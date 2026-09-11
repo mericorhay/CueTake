@@ -1,0 +1,14 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "teleprompter.empty" : {
+      "comment" : "Shown in the teleprompter when the project has no script yet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your script will appear here." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Script'in burada görünecek." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

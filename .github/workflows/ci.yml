@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: CueFlowKit (iOS Simulator)
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: Packages/CueFlowKit
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Build and test
+        run: |
+          set -euo pipefail
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          SCHEME=$(xcodebuild -list -json \
+            | jq -r '.workspace.schemes | if any(.[]; . == "CueFlowKit-Package") then "CueFlowKit-Package" else .[0] end')
+          echo "scheme=$SCHEME simulator=$UDID"
+          xcodebuild test -scheme "$SCHEME" -destination "id=$UDID" CODE_SIGNING_ALLOWED=NO

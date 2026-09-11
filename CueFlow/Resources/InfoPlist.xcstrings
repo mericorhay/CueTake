@@ -1,0 +1,41 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow" } }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow uses the camera to record your videos." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow videolarını çekmek için kamerayı kullanır." } }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow records your voice and listens so the teleprompter can follow you." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow sesini kaydeder ve teleprompter'ın seni takip edebilmesi için konuşmanı dinler." } }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow saves your finished videos to your photo library." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow bitmiş videolarını fotoğraf arşivine kaydeder." } }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Speech recognition lets the teleprompter follow you and creates captions automatically." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Konuşma tanıma, teleprompter'ın seni takip etmesini ve altyazıların otomatik oluşmasını sağlar." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

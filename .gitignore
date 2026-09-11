@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcresult
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/CueFlowKit/Package.resolved
+
+# Secrets
+*.p12
+*.mobileprovision
+Secrets.xcconfig
