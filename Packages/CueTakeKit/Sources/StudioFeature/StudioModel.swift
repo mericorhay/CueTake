@@ -91,7 +91,7 @@ public final class StudioModel {
         task = nil
     }
 
-    public func reset()() {
+    public func reset() {
         task?.cancel()
         task = nil
         phase = .idle

@@ -43,7 +43,7 @@ public final class WorkflowRunModel {
         task = nil
     }
 
-    public func reset()() {
+    public func reset() {
         task?.cancel()
         task = nil
         step = -1

@@ -45,7 +45,7 @@ public final class PromptModel {
         task = nil
     }
 
-    public func cancel()() {
+    public func cancel() {
         task?.cancel()
         task = nil
         step = 0

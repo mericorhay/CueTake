@@ -63,7 +63,7 @@ public final class RetakeModel {
         task = nil
     }
 
-    public func redo()() {
+    public func redo() {
         task?.cancel()
         task = nil
         state = .ready

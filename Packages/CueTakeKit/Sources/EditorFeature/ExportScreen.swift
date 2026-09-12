@@ -39,7 +39,7 @@ public final class ExportModel {
         task = nil
     }
 
-    public func reset()() {
+    public func reset() {
         task?.cancel()
         task = nil
         stage = 0
