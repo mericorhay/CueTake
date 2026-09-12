@@ -1,4 +1,6 @@
+import AVFoundation
 import Domain
+import MediaEngine
 import Observation
 import SwiftUI
 
@@ -32,8 +34,57 @@ public final class EditorModel {
 
     private var task: Task<Void, Never>?
 
+    /// The real playback. Nil until the project's media has been composed — a project that has
+    /// been planned but not shot has nothing to play, and the transport still has to work.
+    public private(set) var player: AVPlayer?
+    private var timeObserver: Any?
+
     public init(project: Project) {
         self.project = project
+    }
+
+    deinit {
+        if let timeObserver { player?.removeTimeObserver(timeObserver) }
+    }
+
+    /// Builds the composition and hands it to a player.
+    ///
+    /// Called whenever the edit changes shape. Rebuilding is cheap — the composition references
+    /// the source files rather than copying them — which is what lets a trim or a reorder be
+    /// reflected in playback immediately instead of after a render.
+    public func loadPlayback(mediaDirectory: URL) async {
+        guard project.segments.contains(where: { $0.selectedTake != nil }) else {
+            teardownPlayer()
+            return
+        }
+        guard let composition = try? await VideoComposer().compose(
+            project: project,
+            mediaDirectory: mediaDirectory
+        ) else {
+            teardownPlayer()
+            return
+        }
+
+        teardownPlayer()
+        let player = AVPlayer(playerItem: AVPlayerItem(asset: composition))
+        // Often enough to look continuous, rarely enough not to fight the scrub.
+        timeObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.03, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            MainActor.assumeIsolated {
+                guard let self, !isScrubbing, isPlaying else { return }
+                playhead = min(time.seconds, duration)
+            }
+        }
+        self.player = player
+    }
+
+    private func teardownPlayer() {
+        if let timeObserver { player?.removeTimeObserver(timeObserver) }
+        timeObserver = nil
+        player?.pause()
+        player = nil
     }
 
     /// Total running time from the segments' durations.
@@ -75,6 +126,15 @@ public final class EditorModel {
             return
         }
         isPlaying = true
+
+        if let player {
+            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600))
+            player.play()
+            return
+        }
+
+        // No media yet: the playhead still has to move, or the editor cannot be understood before
+        // anything has been shot.
         task = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(60))
@@ -92,6 +152,7 @@ public final class EditorModel {
 
     public func pause() {
         isPlaying = false
+        player?.pause()
         task?.cancel()
         task = nil
     }
@@ -102,6 +163,13 @@ public final class EditorModel {
 
     public func seek(to seconds: Double) {
         playhead = min(max(0, seconds), duration)
+        // Tolerance zero: scrubbing to a boundary and landing near it is how a cut ends up one
+        // frame out, which is the one thing the timeline exists to prevent.
+        player?.seek(
+            to: CMTime(seconds: playhead, preferredTimescale: 600),
+            toleranceBefore: .zero,
+            toleranceAfter: .zero
+        )
     }
 
     public func beginScrub() {

@@ -46,6 +46,21 @@ public enum CardFill: Hashable {
     }
 }
 
+extension CardFill {
+    /// The design's card fills, cycled by position.
+    ///
+    /// A library has any number of projects; the design drew three. Cycling keeps the rhythm the
+    /// design established — warm, lime, neutral — however long the list gets, instead of inventing
+    /// a colour per project or letting everything past the third one go grey.
+    public static func ramp(at index: Int, alpha: Double = 0.35) -> CardFill {
+        switch index % 3 {
+        case 0: .gradient(angle: 165, from: DS.Palette.accent(alpha), to: Color(hex: 0x121216))
+        case 1: .gradient(angle: 165, from: DS.Palette.lime(alpha * 0.63), to: Color(hex: 0x121216))
+        default: .gradient(angle: 160, from: Color(hex: 0x141418), to: Color(hex: 0x0F0F12))
+        }
+    }
+}
+
 extension LibraryItem {
     /// The design's three recent cards, with their own fills.
     public static let sampleRecents: [LibraryItem] = [

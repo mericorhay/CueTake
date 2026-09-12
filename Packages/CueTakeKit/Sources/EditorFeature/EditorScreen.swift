@@ -1,3 +1,4 @@
+import AVKit
 import DesignSystem
 import Domain
 import SwiftUI
@@ -10,15 +11,19 @@ public struct EditorScreen: View {
     private let onExport: () -> Void
     private let onCaptions: () -> Void
     private let onRetake: (Segment.ID) -> Void
+    /// Asks the layer that knows where media lives to get playback ready.
+    private let onPrepare: () async -> Void
 
     public init(
         model: EditorModel,
+        onPrepare: @escaping () async -> Void = {},
         onBack: @escaping () -> Void,
         onExport: @escaping () -> Void,
         onCaptions: @escaping () -> Void,
         onRetake: @escaping (Segment.ID) -> Void
     ) {
         self.model = model
+        self.onPrepare = onPrepare
         self.onBack = onBack
         self.onExport = onExport
         self.onCaptions = onCaptions
@@ -47,6 +52,7 @@ public struct EditorScreen: View {
             }
         }
         .padding(.top, 58)
+        .task { await onPrepare() }
         .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
@@ -80,11 +86,21 @@ public struct EditorScreen: View {
 
     /// The composition preview. AVPlayer lands here; until then it is the camera-dark plate.
     private var preview: some View {
-        RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
-            .fill(DS.Palette.camera)
-            .frame(height: 212)
-            .padding(.horizontal, 18)
-            .padding(.top, 4)
+        Group {
+            if let player = model.player {
+                // No AVKit chrome: the transport and the timeline below are the controls, and a
+                // second set of them inside the frame would be two players arguing.
+                VideoPlayer(player: player)
+                    .disabled(true)
+            } else {
+                RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
+                    .fill(DS.Palette.camera)
+            }
+        }
+        .frame(height: 212)
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+        .padding(.horizontal, 18)
+        .padding(.top, 4)
     }
 
     private var transport: some View {

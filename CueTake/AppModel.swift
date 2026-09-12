@@ -1,5 +1,6 @@
 import Domain
 import EditorFeature
+import LibraryFeature
 import MediaEngine
 import Observation
 import Persistence
@@ -79,6 +80,40 @@ final class AppModel {
         self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
     }
 
+    // MARK: - Library
+
+    /// What the store holds, newest first. The library screens read this rather than a sample.
+    private(set) var library: [ProjectSummary] = []
+
+    var recentItems: [LibraryItem] {
+        library.prefix(3).enumerated().map { index, summary in
+            item(for: summary, at: index, height: 210)
+        }
+    }
+
+    var projectItems: [LibraryItem] {
+        library.enumerated().map { index, summary in
+            // The design's grid alternates tall and short cards; keeping that rhythm matters more
+            // than any one card's height meaning something.
+            item(for: summary, at: index, height: index % 2 == 0 ? 206 : 164)
+        }
+    }
+
+    private func item(for summary: ProjectSummary, at index: Int, height: CGFloat) -> LibraryItem {
+        LibraryItem(
+            id: summary.id,
+            title: summary.title,
+            meta: summary.updatedAt.formatted(.relative(presentation: .named)),
+            duration: "\(summary.segmentCount)",
+            fill: .ramp(at: index),
+            height: height
+        )
+    }
+
+    func refreshLibrary() async {
+        library = (try? await dependencies.projectStore.summaries()) ?? []
+    }
+
     // MARK: - Import
 
     /// Drives the photo picker.
@@ -121,7 +156,14 @@ final class AppModel {
 
         project.updatedAt = .now
         scheduleSave()
+        await refreshLibrary()
         openEditor()
+    }
+
+    /// The editor asks for playback; only this layer knows where the project's media lives.
+    func prepareEditorPlayback() async {
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
+        await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
     }
 
     // MARK: - Export
@@ -209,11 +251,13 @@ final class AppModel {
               let stored = try? await store.load(summary.id)
         else {
             try? await store.save(project)
+            await refreshLibrary()
             return
         }
         project = stored
         studioModel = StudioModel(project: stored)
         editorModel = EditorModel(project: stored)
+        await refreshLibrary()
     }
 
     func completeOnboarding() {

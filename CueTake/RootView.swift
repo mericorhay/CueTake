@@ -70,6 +70,7 @@ struct RootView: View {
 
         case .home:
             HomeScreen(
+                recents: model.recentItems,
                 onCreate: { model.go(to: .create) },
                 onOpenProject: { _ in model.openEditor() },
                 onOpenAllProjects: { model.go(to: .projects) },
@@ -129,6 +130,7 @@ struct RootView: View {
         case .editor:
             EditorScreen(
                 model: model.editorModel,
+                onPrepare: { await model.prepareEditorPlayback() },
                 onBack: { model.go(to: .home) },
                 onExport: { model.go(to: .export) },
                 onCaptions: { model.go(to: .captions) },
@@ -161,7 +163,7 @@ struct RootView: View {
             )
 
         case .projects:
-            ProjectsScreen { _ in model.openEditor() }
+            ProjectsScreen(projects: model.projectItems) { _ in model.openEditor() }
 
         case .workflows:
             WorkflowsScreen { _ in model.go(to: .workflowDetail) }
