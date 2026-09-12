@@ -29,6 +29,11 @@ public struct StudioScreen: View {
         self.onFinished = onFinished
     }
 
+    /// Bumped on every shutter press, so the bloom ring fires once per commit.
+    @State private var shutterPresses = 0
+    @State private var countdownSweep = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public var body: some View {
         GeometryReader { proxy in
             ZStack {
@@ -97,12 +102,18 @@ public struct StudioScreen: View {
                 segmentPips
 
                 DSCircleButton("⊞", fontSize: 15, style: .glass) {
-                    withAnimation(DS.Easing.ease(0.25)) { model.showsGrid.toggle() }
+                    model.showsGrid.toggle()
                 }
+                .opacity(model.showsGrid ? 1 : 0.55)
+                .studioMotion(StudioMotion.snap, reduced: reduceMotion, value: model.showsGrid)
 
                 DSCircleButton("⟲", fontSize: 14, style: .glass) {
                     model.setLandscape(!model.isLandscape)
                 }
+                // The glyph turns with the thing it turns. A rotate button that does not rotate is
+                // the clearest case of a label describing an action the interface never performs.
+                .rotationEffect(.degrees(model.isLandscape ? -90 : 0))
+                .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.isLandscape)
             }
         }
     }
@@ -110,13 +121,17 @@ public struct StudioScreen: View {
     private var segmentPips: some View {
         HStack(spacing: 6) {
             ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
+                let isCurrent = index == model.segmentIndex
                 Capsule()
                     .fill(
-                        index == 0
+                        isCurrent
                             ? DS.Palette.segment(at: segment.role.paletteIndex)
                             : DS.Palette.hairline(0.28)
                     )
-                    .frame(width: 16, height: 3)
+                    // The current one widens rather than brightens: length survives a glance at
+                    // arm's length, a colour shift on a 3pt bar does not.
+                    .frame(width: isCurrent ? 22 : 16, height: 3)
+                    .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.segmentIndex)
             }
 
             Text(model.project.estimatedTotalLabel)
@@ -219,11 +234,12 @@ public struct StudioScreen: View {
                     .dsPulse(duration: 1.6)
             }
         }
-        .buttonStyle(.dsPressIcon)
+        .buttonStyle(StopButtonStyle())
     }
 
     private var shutter: some View {
         Button {
+            shutterPresses += 1
             model.beginCountdown()
         } label: {
             ZStack {
@@ -240,8 +256,16 @@ public struct StudioScreen: View {
                     .frame(width: 60, height: 60)
                     .shadow(color: DS.Palette.accent(0.6), radius: 16)
             }
+            // Fired outside the pressed state so it plays on the way out, reading as the
+            // consequence of the press rather than part of it.
+            .overlay {
+                if !reduceMotion {
+                    BloomRing(trigger: shutterPresses)
+                        .frame(width: 94, height: 94)
+                }
+            }
         }
-        .buttonStyle(.dsPressIcon)
+        .buttonStyle(ShutterButtonStyle())
     }
 
     /// Covers the frame while the count runs. Tapping anywhere cancels, because the moment you
@@ -251,11 +275,33 @@ public struct StudioScreen: View {
             Rectangle()
                 .fill(DS.Palette.inkInverse(0.45))
 
-            Text("\(value)")
-                .dsFont(.archivo, .extrabold, 96)
-                .foregroundStyle(DS.Palette.ink)
-                .contentTransition(.numericText(countsDown: true))
-                .shadow(color: .black.opacity(0.5), radius: 30)
+            ZStack {
+                // Empties once per second. The count is the only place in the studio where the
+                // reader is waiting rather than doing, so it is the one place that owes them a
+                // sense of how long is left.
+                Circle()
+                    .stroke(DS.Palette.ink(0.15), lineWidth: 3)
+                    .frame(width: 168, height: 168)
+
+                Circle()
+                    .trim(from: 0, to: countdownSweep ? 0 : 1)
+                    .stroke(DS.Palette.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 168, height: 168)
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: countdownSweep)
+
+                Text("\(value)")
+                    .dsFont(.archivo, .extrabold, 96)
+                    .foregroundStyle(DS.Palette.ink)
+                    .contentTransition(.numericText(countsDown: true))
+                    .shadow(color: .black.opacity(0.5), radius: 30)
+                    .id(value)
+                    .transition(
+                        .scale(scale: 1.35).combined(with: .opacity)
+                    )
+            }
+            .onAppear { countdownSweep = true }
+            .onDisappear { countdownSweep = false }
 
             Text("studio.countdown.cancel", bundle: .module)
                 .dsFont(.sans, .medium, 12)
@@ -266,7 +312,7 @@ public struct StudioScreen: View {
         .ignoresSafeArea()
         .contentShape(Rectangle())
         .onTapGesture { model.cancelCountdown() }
-        .animation(DS.Easing.standard(0.3), value: value)
+        .studioMotion(StudioMotion.bloom, reduced: reduceMotion, value: value)
         .transition(.opacity)
     }
 

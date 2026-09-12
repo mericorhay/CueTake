@@ -14,6 +14,7 @@ public struct TeleprompterPanel: View {
     @State private var dragOrigin: TeleprompterModel.Frame?
     @State private var resizeOrigin: TeleprompterModel.Frame?
     @State private var textSizeOrigin: Double?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// What the reader is changing right now, so the panel can say so.
     @State private var adjustment: Adjustment?
 
@@ -70,6 +71,10 @@ public struct TeleprompterPanel: View {
             radius: model.isDragging ? 35 : 20,
             y: model.isDragging ? 30 : 16
         )
+        // Picked up rather than merely followed: a hair of scale is what separates dragging an
+        // object from scrubbing a value, and it is the whole difference in how the panel reads.
+        .scaleEffect(model.isDragging && !reduceMotion ? 1.02 : 1)
+        .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.isDragging)
         .position(x: rect.midX, y: rect.midY)
         .animation(model.isDragging ? nil : DS.Easing.standard(0.5), value: model.frame)
     }
@@ -86,7 +91,7 @@ public struct TeleprompterPanel: View {
                 .padding(.vertical, 5)
                 .background(Capsule().fill(DS.Palette.inkInverse(0.72)))
                 .offset(y: -13)
-                .transition(.opacity)
+                .transition(reduceMotion ? .opacity : .scale(scale: 0.8).combined(with: .opacity))
         }
     }
 
@@ -122,6 +127,8 @@ public struct TeleprompterPanel: View {
                 Text(model.isPaused ? "▶" : "❚❚")
                     .dsFont(.sans, .semibold, 9)
                     .foregroundStyle(model.isPaused ? DS.Palette.inkInverse : DS.Palette.ink)
+                    .contentTransition(.opacity)
+                    .animation(StudioMotion.snap, value: model.isPaused)
                     .frame(width: 22, height: 22)
                     .background(
                         RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -136,6 +143,8 @@ public struct TeleprompterPanel: View {
                 Text(model.preset.uppercasedLabel(locale: .current))
                     .dsFont(.mono, .medium, 9, letterSpacing: 0.08)
                     .foregroundStyle(DS.Palette.ink)
+                    .contentTransition(.opacity)
+                    .animation(StudioMotion.snap, value: model.preset)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(DS.Palette.hairline(0.1)))
@@ -177,8 +186,13 @@ public struct TeleprompterPanel: View {
                         .padding(.horizontal, 2)
                         .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(word.background))
                         .opacity(word.opacity)
+                        // The word under the voice is the one thing the eye tracks continuously,
+                        // so it is the one thing allowed to move. Scale rather than colour: the
+                        // highlight already carries colour, and a second colour cue would fight it.
+                        .scaleEffect(word.isActive && !reduceMotion ? 1.07 : 1)
                         .animation(DS.Easing.ease(0.22), value: word.color)
                         .animation(DS.Easing.ease(0.22), value: word.opacity)
+                        .animation(StudioMotion.bloom, value: word.isActive)
                 }
             }
             .frame(maxWidth: .infinity, alignment: model.alignment == .center ? .center : .leading)
@@ -212,12 +226,14 @@ public struct TeleprompterPanel: View {
     // MARK: - Handles
 
     private var resizeHandle: some View {
-        ResizeChevron()
-            .stroke(DS.Palette.ink(0.5), lineWidth: 2)
-            .frame(width: 12, height: 12)
+        let isActive = adjustment == .resize
+        return ResizeChevron()
+            .stroke(isActive ? DS.Palette.accent : DS.Palette.ink(0.5), lineWidth: 2)
+            .frame(width: isActive ? 15 : 12, height: isActive ? 15 : 12)
             .padding(5)
             .frame(width: 26, height: 26, alignment: .bottomTrailing)
             .contentShape(Rectangle())
+            .studioMotion(StudioMotion.snap, reduced: reduceMotion, value: isActive)
             .gesture(resizeGesture)
     }
 

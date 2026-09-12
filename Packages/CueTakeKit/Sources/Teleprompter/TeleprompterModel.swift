@@ -204,7 +204,8 @@ public final class TeleprompterModel {
                     text: text,
                     color: index <= active ? accent : ink,
                     background: .clear,
-                    opacity: index <= active ? 1 : 0.4
+                    opacity: index <= active ? 1 : 0.4,
+                    isActive: index == active
                 )
             case .line:
                 let near = abs(index - active) <= 6
@@ -213,7 +214,8 @@ public final class TeleprompterModel {
                     text: text,
                     color: ink,
                     background: .clear,
-                    opacity: active < 0 ? 0.85 : (near ? 1 : 0.22)
+                    opacity: active < 0 ? 0.85 : (near ? 1 : 0.22),
+                    isActive: index == active
                 )
             case .word:
                 let isHot = active >= 0 && index > active && index <= active + lookAhead
@@ -222,7 +224,8 @@ public final class TeleprompterModel {
                     text: text,
                     color: index == active ? inkInverse : ink,
                     background: index == active ? accent : (isHot ? lime.opacity(0.16) : .clear),
-                    opacity: index < active ? 0.3 : 1
+                    opacity: index < active ? 0.3 : 1,
+                    isActive: index == active
                 )
             }
         }
@@ -237,5 +240,8 @@ public final class TeleprompterModel {
         public var color: Color
         public var background: Color
         public var opacity: Double
+        /// The word being spoken. Drawn slightly larger, because this is the one thing on screen
+        /// the reader's eye is tracking continuously.
+        public var isActive: Bool = false
     }
 }
