@@ -1,0 +1,116 @@
+name: TestFlight
+
+# Signed release build -> archive -> TestFlight, via fastlane.
+#
+# Same Apple team as MicFox and Galapagos (XYB3NLV654), so these secrets are
+# shared with those repos:
+#   APPLE_TEAM_ID
+#   IOS_DISTRIBUTION_CERT_P12      base64 of the distribution .p12
+#   IOS_CERTIFICATE_PASSWORD       password for that .p12
+#   APP_STORE_CONNECT_API_KEY      the .p8, raw or base64
+#   APP_STORE_CONNECT_API_KEY_ID
+#   APP_STORE_CONNECT_ISSUER_ID
+# Only this one is CueTake-specific, because a profile is tied to a bundle id:
+#   IOS_PROVISIONING_PROFILE       base64 of the com.orhay.cuetake App Store profile
+on:
+  workflow_dispatch:
+    inputs:
+      groups:
+        description: "TestFlight group names, comma separated (optional)"
+        required: false
+        default: ""
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-26
+    timeout-minutes: 70
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Toolchain
+        run: xcodebuild -version
+
+      - name: Setup Ruby + fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+
+      # Signing assets live in secrets base64-encoded, written under RUNNER_TEMP
+      # (wiped when the job ends). Both are validated here rather than letting a
+      # bad one surface later: a wrong password and a corrupt base64 blob both
+      # come out of `security import` as the same "MAC verification failed".
+      - name: Stage and verify signing assets
+        env:
+          IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          echo "$IOS_DISTRIBUTION_CERT_P12" | base64 --decode > "$RUNNER_TEMP/dist.p12" 2>/dev/null \
+            || { echo "::error::IOS_DISTRIBUTION_CERT_P12 is not valid base64."; exit 1; }
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision" 2>/dev/null \
+            || { echo "::error::IOS_PROVISIONING_PROFILE is not valid base64."; exit 1; }
+
+          if ! openssl asn1parse -inform der -in "$RUNNER_TEMP/dist.p12" > /dev/null 2>&1; then
+            echo "::error::IOS_DISTRIBUTION_CERT_P12 decoded to $(wc -c < "$RUNNER_TEMP/dist.p12") bytes that are not a PKCS#12 file."
+            echo "::error::Re-export the .p12 and base64 it in one line: base64 -i cert.p12 | tr -d '\\n'"
+            exit 1
+          fi
+
+          if ! openssl pkcs12 -in "$RUNNER_TEMP/dist.p12" -passin env:IOS_CERTIFICATE_PASSWORD -nokeys -noout 2>/dev/null; then
+            echo "::error::IOS_CERTIFICATE_PASSWORD does not open IOS_DISTRIBUTION_CERT_P12 (the .p12 is well-formed, so it is the password secret)."
+            exit 1
+          fi
+          echo "Certificate and password verified."
+
+          # macOS's Security framework only speaks the older PKCS#12 encryption
+          # algorithms. A .p12 written by OpenSSL 3 defaults to AES-256, which
+          # `security import` rejects with that same misleading message.
+          openssl pkcs12 -in "$RUNNER_TEMP/dist.p12" -passin env:IOS_CERTIFICATE_PASSWORD \
+                         -nodes -out "$RUNNER_TEMP/dist.pem" 2>/dev/null \
+            || openssl pkcs12 -legacy -in "$RUNNER_TEMP/dist.p12" -passin env:IOS_CERTIFICATE_PASSWORD \
+                              -nodes -out "$RUNNER_TEMP/dist.pem"
+          openssl pkcs12 -export -in "$RUNNER_TEMP/dist.pem" \
+                         -passout env:IOS_CERTIFICATE_PASSWORD \
+                         -legacy -out "$RUNNER_TEMP/dist_legacy.p12" 2>/dev/null \
+            || openssl pkcs12 -export -in "$RUNNER_TEMP/dist.pem" \
+                              -passout env:IOS_CERTIFICATE_PASSWORD \
+                              -out "$RUNNER_TEMP/dist_legacy.p12"
+          rm -f "$RUNNER_TEMP/dist.pem"
+          echo "Certificate re-encrypted for the macOS keychain."
+
+          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" > /dev/null \
+            || { echo "::error::IOS_PROVISIONING_PROFILE is not a valid .mobileprovision."; exit 1; }
+          echo "Provisioning profile verified."
+
+          echo "IOS_CERT_PATH=$RUNNER_TEMP/dist_legacy.p12" >> "$GITHUB_ENV"
+          echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
+
+      - name: Build and upload to TestFlight
+        env:
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"
+          FASTLANE_XCODEBUILD_SETTINGS_RETRIES: "5"
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          TESTFLIGHT_GROUPS: ${{ inputs.groups }}
+          # Strictly increasing and unique per run, so re-uploads never collide.
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: bundle exec fastlane beta
+
+      - name: Upload the IPA as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CueTake-build${{ github.run_number }}
+          path: build/*.ipa
+          if-no-files-found: ignore

@@ -1,0 +1,11 @@
+# Must match PRODUCT_BUNDLE_IDENTIFIER in Config/CueTake.xcconfig.
+app_identifier("com.orhay.cuetake")
+
+# Same Apple team as MicFox and Galapagos, so the distribution certificate and
+# the App Store Connect API key secrets are shared across the three apps —
+# only the provisioning profile is per bundle id.
+team_id(ENV["APPLE_TEAM_ID"] || "XYB3NLV654")
+
+# Deliberately no apple_id: auth goes through the App Store Connect API key
+# (see the Fastfile). An Apple ID invites interactive login, which stalls on
+# 2FA on a headless runner.

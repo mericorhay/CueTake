@@ -1,0 +1,242 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		10000000000000000000B301 /* CueTakeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 10000000000000000000B201 /* CueTakeKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		10000000000000000000A301 /* CueTake.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CueTake.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		10000000000000000000E101 /* CueTake.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = CueTake.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		10000000000000000000A601 /* CueTake */ = {isa = PBXFileSystemSynchronizedRootGroup; path = CueTake; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		10000000000000000000A801 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000B301 /* CueTakeKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		10000000000000000000A401 = {
+			isa = PBXGroup;
+			children = (
+				10000000000000000000E201 /* Config */,
+				10000000000000000000A601 /* CueTake */,
+				10000000000000000000A501 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		10000000000000000000A501 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				10000000000000000000A301 /* CueTake.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		10000000000000000000E201 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				10000000000000000000E101 /* CueTake.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		10000000000000000000A201 /* CueTake */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 10000000000000000000D201 /* Build configuration list for PBXNativeTarget "CueTake" */;
+			buildPhases = (
+				10000000000000000000A701 /* Sources */,
+				10000000000000000000A801 /* Frameworks */,
+				10000000000000000000A901 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				10000000000000000000A601 /* CueTake */,
+			);
+			name = CueTake;
+			packageProductDependencies = (
+				10000000000000000000B201 /* CueTakeKit */,
+			);
+			productName = CueTake;
+			productReference = 10000000000000000000A301 /* CueTake.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		10000000000000000000A101 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					10000000000000000000A201 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = 10000000000000000000D101 /* Build configuration list for PBXProject "CueTake" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				tr,
+				Base,
+			);
+			mainGroup = 10000000000000000000A401;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				10000000000000000000B101 /* XCLocalSwiftPackageReference "Packages/CueTakeKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 10000000000000000000A501 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				10000000000000000000A201 /* CueTake */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		10000000000000000000A901 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		10000000000000000000A701 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		10000000000000000000C101 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		10000000000000000000C201 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		10000000000000000000C301 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 10000000000000000000E101 /* CueTake.xcconfig */;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		10000000000000000000C401 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 10000000000000000000E101 /* CueTake.xcconfig */;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		10000000000000000000D101 /* Build configuration list for PBXProject "CueTake" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10000000000000000000C101 /* Debug */,
+				10000000000000000000C201 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		10000000000000000000D201 /* Build configuration list for PBXNativeTarget "CueTake" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10000000000000000000C301 /* Debug */,
+				10000000000000000000C401 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		10000000000000000000B101 /* XCLocalSwiftPackageReference "Packages/CueTakeKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CueTakeKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		10000000000000000000B201 /* CueTakeKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CueTakeKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 10000000000000000000A101 /* Project object */;
+}

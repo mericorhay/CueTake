@@ -11,13 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  package:
-    name: CueTakeKit (iOS Simulator)
+  build:
+    name: Build and test
     runs-on: macos-26
-    timeout-minutes: 30
-    defaults:
-      run:
-        working-directory: Packages/CueTakeKit
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
 
@@ -26,12 +23,40 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Build and test
+      # One simulator for both steps. Picking by device name pins us to whatever
+      # list the image happens to ship; taking the first available iPhone does not.
+      - name: Pick a simulator
+        id: sim
         run: |
           set -euo pipefail
           UDID=$(xcrun simctl list devices available -j \
-            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+            | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone')))")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Using simulator $UDID"
+
+      # The app scheme pulls in every module, so this is the compile gate for the
+      # whole codebase, app target included.
+      - name: Build the app
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project CueTake.xcodeproj \
+            -scheme CueTake \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM=""
+
+      - name: Run the package tests
+        working-directory: Packages/CueTakeKit
+        run: |
+          set -euo pipefail
           SCHEME=$(xcodebuild -list -json \
-            | jq -r '.workspace.schemes | if any(.[]; . == "CueTakeKit-Package") then "CueTakeKit-Package" else .[0] end')
-          echo "scheme=$SCHEME simulator=$UDID"
-          xcodebuild test -scheme "$SCHEME" -destination "id=$UDID" CODE_SIGNING_ALLOWED=NO
+            | python3 -c "import json,sys;s=json.load(sys.stdin)['workspace']['schemes'];print('CueTakeKit-Package' if 'CueTakeKit-Package' in s else s[0])")
+          echo "Testing scheme $SCHEME"
+          xcodebuild test \
+            -scheme "$SCHEME" \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO

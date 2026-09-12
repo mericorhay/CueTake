@@ -24,6 +24,9 @@ AI Creator Camera for iOS. AI ile script oluştur → segmentlere böl → konu�
 
 ```
 CueTake/
+├── CueTake.xcodeproj            Uygulama hedefi (senkronize klasör)
+├── Config/CueTake.xcconfig      Bundle id, takım, sürüm, Swift ayarları
+├── fastlane/                    TestFlight lane
 ├── CueTake/                      App target (ince): giriş noktası, composition root, routing
 │   ├── CueTakeApp.swift
 │   ├── AppDependencies.swift     Somut implementasyonları bilen tek yer
@@ -181,26 +184,40 @@ SwiftData **ana domain modeli değildir**, sadece listeleme index'i olarak kulla
 - İzin metinleri app target'taki `InfoPlist.xcstrings` dosyasında. Bu dosya app bundle'ına `tr.lproj` da eklediği için iOS, package bundle'larındaki Türkçe metinleri de seçebiliyor.
 - **Türkçe dikkat:** büyük/küçük harf dönüşümleri ve metin karşılaştırmaları her zaman locale ile yapılır. `CaptionTextCase.apply`, "istanbul"u "İSTANBUL" yapar (ISTANBUL değil). `ScriptText.matchKey`, konuşma takibinde ı/i karışmasını önler.
 
-## Kurulum (Mac)
+## Derleme ve dağıtım
 
-Bu iskelet Windows'ta oluşturuldu. Package CI'da derleniyor, ama `.xcodeproj` Mac'te bir kez oluşturulmalı:
+Mac gerekmiyor: proje dosyası repoda hazır ve derleme GitHub Actions üzerinde yapılıyor.
 
-1. Xcode 26 veya üstünde **File ▸ New ▸ Project ▸ iOS App** seç: ad `CueTake`, arayüz SwiftUI, testler Swift Testing. Geçici bir klasöre kaydet.
-2. `CueTake.xcodeproj` dosyasını bu reponun köküne taşı. Xcode'un oluşturduğu kaynak klasörünü sil.
-3. Projede eski grubu kaldır. Repodaki `CueTake/` klasörünü **folder (buildable)** olarak app target'a ekle.
-4. **File ▸ Add Package Dependencies ▸ Add Local…** ile `Packages/CueTakeKit` paketini ekle ve `CueTakeKit` ürününü app target'a bağla.
-5. Build Settings:
-   - iOS Deployment Target `26.0`
-   - Swift Language Version `6`
-   - Default Actor Isolation `MainActor`
-   - Approachable Concurrency `Yes`
-   - Targeted Device Family `iPhone`
-6. Project ▸ Info ▸ Localizations bölümüne **Turkish** ekle.
-7. Info: `GENERATE_INFOPLIST_FILE` açık kalsın. Kamera, mikrofon, konuşma ve fotoğraf izin anahtarlarını ekle; çevirileri `InfoPlist.xcstrings`'ten gelir.
+- **Kimlik** `Config/CueTake.xcconfig` içinde: bundle id `com.orhay.cuetake`, takım `XYB3NLV654`, sürüm ve tüm Swift ayarları. Proje dosyası bu dosyayı okuyor, yani sürüm ya da ayar değiştirmek için Xcode açmaya gerek yok.
+- **CI** (`.github/workflows/ci.yml`) her push'ta uygulamayı simülatör için derliyor ve paket testlerini koşuyor. Uygulama şeması bütün modülleri çektiği için bu, kod tabanının tamamının derlenme kapısı.
+- **TestFlight** (`.github/workflows/testflight.yml`) elle tetikleniyor (Actions ▸ TestFlight ▸ Run workflow). İmzalı arşivi fastlane ile alıp yüklüyor; build numarası her koşuda Actions run numarası oluyor, böylece yüklemeler çakışmıyor.
 
-## CI
+### Gereken secret'lar
 
-`.github/workflows/ci.yml`, her push'ta paketi macOS runner'da derleyip iOS Simulator'de testleri koşar. Private repoda macOS dakikaları ücretsiz kotadan 10 kat hızlı düşer.
+Takım MicFox ve Galapagos ile aynı (`XYB3NLV654`), o yüzden sertifika ve App Store Connect anahtarı o repolardakiyle birebir aynı değerler:
+
+| Secret | Paylaşılan? |
+|---|---|
+| `APPLE_TEAM_ID` | evet |
+| `IOS_DISTRIBUTION_CERT_P12` | evet |
+| `IOS_CERTIFICATE_PASSWORD` | evet |
+| `APP_STORE_CONNECT_API_KEY` | evet |
+| `APP_STORE_CONNECT_API_KEY_ID` | evet |
+| `APP_STORE_CONNECT_ISSUER_ID` | evet |
+| `IOS_PROVISIONING_PROFILE` | **hayır** — CueTake'e özel |
+
+Profil bundle id'ye bağlı olduğu için tek yeni iş şu: Apple Developer'da `com.orhay.cuetake` için bir App Store provisioning profile üret, indir ve tek satır base64'e çevirip secret olarak ekle:
+
+```bash
+base64 -i CueTake_AppStore.mobileprovision | tr -d '
+'
+```
+
+App Store Connect'te de uygulama kaydının açılmış olması gerekiyor (aynı bundle id ile), yoksa yükleme adımı reddedilir.
+
+### Mac'te açmak istersen
+
+`CueTake.xcodeproj` doğrudan açılıyor. Proje Xcode 16+ senkronize klasör yapısını kullanıyor: `CueTake/` altına dosya eklemek yeterli, proje dosyasına dokunmuyorsun. Paket `Packages/CueTakeKit` yerel bağımlılık olarak bağlı.
 
 ## Tasarımın uygulanması
 

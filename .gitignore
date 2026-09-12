@@ -17,3 +17,12 @@ Packages/CueTakeKit/Package.resolved
 *.p12
 *.mobileprovision
 Secrets.xcconfig
+
+# fastlane / release output
+build/
+*.ipa
+*.dSYM.zip
+Gemfile.lock
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
