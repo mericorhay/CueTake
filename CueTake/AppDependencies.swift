@@ -9,6 +9,7 @@ import WorkflowEngine
 /// Features receive the protocols they need through their initializers; there is no global container.
 struct AppDependencies {
     var projectStore: any ProjectStore
+    var settingsStore: any SettingsStore
     var camera: any CameraCapturing
     var speech: any SpeechTranscribing
     var scriptTracker: any ScriptTracking
@@ -17,9 +18,19 @@ struct AppDependencies {
     var ai: AICapabilityRouter
     var workflowRunner: WorkflowRunner
 
-    /// Every engine is a placeholder until it is implemented.
+    /// Falls back to memory if Application Support cannot be opened. Losing projects is bad;
+    /// refusing to launch over it is worse, and the fallback keeps the session usable.
+    private static func makeProjectStore() -> any ProjectStore {
+        if let store = try? FileProjectStore.inApplicationSupport() {
+            return store
+        }
+        return InMemoryProjectStore()
+    }
+
+    /// Every engine is a placeholder until it is implemented. Storage is not.
     static let live = AppDependencies(
-        projectStore: InMemoryProjectStore(),
+        projectStore: makeProjectStore(),
+        settingsStore: UserDefaultsSettingsStore(),
         camera: UnimplementedCameraCapture(),
         speech: UnimplementedSpeechTranscriber(),
         scriptTracker: UnimplementedScriptTracker(),

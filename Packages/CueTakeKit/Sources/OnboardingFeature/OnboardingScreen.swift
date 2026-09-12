@@ -81,6 +81,7 @@ public struct OnboardingScreen: View {
         .padding(.top, 78)
         .padding(.bottom, 40)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .dsScreenLayout()
         .background {
             DS.Palette.screen
                 .overlay(alignment: .topTrailing) {

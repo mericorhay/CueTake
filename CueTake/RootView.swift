@@ -32,20 +32,23 @@ struct RootView: View {
 
             if model.screen.isRoot {
                 tabBar
-                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .frame(maxWidth: DS.Layout.column)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, 20)
                     .ignoresSafeArea(.container)
             }
         }
         .animation(DS.Easing.ease(0.22), value: model.screen)
         .preferredColorScheme(.dark)
+        .task { await model.restore() }
+        .onChange(of: model.project) { model.scheduleSave() }
     }
 
     @ViewBuilder
     private var screen: some View {
         switch model.screen {
         case .onboarding:
-            OnboardingScreen { model.go(to: .home) }
+            OnboardingScreen { model.completeOnboarding() }
 
         case .home:
             HomeScreen(
@@ -124,6 +127,7 @@ struct RootView: View {
         case .captions:
             CaptionsScreen(
                 project: model.project,
+                style: model.settingsModel.settings.captionPreset,
                 onBack: { model.openEditor() },
                 onExport: { model.go(to: .export) }
             )
@@ -149,7 +153,7 @@ struct RootView: View {
             )
 
         case .settings:
-            SettingsScreen()
+            SettingsScreen(model: model.settingsModel)
         }
     }
 

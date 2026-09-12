@@ -1,24 +1,14 @@
 import DesignSystem
+import Domain
 import SwiftUI
+import UIKit
 
 public struct SettingsScreen: View {
-    public init() {}
+    private let model: SettingsModel
 
-    private struct Row {
-        var key: String.LocalizationValue
-        var value: String.LocalizationValue
+    public init(model: SettingsModel) {
+        self.model = model
     }
-
-    private static let rows: [Row] = [
-        Row(key: "settings.account", value: "settings.account.value"),
-        Row(key: "settings.language", value: "settings.language.value"),
-        Row(key: "settings.camera", value: "settings.camera.value"),
-        Row(key: "settings.captions", value: "settings.captions.value"),
-        Row(key: "settings.ai", value: "settings.ai.value"),
-        Row(key: "settings.subscription", value: "settings.subscription.value"),
-        Row(key: "settings.privacy", value: "settings.privacy.value"),
-        Row(key: "settings.export", value: "settings.export.value"),
-    ]
 
     public var body: some View {
         ScrollView {
@@ -29,9 +19,30 @@ public struct SettingsScreen: View {
                     .padding(.vertical, 22)
 
                 VStack(spacing: 0) {
-                    ForEach(Array(Self.rows.enumerated()), id: \.offset) { index, row in
-                        settingRow(row, isLast: index == Self.rows.count - 1)
+                    languageRow
+
+                    picker("settings.camera", CameraPosition.allCases, model.settings.defaultCamera, \.label) {
+                        model.update(\.defaultCamera, to: $0)
                     }
+
+                    picker("settings.quality", VideoFormat.Resolution.allCases, model.settings.captureResolution, \.label) {
+                        model.update(\.captureResolution, to: $0)
+                    }
+
+                    picker("settings.captions", CaptionPreference.allCases, model.settings.captionPreset, \.label) {
+                        model.update(\.captionPreset, to: $0)
+                    }
+
+                    picker("settings.ai", AIProcessing.allCases, model.settings.aiProcessing, \.label) {
+                        model.update(\.aiProcessing, to: $0)
+                    }
+
+                    picker("settings.export", ExportDestination.allCases, model.settings.exportDestination, \.label) {
+                        model.update(\.exportDestination, to: $0)
+                    }
+
+                    staticRow("settings.subscription", String(localized: "settings.subscription.value", bundle: .module))
+                    staticRow("settings.version", Self.version, isLast: true)
                 }
                 .dsCard(radius: DS.Radius.card)
             }
@@ -40,9 +51,17 @@ public struct SettingsScreen: View {
             .padding(.bottom, 108)
         }
         .scrollIndicators(.hidden)
+        .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }
+
+    private static let version: String = {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        return "\(short) (\(build))"
+    }()
 
     private var profile: some View {
         HStack(spacing: 13) {
@@ -65,30 +84,136 @@ public struct SettingsScreen: View {
         .dsCard(radius: DS.Radius.card)
     }
 
-    private func settingRow(_ row: Row, isLast: Bool) -> some View {
+    // MARK: - Rows
+
+    /// iOS owns per-app language. A picker of our own here would either lie, or force every string
+    /// in the app to be looked up against an override locale. So the row reports what the system
+    /// is using and opens the one place where it can actually be changed.
+    private var languageRow: some View {
+        Button {
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(url)
+        } label: {
+            row(String(localized: "settings.language", bundle: .module), value: Self.languageName)
+        }
+        .buttonStyle(.dsPress)
+    }
+
+    private static let languageName: String = {
+        let identifier = Bundle.main.preferredLocalizations.first ?? Locale.current.identifier
+        return Locale.current.localizedString(forLanguageCode: identifier)?.capitalized(with: .current)
+            ?? identifier
+    }()
+
+    private func picker<Option: Hashable>(
+        _ titleKey: String.LocalizationValue,
+        _ options: [Option],
+        _ selection: Option,
+        _ label: KeyPath<Option, String>,
+        onSelect: @escaping (Option) -> Void
+    ) -> some View {
+        Menu {
+            // A list of buttons rather than a Picker: the design's row *is* the label, and Picker
+            // insists on bringing its own along.
+            ForEach(Array(options.enumerated()), id: \.offset) { _, option in
+                Button {
+                    onSelect(option)
+                } label: {
+                    if option == selection {
+                        Label(option[keyPath: label], systemImage: "checkmark")
+                    } else {
+                        Text(option[keyPath: label])
+                    }
+                }
+            }
+        } label: {
+            row(String(localized: titleKey, bundle: .module), value: selection[keyPath: label])
+        }
+    }
+
+    private func staticRow(_ titleKey: String.LocalizationValue, _ value: String, isLast: Bool = false) -> some View {
+        row(String(localized: titleKey, bundle: .module), value: value, chevron: false, isLast: isLast)
+    }
+
+    private func row(_ title: String, value: String, chevron: Bool = true, isLast: Bool = false) -> some View {
         HStack(spacing: 0) {
-            Text(String(localized: row.key, bundle: .module))
+            Text(title)
                 .dsFont(.sans, .medium, 14)
                 .foregroundStyle(DS.Palette.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(String(localized: row.value, bundle: .module))
+            Text(value)
                 .dsFont(.sans, .regular, 13)
                 .foregroundStyle(DS.Palette.ink(0.38))
+                .lineLimit(1)
 
-            Text("›")
-                .font(.system(size: 15))
-                .foregroundStyle(DS.Palette.ink(0.25))
-                .padding(.leading, 8)
+            if chevron {
+                Text("›")
+                    .font(.system(size: 15))
+                    .foregroundStyle(DS.Palette.ink(0.25))
+                    .padding(.leading, 8)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 15)
+        .contentShape(Rectangle())
         .overlay(alignment: .bottom) {
             if !isLast {
                 Rectangle()
                     .fill(DS.Palette.hairline(0.05))
                     .frame(height: 1)
             }
+        }
+    }
+}
+
+// MARK: - Option labels
+//
+// Domain owns the cases; what they are called on screen is this module's business.
+
+extension CameraPosition {
+    var label: String {
+        switch self {
+        case .front: String(localized: "settings.camera.front", bundle: .module)
+        case .back: String(localized: "settings.camera.back", bundle: .module)
+        }
+    }
+}
+
+extension VideoFormat.Resolution {
+    var label: String {
+        switch self {
+        case .hd1080: "1080p"
+        case .uhd4K: "4K"
+        }
+    }
+}
+
+extension CaptionPreference {
+    var label: String {
+        switch self {
+        case .off: String(localized: "settings.captions.off", bundle: .module)
+        case .pop: String(localized: "settings.captions.pop", bundle: .module)
+        case .clean: String(localized: "settings.captions.clean", bundle: .module)
+        case .karaoke: String(localized: "settings.captions.karaoke", bundle: .module)
+        }
+    }
+}
+
+extension AIProcessing {
+    var label: String {
+        switch self {
+        case .onDeviceOnly: String(localized: "settings.ai.onDevice", bundle: .module)
+        case .allowCloud: String(localized: "settings.ai.cloud", bundle: .module)
+        }
+    }
+}
+
+extension ExportDestination {
+    var label: String {
+        switch self {
+        case .photoLibrary: String(localized: "settings.export.photos", bundle: .module)
+        case .files: String(localized: "settings.export.files", bundle: .module)
         }
     }
 }

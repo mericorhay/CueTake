@@ -46,6 +46,12 @@ public struct StudioScreen: View {
                     settingsSheet
                 }
             }
+            // The window's shape is the orientation. `onChange` alone misses the case where the
+            // studio is opened with the phone already on its side.
+            .onAppear { model.setLandscape(proxy.size.width > proxy.size.height) }
+            .onChange(of: proxy.size) { _, size in
+                model.setLandscape(size.width > size.height)
+            }
         }
         .background(DS.Palette.screen)
         .dsEnter(.screen(duration: 0.5))
@@ -73,8 +79,7 @@ public struct StudioScreen: View {
                 segmentPips
 
                 DSCircleButton("⟲", fontSize: 14, style: .glass) {
-                    model.isLandscape.toggle()
-                    model.teleprompter.setLandscape(model.isLandscape)
+                    model.setLandscape(!model.isLandscape)
                 }
             }
         }

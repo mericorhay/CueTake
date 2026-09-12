@@ -93,6 +93,7 @@ public struct CreateScreen: View {
         .padding(.horizontal, 22)
         .padding(.top, 64)
         .padding(.bottom, 40)
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

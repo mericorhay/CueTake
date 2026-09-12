@@ -120,6 +120,7 @@ public struct RetakeScreen: View {
             .padding(.horizontal, 20)
             .padding(.top, 58)
             .padding(.bottom, 36)
+            .dsScreenLayout(scrolls: true)
         }
         .dsEnter(.screen())
     }

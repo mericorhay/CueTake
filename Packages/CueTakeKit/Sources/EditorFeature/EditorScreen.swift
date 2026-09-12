@@ -47,6 +47,7 @@ public struct EditorScreen: View {
             }
         }
         .padding(.top, 58)
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

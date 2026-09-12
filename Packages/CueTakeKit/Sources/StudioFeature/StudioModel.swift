@@ -26,6 +26,17 @@ public final class StudioModel {
     public let teleprompter = TeleprompterModel()
     public private(set) var project: Project
 
+    /// Keeps the prompter's preset tables in step with the studio's orientation.
+    ///
+    /// The design file has a rotate button because a browser cannot be turned on its side. A phone
+    /// can, so the real signal is the window's shape — the button stays, but rotating the device
+    /// is what normally drives this.
+    public func setLandscape(_ landscape: Bool) {
+        guard landscape != isLandscape else { return }
+        isLandscape = landscape
+        teleprompter.setLandscape(landscape)
+    }
+
     private var task: Task<Void, Never>?
 
     public init(project: Project) {

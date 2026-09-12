@@ -55,7 +55,7 @@ let package = Package(
         uiModule("StudioFeature", ["Domain", "DesignSystem", "Teleprompter", "CaptureEngine", "SpeechEngine"]),
         uiModule("EditorFeature", ["Domain", "DesignSystem", "MediaEngine"]),
         uiModule("WorkflowsFeature", ["Domain", "DesignSystem", "WorkflowEngine"]),
-        uiModule("SettingsFeature", ["Domain", "DesignSystem"]),
+        uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),
         .testTarget(name: "WorkflowEngineTests", dependencies: ["Domain", "WorkflowEngine"], swiftSettings: concurrency),

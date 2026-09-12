@@ -103,6 +103,7 @@ public struct HomeScreen: View {
             .padding(.bottom, 108)
         }
         .scrollIndicators(.hidden)
+        .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

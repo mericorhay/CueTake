@@ -65,6 +65,7 @@ public struct CompleteScreen: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
+            .dsScreenLayout(scrolls: true)
         }
         .dsEnter(.screen(duration: 0.5))
     }

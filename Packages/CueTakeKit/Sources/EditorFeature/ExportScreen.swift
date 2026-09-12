@@ -106,6 +106,7 @@ public struct ExportScreen: View {
         .padding(.top, 60)
         .padding(.bottom, 36)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

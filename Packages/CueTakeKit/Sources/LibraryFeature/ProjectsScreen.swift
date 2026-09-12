@@ -46,6 +46,7 @@ public struct ProjectsScreen: View {
             .padding(.bottom, 108)
         }
         .scrollIndicators(.hidden)
+        .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

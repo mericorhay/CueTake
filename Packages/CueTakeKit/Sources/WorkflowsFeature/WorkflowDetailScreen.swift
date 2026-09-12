@@ -118,6 +118,7 @@ public struct WorkflowDetailScreen: View {
         .padding(.top, 60)
         .padding(.bottom, 34)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

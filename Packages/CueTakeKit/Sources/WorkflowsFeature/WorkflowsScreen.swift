@@ -65,6 +65,7 @@ public struct WorkflowsScreen: View {
             .padding(.bottom, 108)
         }
         .scrollIndicators(.hidden)
+        .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

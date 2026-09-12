@@ -30,6 +30,7 @@ public struct BlueprintScreen: View {
             segmentList
             footer
         }
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

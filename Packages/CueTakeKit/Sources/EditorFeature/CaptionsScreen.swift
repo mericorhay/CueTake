@@ -24,10 +24,18 @@ public struct CaptionsScreen: View {
     @State private var style: Style = .pop
     @State private var position: Position = .bottom
 
-    public init(project: Project, onBack: @escaping () -> Void, onExport: @escaping () -> Void) {
+    /// - Parameter style: the preset from Settings. `.off` has no screen of its own — the user
+    ///   asked for no captions, not for a blank editor — so it opens on Pop like a fresh choice.
+    public init(
+        project: Project,
+        style: CaptionPreference = .pop,
+        onBack: @escaping () -> Void,
+        onExport: @escaping () -> Void
+    ) {
         self.project = project
         self.onBack = onBack
         self.onExport = onExport
+        _style = State(initialValue: Style(style))
     }
 
     /// Every segment's words, chunked four at a time — the design's cue list.
@@ -57,6 +65,7 @@ public struct CaptionsScreen: View {
             }
             .padding(.top, 58)
             .padding(.bottom, 34)
+            .dsScreenLayout(scrolls: true)
         }
         .dsEnter(.screen())
     }
@@ -229,6 +238,14 @@ private struct CaptionsBackdrop: View {
 }
 
 extension CaptionsScreen.Style {
+    init(_ preference: CaptionPreference) {
+        switch preference {
+        case .off, .pop: self = .pop
+        case .clean: self = .clean
+        case .karaoke: self = .karaoke
+        }
+    }
+
     var label: String {
         switch self {
         case .pop: String(localized: "captions.style.pop", bundle: .module)

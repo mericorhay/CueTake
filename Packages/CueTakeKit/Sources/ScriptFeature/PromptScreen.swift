@@ -83,6 +83,7 @@ public struct PromptScreen: View {
         .padding(.top, 64)
         .padding(.bottom, 32)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }

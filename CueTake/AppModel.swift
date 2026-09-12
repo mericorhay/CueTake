@@ -2,6 +2,7 @@ import Domain
 import EditorFeature
 import Observation
 import ScriptFeature
+import SettingsFeature
 import StudioFeature
 import SwiftUI
 import WorkflowsFeature
@@ -50,6 +51,7 @@ final class AppModel {
     let promptModel = PromptModel()
     let exportModel = ExportModel()
     let workflowModel = WorkflowRunModel()
+    let settingsModel: SettingsModel
 
     private(set) var studioModel: StudioModel
     private(set) var editorModel: EditorModel
@@ -62,6 +64,52 @@ final class AppModel {
         self.project = project
         self.studioModel = StudioModel(project: project)
         self.editorModel = EditorModel(project: project)
+
+        let settingsModel = SettingsModel(store: dependencies.settingsStore)
+        self.settingsModel = settingsModel
+        // Skipping the intro for someone who has already seen it is the whole point of recording
+        // that they did.
+        self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
+    }
+
+    // MARK: - Persistence
+
+    private var saveTask: Task<Void, Never>?
+
+    /// Coalesces the writes that a drag or a text edit produces into one.
+    ///
+    /// Driven from the root view's `onChange` rather than a `didSet` on `project`: property
+    /// observers and the `@Observable` macro's generated accessors do not mix, and the view layer
+    /// already knows precisely when the value it is bound to has changed.
+    func scheduleSave() {
+        saveTask?.cancel()
+        let project = project
+        let store = dependencies.projectStore
+        saveTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            try? await store.save(project)
+        }
+    }
+
+    /// Loads the most recently edited project, or writes the seeded one if there is nothing yet.
+    /// Called once, when the root view appears.
+    func restore() async {
+        let store = dependencies.projectStore
+        guard let summary = try? await store.summaries().first,
+              let stored = try? await store.load(summary.id)
+        else {
+            try? await store.save(project)
+            return
+        }
+        project = stored
+        studioModel = StudioModel(project: stored)
+        editorModel = EditorModel(project: stored)
+    }
+
+    func completeOnboarding() {
+        settingsModel.update(\.hasCompletedOnboarding, to: true)
+        go(to: .home)
     }
 
     func go(to screen: Screen) {

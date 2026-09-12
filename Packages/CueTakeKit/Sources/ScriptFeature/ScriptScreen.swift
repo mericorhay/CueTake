@@ -47,6 +47,7 @@ public struct ScriptScreen: View {
             .padding(.top, 8)
             .padding(.bottom, 30)
         }
+        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }
