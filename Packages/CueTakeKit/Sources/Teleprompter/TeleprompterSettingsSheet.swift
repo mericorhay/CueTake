@@ -137,7 +137,7 @@ public struct TeleprompterSettingsSheet: View {
     private var sliderRows: some View {
         switch model.settingsTab {
         case .layout:
-            sliderRow(String(localized: "teleprompter.slider.textSize", bundle: .module), value: $model.textSize, in: 14...34, step: 1) {
+            sliderRow(String(localized: "teleprompter.slider.textSize", bundle: .module), value: $model.textSize, in: TeleprompterModel.textSizeRange, step: 1) {
                 "\(Int(model.textSize))pt"
             }
             sliderRow(String(localized: "teleprompter.slider.width", bundle: .module), value: $model.frame.width, in: 26...96, step: 1, onEdit: {

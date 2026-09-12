@@ -77,7 +77,10 @@ public final class TeleprompterModel {
     public var isDragging = false
     public var isLandscape = false
 
-    /// Text size in points, 14–34 in the design.
+    /// Text size in points. The design shipped a 14–34 slider, but every teleprompter guide puts
+    /// the floor for comfortable reading-to-camera around 36 — the old ceiling was below the point
+    /// where the feature starts working. Pinching the panel drives this directly.
+    public static let textSizeRange: ClosedRange<Double> = 14...64
     public var textSize: Double = 20
     /// Panel opacity, 10–100. The panel fill is `opacity / 145`, as in the design.
     public var opacity: Double = 78
@@ -150,6 +153,17 @@ public final class TeleprompterModel {
         if let target { frame = target }
     }
 
+    /// Clamped so a pinch can be thrown at it without bounds checks at the call site.
+    public func setTextSize(_ value: Double) {
+        textSize = min(max(Self.textSizeRange.lowerBound, value), Self.textSizeRange.upperBound)
+    }
+
+    /// Stops the script following the speaker without touching what is on screen, so the reader
+    /// can hold a line while they ad-lib and pick it up again afterwards.
+    public func togglePause() {
+        isPaused.toggle()
+    }
+
     public func cyclePreset() {
         let order: [Preset] = [.compact, .band, .full, .corner]
         let index = order.firstIndex(of: preset).map { $0 + 1 } ?? 0
@@ -186,6 +200,7 @@ public final class TeleprompterModel {
             switch mode {
             case .karaoke:
                 return WordStyle(
+                    id: index,
                     text: text,
                     color: index <= active ? accent : ink,
                     background: .clear,
@@ -194,6 +209,7 @@ public final class TeleprompterModel {
             case .line:
                 let near = abs(index - active) <= 6
                 return WordStyle(
+                    id: index,
                     text: text,
                     color: ink,
                     background: .clear,
@@ -202,6 +218,7 @@ public final class TeleprompterModel {
             case .word:
                 let isHot = active >= 0 && index > active && index <= active + lookAhead
                 return WordStyle(
+                    id: index,
                     text: text,
                     color: index == active ? inkInverse : ink,
                     background: index == active ? accent : (isHot ? lime.opacity(0.16) : .clear),
@@ -212,7 +229,10 @@ public final class TeleprompterModel {
     }
 
     public struct WordStyle: Identifiable {
-        public let id = UUID()
+        /// The word's index. It used to be a fresh `UUID` per call, which gave every word a new
+        /// identity on every body evaluation: `ForEach` rebuilt the entire script each frame and
+        /// restarted every highlight animation mid-flight.
+        public let id: Int
         public var text: String
         public var color: Color
         public var background: Color

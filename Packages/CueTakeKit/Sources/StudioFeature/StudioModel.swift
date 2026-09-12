@@ -22,6 +22,10 @@ public final class StudioModel {
     public private(set) var segmentIndex = 0
     public private(set) var wordIndex = 0
     public var isLandscape = false
+    /// Rule-of-thirds guides over the preview. Off by default; it is a framing aid, not decoration.
+    public var showsGrid = false
+    /// Seconds left before recording starts, or nil when no countdown is running.
+    public private(set) var countdown: Int?
 
     public let teleprompter = TeleprompterModel()
     public private(set) var project: Project
@@ -71,6 +75,37 @@ public final class StudioModel {
         return min(1, Double(wordIndex) / Double(words))
     }
 
+    /// Three seconds to put the phone on the tripod and find the lens.
+    ///
+    /// Every recording teleprompter ships this, and the reason is not politeness: without it the
+    /// first seconds of every take are the reader reaching back from the shutter, which is exactly
+    /// the footage they then have to trim.
+    public func beginCountdown(from seconds: Int = 3) {
+        guard task == nil, phase == .idle else { return }
+        teleprompter.isSettingsOpen = false
+        countdown = seconds
+        task = Task { [weak self] in
+            while true {
+                try? await Task.sleep(for: .seconds(1))
+                guard let self, !Task.isCancelled, let value = countdown else { return }
+                if value <= 1 {
+                    countdown = nil
+                    task = nil
+                    startRecording()
+                    return
+                }
+                countdown = value - 1
+            }
+        }
+    }
+
+    public func cancelCountdown() {
+        guard countdown != nil else { return }
+        task?.cancel()
+        task = nil
+        countdown = nil
+    }
+
     public func startRecording() {
         guard task == nil else { return }
         phase = .recording
@@ -100,6 +135,7 @@ public final class StudioModel {
     public func stopTimers() {
         task?.cancel()
         task = nil
+        countdown = nil
     }
 
     public func reset() {
@@ -108,6 +144,7 @@ public final class StudioModel {
         phase = .idle
         segmentIndex = 0
         wordIndex = 0
+        countdown = nil
     }
 
     /// Real speech tracking calls this instead of the timer.

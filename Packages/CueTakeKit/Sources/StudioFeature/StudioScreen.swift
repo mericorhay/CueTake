@@ -29,6 +29,11 @@ public struct StudioScreen: View {
             ZStack {
                 CameraBackdrop()
 
+                if model.showsGrid {
+                    FramingGrid()
+                        .transition(.opacity)
+                }
+
                 TeleprompterPanel(
                     model: model.teleprompter,
                     frameSize: proxy.size,
@@ -44,6 +49,10 @@ public struct StudioScreen: View {
 
                 if model.teleprompter.isSettingsOpen {
                     settingsSheet
+                }
+
+                if let countdown = model.countdown {
+                    countdownOverlay(countdown)
                 }
             }
             // The window's shape is the orientation. `onChange` alone misses the case where the
@@ -77,6 +86,10 @@ public struct StudioScreen: View {
                 Spacer(minLength: 0)
 
                 segmentPips
+
+                DSCircleButton("⊞", fontSize: 15, style: .glass) {
+                    withAnimation(DS.Easing.ease(0.25)) { model.showsGrid.toggle() }
+                }
 
                 DSCircleButton("⟲", fontSize: 14, style: .glass) {
                     model.setLandscape(!model.isLandscape)
@@ -202,7 +215,7 @@ public struct StudioScreen: View {
 
     private var shutter: some View {
         Button {
-            model.startRecording()
+            model.beginCountdown()
         } label: {
             ZStack {
                 RecordRing()
@@ -220,6 +233,32 @@ public struct StudioScreen: View {
             }
         }
         .buttonStyle(.dsPressIcon)
+    }
+
+    /// Covers the frame while the count runs. Tapping anywhere cancels, because the moment you
+    /// need that is the moment you have just realised the phone is pointing at the ceiling.
+    private func countdownOverlay(_ value: Int) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(DS.Palette.inkInverse(0.45))
+
+            Text("\(value)")
+                .dsFont(.archivo, .extrabold, 96)
+                .foregroundStyle(DS.Palette.ink)
+                .contentTransition(.numericText(countsDown: true))
+                .shadow(color: .black.opacity(0.5), radius: 30)
+
+            Text("studio.countdown.cancel", bundle: .module)
+                .dsFont(.sans, .medium, 12)
+                .foregroundStyle(DS.Palette.ink(0.6))
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 60)
+        }
+        .ignoresSafeArea()
+        .contentShape(Rectangle())
+        .onTapGesture { model.cancelCountdown() }
+        .animation(DS.Easing.standard(0.3), value: value)
+        .transition(.opacity)
     }
 
     /// Portrait docks the sheet above the controls; landscape pins it beside the right-hand column.
