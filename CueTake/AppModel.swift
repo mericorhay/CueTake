@@ -8,6 +8,7 @@ import Persistence
 import Photos
 import PhotosUI
 import ScriptFeature
+import SpeechEngine
 import SettingsFeature
 import StudioFeature
 import SwiftUI
