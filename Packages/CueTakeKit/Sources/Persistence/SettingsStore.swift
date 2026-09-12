@@ -16,7 +16,11 @@ public protocol SettingsStore: Sendable {
 /// write is never meaningful, and it keeps `AppSettings` free to change shape without leaving
 /// orphaned keys behind. Anything unreadable falls back to the defaults instead of throwing —
 /// a corrupt preference is not worth failing a launch over.
-public struct UserDefaultsSettingsStore: SettingsStore {
+///
+/// `@unchecked` because `UserDefaults` is documented as thread-safe but is not annotated
+/// `Sendable`. A final class with two immutable stored properties adds no mutable state of its own,
+/// so the guarantee rests entirely on the one Foundation already makes.
+public final class UserDefaultsSettingsStore: SettingsStore, @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
 
