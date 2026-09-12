@@ -1,0 +1,34 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "tab.home" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Home" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ana sayfa" } }
+      }
+    },
+    "tab.projects" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Projects" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Projeler" } }
+      }
+    },
+    "tab.settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ayarlar" } }
+      }
+    },
+    "tab.workflows" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Workflows" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Workflow'lar" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

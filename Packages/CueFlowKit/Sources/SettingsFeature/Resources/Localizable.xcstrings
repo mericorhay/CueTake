@@ -1,6 +1,139 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "settings.account" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Hesap" } }
+      }
+    },
+    "settings.account.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deniz" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Deniz" } }
+      }
+    },
+    "settings.ai" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "AI" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "AI" } }
+      }
+    },
+    "settings.ai.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Balanced" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Dengeli" } }
+      }
+    },
+    "settings.camera" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Camera" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Kamera" } }
+      }
+    },
+    "settings.camera.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "4K · 30 fps" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "4K · 30 fps" } }
+      }
+    },
+    "settings.captions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captions" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Altyazılar" } }
+      }
+    },
+    "settings.captions.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pop" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Pop" } }
+      }
+    },
+    "settings.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Dışa aktarma" } }
+      }
+    },
+    "settings.export.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "1080p" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "1080p" } }
+      }
+    },
+    "settings.language" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Dil" } }
+      }
+    },
+    "settings.language.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Türkçe" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Türkçe" } }
+      }
+    },
+    "settings.privacy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Privacy" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Gizlilik" } }
+      }
+    },
+    "settings.privacy.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "On-device" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Cihaz üzerinde" } }
+      }
+    },
+    "settings.profile.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deniz Aksoy" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Deniz Aksoy" } }
+      }
+    },
+    "settings.profile.plan" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow Pro · renews Oct 4" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow Pro · 4 Eki yenilenir" } }
+      }
+    },
+    "settings.subscription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Subscription" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Abonelik" } }
+      }
+    },
+    "settings.subscription.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pro" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Pro" } }
+      }
+    },
+    "settings.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ayarlar" } }
+      }
+    }
   },
   "version" : "1.0"
 }

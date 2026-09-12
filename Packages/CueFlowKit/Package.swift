@@ -14,7 +14,7 @@ let modules: [String] = [
     "Domain",
     "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine",
     "DesignSystem", "Teleprompter",
-    "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature",
+    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature",
 ]
 
 func engine(_ name: String, _ dependencies: [Target.Dependency] = ["Domain"]) -> Target {
@@ -49,6 +49,7 @@ let package = Package(
         uiModule("Teleprompter", ["Domain", "DesignSystem"]),
 
         // Features never import each other; the app target routes between them.
+        uiModule("OnboardingFeature", ["DesignSystem"]),
         uiModule("LibraryFeature", ["Domain", "DesignSystem", "Persistence"]),
         uiModule("ScriptFeature", ["Domain", "DesignSystem", "AIServices"]),
         uiModule("StudioFeature", ["Domain", "DesignSystem", "Teleprompter", "CaptureEngine", "SpeechEngine"]),
