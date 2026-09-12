@@ -11,7 +11,7 @@ build/
 # Swift Package Manager
 .build/
 .swiftpm/
-Packages/CueFlowKit/Package.resolved
+Packages/CueTakeKit/Package.resolved
 
 # Secrets
 *.p12

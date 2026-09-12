@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Values extracted verbatim from the CueFlow design file (CueFlow.dc.html).
+// Values extracted verbatim from the CueTake design file (CueTake.dc.html).
 // Do not "improve" these numbers: the design is the source of truth.
 
 extension Color {

@@ -15,7 +15,7 @@ public enum AICapability: String, Hashable, Sendable, Codable, CaseIterable {
 public enum AIExecutionLocation: String, Hashable, Sendable {
     /// Apple Foundation Models. Private, free, offline; limited by device and language.
     case onDevice
-    /// CueFlow's own backend. API keys live there, never in the app.
+    /// CueTake's own backend. API keys live there, never in the app.
     case remote
 }
 

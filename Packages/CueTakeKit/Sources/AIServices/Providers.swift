@@ -12,9 +12,9 @@ public struct FoundationModelsProvider: AIProvider {
     }
 }
 
-/// CueFlow backend. The app talks only to our server, which holds third-party model keys.
+/// CueTake backend. The app talks only to our server, which holds third-party model keys.
 public struct RemoteAIProvider: AIProvider {
-    public let descriptor = AIProviderDescriptor(id: "cueflow.remote", location: .remote)
+    public let descriptor = AIProviderDescriptor(id: "cuetake.remote", location: .remote)
     public let baseURL: URL?
 
     public init(baseURL: URL? = nil) {

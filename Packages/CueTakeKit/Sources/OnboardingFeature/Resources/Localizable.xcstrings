@@ -4,8 +4,8 @@
     "onboarding.1.subtitle" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow turns one sentence into a shootable blueprint — hook, intro, point, CTA." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow tek cümleyi çekilebilir bir taslağa çevirir — hook, giriş, ana fikir, CTA." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake turns one sentence into a shootable blueprint — hook, intro, point, CTA." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake tek cümleyi çekilebilir bir taslağa çevirir — hook, giriş, ana fikir, CTA." } }
       }
     },
     "onboarding.1.title" : {

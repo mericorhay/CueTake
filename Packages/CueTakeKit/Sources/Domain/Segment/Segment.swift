@@ -1,6 +1,6 @@
 import Foundation
 
-/// The central unit of CueFlow. One beat of the video: "Hook", "Intro", "CTA"...
+/// The central unit of CueTake. One beat of the video: "Hook", "Intro", "CTA"...
 ///
 /// A segment stores only what is intrinsic to it. Its position in the final video
 /// (start / end on the timeline) is *derived* by `TimelineBuilder`, never stored,

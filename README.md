@@ -1,4 +1,4 @@
-# CueFlow
+# CueTake
 
 AI Creator Camera for iOS. AI ile script oluştur → segmentlere böl → konuşurken seni takip eden teleprompter ile çek → timeline'da segmentleri düzenle → otomatik altyazı → sadece kötü segmenti tekrar çek → Reels / Shorts / TikTok olarak dışa aktar.
 
@@ -13,7 +13,7 @@ AI Creator Camera for iOS. AI ile script oluştur → segmentlere böl → konu�
 | UI | SwiftUI + Observation (`@Observable`), Liquid Glass |
 | Kamera | AVFoundation (AVCaptureSession + AVAssetWriter) |
 | Konuşma | Speech: SpeechAnalyzer + SpeechTranscriber, gerekirse SFSpeechRecognizer'a düşüş |
-| AI | Foundation Models (cihaz üzerinde) + CueFlow backend (uzak) |
+| AI | Foundation Models (cihaz üzerinde) + CueTake backend (uzak) |
 | Düzenleme / export | AVComposition, AVVideoComposition, PhotoKit |
 | Kalıcılık | Proje klasörü (versiyonlu JSON + medya) + SwiftData yalnızca index için |
 | Lokalizasyon | String Catalogs (`.xcstrings`), İngilizce + Türkçe |
@@ -23,12 +23,12 @@ AI Creator Camera for iOS. AI ile script oluştur → segmentlere böl → konu�
 ## Yapı
 
 ```
-CueFlow/
-├── CueFlow/                      App target (ince): giriş noktası, composition root, routing
-│   ├── CueFlowApp.swift
+CueTake/
+├── CueTake/                      App target (ince): giriş noktası, composition root, routing
+│   ├── CueTakeApp.swift
 │   ├── AppDependencies.swift     Somut implementasyonları bilen tek yer
 │   └── Resources/InfoPlist.xcstrings   İzin metinleri (TR + EN)
-├── Packages/CueFlowKit/          Tek local Swift Package, çok modül
+├── Packages/CueTakeKit/          Tek local Swift Package, çok modül
 │   ├── Package.swift
 │   ├── Sources/
 │   │   ├── Domain/               Saf modeller + saf mantık (sadece Foundation)
@@ -185,10 +185,10 @@ SwiftData **ana domain modeli değildir**, sadece listeleme index'i olarak kulla
 
 Bu iskelet Windows'ta oluşturuldu. Package CI'da derleniyor, ama `.xcodeproj` Mac'te bir kez oluşturulmalı:
 
-1. Xcode 26 veya üstünde **File ▸ New ▸ Project ▸ iOS App** seç: ad `CueFlow`, arayüz SwiftUI, testler Swift Testing. Geçici bir klasöre kaydet.
-2. `CueFlow.xcodeproj` dosyasını bu reponun köküne taşı. Xcode'un oluşturduğu kaynak klasörünü sil.
-3. Projede eski grubu kaldır. Repodaki `CueFlow/` klasörünü **folder (buildable)** olarak app target'a ekle.
-4. **File ▸ Add Package Dependencies ▸ Add Local…** ile `Packages/CueFlowKit` paketini ekle ve `CueFlowKit` ürününü app target'a bağla.
+1. Xcode 26 veya üstünde **File ▸ New ▸ Project ▸ iOS App** seç: ad `CueTake`, arayüz SwiftUI, testler Swift Testing. Geçici bir klasöre kaydet.
+2. `CueTake.xcodeproj` dosyasını bu reponun köküne taşı. Xcode'un oluşturduğu kaynak klasörünü sil.
+3. Projede eski grubu kaldır. Repodaki `CueTake/` klasörünü **folder (buildable)** olarak app target'a ekle.
+4. **File ▸ Add Package Dependencies ▸ Add Local…** ile `Packages/CueTakeKit` paketini ekle ve `CueTakeKit` ürününü app target'a bağla.
 5. Build Settings:
    - iOS Deployment Target `26.0`
    - Swift Language Version `6`
@@ -204,7 +204,7 @@ Bu iskelet Windows'ta oluşturuldu. Package CI'da derleniyor, ama `.xcodeproj` M
 
 ## Tasarımın uygulanması
 
-Kaynak: Claude Design dosyası `CueFlow.dc.html` (17 ekranlık interaktif prototip). Renkler, boşluklar, köşe yarıçapları, tipografi ölçeği, gölgeler, animasyon eğrileri ve gecikmeler dosyadan birebir alındı.
+Kaynak: Claude Design dosyası `CueFlow.dc.html`, 17 ekranlık interaktif prototip (dosya adı tasarımdaki hâliyle bırakıldı). Renkler, boşluklar, köşe yarıçapları, tipografi ölçeği, gölgeler, animasyon eğrileri ve gecikmeler dosyadan birebir alındı.
 
 | Tasarım ekranı | Modül |
 |---|---|

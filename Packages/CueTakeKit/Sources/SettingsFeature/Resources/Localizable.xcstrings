@@ -109,8 +109,8 @@
     "settings.profile.plan" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow Pro · renews Oct 4" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueFlow Pro · 4 Eki yenilenir" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake Pro · renews Oct 4" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake Pro · 4 Eki yenilenir" } }
       }
     },
     "settings.subscription" : {

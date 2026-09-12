@@ -26,11 +26,11 @@ func uiModule(_ name: String, _ dependencies: [Target.Dependency]) -> Target {
 }
 
 let package = Package(
-    name: "CueFlowKit",
+    name: "CueTakeKit",
     defaultLocalization: "en",
     platforms: [.iOS(.v26)],
     products: [
-        .library(name: "CueFlowKit", targets: modules),
+        .library(name: "CueTakeKit", targets: modules),
     ],
     targets: [
         // Pure models and pure logic. Foundation only.

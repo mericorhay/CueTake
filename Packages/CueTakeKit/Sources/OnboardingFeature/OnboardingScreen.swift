@@ -108,7 +108,7 @@ public struct OnboardingScreen: View {
                 .fill(DS.Palette.accent)
                 .frame(width: 11, height: 11)
 
-            Text("CUEFLOW")
+            Text("CUETAKE")
                 .dsFont(.sans, .semibold, 13, letterSpacing: 0.22)
                 .foregroundStyle(DS.Palette.ink)
         }
