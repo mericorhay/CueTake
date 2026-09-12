@@ -1,6 +1,220 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "captions.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Aktar" } }
+      }
+    },
+    "captions.kicker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CAPTIONS" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ALTYAZILAR" } }
+      }
+    },
+    "captions.style" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "STYLE" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "STİL" } }
+      }
+    },
+    "editor.captions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captions" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Altyazılar" } }
+      }
+    },
+    "editor.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Bitti" } }
+      }
+    },
+    "editor.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Aktar" } }
+      }
+    },
+    "editor.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tap a segment to inspect it" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "İncelemek için bir segmente dokun" } }
+      }
+    },
+    "editor.info.caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "STYLE POP · BOTTOM" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "STİL POP · ALT" } }
+      }
+    },
+    "editor.info.pace %lld" : {
+      "comment" : "The argument is words per minute.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "PACE %lld WPM" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "TEMPO %lld KDK" } }
+      }
+    },
+    "editor.info.recorded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "RECORDED TODAY" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "BUGÜN ÇEKİLDİ" } }
+      }
+    },
+    "editor.info.style" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cut: hard · Zoom: none · Grade: neutral warm" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Kesme: sert · Zoom: yok · Renk: nötr sıcak" } }
+      }
+    },
+    "editor.info.styleSub" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "INHERITS PROJECT LOOK" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "PROJE GÖRÜNÜMÜNÜ ALIR" } }
+      }
+    },
+    "editor.info.takeSelected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Take 1 selected" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Çekim 1 seçili" } }
+      }
+    },
+    "editor.info.words %lld %lld" : {
+      "comment" : "Arguments: word count, then duration in seconds.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld WORDS · %2$lldS" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld KELİME · %2$lld SN" } }
+      }
+    },
+    "editor.retakeSegment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retake segment" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Segmenti tekrar çek" } }
+      }
+    },
+    "editor.take %lld" : {
+      "comment" : "Take number badge on a timeline clip.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TAKE %lld" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ÇEKİM %lld" } }
+      }
+    },
+    "editor.timeline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TIMELINE" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ZAMAN ÇİZELGESİ" } }
+      }
+    },
+    "export.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Bitti" } }
+      }
+    },
+    "export.kicker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "EXPORT" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "DIŞA AKTAR" } }
+      }
+    },
+    "export.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready to post." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Paylaşmaya hazır." } }
+      }
+    },
+    "export.render" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Render video" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Videoyu render et" } }
+      }
+    },
+    "export.stage.captions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captions" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Altyazılar" } }
+      }
+    },
+    "export.stage.captions.note %@" : {
+      "comment" : "The argument is the caption style name, lowercased.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "burned, %@ style" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "gömülü, %@ stili" } }
+      }
+    },
+    "export.stage.final" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Final" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Final" } }
+      }
+    },
+    "export.stage.final.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "H.264 · 28 MB" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "H.264 · 28 MB" } }
+      }
+    },
+    "export.stage.render" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Render" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Render" } }
+      }
+    },
+    "export.stage.render.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "1080×1920 · 30 fps" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "1080×1920 · 30 fps" } }
+      }
+    },
+    "export.stage.timeline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Timeline" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Zaman çizelgesi" } }
+      }
+    },
+    "export.stage.timeline.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "4 segments locked" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "4 segment kilitlendi" } }
+      }
+    },
+    "export.summary" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "1080×1920 · H.264 · 28 MB · burned captions" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "1080×1920 · H.264 · 28 MB · gömülü altyazı" } }
+      }
+    }
   },
   "version" : "1.0"
 }
