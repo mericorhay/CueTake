@@ -20,7 +20,7 @@ public final class PromptModel {
     public var progress: Double { Double(step) * 0.25 }
 
     /// The design advances a step every 850ms, then opens the blueprint.
-    public func generate(onFinish: @escaping () -> Void) {
+    public func generate(onFinish: @escaping @MainActor () -> Void) {
         guard task == nil else { return }
         step = 1
         task = Task { [weak self] in
@@ -38,7 +38,14 @@ public final class PromptModel {
         }
     }
 
-    public func cancel() {
+    /// Cancels the running timer without touching what is already on screen, the way the design
+    /// clears its intervals on every navigation.
+    public func stopTimers() {
+        task?.cancel()
+        task = nil
+    }
+
+    public func cancel()() {
         task?.cancel()
         task = nil
         step = 0

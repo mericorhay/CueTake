@@ -172,15 +172,15 @@ public struct CaptionsScreen: View {
                 .padding(.bottom, 8)
 
             HStack(spacing: 7) {
-                ForEach(Style.allCases, id: \.self) { option in
-                    DSPill(option.rawValue, isOn: style == option) { style = option }
+                ForEach(Style.allCases, id: .self) { option in
+                    DSPill(option.label, isOn: style == option) { style = option }
                 }
             }
             .padding(.bottom, 14)
 
             HStack(spacing: 7) {
-                ForEach(Position.allCases, id: \.self) { option in
-                    DSPill(option.rawValue, isOn: position == option) { position = option }
+                ForEach(Position.allCases, id: .self) { option in
+                    DSPill(option.label, isOn: position == option) { position = option }
                 }
             }
         }
@@ -225,5 +225,25 @@ private struct CaptionsBackdrop: View {
                 )
             }
             .ignoresSafeArea()
+    }
+}
+
+extension CaptionsScreen.Style {
+    var label: String {
+        switch self {
+        case .pop: String(localized: "captions.style.pop", bundle: .module)
+        case .clean: String(localized: "captions.style.clean", bundle: .module)
+        case .karaoke: String(localized: "captions.style.karaoke", bundle: .module)
+        }
+    }
+}
+
+extension CaptionsScreen.Position {
+    var label: String {
+        switch self {
+        case .top: String(localized: "captions.position.top", bundle: .module)
+        case .middle: String(localized: "captions.position.middle", bundle: .module)
+        case .bottom: String(localized: "captions.position.bottom", bundle: .module)
+        }
     }
 }

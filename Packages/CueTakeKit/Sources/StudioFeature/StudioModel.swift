@@ -84,7 +84,14 @@ public final class StudioModel {
         phase = .complete
     }
 
-    public func reset() {
+    /// Cancels the running timer without touching what is already on screen, the way the design
+    /// clears its intervals on every navigation.
+    public func stopTimers() {
+        task?.cancel()
+        task = nil
+    }
+
+    public func reset()() {
         task?.cancel()
         task = nil
         phase = .idle

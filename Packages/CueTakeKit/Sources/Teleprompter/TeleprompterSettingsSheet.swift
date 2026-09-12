@@ -18,7 +18,7 @@ public struct TeleprompterSettingsSheet: View {
             sliderRows
             segmentedRows
 
-            Text("Drag the prompter to move it, pull the corner to resize. Presets snap instantly.")
+            Text("teleprompter.hint", bundle: .module)
                 .dsFont(.sans, .regular, 10)
                 .foregroundStyle(DS.Palette.ink(0.3))
                 .padding(.top, 8)
@@ -43,7 +43,7 @@ public struct TeleprompterSettingsSheet: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            DSKicker("TELEPROMPTER", size: 9, color: DS.Palette.ink(0.45))
+            DSKicker(String(localized: "teleprompter.title", bundle: .module), size: 9, color: DS.Palette.ink(0.45))
             Spacer(minLength: 0)
             Button {
                 model.isSettingsOpen = false
@@ -87,7 +87,7 @@ public struct TeleprompterSettingsSheet: View {
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
-                Text(preset.rawValue)
+                Text(preset.label)
                     .dsFont(.sans, .medium, 10)
             }
             .foregroundStyle(isOn ? DS.Palette.accent : DS.Palette.ink(0.6))
@@ -114,7 +114,7 @@ public struct TeleprompterSettingsSheet: View {
                 Button {
                     model.settingsTab = tab
                 } label: {
-                    Text(tab.rawValue)
+                    Text(tab.label)
                         .dsFont(.sans, .medium, 12)
                         .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.6))
                         .padding(.horizontal, 13)
@@ -135,29 +135,29 @@ public struct TeleprompterSettingsSheet: View {
     private var sliderRows: some View {
         switch model.settingsTab {
         case .layout:
-            sliderRow("Text size", value: $model.textSize, in: 14...34, step: 1) {
+            sliderRow(String(localized: "teleprompter.slider.textSize", bundle: .module), value: $model.textSize, in: 14...34, step: 1) {
                 "\(Int(model.textSize))pt"
             }
-            sliderRow("Width", value: $model.frame.width, in: 26...96, step: 1, onEdit: {
+            sliderRow(String(localized: "teleprompter.slider.width", bundle: .module), value: $model.frame.width, in: 26...96, step: 1, onEdit: {
                 model.preset = .custom
                 model.frame.x = min(model.frame.x, 98 - model.frame.width)
             }) {
                 "\(Int(model.frame.width.rounded()))%"
             }
-            sliderRow("Height", value: $model.frame.height, in: 12...80, step: 1, onEdit: {
+            sliderRow(String(localized: "teleprompter.slider.height", bundle: .module), value: $model.frame.height, in: 12...80, step: 1, onEdit: {
                 model.preset = .custom
                 model.frame.y = min(model.frame.y, 93 - model.frame.height)
             }) {
                 "\(Int(model.frame.height.rounded()))%"
             }
-            sliderRow("Opacity", value: $model.opacity, in: 10...100, step: 1) {
+            sliderRow(String(localized: "teleprompter.slider.opacity", bundle: .module), value: $model.opacity, in: 10...100, step: 1) {
                 "\(Int(model.opacity))%"
             }
         case .flow:
-            sliderRow("Speed", value: $model.speed, in: 0...100, step: 1) {
+            sliderRow(String(localized: "teleprompter.slider.speed", bundle: .module), value: $model.speed, in: 0...100, step: 1) {
                 model.speedLabel
             }
-            sliderRow("Look-ahead", value: lookAheadBinding, in: 0...4, step: 1) {
+            sliderRow(String(localized: "teleprompter.slider.lookAhead", bundle: .module), value: lookAheadBinding, in: 0...4, step: 1) {
                 "\(model.lookAhead)w"
             }
         }
@@ -208,30 +208,38 @@ public struct TeleprompterSettingsSheet: View {
     private var segmentedRows: some View {
         switch model.settingsTab {
         case .layout:
-            segmentedRow("Align", options: TeleprompterModel.Alignment.allCases.map(\.rawValue)) { label in
-                model.alignment.rawValue == label
-            } select: { label in
-                model.alignment = TeleprompterModel.Alignment(rawValue: label) ?? .left
-            }
-            segmentedRow("Mirror", options: ["Off", "On"]) { label in
-                model.isMirrored == (label == "On")
-            } select: { label in
-                model.isMirrored = label == "On"
-            }
+            segmentedRow(
+                String(localized: "teleprompter.row.align", bundle: .module),
+                options: TeleprompterModel.Alignment.allCases,
+                label: { $0.label },
+                isOn: { model.alignment == $0 },
+                select: { model.alignment = $0 }
+            )
+            segmentedRow(
+                String(localized: "teleprompter.row.mirror", bundle: .module),
+                options: [false, true],
+                label: { $0 ? String(localized: "teleprompter.mirror.on", bundle: .module) : String(localized: "teleprompter.mirror.off", bundle: .module) },
+                isOn: { model.isMirrored == $0 },
+                select: { model.isMirrored = $0 }
+            )
         case .flow:
-            segmentedRow("Highlight", options: TeleprompterModel.HighlightMode.allCases.map(\.rawValue)) { label in
-                model.mode.rawValue == label
-            } select: { label in
-                model.mode = TeleprompterModel.HighlightMode(rawValue: label) ?? .word
-            }
+            segmentedRow(
+                String(localized: "teleprompter.row.highlight", bundle: .module),
+                options: TeleprompterModel.HighlightMode.allCases,
+                label: { $0.label },
+                isOn: { model.mode == $0 },
+                select: { model.mode = $0 }
+            )
         }
     }
 
-    private func segmentedRow(
+    /// Options stay typed; only their labels come from the catalog.
+    private func segmentedRow<Option: Hashable>(
         _ label: String,
-        options: [String],
-        isOn: @escaping (String) -> Bool,
-        select: @escaping (String) -> Void
+        options: [Option],
+        label optionLabel: @escaping (Option) -> String,
+        isOn: @escaping (Option) -> Bool,
+        select: @escaping (Option) -> Void
     ) -> some View {
         HStack(spacing: 12) {
             Text(label)
@@ -242,7 +250,7 @@ public struct TeleprompterSettingsSheet: View {
             HStack(spacing: 5) {
                 ForEach(options, id: \.self) { option in
                     DSPill(
-                        option,
+                        optionLabel(option),
                         isOn: isOn(option),
                         fontSize: 11,
                         radius: 10,

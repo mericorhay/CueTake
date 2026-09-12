@@ -78,7 +78,7 @@ public struct TeleprompterPanel: View {
             Button {
                 model.cyclePreset()
             } label: {
-                Text(model.preset.rawValue.uppercased())
+                Text(model.preset.uppercasedLabel(locale: .current))
                     .dsFont(.mono, .medium, 9, letterSpacing: 0.08)
                     .foregroundStyle(DS.Palette.ink)
                     .padding(.horizontal, 8)

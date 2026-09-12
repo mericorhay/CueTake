@@ -6,7 +6,7 @@ import UIKit
 // so no Info.plist entry is needed and the module stays self-contained.
 //
 // CSS in the design is written as `font: <weight> <size>px/<line-height> '<family>'`.
-// `DS.font(...)` mirrors that shorthand one to one.
+// `DS.archivo(...)`, `DS.sans(...)` and `DS.mono(...)` mirror that shorthand one to one.
 
 extension DS {
     public enum FontFamily: String {
@@ -165,19 +165,16 @@ public struct DSHeadline: View {
         }
     }
 
+    // HorizontalAlignment is a struct, so these compare rather than switch.
     private var textAlignment: TextAlignment {
-        switch alignment {
-        case .center: .center
-        case .trailing: .trailing
-        default: .leading
-        }
+        if alignment == .center { return .center }
+        if alignment == .trailing { return .trailing }
+        return .leading
     }
 
     private var frameAlignment: Alignment {
-        switch alignment {
-        case .center: .center
-        case .trailing: .trailing
-        default: .leading
-        }
+        if alignment == .center { return .center }
+        if alignment == .trailing { return .trailing }
+        return .leading
     }
 }

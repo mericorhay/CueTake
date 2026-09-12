@@ -296,7 +296,7 @@ public struct EditorScreen: View {
                     Button {
                         model.inspectorTab = tab
                     } label: {
-                        Text(tab.rawValue)
+                        Text(tab.label)
                             .dsFont(.sans, .medium, 12)
                             .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.6))
                             .padding(.horizontal, 11)
@@ -445,5 +445,17 @@ extension Segment {
 
     var wordsPerMinute: Int {
         Int((Double(wordCount) / max(1, barWeight) * 60).rounded())
+    }
+}
+
+extension EditorModel.InspectorTab {
+    var label: String {
+        switch self {
+        case .script: String(localized: "editor.tab.script", bundle: .module)
+        case .caption: String(localized: "editor.tab.caption", bundle: .module)
+        case .timing: String(localized: "editor.tab.timing", bundle: .module)
+        case .take: String(localized: "editor.tab.take", bundle: .module)
+        case .style: String(localized: "editor.tab.style", bundle: .module)
+        }
     }
 }

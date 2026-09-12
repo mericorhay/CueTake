@@ -38,7 +38,7 @@ struct RootView: View {
         case .home:
             HomeScreen(
                 onCreate: { model.go(to: .create) },
-                onOpenProject: { _ in model.go(to: .editor) },
+                onOpenProject: { _ in model.openEditor() },
                 onOpenAllProjects: { model.go(to: .projects) },
                 onOpenWorkflow: { model.go(to: .workflowDetail) }
             )
@@ -49,7 +49,7 @@ struct RootView: View {
                 case .prompt: model.go(to: .prompt)
                 case .script: model.go(to: .script)
                 case .workflow: model.go(to: .workflowDetail)
-                case .studio: model.go(to: .studio)
+                case .studio: model.openStudio()
                 }
             }
 
@@ -65,29 +65,29 @@ struct RootView: View {
                 project: $model.project,
                 onBack: { model.go(to: .prompt) },
                 onOpenScript: { model.go(to: .script) },
-                onOpenStudio: { model.go(to: .studio) }
+                onOpenStudio: { model.openStudio() }
             )
 
         case .script:
             ScriptScreen(
                 project: $model.project,
                 onBack: { model.go(to: .blueprint) },
-                onOpenStudio: { model.go(to: .studio) }
+                onOpenStudio: { model.openStudio() }
             )
 
         case .studio:
             StudioScreen(
                 model: model.studioModel,
                 onBack: { model.go(to: .blueprint) },
-                onOpenEditor: { model.go(to: .editor) },
+                onOpenEditor: { model.openEditor() },
                 onFinished: { model.go(to: .complete) }
             )
 
         case .complete:
             CompleteScreen(
                 project: model.project,
-                onRetake: { model.startRetakeOfFirstSegment() },
-                onEdit: { model.go(to: .editor) },
+                onRetake: { model.startRetakeFromComplete() },
+                onEdit: { model.openEditor() },
                 onDone: { model.go(to: .export) }
             )
 
@@ -104,7 +104,7 @@ struct RootView: View {
             if let retakeModel = model.retakeModel {
                 RetakeScreen(
                     model: retakeModel,
-                    onBack: { model.go(to: .editor) },
+                    onBack: { model.openEditor() },
                     onKeep: { _ in model.keepRetake() }
                 )
             }
@@ -112,19 +112,19 @@ struct RootView: View {
         case .captions:
             CaptionsScreen(
                 project: model.project,
-                onBack: { model.go(to: .editor) },
+                onBack: { model.openEditor() },
                 onExport: { model.go(to: .export) }
             )
 
         case .export:
             ExportScreen(
                 model: model.exportModel,
-                onBack: { model.go(to: .editor) },
+                onBack: { model.openEditor() },
                 onDone: { model.finishExport() }
             )
 
         case .projects:
-            ProjectsScreen { _ in model.go(to: .editor) }
+            ProjectsScreen { _ in model.openEditor() }
 
         case .workflows:
             WorkflowsScreen { _ in model.go(to: .workflowDetail) }
@@ -133,7 +133,7 @@ struct RootView: View {
             WorkflowDetailScreen(
                 model: model.workflowModel,
                 onBack: { model.go(to: .workflows) },
-                onOpenResult: { model.go(to: .editor) }
+                onOpenResult: { model.openEditor() }
             )
 
         case .settings:

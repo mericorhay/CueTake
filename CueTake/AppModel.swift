@@ -36,11 +36,14 @@ enum Screen: Hashable {
 
 /// Holds the project being worked on and the per-screen models, so state survives navigation
 /// the way it does in the design (the prompter keeps its layout, the editor keeps its playhead).
+///
+/// Models are built when navigation happens, never while a view is drawing: reading a property
+/// that writes state from inside `body` makes SwiftUI re-run the body that caused the write.
 @MainActor
 @Observable
 final class AppModel {
     var screen: Screen = .onboarding
-    var project: Project = .sample
+    var project: Project
 
     private(set) var dependencies = AppDependencies.live
 
@@ -48,49 +51,67 @@ final class AppModel {
     let exportModel = ExportModel()
     let workflowModel = WorkflowRunModel()
 
-    private var studioModelStorage: StudioModel?
-    private var editorModelStorage: EditorModel?
+    private(set) var studioModel: StudioModel
+    private(set) var editorModel: EditorModel
     private(set) var retakeModel: RetakeModel?
 
-    /// Recreated whenever the script changes, so the prompter always shows the current segments.
-    var studioModel: StudioModel {
-        if let studioModelStorage, studioModelStorage.project.segments == project.segments {
-            return studioModelStorage
-        }
-        let model = StudioModel(project: project)
-        studioModelStorage = model
-        return model
-    }
-
-    var editorModel: EditorModel {
-        if let editorModelStorage {
-            editorModelStorage.project = project
-            return editorModelStorage
-        }
-        let model = EditorModel(project: project)
-        editorModelStorage = model
-        return model
+    init() {
+        // `Project.sample` mints fresh identifiers on every call, so the models have to be seeded
+        // from this one instance or their segment IDs would not match the project's.
+        let project = Project.sample
+        self.project = project
+        self.studioModel = StudioModel(project: project)
+        self.editorModel = EditorModel(project: project)
     }
 
     func go(to screen: Screen) {
-        withAnimation(nil) { self.screen = screen }
+        stopTimers()
+        self.screen = screen
+    }
+
+    /// The design clears every interval on navigation, so nothing keeps ticking behind a screen
+    /// you have left: playback, the generation run, the export and the workflow all stop.
+    private func stopTimers() {
+        studioModel.stopTimers()
+        editorModel.pause()
+        promptModel.stopTimers()
+        exportModel.stopTimers()
+        workflowModel.stopTimers()
+        retakeModel?.stopTimers()
+    }
+
+    /// Rebuilds the studio only when the script actually changed, so the prompter keeps its
+    /// layout, size and mode between visits.
+    func openStudio() {
+        if studioModel.project.segments != project.segments {
+            studioModel = StudioModel(project: project)
+        }
+        go(to: .studio)
+    }
+
+    /// The editor keeps its playhead and inspector; it only needs the current project.
+    func openEditor() {
+        editorModel.project = project
+        go(to: .editor)
     }
 
     func startRetake(of segmentID: Segment.ID) {
-        guard let segment = project.segment(id: segmentID) ?? project.segments.first else { return }
+        guard let segment = project.segment(id: segmentID) else { return }
         retakeModel = RetakeModel(segment: segment)
         go(to: .retake)
     }
 
-    func startRetakeOfFirstSegment() {
-        guard let first = project.segments.first else { return }
-        startRetake(of: first.id)
+    /// Complete offers a retake without naming a segment; the design lands on the main point.
+    func startRetakeFromComplete() {
+        let segment = project.segments.count > 2 ? project.segments[2] : project.segments.first
+        guard let segment else { return }
+        startRetake(of: segment.id)
     }
 
     /// Keeping a take is the only thing a retake changes; the rest of the cut is untouched.
     func keepRetake() {
         retakeModel = nil
-        go(to: .editor)
+        openEditor()
     }
 
     func finishExport() {

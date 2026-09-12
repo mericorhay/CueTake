@@ -56,7 +56,14 @@ public final class RetakeModel {
         finish()
     }
 
-    public func redo() {
+    /// Cancels the running timer without touching what is already on screen, the way the design
+    /// clears its intervals on every navigation.
+    public func stopTimers() {
+        task?.cancel()
+        task = nil
+    }
+
+    public func redo()() {
         task?.cancel()
         task = nil
         state = .ready
