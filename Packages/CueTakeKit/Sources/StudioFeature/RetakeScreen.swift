@@ -169,7 +169,7 @@ public struct RetakeScreen: View {
                         .shadow(color: DS.Palette.accent(0.6), radius: 15)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .dsEnter(.rise(duration: 0.4))
     }
@@ -210,7 +210,7 @@ public struct RetakeScreen: View {
                         .dsPulse(duration: 1.6)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .dsEnter(.rise(duration: 0.4))
     }
@@ -290,6 +290,6 @@ public struct RetakeScreen: View {
                 border: isOn ? DS.Palette.accent : DS.Palette.hairline(0.12)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPress)
     }
 }

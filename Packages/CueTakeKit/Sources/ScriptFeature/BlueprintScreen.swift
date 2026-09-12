@@ -160,7 +160,7 @@ public struct BlueprintScreen: View {
                         .stroke(DS.Palette.inkInverse(0.2), lineWidth: 1)
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPress)
     }
 
     private var connector: some View {

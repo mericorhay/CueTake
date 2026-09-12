@@ -154,7 +154,7 @@ public struct ScriptScreen: View {
                         .stroke(DS.Palette.lime(0.28), lineWidth: 1)
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPress)
     }
 }
 

@@ -1,378 +1,898 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "blueprint.action.delete" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Sil" } }
+  "sourceLanguage": "en",
+  "strings": {
+    "blueprint.action.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
       }
     },
-    "blueprint.action.duplicate" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Duplicate" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Çoğalt" } }
+    "blueprint.action.duplicate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çoğalt"
+          }
+        }
       }
     },
-    "blueprint.action.moveDown" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "↓ Move" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "↓ Taşı" } }
+    "blueprint.action.moveDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↓ Move"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↓ Taşı"
+          }
+        }
       }
     },
-    "blueprint.action.moveUp" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "↑ Move" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "↑ Taşı" } }
+    "blueprint.action.moveUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↑ Move"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↑ Taşı"
+          }
+        }
       }
     },
-    "blueprint.action.regenerate" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Regenerate" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Yeniden üret" } }
+    "blueprint.action.regenerate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenerate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden üret"
+          }
+        }
       }
     },
-    "blueprint.kicker %@" : {
-      "comment" : "Header stamp; the argument is the total duration, e.g. 0:30.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "BLUEPRINT · %@" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "TASLAK · %@" } }
+    "blueprint.kicker %@": {
+      "comment": "Header stamp; the argument is the total duration, e.g. 0:30.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BLUEPRINT · %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TASLAK · %@"
+          }
+        }
       }
     },
-    "blueprint.script" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Script" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Script" } }
+    "blueprint.script": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metin"
+          }
+        }
       }
     },
-    "blueprint.studio" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Go to Studio" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Stüdyoya geç" } }
+    "blueprint.studio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Studio"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyoya geç"
+          }
+        }
       }
     },
-    "blueprint.title" : {
-      "comment" : "Project title on the blueprint; the line break is part of the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 17 Pro Max\nCamera" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 17 Pro Max\nKamera" } }
+    "blueprint.title": {
+      "comment": "Project title on the blueprint; the line break is part of the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max\nCamera"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max\nKamera"
+          }
+        }
       }
     },
-    "create.idea.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "AI writes the blueprint" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Taslağı AI yazsın" } }
+    "create.idea.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI writes the blueprint"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taslağı AI yazsın"
+          }
+        }
       }
     },
-    "create.idea.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start from Idea" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Fikirle başla" } }
+    "create.idea.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start from Idea"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fikirle başla"
+          }
+        }
       }
     },
-    "create.record.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Straight to camera, no script" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Doğrudan kamera, script yok" } }
+    "create.record.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Straight to camera, no script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doğrudan kamera, metin yok"
+          }
+        }
       }
     },
-    "create.record.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Recording" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Kayda başla" } }
+    "create.record.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Recording"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayda başla"
+          }
+        }
       }
     },
-    "create.script.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste what you already wrote" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Yazdığın metni yapıştır" } }
+    "create.script.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste what you already wrote"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazdığın metni yapıştır"
+          }
+        }
       }
     },
-    "create.script.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start from Script" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Script ile başla" } }
+    "create.script.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start from Script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metinle başla"
+          }
+        }
       }
     },
-    "create.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pick an entry point. Everything else adapts." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Bir başlangıç seç. Gerisi ona göre şekillenir." } }
+    "create.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick an entry point. Everything else adapts."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir başlangıç seç. Gerisi ona göre şekillenir."
+          }
+        }
       }
     },
-    "create.title" : {
-      "comment" : "Two lines; the line break is part of the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Where do\nwe start?" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Nereden\nbaşlıyoruz?" } }
+    "create.title": {
+      "comment": "Two lines; the line break is part of the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where do\nwe start?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nereden\nbaşlıyoruz?"
+          }
+        }
       }
     },
-    "create.workflow.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Product Reel · 5 steps" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ürün Reel'i · 5 adım" } }
+    "create.workflow.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product Reel · 5 steps"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ürün Reel'i · 5 adım"
+          }
+        }
       }
     },
-    "create.workflow.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use Workflow" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Workflow kullan" } }
+    "create.workflow.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Workflow"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow kullan"
+          }
+        }
       }
     },
-    "prompt.chip.cameraComparison" : {
-      "comment" : "Prompt suggestion, in the creator's own language as in the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kamera karşılaştırması" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Kamera karşılaştırması" } }
+    "prompt.chip.cameraComparison": {
+      "comment": "Prompt suggestion, in the creator's own language as in the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera karşılaştırması"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera karşılaştırması"
+          }
+        }
       }
     },
-    "prompt.chip.productReel" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "30 sn ürün reel’i" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "30 sn ürün reel’i" } }
+    "prompt.chip.productReel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 sn ürün reel’i"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 sn ürün reel’i"
+          }
+        }
       }
     },
-    "prompt.chip.storytelling" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hikâye anlatımı" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Hikâye anlatımı" } }
+    "prompt.chip.storytelling": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hikâye anlatımı"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hikâye anlatımı"
+          }
+        }
       }
     },
-    "prompt.chip.tutorial" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Tutorial: 3 adım" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tutorial: 3 adım" } }
+    "prompt.chip.tutorial": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutorial: 3 adım"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tutorial: 3 adım"
+          }
+        }
       }
     },
-    "prompt.default" : {
-      "comment" : "Prefilled brief, in the creator's own language as in the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel" } }
+    "prompt.default": {
+      "comment": "Prefilled brief, in the creator's own language as in the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+          }
+        }
       }
     },
-    "prompt.generate" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Generate blueprint" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Taslağı oluştur" } }
+    "prompt.generate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate blueprint"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taslağı oluştur"
+          }
+        }
       }
     },
-    "prompt.kicker" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "IDEA → BLUEPRINT" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "FİKİR → TASLAK" } }
+    "prompt.kicker": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IDEA → BLUEPRINT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FİKİR → TASLAK"
+          }
+        }
       }
     },
-    "prompt.option.format" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FORMAT" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "FORMAT" } }
+    "prompt.option.format": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FORMAT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FORMAT"
+          }
+        }
       }
     },
-    "prompt.option.format.value" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "9:16 Reel" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "9:16 Reel" } }
+    "prompt.option.format.value": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "9:16 Reel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "9:16 Reel"
+          }
+        }
       }
     },
-    "prompt.option.length" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "LENGTH" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "SÜRE" } }
+    "prompt.option.length": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LENGTH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÜRE"
+          }
+        }
       }
     },
-    "prompt.option.length.value" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "30 sec" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "30 sn" } }
+    "prompt.option.length.value": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 sec"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 sn"
+          }
+        }
       }
     },
-    "prompt.option.tone" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "TONE" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "TON" } }
+    "prompt.option.tone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TONE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TON"
+          }
+        }
       }
     },
-    "prompt.option.tone.value" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Energetic" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Enerjik" } }
+    "prompt.option.tone.value": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energetic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enerjik"
+          }
+        }
       }
     },
-    "prompt.step.beats" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Structuring beats" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Akış kuruluyor" } }
+    "prompt.step.beats": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Structuring beats"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akış kuruluyor"
+          }
+        }
       }
     },
-    "prompt.step.beats.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "4 segments" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "4 segment" } }
+    "prompt.step.beats.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 segments"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 segment"
+          }
+        }
       }
     },
-    "prompt.step.intent" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reading intent" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Niyet okunuyor" } }
+    "prompt.step.intent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading intent"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Niyet okunuyor"
+          }
+        }
       }
     },
-    "prompt.step.intent.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "tone, length" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ton, süre" } }
+    "prompt.step.intent.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tone, length"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ton, süre"
+          }
+        }
       }
     },
-    "prompt.step.timing" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Timing segments" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Süreler ayarlanıyor" } }
+    "prompt.step.timing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timing segments"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süreler ayarlanıyor"
+          }
+        }
       }
     },
-    "prompt.step.timing.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "0:30 total" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "toplam 0:30" } }
+    "prompt.step.timing.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0:30 total"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "toplam 0:30"
+          }
+        }
       }
     },
-    "prompt.step.writing" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Writing script" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Script yazılıyor" } }
+    "prompt.step.writing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writing script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metin yazılıyor"
+          }
+        }
       }
     },
-    "prompt.step.writing.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "TR · 78 words" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "TR · 78 kelime" } }
+    "prompt.step.writing.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TR · 78 words"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TR · 78 kelime"
+          }
+        }
       }
     },
-    "prompt.title" : {
-      "comment" : "Two lines; the line break is part of the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "What are we\nmaking?" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ne çekiyoruz\nbugün?" } }
+    "prompt.title": {
+      "comment": "Two lines; the line break is part of the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What are we\nmaking?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne çekiyoruz\nbugün?"
+          }
+        }
       }
     },
-    "script.action.longer" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Longer" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Daha uzun" } }
+    "script.action.longer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longer"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha uzun"
+          }
+        }
       }
     },
-    "script.action.moreEnergetic" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "More energetic" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Daha enerjik" } }
+    "script.action.moreEnergetic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More energetic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha enerjik"
+          }
+        }
       }
     },
-    "script.action.moreNatural" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "More natural" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Daha doğal" } }
+    "script.action.moreNatural": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More natural"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha doğal"
+          }
+        }
       }
     },
-    "script.action.rewrite" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rewrite" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Yeniden yaz" } }
+    "script.action.rewrite": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rewrite"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden yaz"
+          }
+        }
       }
     },
-    "script.action.shorter" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shorter" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Daha kısa" } }
+    "script.action.shorter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shorter"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daha kısa"
+          }
+        }
       }
     },
-    "script.kicker %lld" : {
-      "comment" : "Header stamp; the argument is the script's word count.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "SCRIPT · %lld WORDS" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "SCRIPT · %lld KELİME" } }
+    "script.kicker %lld": {
+      "comment": "Header stamp; the argument is the script's word count.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SCRIPT · %lld WORDS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SCRIPT · %lld KELİME"
+          }
+        }
       }
     },
-    "script.longer.addition" : {
-      "comment" : "Sentence appended by the Longer rewrite, in the script's language.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun." } }
+    "script.longer.addition": {
+      "comment": "Sentence appended by the Longer rewrite, in the script's language.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+          }
+        }
       }
     },
-    "script.natural.prefix" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Bak şöyle söyleyeyim:" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Bak şöyle söyleyeyim:" } }
+    "script.natural.prefix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bak şöyle söyleyeyim:"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bak şöyle söyleyeyim:"
+          }
+        }
       }
     },
-    "script.rewrite.prefix" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cidden," } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Cidden," } }
+    "script.rewrite.prefix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cidden,"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cidden,"
+          }
+        }
       }
     },
-    "script.rewriteAs" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "REWRITE AS" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ŞÖYLE YAZ" } }
+    "script.rewriteAs": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REWRITE AS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ŞÖYLE YAZ"
+          }
+        }
       }
     },
-    "script.studio" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Go to Studio" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Stüdyoya geç" } }
+    "script.studio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Studio"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyoya geç"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

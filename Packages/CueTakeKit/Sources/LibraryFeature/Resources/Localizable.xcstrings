@@ -1,92 +1,212 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "home.create.kicker" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "NEW" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "YENİ" } }
+  "sourceLanguage": "en",
+  "strings": {
+    "home.create.kicker": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YENİ"
+          }
+        }
       }
     },
-    "home.create.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Idea, script, workflow or straight to camera" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Fikir, script, workflow ya da doğrudan kamera" } }
+    "home.create.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idea, script, workflow or straight to camera"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fikir, metin, workflow ya da doğrudan kamera"
+          }
+        }
       }
     },
-    "home.create.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create video" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Video oluştur" } }
+    "home.create.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video oluştur"
+          }
+        }
       }
     },
-    "home.greeting.stamp" : {
-      "comment" : "Day and time above the greeting.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "FRIDAY · 20:14" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CUMA · 20:14" } }
+    "home.greeting.stamp": {
+      "comment": "Day and time above the greeting.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FRIDAY · 20:14"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CUMA · 20:14"
+          }
+        }
       }
     },
-    "home.greeting.title" : {
-      "comment" : "Two lines; the line break is part of the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ready when\nyou are, Deniz." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Hazırsan\nbaşlayalım, Deniz." } }
+    "home.greeting.title": {
+      "comment": "Two lines; the line break is part of the design.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready when\nyou are, Deniz."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazırsan\nbaşlayalım, Deniz."
+          }
+        }
       }
     },
-    "home.recent.all" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "All" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tümü" } }
+    "home.recent.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tümü"
+          }
+        }
       }
     },
-    "home.section.recent" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "RECENT" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "SON ÇALIŞMALAR" } }
+    "home.section.recent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECENT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SON ÇALIŞMALAR"
+          }
+        }
       }
     },
-    "home.section.workflows" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "WORKFLOWS" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "WORKFLOW'LAR" } }
+    "home.section.workflows": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORKFLOWS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORKFLOW'LAR"
+          }
+        }
       }
     },
-    "home.workflow.meta" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "5 steps · run 12 times" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "5 adım · 12 kez çalıştı" } }
+    "home.workflow.meta": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 steps · run 12 times"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 adım · 12 kez çalıştı"
+          }
+        }
       }
     },
-    "home.workflow.name" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Product Reel" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ürün Reel'i" } }
+    "home.workflow.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product Reel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ürün Reel'i"
+          }
+        }
       }
     },
-    "projects.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "7 videos · 3 drafts" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "7 video · 3 taslak" } }
+    "projects.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 videos · 3 drafts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 video · 3 taslak"
+          }
+        }
       }
     },
-    "projects.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Projects" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Projeler" } }
+    "projects.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projeler"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

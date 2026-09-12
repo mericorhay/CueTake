@@ -1,146 +1,346 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "workflow.description" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "30-second vertical reel for a single product. Energetic tone, hook-first, burned captions." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tek ürün için 30 saniyelik dikey reel. Enerjik ton, hook ile başlar, gömülü altyazı." } }
+  "sourceLanguage": "en",
+  "strings": {
+    "workflow.description": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30-second vertical reel for a single product. Energetic tone, hook-first, burned captions."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tek ürün için 30 saniyelik dikey reel. Enerjik ton, hook ile başlar, gömülü altyazı."
+          }
+        }
       }
     },
-    "workflow.input.feature" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "One key feature" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tek önemli özellik" } }
+    "workflow.input.feature": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One key feature"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tek önemli özellik"
+          }
+        }
       }
     },
-    "workflow.input.kicker" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "INPUT" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "GİRDİ" } }
+    "workflow.input.kicker": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INPUT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GİRDİ"
+          }
+        }
       }
     },
-    "workflow.input.product" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Product name" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ürün adı" } }
+    "workflow.input.product": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product name"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ürün adı"
+          }
+        }
       }
     },
-    "workflow.run.open" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open result" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Sonucu aç" } }
+    "workflow.run.open": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open result"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonucu aç"
+          }
+        }
       }
     },
-    "workflow.run.running" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Running…" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Çalışıyor…" } }
+    "workflow.run.running": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çalışıyor…"
+          }
+        }
       }
     },
-    "workflow.run.start" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Run workflow" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Workflow'u çalıştır" } }
+    "workflow.run.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run workflow"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow'u çalıştır"
+          }
+        }
       }
     },
-    "workflow.step.captions" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Captions" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Altyazılar" } }
+    "workflow.step.captions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar"
+          }
+        }
       }
     },
-    "workflow.step.captions.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "pop style, burned" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "pop stili, gömülü" } }
+    "workflow.step.captions.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pop style, burned"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pop stili, gömülü"
+          }
+        }
       }
     },
-    "workflow.step.export" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Export" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Dışa aktar" } }
+    "workflow.step.export": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa aktar"
+          }
+        }
       }
     },
-    "workflow.step.export.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "9:16 · H.264" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "9:16 · H.264" } }
+    "workflow.step.export.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "9:16 · H.264"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "9:16 · H.264"
+          }
+        }
       }
     },
-    "workflow.step.idea" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Idea" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Fikir" } }
+    "workflow.step.idea": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idea"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fikir"
+          }
+        }
       }
     },
-    "workflow.step.idea.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "from product + feature" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ürün + özellikten" } }
+    "workflow.step.idea.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "from product + feature"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ürün + özellikten"
+          }
+        }
       }
     },
-    "workflow.step.record" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Record" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Çekim" } }
+    "workflow.step.record": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekim"
+          }
+        }
       }
     },
-    "workflow.step.record.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "teleprompter on" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "teleprompter açık" } }
+    "workflow.step.record.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "teleprompter on"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "teleprompter açık"
+          }
+        }
       }
     },
-    "workflow.step.script" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Script" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Script" } }
+    "workflow.step.script": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metin"
+          }
+        }
       }
     },
-    "workflow.step.script.note" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "4 segments, TR" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "4 segment, TR" } }
+    "workflow.step.script.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 segments, TR"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 segment, TR"
+          }
+        }
       }
     },
-    "workflow.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Product Reel" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Ürün Reel'i" } }
+    "workflow.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product Reel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ürün Reel'i"
+          }
+        }
       }
     },
-    "workflows.subtitle" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reusable creative recipes" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tekrar kullanılabilir üretim tarifleri" } }
+    "workflows.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reusable creative recipes"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrar kullanılabilir üretim tarifleri"
+          }
+        }
       }
     },
-    "workflows.title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Workflows" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Workflow'lar" } }
+    "workflows.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflows"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow'lar"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

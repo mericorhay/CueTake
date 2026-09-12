@@ -54,7 +54,7 @@ public struct WorkflowsScreen: View {
                         } label: {
                             card(workflow)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.dsPress)
                         .dsEnter(.rise(duration: 0.5, delay: Double(index) * 0.07))
                     }
                 }

@@ -52,7 +52,7 @@ public struct TeleprompterSettingsSheet: View {
                     .font(.system(size: 15))
                     .foregroundStyle(DS.Palette.ink(0.5))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .padding(.bottom, 12)
     }
@@ -94,8 +94,10 @@ public struct TeleprompterSettingsSheet: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 9)
             .padding(.horizontal, 4)
+            // Without this the row only responds on the preview shape and the label itself.
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPress)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(isOn ? DS.Palette.accent(0.18) : DS.Palette.hairline(0.06))
@@ -124,7 +126,7 @@ public struct TeleprompterSettingsSheet: View {
                                 .fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07))
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
             }
             Spacer(minLength: 0)
         }

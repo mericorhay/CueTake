@@ -71,7 +71,7 @@ public struct EditorScreen: View {
                             .fill(DS.Palette.accent)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 10)
@@ -93,7 +93,7 @@ public struct EditorScreen: View {
                     .font(.system(size: 18))
                     .foregroundStyle(DS.Palette.ink(0.55))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
 
             Button(action: model.togglePlayback) {
                 Text(model.isPlaying ? "❚❚" : "▶")
@@ -102,7 +102,7 @@ public struct EditorScreen: View {
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(DS.Palette.ink))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
 
             Text("\(model.playheadLabel) / \(model.durationLabel)")
                 .dsFont(.mono, .medium, 12)
@@ -134,7 +134,7 @@ public struct EditorScreen: View {
                                 .stroke(DS.Palette.lime(0.3), lineWidth: 1)
                         }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
             }
             .padding(.bottom, 9)
 
@@ -286,7 +286,7 @@ public struct EditorScreen: View {
                         .font(.system(size: 16))
                         .foregroundStyle(DS.Palette.ink(0.45))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
             }
             .padding(.bottom, 14)
 
@@ -306,7 +306,7 @@ public struct EditorScreen: View {
                                     .fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07))
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.dsPress)
                     .animation(DS.Easing.ease(0.25), value: isOn)
                 }
             }
@@ -333,7 +333,7 @@ public struct EditorScreen: View {
                                 .stroke(DS.Palette.accent(0.4), lineWidth: 1)
                         }
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
 
                 Button {
                     withAnimation(DS.Easing.standard(0.38)) { model.inspectedSegment = nil }
@@ -348,7 +348,7 @@ public struct EditorScreen: View {
                                 .fill(DS.Palette.ink)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
             }
             .padding(.top, 14)
         }

@@ -77,7 +77,7 @@ public struct CaptionsScreen: View {
                             .fill(DS.Palette.accent)
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .padding(.horizontal, 18)
     }
@@ -159,7 +159,7 @@ public struct CaptionsScreen: View {
                                         .fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07))
                                 )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.dsPress)
                     }
                 }
             }

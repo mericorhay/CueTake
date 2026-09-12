@@ -142,7 +142,7 @@ public struct CreateScreen: View {
             }
             .shadow(color: card.isAccent ? DS.Palette.accent(0.3) : .clear, radius: 25, y: 20)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPressCard)
         .dsEnter(.slab(duration: 0.55, delay: Double(index) * 0.07))
     }
 }

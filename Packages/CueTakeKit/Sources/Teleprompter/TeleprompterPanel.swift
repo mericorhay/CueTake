@@ -85,7 +85,7 @@ public struct TeleprompterPanel: View {
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(DS.Palette.hairline(0.1)))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
 
             Button {
                 model.isSettingsOpen.toggle()
@@ -96,7 +96,7 @@ public struct TeleprompterPanel: View {
                     .frame(width: 22, height: 22)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(DS.Palette.hairline(0.1)))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .padding(.bottom, 8)
     }

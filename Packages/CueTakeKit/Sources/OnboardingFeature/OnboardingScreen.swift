@@ -58,8 +58,10 @@ public struct OnboardingScreen: View {
                         .foregroundStyle(DS.Palette.ink(0.42))
                         .padding(.vertical, 14)
                         .padding(.horizontal, 4)
+                        // Text alone hit-tests on its glyphs; this hands the padding over too.
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
 
                 DSPrimaryButton(
                     String(localized: current.cta, bundle: .module),
@@ -85,8 +87,14 @@ public struct OnboardingScreen: View {
                     // The accent bloom bleeding off the top-right corner.
                     Circle()
                         .fill(
+                            // radial-gradient(circle, rgba(255,90,79,.4), transparent 65%) —
+                            // the stop matters: spreading the fade over the whole radius
+                            // leaves a visible haze where the design has none.
                             RadialGradient(
-                                colors: [DS.Palette.accent(0.4), .clear],
+                                stops: [
+                                    .init(color: DS.Palette.accent(0.4), location: 0),
+                                    .init(color: .clear, location: 0.65),
+                                ],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 140
@@ -124,29 +132,34 @@ public struct OnboardingScreen: View {
         var scale: CGFloat
     }
 
-    private var stackCards: [StackCard] {
-        [
-            StackCard(kicker: "onboarding.card.idea", title: "onboarding.card.idea.value", fill: DS.Palette.ink, x: -14, y: 0, rotation: -7, scale: 0.9),
-            StackCard(kicker: "onboarding.card.blueprint", title: "onboarding.card.blueprint.value", fill: DS.Palette.lime, x: 14, y: 58, rotation: 4, scale: 0.95),
-            StackCard(kicker: "onboarding.card.video", title: "onboarding.card.video.value", fill: DS.Palette.accent, x: -6, y: 120, rotation: -2, scale: 1),
-        ]
-    }
+    /// The deck is fixed, so it is built once rather than on every `body` evaluation.
+    private static let stackCards: [StackCard] = [
+        StackCard(kicker: "onboarding.card.idea", title: "onboarding.card.idea.value", fill: DS.Palette.ink, x: -14, y: 0, rotation: -7, scale: 0.9),
+        StackCard(kicker: "onboarding.card.blueprint", title: "onboarding.card.blueprint.value", fill: DS.Palette.lime, x: 14, y: 58, rotation: 4, scale: 0.95),
+        StackCard(kicker: "onboarding.card.video", title: "onboarding.card.video.value", fill: DS.Palette.accent, x: -6, y: 120, rotation: -2, scale: 1),
+    ]
 
     private var cardStack: some View {
         ZStack(alignment: .topLeading) {
-            ForEach(Array(stackCards.enumerated()), id: \.offset) { index, card in
+            ForEach(Array(Self.stackCards.enumerated()), id: \.offset) { index, card in
                 VStack(alignment: .leading, spacing: 8) {
                     Text(String(localized: card.kicker, bundle: .module))
                         .dsFont(.mono, .medium, 10, letterSpacing: 0.16)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .opacity(0.65)
+                        .lineLimit(1)
+                    // The deck overlaps by design and only reads while every card is one line
+                    // tall. A title that wraps swallows the card beneath it, so it shrinks
+                    // instead — the geometry stays identical in both languages.
                     TightText(
                         String(localized: card.title, bundle: .module),
                         .archivo,
                         .bold,
                         19,
                         lineHeight: 1.2,
-                        color: DS.Palette.inkInverse
+                        color: DS.Palette.inkInverse,
+                        lineLimit: 1,
+                        minimumScaleFactor: 0.7
                     )
                 }
                 .frame(width: 250, alignment: .leading)

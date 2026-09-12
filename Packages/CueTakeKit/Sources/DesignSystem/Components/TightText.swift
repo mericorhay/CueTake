@@ -18,6 +18,11 @@ public struct TightText: UIViewRepresentable {
     private let color: UIColor
     private let alignment: NSTextAlignment
     private let shadow: Shadow?
+    /// 0 means "as many as it takes", matching `UILabel.numberOfLines`.
+    private let lineLimit: Int
+    /// Below 1, the text shrinks to hold `lineLimit` rather than wrapping. Decks and cards are laid
+    /// out at fixed heights, so a translation one word longer than the source must not grow them.
+    private let minimumScaleFactor: CGFloat
 
     /// CSS `text-shadow`. Unlike SwiftUI's `.shadow(radius:)`, `blur` here maps 1:1 to the CSS blur.
     public struct Shadow {
@@ -42,8 +47,12 @@ public struct TightText: UIViewRepresentable {
         letterSpacing: CGFloat = 0,
         color: Color = DS.Palette.ink,
         alignment: TextAlignment = .leading,
-        shadow: Shadow? = nil
+        shadow: Shadow? = nil,
+        lineLimit: Int = 0,
+        minimumScaleFactor: CGFloat = 1
     ) {
+        self.lineLimit = lineLimit
+        self.minimumScaleFactor = minimumScaleFactor
         self.text = text
         self.font = DS.uiFont(family, weight, size)
         self.lineHeight = size * lineHeight
@@ -57,10 +66,15 @@ public struct TightText: UIViewRepresentable {
         self.shadow = shadow
     }
 
+    /// UIKit ignores `adjustsFontSizeToFitWidth` while the line break mode is a wrapping one, and
+    /// the paragraph style below overrides whatever the label itself is set to — so both have to
+    /// agree, and shrinking needs truncation as its fallback.
+    private var lineBreak: NSLineBreakMode {
+        minimumScaleFactor < 1 ? .byTruncatingTail : .byWordWrapping
+    }
+
     public func makeUIView(context: Context) -> UILabel {
         let label = UILabel()
-        label.numberOfLines = 0
-        label.lineBreakMode = .byWordWrapping
         label.backgroundColor = .clear
         // Let SwiftUI decide the width; the label reports the height it needs for it.
         label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -69,6 +83,10 @@ public struct TightText: UIViewRepresentable {
     }
 
     public func updateUIView(_ label: UILabel, context: Context) {
+        label.numberOfLines = lineLimit
+        label.lineBreakMode = lineBreak
+        label.adjustsFontSizeToFitWidth = minimumScaleFactor < 1
+        label.minimumScaleFactor = minimumScaleFactor
         label.attributedText = attributedText
         label.textAlignment = alignment
     }
@@ -84,7 +102,7 @@ public struct TightText: UIViewRepresentable {
         let paragraph = NSMutableParagraphStyle()
         paragraph.minimumLineHeight = lineHeight
         paragraph.maximumLineHeight = lineHeight
-        paragraph.lineBreakMode = .byWordWrapping
+        paragraph.lineBreakMode = lineBreak
         paragraph.alignment = alignment
 
         var attributes: [NSAttributedString.Key: Any] = [

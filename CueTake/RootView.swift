@@ -17,15 +17,27 @@ struct RootView: View {
         ZStack {
             DS.Palette.screen.ignoresSafeArea()
 
+            // The design is drawn on a 402x874 frame — an iPhone 16 Pro screen — and every
+            // screen's padding is measured from the device edge, not from the safe area: 78pt
+            // of top padding is what clears the status bar. Laying these out inside the safe
+            // area would add the insets on top, squeezing every screen from both ends.
+            // `.container` is deliberate: the keyboard's inset must still push content up.
             screen
                 .id(model.screen)
+                .ignoresSafeArea(.container)
+                // Each screen plays the design's own `scin` entrance on arrival, so only the
+                // exit is described here: without it the outgoing screen is cut rather than
+                // handed over, and every navigation reads as a jump.
+                .transition(.asymmetric(insertion: .identity, removal: .opacity))
 
             if model.screen.isRoot {
                 tabBar
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, 20)
+                    .ignoresSafeArea(.container)
             }
         }
+        .animation(DS.Easing.ease(0.22), value: model.screen)
         .preferredColorScheme(.dark)
     }
 

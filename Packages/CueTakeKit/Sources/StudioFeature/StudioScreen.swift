@@ -192,7 +192,7 @@ public struct StudioScreen: View {
                     .dsPulse(duration: 1.6)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPressIcon)
     }
 
     private var shutter: some View {
@@ -214,7 +214,7 @@ public struct StudioScreen: View {
                     .shadow(color: DS.Palette.accent(0.6), radius: 16)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPressIcon)
     }
 
     /// Portrait docks the sheet above the controls; landscape pins it beside the right-hand column.

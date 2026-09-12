@@ -99,7 +99,10 @@ public struct PromptScreen: View {
                 .dsFont(.sans, .regular, 16, lineHeight: 1.45)
                 .foregroundStyle(DS.Palette.ink)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: 132)
+                // `TextEditor` is greedy vertically and a minimum does not hold it back: left
+                // alone it eats the whole column and pushes the chips and options off the
+                // bottom. The design's textarea is a fixed 132pt box that scrolls its content.
+                .frame(height: 132)
                 .padding(17)
                 .dsCard(radius: DS.Radius.card, border: DS.Palette.hairline(0.09))
 
@@ -119,7 +122,7 @@ public struct PromptScreen: View {
                             )
                             .overlay(Capsule().stroke(DS.Palette.hairline(0.08), lineWidth: 1))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.dsPress)
                 }
             }
             .padding(.top, 16)

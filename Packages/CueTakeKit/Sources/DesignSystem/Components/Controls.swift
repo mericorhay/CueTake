@@ -32,13 +32,15 @@ public struct DSCircleButton: View {
 
     public var body: some View {
         Button(action: action) {
+            // The skin belongs to the label: a background applied outside the Button is not part
+            // of what gets hit-tested, which used to leave only the glyph tappable.
             Text(glyph)
                 .font(font ?? .system(size: fontSize))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: size, height: size)
+                .modifier(CircleSkin(style: style))
         }
-        .buttonStyle(.plain)
-        .modifier(CircleSkin(style: style))
+        .buttonStyle(.dsPressIcon)
     }
 }
 
@@ -91,9 +93,9 @@ public struct DSPrimaryButton: View {
                 .foregroundStyle(DS.Palette.inkInverse)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, verticalPadding)
+                .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
         }
-        .buttonStyle(.plain)
-        .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
+        .buttonStyle(.dsPress(radius: radius))
         .shadow(color: glow ? DS.Palette.accent(0.34) : .clear, radius: 20, y: 14)
     }
 }
@@ -127,13 +129,13 @@ public struct DSSecondaryButton: View {
                 .foregroundStyle(DS.Palette.ink)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, verticalPadding)
+                .dsGlass(
+                    tint: DS.Palette.glass(0.6),
+                    in: RoundedRectangle(cornerRadius: radius, style: .continuous),
+                    border: DS.Palette.hairline(0.14)
+                )
         }
-        .buttonStyle(.plain)
-        .dsGlass(
-            tint: DS.Palette.glass(0.6),
-            in: RoundedRectangle(cornerRadius: radius, style: .continuous),
-            border: DS.Palette.hairline(0.14)
-        )
+        .buttonStyle(.dsPress(radius: radius))
     }
 }
 
@@ -172,12 +174,12 @@ public struct DSPill: View {
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.65))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, verticalPadding)
+                .background(
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .fill(isOn ? onFill : DS.Palette.hairline(0.07))
+                )
         }
-        .buttonStyle(.plain)
-        .background(
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(isOn ? onFill : DS.Palette.hairline(0.07))
-        )
+        .buttonStyle(.dsPress(radius: radius))
         .animation(DS.Easing.ease(0.25), value: isOn)
     }
 }

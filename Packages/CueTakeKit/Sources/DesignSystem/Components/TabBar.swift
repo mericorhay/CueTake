@@ -42,7 +42,7 @@ public struct DSTabBar<Tab: Hashable>: View {
                     .padding(.vertical, 10)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
                 .animation(DS.Easing.ease(0.3), value: isOn)
             }
         }

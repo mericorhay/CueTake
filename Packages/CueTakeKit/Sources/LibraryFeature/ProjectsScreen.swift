@@ -36,7 +36,7 @@ public struct ProjectsScreen: View {
                         } label: {
                             card(project)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.dsPress)
                     }
                 }
                 .padding(.top, 22)

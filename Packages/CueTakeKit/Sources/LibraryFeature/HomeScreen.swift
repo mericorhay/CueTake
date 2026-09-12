@@ -179,7 +179,7 @@ public struct HomeScreen: View {
             .clipShape(RoundedRectangle(cornerRadius: DS.Radius.hero, style: .continuous))
             .shadow(color: DS.Palette.accent(0.32), radius: 30, y: 24)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.dsPressCard)
         .padding(.horizontal, 22)
         .padding(.top, 26)
     }
@@ -196,7 +196,7 @@ public struct HomeScreen: View {
                         .dsFont(.sans, .medium, 13)
                         .foregroundStyle(DS.Palette.accent)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.dsPress)
             }
             .padding(.horizontal, 22)
             .padding(.top, 32)
@@ -210,7 +210,7 @@ public struct HomeScreen: View {
                         } label: {
                             recentCard(item)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.dsPressCard)
                     }
                 }
                 .padding(.horizontal, 22)
@@ -287,7 +287,7 @@ public struct HomeScreen: View {
                 .padding(15)
                 .dsCard(radius: 18)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.dsPress)
         }
         .padding(.horizontal, 22)
         .padding(.top, 30)
