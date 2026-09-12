@@ -103,3 +103,17 @@ public struct TeleprompterHints: Hashable, Sendable, Codable {
         self.speakerNotes = speakerNotes
     }
 }
+
+extension SegmentRole {
+    /// Uppercase label shown by the prompter, blueprint and timeline: HOOK, INTRO, POINT, CTA.
+    public var displayLabel: String {
+        switch self {
+        case .hook: "HOOK"
+        case .intro: "INTRO"
+        case .mainPoint: "POINT"
+        case .example: "EXAMPLE"
+        case .callToAction: "CTA"
+        case .custom(let name): name.uppercased()
+        }
+    }
+}

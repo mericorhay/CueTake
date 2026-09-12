@@ -2,82 +2,220 @@ import Domain
 import Observation
 import SwiftUI
 
-/// Teleprompter state. Speech tracking pushes positions in; manual input always wins.
+/// Teleprompter state, matching the design's prompter panel exactly.
 ///
-/// Knows nothing about audio: StudioFeature connects `ScriptTracking` output to `speakerDidReach`.
+/// Geometry is stored as percentages of the camera frame, like the design, so the panel keeps its
+/// place when the device rotates or the preview size changes.
+/// Knows nothing about audio: StudioFeature feeds `speakerDidReach` from speech tracking.
 @MainActor
 @Observable
 public final class TeleprompterModel {
-    public enum Mode: Hashable, Sendable {
-        /// Follows the speaker's voice.
-        case speechTracking
-        /// Scrolls at a constant speed.
-        case fixedSpeed
-        /// Only moves when the user scrolls or taps.
-        case manual
+    /// How the current position is painted onto the script.
+    public enum HighlightMode: String, CaseIterable, Sendable {
+        /// Current word inverted on accent, look-ahead words washed lime.
+        case word = "Word"
+        /// A moving window of readable lines.
+        case line = "Line"
+        /// Everything already spoken turns accent.
+        case karaoke = "Karaoke"
     }
 
-    public private(set) var segments: [Segment]
+    public enum Alignment: String, CaseIterable, Sendable {
+        case left = "Left"
+        case center = "Center"
+    }
+
+    public enum SettingsTab: String, CaseIterable, Sendable {
+        case layout = "Layout"
+        case flow = "Flow"
+    }
+
+    public enum Preset: String, CaseIterable, Sendable {
+        case compact = "Compact"
+        case band = "Band"
+        case full = "Full"
+        case corner = "Corner"
+        /// Set automatically once the user drags or resizes the panel.
+        case custom = "Custom"
+    }
+
+    /// Panel rectangle in percent of the frame, as in the design.
+    public struct Frame: Hashable, Sendable {
+        public var x: Double
+        public var y: Double
+        public var width: Double
+        public var height: Double
+
+        public init(x: Double, y: Double, width: Double, height: Double) {
+            self.x = x
+            self.y = y
+            self.width = width
+            self.height = height
+        }
+    }
+
+    // Verbatim from the design's PRESETS table.
+    static let portraitPresets: [Preset: Frame] = [
+        .compact: Frame(x: 28, y: 60, width: 44, height: 18),
+        .band: Frame(x: 5, y: 56, width: 90, height: 26),
+        .full: Frame(x: 5, y: 16, width: 90, height: 62),
+        .corner: Frame(x: 54, y: 12, width: 42, height: 26),
+    ]
+
+    static let landscapePresets: [Preset: Frame] = [
+        .compact: Frame(x: 34, y: 56, width: 32, height: 30),
+        .band: Frame(x: 8, y: 58, width: 84, height: 32),
+        .full: Frame(x: 6, y: 12, width: 88, height: 68),
+        .corner: Frame(x: 58, y: 10, width: 38, height: 42),
+    ]
+
+    public private(set) var segments: [Segment] = []
     public private(set) var position: ScriptPosition?
-    public var mode: Mode
-    public var isPaused = false
-    public var textScale = 1.0
-    public var isMirrored = false
 
-    public init(segments: [Segment], mode: Mode = .speechTracking) {
-        self.segments = segments
-        self.mode = mode
-    }
+    public var frame = Frame(x: 5, y: 56, width: 90, height: 26)
+    public var preset: Preset = .band
+    public var isDragging = false
+    public var isLandscape = false
+
+    /// Text size in points, 14–34 in the design.
+    public var textSize: Double = 20
+    /// Panel opacity, 10–100. The panel fill is `opacity / 145`, as in the design.
+    public var opacity: Double = 78
+    /// Scroll speed, 0–100, displayed as 0.6×–1.6×.
+    public var speed: Double = 50
+    /// Words highlighted ahead of the current one, 0–4.
+    public var lookAhead: Int = 1
+    public var mode: HighlightMode = .word
+    public var alignment: Alignment = .left
+    public var isMirrored = false
+    public var settingsTab: SettingsTab = .layout
+    public var isSettingsOpen = false
+    public var isPaused = false
+
+    public init() {}
 
     public func load(_ segments: [Segment]) {
         self.segments = segments
         position = nil
     }
 
+    // MARK: - Position
+
     public func speakerDidReach(_ position: ScriptPosition) {
-        guard mode == .speechTracking, !isPaused else { return }
+        guard !isPaused else { return }
         self.position = position
     }
 
+    /// Manual input always wins over automatic following.
     public func userDidMove(to position: ScriptPosition) {
-        mode = .manual
         self.position = position
     }
-}
 
-/// Segment-level scrolling placeholder. Word highlighting arrives with speech tracking.
-public struct TeleprompterView: View {
-    private let model: TeleprompterModel
-
-    public init(model: TeleprompterModel) {
-        self.model = model
+    /// Index of the word being spoken in the current segment, or nil when not tracking.
+    public var activeWordIndex: Int? {
+        position?.wordIndex
     }
 
-    public var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: Spacing.xl) {
-                    if model.segments.isEmpty {
-                        Text("teleprompter.empty", bundle: .module)
-                            .font(.cfPrompter(size: 28 * model.textScale))
-                            .foregroundStyle(Palette.textSecondary)
-                    }
-                    ForEach(model.segments) { segment in
-                        Text(segment.script)
-                            .font(.cfPrompter(size: 34 * model.textScale))
-                            .foregroundStyle(segment.id == model.position?.segmentID ? Palette.textPrimary : Palette.textSecondary)
-                            .id(segment.id)
-                    }
-                }
-                .padding(Spacing.xl)
-            }
-            .onChange(of: model.position?.segmentID) { _, segmentID in
-                guard let segmentID else { return }
-                withAnimation(Motion.smooth) {
-                    proxy.scrollTo(segmentID, anchor: .top)
-                }
+    public var currentSegment: Segment? {
+        guard let position else { return segments.first }
+        return segments.first { $0.id == position.segmentID } ?? segments.first
+    }
+
+    public var nextSegment: Segment? {
+        guard let current = currentSegment,
+              let index = segments.firstIndex(where: { $0.id == current.id }),
+              segments.indices.contains(index + 1)
+        else { return nil }
+        return segments[index + 1]
+    }
+
+    // MARK: - Layout
+
+    var presets: [Preset: Frame] {
+        isLandscape ? Self.landscapePresets : Self.portraitPresets
+    }
+
+    public func apply(_ preset: Preset) {
+        guard let frame = presets[preset] else { return }
+        self.preset = preset
+        self.frame = frame
+        isDragging = false
+    }
+
+    /// Keeps the current preset's shape when the device rotates.
+    public func setLandscape(_ landscape: Bool) {
+        guard landscape != isLandscape else { return }
+        isLandscape = landscape
+        let target = presets[preset] ?? presets[.band]
+        if let target { frame = target }
+    }
+
+    public func cyclePreset() {
+        let order: [Preset] = [.compact, .band, .full, .corner]
+        let index = order.firstIndex(of: preset).map { $0 + 1 } ?? 0
+        apply(order[index % order.count])
+    }
+
+    /// Drag, in percent of the frame. Clamped exactly as the design clamps it.
+    public func move(byX dx: Double, y dy: Double, from origin: Frame) {
+        preset = .custom
+        frame.x = min(max(2, origin.x + dx), 98 - origin.width)
+        frame.y = min(max(6, origin.y + dy), 93 - origin.height)
+    }
+
+    public func resize(byX dx: Double, y dy: Double, from origin: Frame) {
+        preset = .custom
+        frame.width = min(max(26, origin.width + dx), 98 - origin.x)
+        frame.height = min(max(12, origin.height + dy), 93 - origin.y)
+    }
+
+    // MARK: - Derived display values
+
+    /// Panel fill opacity. The design divides the 10–100 setting by 145.
+    public var panelFillOpacity: Double { opacity / 145 }
+
+    public var speedLabel: String { String(format: "%.1f×", 0.6 + speed / 100) }
+
+    /// Per-word appearance for the current segment.
+    public func wordStyles(accent: Color, ink: Color, inkInverse: Color, lime: Color) -> [WordStyle] {
+        guard let segment = currentSegment else { return [] }
+        let words = ScriptText.words(in: segment.script).map(String.init)
+        let active = activeWordIndex ?? -1
+
+        return words.enumerated().map { index, text in
+            switch mode {
+            case .karaoke:
+                return WordStyle(
+                    text: text,
+                    color: index <= active ? accent : ink,
+                    background: .clear,
+                    opacity: index <= active ? 1 : 0.4
+                )
+            case .line:
+                let near = abs(index - active) <= 6
+                return WordStyle(
+                    text: text,
+                    color: ink,
+                    background: .clear,
+                    opacity: active < 0 ? 0.85 : (near ? 1 : 0.22)
+                )
+            case .word:
+                let isHot = active >= 0 && index > active && index <= active + lookAhead
+                return WordStyle(
+                    text: text,
+                    color: index == active ? inkInverse : ink,
+                    background: index == active ? accent : (isHot ? lime.opacity(0.16) : .clear),
+                    opacity: index < active ? 0.3 : 1
+                )
             }
         }
-        .scaleEffect(x: model.isMirrored ? -1 : 1, y: 1)
+    }
+
+    public struct WordStyle: Identifiable {
+        public let id = UUID()
+        public var text: String
+        public var color: Color
+        public var background: Color
+        public var opacity: Double
     }
 }
