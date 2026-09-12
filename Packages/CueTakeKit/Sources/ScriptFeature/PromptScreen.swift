@@ -139,7 +139,9 @@ public struct PromptScreen: View {
                 verticalPadding: 19,
                 fontSize: 16
             ) {
-                model.generate(onFinish: onGenerated)
+                // Wrapped rather than passed straight through: the callback the caller hands us
+                // carries no isolation, and generate() runs its completion on the main actor.
+                model.generate { onGenerated() }
             }
         }
     }
