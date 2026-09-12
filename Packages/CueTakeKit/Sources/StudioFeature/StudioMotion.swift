@@ -1,25 +1,6 @@
 import DesignSystem
 import SwiftUI
 
-/// The studio's motion vocabulary.
-///
-/// Three curves, used deliberately. The point is not that every control moves — it is that two
-/// controls which do different things do not move the same way. A shutter that commits to a take
-/// should not feel like a toggle that draws guide lines, and a panel being dragged should not
-/// settle like a button being tapped.
-///
-/// All three are springs. Duration-based easing is what makes an interface feel authored rather
-/// than physical: a spring carries the velocity of the gesture that started it, so releasing a
-/// control mid-motion looks like letting go of an object instead of cancelling a video.
-enum StudioMotion {
-    /// Taps. Quick, barely overshoots — it should be finished before the eye follows it.
-    static let snap = Animation.spring(response: 0.26, dampingFraction: 0.7)
-    /// Things coming to rest after a gesture: the prompter after a drag, a sheet after a dismiss.
-    static let settle = Animation.spring(response: 0.48, dampingFraction: 0.86)
-    /// Moments worth noticing. Loose enough to overshoot visibly, for the shutter and the count.
-    static let bloom = Animation.spring(response: 0.42, dampingFraction: 0.55)
-}
-
 /// The shutter's press response.
 ///
 /// Two rings that shrink by different amounts on different springs, so the control reads as
@@ -30,7 +11,7 @@ struct ShutterButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.9 : 1)
             .animation(
-                configuration.isPressed ? StudioMotion.snap : StudioMotion.bloom,
+                configuration.isPressed ? DS.Motion.snap : DS.Motion.bloom,
                 value: configuration.isPressed
             )
             .sensoryFeedback(.impact(weight: .heavy, intensity: 0.9), trigger: configuration.isPressed) { _, pressed in
@@ -51,7 +32,7 @@ struct StopButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.92 : 1)
             .rotationEffect(.degrees(configuration.isPressed ? 45 : 0))
             .animation(
-                configuration.isPressed ? StudioMotion.snap : StudioMotion.settle,
+                configuration.isPressed ? DS.Motion.snap : DS.Motion.settle,
                 value: configuration.isPressed
             )
             .sensoryFeedback(.impact(weight: .medium, intensity: 0.8), trigger: configuration.isPressed) { _, pressed in
@@ -86,15 +67,5 @@ struct BloomRing: View {
                     phase = true
                 }
             }
-    }
-}
-
-extension View {
-    /// Honours Reduce Motion for the decorative half of an animation while keeping the state change.
-    ///
-    /// An interface that ignores this setting is not polished, it is loud — and the people who turn
-    /// it on are the ones who feel motion the most.
-    func studioMotion(_ animation: Animation, reduced: Bool, value: some Equatable) -> some View {
-        self.animation(reduced ? .easeOut(duration: 0.15) : animation, value: value)
     }
 }

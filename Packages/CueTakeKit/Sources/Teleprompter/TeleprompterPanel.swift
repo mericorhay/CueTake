@@ -74,7 +74,7 @@ public struct TeleprompterPanel: View {
         // Picked up rather than merely followed: a hair of scale is what separates dragging an
         // object from scrubbing a value, and it is the whole difference in how the panel reads.
         .scaleEffect(model.isDragging && !reduceMotion ? 1.02 : 1)
-        .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.isDragging)
+        .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.isDragging)
         .position(x: rect.midX, y: rect.midY)
         .animation(model.isDragging ? nil : DS.Easing.standard(0.5), value: model.frame)
     }
@@ -128,7 +128,7 @@ public struct TeleprompterPanel: View {
                     .dsFont(.sans, .semibold, 9)
                     .foregroundStyle(model.isPaused ? DS.Palette.inkInverse : DS.Palette.ink)
                     .contentTransition(.opacity)
-                    .animation(StudioMotion.snap, value: model.isPaused)
+                    .animation(DS.Motion.snap, value: model.isPaused)
                     .frame(width: 22, height: 22)
                     .background(
                         RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -144,7 +144,7 @@ public struct TeleprompterPanel: View {
                     .dsFont(.mono, .medium, 9, letterSpacing: 0.08)
                     .foregroundStyle(DS.Palette.ink)
                     .contentTransition(.opacity)
-                    .animation(StudioMotion.snap, value: model.preset)
+                    .animation(DS.Motion.snap, value: model.preset)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(DS.Palette.hairline(0.1)))
@@ -192,7 +192,7 @@ public struct TeleprompterPanel: View {
                         .scaleEffect(word.isActive && !reduceMotion ? 1.07 : 1)
                         .animation(DS.Easing.ease(0.22), value: word.color)
                         .animation(DS.Easing.ease(0.22), value: word.opacity)
-                        .animation(StudioMotion.bloom, value: word.isActive)
+                        .animation(DS.Motion.bloom, value: word.isActive)
                 }
             }
             .frame(maxWidth: .infinity, alignment: model.alignment == .center ? .center : .leading)
@@ -233,7 +233,7 @@ public struct TeleprompterPanel: View {
             .padding(5)
             .frame(width: 26, height: 26, alignment: .bottomTrailing)
             .contentShape(Rectangle())
-            .studioMotion(StudioMotion.snap, reduced: reduceMotion, value: isActive)
+            .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isActive)
             .gesture(resizeGesture)
     }
 

@@ -25,7 +25,7 @@ struct FramingGrid: View {
                         .offset(x: width * CGFloat(column) / 3 - width / 2)
                         .animation(
                             reduceMotion ? .easeOut(duration: 0.15)
-                                : StudioMotion.settle.delay(Double(column - 1) * 0.05),
+                                : DS.Motion.settle.delay(Double(column - 1) * 0.05),
                             value: drawn
                         )
                 }
@@ -37,7 +37,7 @@ struct FramingGrid: View {
                         .offset(y: height * CGFloat(row) / 3 - height / 2)
                         .animation(
                             reduceMotion ? .easeOut(duration: 0.15)
-                                : StudioMotion.settle.delay(0.1 + Double(row - 1) * 0.05),
+                                : DS.Motion.settle.delay(0.1 + Double(row - 1) * 0.05),
                             value: drawn
                         )
                 }

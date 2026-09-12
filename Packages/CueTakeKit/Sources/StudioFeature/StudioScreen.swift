@@ -105,7 +105,7 @@ public struct StudioScreen: View {
                     model.showsGrid.toggle()
                 }
                 .opacity(model.showsGrid ? 1 : 0.55)
-                .studioMotion(StudioMotion.snap, reduced: reduceMotion, value: model.showsGrid)
+                .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: model.showsGrid)
 
                 DSCircleButton("⟲", fontSize: 14, style: .glass) {
                     model.setLandscape(!model.isLandscape)
@@ -113,7 +113,7 @@ public struct StudioScreen: View {
                 // The glyph turns with the thing it turns. A rotate button that does not rotate is
                 // the clearest case of a label describing an action the interface never performs.
                 .rotationEffect(.degrees(model.isLandscape ? -90 : 0))
-                .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.isLandscape)
+                .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.isLandscape)
             }
         }
     }
@@ -131,7 +131,7 @@ public struct StudioScreen: View {
                     // The current one widens rather than brightens: length survives a glance at
                     // arm's length, a colour shift on a 3pt bar does not.
                     .frame(width: isCurrent ? 22 : 16, height: 3)
-                    .studioMotion(StudioMotion.settle, reduced: reduceMotion, value: model.segmentIndex)
+                    .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.segmentIndex)
             }
 
             Text(model.project.estimatedTotalLabel)
@@ -312,7 +312,7 @@ public struct StudioScreen: View {
         .ignoresSafeArea()
         .contentShape(Rectangle())
         .onTapGesture { model.cancelCountdown() }
-        .studioMotion(StudioMotion.bloom, reduced: reduceMotion, value: value)
+        .dsMotion(DS.Motion.bloom, reduced: reduceMotion, value: value)
         .transition(.opacity)
     }
 
