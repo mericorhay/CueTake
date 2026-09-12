@@ -85,13 +85,13 @@ final class AppModel {
     /// What the store holds, newest first. The library screens read this rather than a sample.
     private(set) var library: [ProjectSummary] = []
 
-    var recentItems: [LibraryItem] {
+    var recentItems: [LibraryFeature.LibraryItem] {
         library.prefix(3).enumerated().map { index, summary in
             item(for: summary, at: index, height: 210)
         }
     }
 
-    var projectItems: [LibraryItem] {
+    var projectItems: [LibraryFeature.LibraryItem] {
         library.enumerated().map { index, summary in
             // The design's grid alternates tall and short cards; keeping that rhythm matters more
             // than any one card's height meaning something.
@@ -99,8 +99,8 @@ final class AppModel {
         }
     }
 
-    private func item(for summary: ProjectSummary, at index: Int, height: CGFloat) -> LibraryItem {
-        LibraryItem(
+    private func item(for summary: ProjectSummary, at index: Int, height: CGFloat) -> LibraryFeature.LibraryItem {
+        LibraryFeature.LibraryItem(
             id: summary.id,
             title: summary.title,
             meta: summary.updatedAt.formatted(.relative(presentation: .named)),
