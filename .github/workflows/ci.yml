@@ -1,9 +1,10 @@
 name: CI
 
+# Manual only. macOS runners bill at ten times the rate of Linux on a private
+# repo, so builds are batched and started deliberately:
+#   gh workflow run ci.yml -R Galapagos-GCS/CueTake
+# or Actions ▸ CI ▸ Run workflow.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 concurrency:

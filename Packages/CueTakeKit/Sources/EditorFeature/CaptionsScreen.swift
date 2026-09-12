@@ -172,14 +172,14 @@ public struct CaptionsScreen: View {
                 .padding(.bottom, 8)
 
             HStack(spacing: 7) {
-                ForEach(Style.allCases, id: .self) { option in
+                ForEach(Style.allCases, id: \.self) { option in
                     DSPill(option.label, isOn: style == option) { style = option }
                 }
             }
             .padding(.bottom, 14)
 
             HStack(spacing: 7) {
-                ForEach(Position.allCases, id: .self) { option in
+                ForEach(Position.allCases, id: \.self) { option in
                     DSPill(option.label, isOn: position == option) { position = option }
                 }
             }

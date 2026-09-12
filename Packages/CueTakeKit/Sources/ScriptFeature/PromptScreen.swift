@@ -104,7 +104,7 @@ public struct PromptScreen: View {
                 .dsCard(radius: DS.Radius.card, border: DS.Palette.hairline(0.09))
 
             FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
-                ForEach(Self.chipKeys, id: \.self) { key in
+                ForEach(Array(Self.chipKeys.enumerated()), id: \.offset) { _, key in
                     let label = String(localized: key, bundle: .module)
                     Button {
                         model.promptText = label
