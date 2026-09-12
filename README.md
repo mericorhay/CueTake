@@ -2,7 +2,7 @@
 
 AI Creator Camera for iOS. AI ile script oluştur → segmentlere böl → konuşurken seni takip eden teleprompter ile çek → timeline'da segmentleri düzenle → otomatik altyazı → sadece kötü segmenti tekrar çek → Reels / Shorts / TikTok olarak dışa aktar.
 
-> **Durum:** Proje iskeleti. Domain modelleri, protokoller, modül sınırları, lokalizasyon altyapısı ve testler var. Kamera, konuşma tanıma, AI, video düzenleme ve export henüz implement edilmedi; her engine için `Unimplemented…` placeholder'ı bulunuyor.
+> **Durum:** Tasarımın 17 ekranının tamamı SwiftUI olarak uygulandı. Kamera, konuşma tanıma, AI, video düzenleme ve export motorları hâlâ yer tutucu; ekranlar bunların yerine tasarımın kendi zamanlamalarıyla çalışıyor.
 
 ## Teknoloji
 
@@ -63,8 +63,8 @@ CueFlow/
 | **AIServices** | Capability bazlı AI protokolleri, `FoundationModelsProvider`, `RemoteAIProvider`, `AICapabilityRouter`. | Domain |
 | **Persistence** | `ProjectStore`, `ProjectLayout`, `ProjectDocumentCoder` (schema version kontrolü), `InMemoryProjectStore`, SwiftData `ProjectIndexEntry`. | Domain |
 | **WorkflowEngine** | `WorkflowRunner`, `WorkflowStepHandler`, devam ettirilebilir `WorkflowRunState`. Hiçbir capability modülünü import etmez; handler'ları app bağlar. | Domain |
-| **DesignSystem** | `Palette`, `Spacing`, `Radius`, `Motion`, `Font.cf…`, `PrimaryActionButton`, `RecordButton`, `PlaceholderScreen`. | — |
-| **Teleprompter** | `TeleprompterModel` (speech / sabit hız / manuel mod; manuel girdi her zaman kazanır) ve `TeleprompterView`. Ses bilmez, sadece `ScriptPosition` alır. | Domain, DesignSystem |
+| **DesignSystem** | Tasarımdan birebir alınan token'lar (`DS.Palette`, `DS.Radius`, `DS.Easing`), gömülü fontlar ve tipografi (`DS.archivo/sans/mono`, `DSHeadline`), sekiz keyframe animasyonu, cam yüzeyler ve temel kontroller (`DSPrimaryButton`, `DSPill`, `DSSlider`, `DSTabBar`, `FlowLayout`). | — |
+| **Teleprompter** | `TeleprompterModel` (yüzde tabanlı yerleşim, dört hazır düzen, sürükle-boyutlandır, Word / Line / Karaoke vurgulama) ve panel + ayar sayfası görünümleri. Ses bilmez, sadece `ScriptPosition` alır. | Domain, DesignSystem |
 | **LibraryFeature** | Proje listesi, oluştur / aç / sil. | Domain, DesignSystem, Persistence |
 | **ScriptFeature** | AI ile script, segment düzenleme (sırala, böl, birleştir, yeniden yaz). | Domain, DesignSystem, AIServices |
 | **StudioFeature** | Kamera önizleme + teleprompter overlay + kayıt + retake. Tek ekran, iki mod: tüm script veya tek segment. | Domain, DesignSystem, Teleprompter, CaptureEngine, SpeechEngine |
@@ -201,3 +201,39 @@ Bu iskelet Windows'ta oluşturuldu. Package CI'da derleniyor, ama `.xcodeproj` M
 ## CI
 
 `.github/workflows/ci.yml`, her push'ta paketi macOS runner'da derleyip iOS Simulator'de testleri koşar. Private repoda macOS dakikaları ücretsiz kotadan 10 kat hızlı düşer.
+
+## Tasarımın uygulanması
+
+Kaynak: Claude Design dosyası `CueFlow.dc.html` (17 ekranlık interaktif prototip). Renkler, boşluklar, köşe yarıçapları, tipografi ölçeği, gölgeler, animasyon eğrileri ve gecikmeler dosyadan birebir alındı.
+
+| Tasarım ekranı | Modül |
+|---|---|
+| onboarding | `OnboardingFeature` |
+| home, projects | `LibraryFeature` |
+| create, prompt, blueprint, script | `ScriptFeature` |
+| studio, recording, complete, retake | `StudioFeature` |
+| editor, captions, export | `EditorFeature` |
+| workflows, workflowDetail | `WorkflowsFeature` |
+| settings | `SettingsFeature` |
+| teleprompter paneli + ayar sayfası | `Teleprompter` |
+
+### Fontlar
+
+Tasarım Archivo, Instrument Sans ve JetBrains Mono kullanıyor; üçü de iOS'ta yok. Gerekli ağırlıklar `DesignSystem/Resources/Fonts` altına gömüldü ve çalışma anında kaydediliyor (`FontRegistry`), böylece Info.plist'e dokunmadan modül kendi kendine yeterli kalıyor. Üçü de SIL Open Font License; lisans dosyaları yanlarında duruyor.
+
+### Bilinçli olarak uygulanmayanlar
+
+Prototipin bir kısmı uygulamanın değil, önizlemenin parçası. Bunlar kopyalanmadı:
+
+- **Cihaz çerçevesi, sahte durum çubuğu, Dynamic Island ve home indicator.** Gerçek uygulamada bunları iOS çiziyor; kopyalamak gerçek olanın üstüne ikinci bir kopya çizmek olurdu.
+- **Portrait/Landscape anahtarı ve alttaki ekran haritası çipleri.** Prototipte gezinmek için var; uygulamada yönü cihaz, ekranı kullanıcının akışı belirliyor.
+
+### Doğruluk sınırları
+
+- **Cam yüzeyler.** CSS'teki `backdrop-filter: blur()` + `rgba()` ikilisinin SwiftUI'de birebir karşılığı yok. Blur için `Material`, renk için tasarımın kendi rgba değeri üst üste konuyor; Material kendi tonunu da kattığı için sonuç birkaç adım daha koyu olabilir.
+- **Sıkı satır yüksekliği.** Tasarımın başlıkları `line-height:.95`–`1` kullanıyor; SwiftUI tek bir `Text` içinde satır aralığını daraltamıyor. `DSHeadline` her satırı ayrı dizip kutu yüksekliğini birebir veriyor. Başlıkların satır sonları tasarımdaki gibi metnin kendi içinde tanımlı.
+- **Zamanlayıcılar.** Kayıt (135 ms/kelime), retake (130 ms), AI üretimi (850 ms/adım), export (1150 ms/aşama) ve workflow (900 ms/adım) şu an tasarımdaki sürelerle taklit ediliyor. Gerçek motorlar geldiğinde bu zamanlayıcılar `ScriptPosition`, export ilerlemesi ve `WorkflowRunner` olaylarıyla değişecek; ekranlar zaten bu değerleri okuyor.
+
+### Dil
+
+Tasarımın arayüz metinleri İngilizce, içerik metinleri Türkçe. String catalog'larda kaynak dil İngilizce ve değerler tasarımdaki metinlerin birebir aynısı; Türkçe çeviriler yanlarında. Yani uygulama İngilizce çalıştırıldığında ekranlar tasarımla kelimesi kelimesine aynı.

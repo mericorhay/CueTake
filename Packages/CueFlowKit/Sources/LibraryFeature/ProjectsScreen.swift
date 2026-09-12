@@ -61,9 +61,9 @@ public struct ProjectsScreen: View {
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.5))
         }
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: project.height, alignment: .bottomLeading)
-        .padding(12)
         .background(project.gradient)
         .overlay(alignment: .topTrailing) {
             Text(project.duration)

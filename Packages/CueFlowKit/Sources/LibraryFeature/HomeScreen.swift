@@ -224,8 +224,8 @@ public struct HomeScreen: View {
                 .dsFont(.sans, .regular, 11)
                 .foregroundStyle(DS.Palette.ink(0.5))
         }
-        .frame(width: 158, height: 210, alignment: .bottomLeading)
         .padding(13)
+        .frame(width: 158, height: 210, alignment: .bottomLeading)
         .background(item.gradient)
         .overlay(alignment: .topLeading) {
             durationChip(item.duration)

@@ -186,7 +186,7 @@ public struct TeleprompterSettingsSheet: View {
 
             DSSlider(
                 value: Binding(
-                    get: value.wrappedValue,
+                    get: { value.wrappedValue },
                     set: { newValue in
                         value.wrappedValue = newValue
                         onEdit?()
@@ -254,11 +254,5 @@ public struct TeleprompterSettingsSheet: View {
             }
         }
         .padding(.vertical, 7)
-    }
-}
-
-private extension Binding where Value == Double {
-    init(get: Double, set: @escaping (Double) -> Void) {
-        self.init(get: { get }, set: set)
     }
 }
