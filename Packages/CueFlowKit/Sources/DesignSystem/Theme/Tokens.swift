@@ -89,3 +89,12 @@ extension DS {
         public static let sheet: CGFloat = 30
     }
 }
+
+extension DS.Palette {
+    /// Segment colors in the design's order: hook, intro, point, example, CTA, custom.
+    /// Callers pass `segment.role.paletteIndex` so DesignSystem stays free of domain types.
+    public static func segment(at index: Int) -> Color {
+        let ramp = [accent, accentWarm, lime, accentWarm, ink, ink(0.6)]
+        return ramp.indices.contains(index) ? ramp[index] : ink
+    }
+}

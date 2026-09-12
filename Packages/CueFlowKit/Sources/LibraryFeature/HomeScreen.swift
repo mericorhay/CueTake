@@ -1,0 +1,296 @@
+import DesignSystem
+import Domain
+import SwiftUI
+
+/// Card shown in the Recent rail and the Projects grid.
+public struct LibraryItem: Identifiable, Hashable {
+    public let id: UUID
+    public var title: String
+    public var meta: String
+    public var duration: String
+    /// Index into the design's card tints.
+    public var tint: Int
+    /// Masonry height used by the Projects grid.
+    public var height: CGFloat
+
+    public init(
+        id: UUID = UUID(),
+        title: String,
+        meta: String,
+        duration: String,
+        tint: Int,
+        height: CGFloat = 200
+    ) {
+        self.id = id
+        self.title = title
+        self.meta = meta
+        self.duration = duration
+        self.tint = tint
+        self.height = height
+    }
+}
+
+extension LibraryItem {
+    /// The design's three recent cards.
+    public static let sampleRecents: [LibraryItem] = [
+        LibraryItem(title: "iPhone 17 Pro Max Camera", meta: "Edited 2h ago", duration: "0:30", tint: 0),
+        LibraryItem(title: "Studio Light Setup", meta: "Yesterday", duration: "0:45", tint: 1),
+        LibraryItem(title: "3 Editing Habits", meta: "Draft", duration: "1:02", tint: 2),
+    ]
+
+    /// `linear-gradient(165deg, <tint>, #121216)` from the design.
+    public var gradient: LinearGradient {
+        let top: Color
+        switch tint {
+        case 0: top = DS.Palette.accent(0.35)
+        case 1: top = DS.Palette.lime(0.22)
+        case 3: top = Color(hex: 0xFF7043, alpha: 0.32)
+        case 4: top = Color(hex: 0xF5F5F7, alpha: 0.16)
+        default: top = Color(hex: 0x17171C)
+        }
+        return LinearGradient(
+            colors: [top, Color(hex: 0x121216)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+public struct HomeScreen: View {
+    private let recents: [LibraryItem]
+    private let onCreate: () -> Void
+    private let onOpenProject: (LibraryItem) -> Void
+    private let onOpenAllProjects: () -> Void
+    private let onOpenWorkflow: () -> Void
+
+    public init(
+        recents: [LibraryItem] = LibraryItem.sampleRecents,
+        onCreate: @escaping () -> Void,
+        onOpenProject: @escaping (LibraryItem) -> Void,
+        onOpenAllProjects: @escaping () -> Void,
+        onOpenWorkflow: @escaping () -> Void
+    ) {
+        self.recents = recents
+        self.onCreate = onCreate
+        self.onOpenProject = onOpenProject
+        self.onOpenAllProjects = onOpenAllProjects
+        self.onOpenWorkflow = onOpenWorkflow
+    }
+
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+                createCard
+                recentSection
+                workflowSection
+            }
+            .padding(.top, 64)
+            .padding(.bottom, 108)
+        }
+        .scrollIndicators(.hidden)
+        .background(DS.Palette.screen)
+        .dsEnter(.screen())
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 0) {
+                DSKicker(
+                    String(localized: "home.greeting.stamp", bundle: .module),
+                    size: 11,
+                    tracking: 0.14,
+                    color: DS.Palette.ink(0.4)
+                )
+                DSHeadline(
+                    String(localized: "home.greeting.title", bundle: .module),
+                    size: 34
+                )
+                .padding(.top, 10)
+            }
+
+            Spacer(minLength: 0)
+
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [DS.Palette.accentWarm, DS.Palette.accent],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 38, height: 38)
+                .padding(.top, 22)
+        }
+        .padding(.horizontal, 22)
+    }
+
+    // MARK: - Create
+
+    private var createCard: some View {
+        Button(action: onCreate) {
+            ZStack(alignment: .topLeading) {
+                VStack(alignment: .leading, spacing: 0) {
+                    DSKicker(
+                        String(localized: "home.create.kicker", bundle: .module),
+                        size: 10,
+                        tracking: 0.18,
+                        color: DS.Palette.inkInverse(0.6)
+                    )
+                    DSHeadline(
+                        String(localized: "home.create.title", bundle: .module),
+                        size: 30,
+                        color: DS.Palette.inkInverse
+                    )
+                    .padding(.top, 38)
+                    Text("home.create.subtitle", bundle: .module)
+                        .dsFont(.sans, .regular, 13)
+                        .foregroundStyle(DS.Palette.inkInverse(0.66))
+                        .padding(.top, 6)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(24)
+            .background(
+                LinearGradient(
+                    colors: [DS.Palette.accent, DS.Palette.accentWarm],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .overlay(SweepShine())
+            .overlay(alignment: .bottomTrailing) {
+                Text("→")
+                    .font(.system(size: 20))
+                    .foregroundStyle(DS.Palette.accent)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(DS.Palette.inkInverse))
+                    .padding(22)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.hero, style: .continuous))
+            .shadow(color: DS.Palette.accent(0.32), radius: 30, y: 24)
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 22)
+        .padding(.top, 26)
+    }
+
+    // MARK: - Recent
+
+    private var recentSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                sectionLabel(String(localized: "home.section.recent", bundle: .module))
+                Spacer(minLength: 0)
+                Button(action: onOpenAllProjects) {
+                    Text("home.recent.all", bundle: .module)
+                        .dsFont(.sans, .medium, 13)
+                        .foregroundStyle(DS.Palette.accent)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 22)
+            .padding(.top, 32)
+            .padding(.bottom, 12)
+
+            ScrollView(.horizontal) {
+                HStack(spacing: 13) {
+                    ForEach(recents) { item in
+                        Button {
+                            onOpenProject(item)
+                        } label: {
+                            recentCard(item)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.bottom, 4)
+            }
+            .scrollIndicators(.hidden)
+        }
+    }
+
+    private func recentCard(_ item: LibraryItem) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Spacer(minLength: 0)
+            Text(item.title)
+                .dsFont(.archivo, .bold, 15, lineHeight: 1.15)
+                .foregroundStyle(DS.Palette.ink)
+                .multilineTextAlignment(.leading)
+            Text(item.meta)
+                .dsFont(.sans, .regular, 11)
+                .foregroundStyle(DS.Palette.ink(0.5))
+        }
+        .frame(width: 158, height: 210, alignment: .bottomLeading)
+        .padding(13)
+        .background(item.gradient)
+        .overlay(alignment: .topLeading) {
+            durationChip(item.duration)
+                .padding(11)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+    }
+
+    private func durationChip(_ text: String) -> some View {
+        Text(text)
+            .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
+            .foregroundStyle(DS.Palette.ink)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .dsGlass(
+                tint: DS.Palette.inkInverse(0.5),
+                in: RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous),
+                border: nil
+            )
+    }
+
+    // MARK: - Workflows
+
+    private var workflowSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel(String(localized: "home.section.workflows", bundle: .module))
+
+            Button(action: onOpenWorkflow) {
+                HStack(spacing: 13) {
+                    Text("PR")
+                        .dsFont(.archivo, .bold, 13)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .frame(width: 34, height: 34)
+                        .background(
+                            RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous)
+                                .fill(DS.Palette.lime)
+                        )
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("home.workflow.name", bundle: .module)
+                            .dsFont(.sans, .semibold, 14)
+                            .foregroundStyle(DS.Palette.ink)
+                        Text("home.workflow.meta", bundle: .module)
+                            .dsFont(.mono, .medium, 11)
+                            .foregroundStyle(DS.Palette.ink(0.4))
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Text("›")
+                        .font(.system(size: 17))
+                        .foregroundStyle(DS.Palette.ink(0.3))
+                }
+                .padding(15)
+                .dsCard(radius: 18)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 30)
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .dsFont(.sans, .semibold, 13, letterSpacing: 0.12)
+            .foregroundStyle(DS.Palette.ink(0.45))
+    }
+}
