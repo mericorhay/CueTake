@@ -38,16 +38,12 @@ public struct StudioScreen: View {
                 )
 
                 topBar
-                    .frame(maxHeight: .infinity, alignment: .top)
+                    .studioTopBarInsets(isLandscape: model.isLandscape)
 
                 controls
-                    .frame(maxHeight: .infinity, alignment: .bottom)
 
                 if model.teleprompter.isSettingsOpen {
-                    TeleprompterSettingsSheet(model: model.teleprompter)
-                        .padding(.horizontal, 14)
-                        .padding(.bottom, 116)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
+                    settingsSheet
                 }
             }
         }
@@ -63,9 +59,11 @@ public struct StudioScreen: View {
     @ViewBuilder
     private var topBar: some View {
         if model.phase == .recording {
-            recordingStatus
-                .padding(.horizontal, 18)
-                .padding(.top, 56)
+            HStack {
+                Spacer(minLength: 0)
+                recordingStatus
+                Spacer(minLength: 0)
+            }
         } else {
             HStack(alignment: .top, spacing: 10) {
                 DSCircleButton("←", style: .glass, action: onBack)
@@ -79,8 +77,6 @@ public struct StudioScreen: View {
                     model.teleprompter.setLandscape(model.isLandscape)
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 56)
         }
     }
 
@@ -160,40 +156,43 @@ public struct StudioScreen: View {
     @ViewBuilder
     private var controls: some View {
         if model.phase == .recording {
-            Button {
-                model.stopRecording()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(DS.Palette.hairline(0.1))
-                        .overlay(Circle().stroke(DS.Palette.hairline(0.6), lineWidth: 3))
-                        .frame(width: 76, height: 76)
-
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(DS.Palette.accent)
-                        .frame(width: 28, height: 28)
-                        .dsPulse(duration: 1.6)
-                }
+            StudioControlCluster(isLandscape: model.isLandscape) {
+                EmptyView()
+            } center: {
+                stopButton
+            } trailing: {
+                EmptyView()
             }
-            .buttonStyle(.plain)
-            .padding(.bottom, 30)
         } else {
-            HStack {
-                DSCircleButton("Aa", size: 48, fontSize: 15, style: .glass) {
+            StudioControlCluster(isLandscape: model.isLandscape) {
+                DSCircleButton("Aa", size: 48, font: DS.archivo(.semibold, 15), style: .glass) {
                     model.teleprompter.isSettingsOpen.toggle()
                 }
-
-                Spacer(minLength: 0)
-
+            } center: {
                 shutter
-
-                Spacer(minLength: 0)
-
+            } trailing: {
                 DSCircleButton("⤢", size: 48, fontSize: 17, style: .glass, action: onOpenEditor)
             }
-            .padding(.horizontal, 34)
-            .padding(.bottom, 30)
         }
+    }
+
+    private var stopButton: some View {
+        Button {
+            model.stopRecording()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(DS.Palette.hairline(0.1))
+                    .overlay(Circle().stroke(DS.Palette.hairline(0.6), lineWidth: 3))
+                    .frame(width: 76, height: 76)
+
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(DS.Palette.accent)
+                    .frame(width: 28, height: 28)
+                    .dsPulse(duration: 1.6)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private var shutter: some View {
@@ -216,5 +215,22 @@ public struct StudioScreen: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    /// Portrait docks the sheet above the controls; landscape pins it beside the right-hand column.
+    @ViewBuilder
+    private var settingsSheet: some View {
+        if model.isLandscape {
+            TeleprompterSettingsSheet(model: model.teleprompter)
+                .frame(width: 290)
+                .padding(.vertical, 14)
+                .padding(.trailing, 124)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        } else {
+            TeleprompterSettingsSheet(model: model.teleprompter)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 116)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }
     }
 }

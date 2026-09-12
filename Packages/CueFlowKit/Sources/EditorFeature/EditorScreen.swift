@@ -83,6 +83,7 @@ public struct EditorScreen: View {
             .fill(DS.Palette.camera)
             .frame(height: 212)
             .padding(.horizontal, 18)
+            .padding(.top, 4)
     }
 
     private var transport: some View {

@@ -231,7 +231,7 @@ Prototipin bir kısmı uygulamanın değil, önizlemenin parçası. Bunlar kopya
 ### Doğruluk sınırları
 
 - **Cam yüzeyler.** CSS'teki `backdrop-filter: blur()` + `rgba()` ikilisinin SwiftUI'de birebir karşılığı yok. Blur için `Material`, renk için tasarımın kendi rgba değeri üst üste konuyor; Material kendi tonunu da kattığı için sonuç birkaç adım daha koyu olabilir.
-- **Sıkı satır yüksekliği.** Tasarımın başlıkları `line-height:.95`–`1` kullanıyor; SwiftUI tek bir `Text` içinde satır aralığını daraltamıyor. `DSHeadline` her satırı ayrı dizip kutu yüksekliğini birebir veriyor. Başlıkların satır sonları tasarımdaki gibi metnin kendi içinde tanımlı.
+- **Sıkı satır yüksekliği.** Tasarımın başlıkları `line-height:.95`–`1` kullanıyor; SwiftUI tek bir `Text` içinde satır aralığını daraltamıyor. `DSHeadline` her satırı ayrı dizip kutu yüksekliğini birebir veriyor ve tasarımdaki gibi satır sonları metnin kendi içinde tanımlı. Geriye tek bir yer kalıyor: kart başlıkları gibi kendiliğinden alt satıra taşan metinler (`line-height:1.15`). Orada satır aralığı fontun doğal değerinde kalıyor, yani iki satırlık bir kart başlığı tasarımdakinden birkaç punto uzun görünebilir.
 - **Zamanlayıcılar.** Kayıt (135 ms/kelime), retake (130 ms), AI üretimi (850 ms/adım), export (1150 ms/aşama) ve workflow (900 ms/adım) şu an tasarımdaki sürelerle taklit ediliyor. Gerçek motorlar geldiğinde bu zamanlayıcılar `ScriptPosition`, export ilerlemesi ve `WorkflowRunner` olaylarıyla değişecek; ekranlar zaten bu değerleri okuyor.
 
 ### Dil

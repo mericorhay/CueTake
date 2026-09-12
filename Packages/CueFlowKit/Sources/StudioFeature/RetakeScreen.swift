@@ -228,7 +228,7 @@ public struct RetakeScreen: View {
             }
             .padding(.bottom, 14)
 
-            HStack(spacing: 10) {
+            FlexRow(spacing: 10, weights: [1, 1.3]) {
                 DSSecondaryButton(
                     String(localized: "retake.shootAgain", bundle: .module),
                     verticalPadding: 16
@@ -246,7 +246,6 @@ public struct RetakeScreen: View {
                 ) {
                     onKeep(model.choice)
                 }
-                .layoutPriority(1.3)
             }
         }
         .dsEnter(.rise(duration: 0.4))

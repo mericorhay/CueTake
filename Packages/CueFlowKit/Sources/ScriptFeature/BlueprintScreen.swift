@@ -176,7 +176,7 @@ public struct BlueprintScreen: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 10) {
+        FlexRow(spacing: 10, weights: [1, 1.4]) {
             DSSecondaryButton(
                 String(localized: "blueprint.script", bundle: .module),
                 action: onOpenScript
@@ -185,7 +185,6 @@ public struct BlueprintScreen: View {
                 String(localized: "blueprint.studio", bundle: .module),
                 action: onOpenStudio
             )
-            .layoutPriority(1.4)
         }
         .padding(.horizontal, 22)
         .padding(.top, 10)

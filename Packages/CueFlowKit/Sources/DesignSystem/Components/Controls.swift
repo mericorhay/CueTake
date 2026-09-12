@@ -8,6 +8,9 @@ public struct DSCircleButton: View {
     private let glyph: String
     private let size: CGFloat
     private let fontSize: CGFloat
+    /// Set when the glyph is type rather than a symbol — the studio's "Aa" is Archivo in the
+    /// design, while the arrows and crosses are drawn in the system face at a given size.
+    private let font: Font?
     private let style: Style
     private let action: () -> Void
 
@@ -15,12 +18,14 @@ public struct DSCircleButton: View {
         _ glyph: String,
         size: CGFloat = 36,
         fontSize: CGFloat = 16,
+        font: Font? = nil,
         style: Style = .flat,
         action: @escaping () -> Void
     ) {
         self.glyph = glyph
         self.size = size
         self.fontSize = fontSize
+        self.font = font
         self.style = style
         self.action = action
     }
@@ -28,7 +33,7 @@ public struct DSCircleButton: View {
     public var body: some View {
         Button(action: action) {
             Text(glyph)
-                .font(.system(size: fontSize))
+                .font(font ?? .system(size: fontSize))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: size, height: size)
         }
