@@ -3,6 +3,7 @@ import EditorFeature
 import MediaEngine
 import Observation
 import Persistence
+import Photos
 import PhotosUI
 import ScriptFeature
 import SettingsFeature
@@ -121,6 +122,63 @@ final class AppModel {
         project.updatedAt = .now
         scheduleSave()
         openEditor()
+    }
+
+    // MARK: - Export
+
+    /// Composes the timeline and writes it out, moving the export screen's stages as it goes.
+    ///
+    /// The screen does not know how to build a video and should not learn; it asks, and this
+    /// answers. Stages are advanced from the work rather than a timer, so a long write shows as a
+    /// long stage instead of a progress bar that finishes before the file does.
+    func exportProject() async {
+        exportModel.begin()
+
+        let store = dependencies.projectStore
+        guard let mediaDirectory = try? await store.mediaDirectory(for: project.id) else {
+            exportModel.fail(String(localized: "export.failed.media"))
+            return
+        }
+
+        let composer = VideoComposer()
+        let project = project
+        let destination = FileManager.default.temporaryDirectory
+            .appending(path: "\(project.id.uuidString).mov", directoryHint: .notDirectory)
+
+        do {
+            let composition = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
+            exportModel.advance(to: 2)
+
+            let url = try await composer.write(
+                composition,
+                preset: ExportPreset(
+                    format: project.segments.first?.selectedTake != nil
+                        ? .vertical1080
+                        : ExportPreset.shortFormVertical.format,
+                    burnsInCaptions: false,
+                    destination: settingsModel.settings.exportDestination
+                ),
+                to: destination
+            )
+            exportModel.advance(to: 3)
+
+            if settingsModel.settings.exportDestination == .photoLibrary {
+                try await Self.saveToPhotoLibrary(url)
+            }
+            exportModel.succeed(url: url)
+        } catch {
+            exportModel.fail(String(localized: "export.failed.generic"))
+        }
+    }
+
+    /// Asks only for permission to add, never to read: the app writes one video and has no business
+    /// with the rest of someone's library.
+    private static func saveToPhotoLibrary(_ url: URL) async throws {
+        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        guard status == .authorized || status == .limited else { return }
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
+        }
     }
 
     // MARK: - Persistence

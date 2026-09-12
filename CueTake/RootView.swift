@@ -155,6 +155,7 @@ struct RootView: View {
         case .export:
             ExportScreen(
                 model: model.exportModel,
+                onRender: { Task { await model.exportProject() } },
                 onBack: { model.openEditor() },
                 onDone: { model.finishExport() }
             )

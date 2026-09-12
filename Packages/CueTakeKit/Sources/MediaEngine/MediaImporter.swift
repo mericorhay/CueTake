@@ -10,11 +10,11 @@ import Foundation
 /// recorded ones, because the model never cared where a `Recording` came from — the comment on
 /// `Take` already described this case: one file, split into segments by different `sourceRange`s.
 public struct MediaImporter: Sendable {
-    private let fileManager: FileManager
+    /// Reached through `.default` rather than stored: `FileManager` is not `Sendable`, and the
+    /// operations used here are the ones Foundation documents as safe from any thread.
+    private var fileManager: FileManager { .default }
 
-    public init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
-    }
+    public init() {}
 
     public enum ImportError: Error, Hashable, Sendable {
         case unreadable(URL)

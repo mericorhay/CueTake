@@ -8,58 +8,71 @@ import SwiftUI
 public final class ExportModel {
     /// 0 = not started, 1...4 = the stage currently running, 4 = finished.
     public private(set) var stage = 0
-    private var task: Task<Void, Never>?
+
+    /// Where the finished file landed, once there is one.
+    public private(set) var outputURL: URL?
+    /// Set when the export could not finish. Shown instead of pretending it did.
+    public private(set) var failure: String?
 
     public init() {}
 
-    public var isIdle: Bool { stage == 0 }
+    public var isIdle: Bool { stage == 0 && failure == nil }
     public var isDone: Bool { stage >= 4 }
+    public var isRunning: Bool { stage > 0 && stage < 4 }
 
-    /// The design advances a stage every 1150ms. VideoExporting replaces this with real progress.
-    public func run() {
-        guard task == nil else { return }
+    // The stages used to be a timer, because there was nothing to time. They are now driven by the
+    // work itself: the screen does not know how to compose a video and should not learn, so
+    // whoever does the composing moves this along.
+
+    public func begin() {
+        failure = nil
+        outputURL = nil
         stage = 1
-        task = Task { [weak self] in
-            for next in 2...5 {
-                try? await Task.sleep(for: .milliseconds(1150))
-                guard let self, !Task.isCancelled else { return }
-                if next > 4 {
-                    task = nil
-                    return
-                }
-                stage = next
-            }
-        }
     }
 
-    /// Cancels the running timer without touching what is already on screen, the way the design
-    /// clears its intervals on every navigation.
-    public func stopTimers() {
-        task?.cancel()
-        task = nil
+    public func advance(to next: Int) {
+        guard next > stage, next < 4 else { return }
+        stage = next
     }
+
+    public func succeed(url: URL) {
+        outputURL = url
+        stage = 4
+    }
+
+    public func fail(_ reason: String) {
+        failure = reason
+        stage = 0
+    }
+
+    /// Nothing ticks here any more; the export runs where the work is. Kept so navigation can
+    /// treat every model the same way.
+    public func stopTimers() {}
 
     public func reset() {
-        task?.cancel()
-        task = nil
         stage = 0
+        outputURL = nil
+        failure = nil
     }
 }
 
 public struct ExportScreen: View {
     @Bindable private var model: ExportModel
     private let captionStyleName: String
+    private let onRender: () -> Void
     private let onBack: () -> Void
     private let onDone: () -> Void
 
     public init(
         model: ExportModel,
         captionStyleName: String = "pop",
+        onRender: @escaping () -> Void,
         onBack: @escaping () -> Void,
         onDone: @escaping () -> Void
     ) {
         self.model = model
         self.captionStyleName = captionStyleName
+        self.onRender = onRender
         self.onBack = onBack
         self.onDone = onDone
     }
@@ -98,8 +111,17 @@ public struct ExportScreen: View {
                     verticalPadding: 19,
                     fontSize: 16
                 ) {
-                    model.run()
+                    onRender()
                 }
+            }
+
+            if let failure = model.failure {
+                Text(failure)
+                    .dsFont(.sans, .regular, 12)
+                    .foregroundStyle(DS.Palette.accent)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 10)
             }
         }
         .padding(.horizontal, 22)
