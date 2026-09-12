@@ -4,9 +4,6 @@ import Foundation
 
 /// Builds the finished video out of the timeline, and writes it to a file.
 ///
-/// This is the half of the app that makes everything before it worth doing: until a file comes out
-/// the other end, trimming and reordering are a drawing of an edit rather than an edit.
-///
 /// Composition rather than re-encoding per clip: `AVMutableComposition` references the source files
 /// and describes what to play from where, so assembling a video is nearly free and only the final
 /// write costs anything. It is also why a retake is cheap — one segment's range changes and the
@@ -21,14 +18,19 @@ public struct VideoComposer: Sendable {
         case exportFailed(String)
     }
 
-    /// Assembles the project's selected takes, in segment order, into one composition.
+    /// A composition plus the instructions that say how each clip is framed inside it.
+    public struct Assembled: @unchecked Sendable {
+        public var composition: AVMutableComposition
+        /// Travels with the composition everywhere. The export needs it, and so does the preview,
+        /// or the editor shows something the exported file will not match.
+        public var videoComposition: AVMutableVideoComposition
+    }
+
+    /// Assembles the project's selected takes, in segment order.
     ///
     /// - Parameter mediaDirectory: where `Recording.relativePath` resolves against. The document
     ///   stores paths relative to the project because the container path changes between installs.
-    public func compose(
-        project: Project,
-        mediaDirectory: URL
-    ) async throws -> AVMutableComposition {
+    public func compose(project: Project, mediaDirectory: URL) async throws -> Assembled {
         let composition = AVMutableComposition()
         guard
             let videoTrack = composition.addMutableTrack(
@@ -42,16 +44,19 @@ public struct VideoComposer: Sendable {
         else { throw ComposeError.nothingToCompose }
 
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
+        let renderSize = CGSize(
+            width: CGFloat(project.format.renderSize.width),
+            height: CGFloat(project.format.renderSize.height)
+        )
+
         var cursor = CMTime.zero
-        var appended = 0
+        var instructions: [AVMutableVideoCompositionInstruction] = []
 
         for segment in project.segments {
             guard let take = segment.selectedTake,
                   let recording = recordings[take.recordingID]
             else { continue }
 
-            // The file name is the last component; the directory is the project's, which is what
-            // makes a project movable between devices.
             let url = mediaDirectory.appending(
                 path: (recording.relativePath as NSString).lastPathComponent,
                 directoryHint: .notDirectory
@@ -62,10 +67,15 @@ public struct VideoComposer: Sendable {
                 throw ComposeError.noVideoTrack(recording.id)
             }
 
-            let range = CMTimeRange(
-                start: CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600),
-                duration: CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
-            )
+            // Clamped to what the file actually contains. Trimming a segment longer than its
+            // recording asked AVFoundation for time that does not exist, which it answers by
+            // trapping — that was the crash on export.
+            let assetDuration = try await asset.load(.duration)
+            let start = CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600)
+            guard start < assetDuration else { continue }
+            let wanted = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
+            let range = CMTimeRange(start: start, duration: min(wanted, assetDuration - start))
+            guard range.duration.seconds > 0.01 else { continue }
 
             try videoTrack.insertTimeRange(range, of: sourceVideo, at: cursor)
             // Audio is optional on purpose: a clip with no audio track is a legitimate thing to
@@ -74,33 +84,78 @@ public struct VideoComposer: Sendable {
                 try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)
             }
 
-            // Orientation lives on the source track, and dropping it is how an imported clip ends
-            // up sideways in the export while looking upright everywhere else.
-            videoTrack.preferredTransform = try await sourceVideo.load(.preferredTransform)
+            let natural = try await sourceVideo.load(.naturalSize)
+            let preferred = try await sourceVideo.load(.preferredTransform)
+
+            let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
+            layer.setTransform(Self.fit(natural: natural, preferred: preferred, into: renderSize), at: cursor)
+
+            let instruction = AVMutableVideoCompositionInstruction()
+            instruction.timeRange = CMTimeRange(start: cursor, duration: range.duration)
+            instruction.layerInstructions = [layer]
+            instructions.append(instruction)
 
             cursor = cursor + range.duration
-            appended += 1
         }
 
-        guard appended > 0 else { throw ComposeError.nothingToCompose }
-        return composition
+        guard !instructions.isEmpty else { throw ComposeError.nothingToCompose }
+
+        let videoComposition = AVMutableVideoComposition()
+        videoComposition.renderSize = renderSize
+        videoComposition.frameDuration = CMTime(
+            value: 1,
+            timescale: CMTimeScale(max(24, project.format.frameRate))
+        )
+        videoComposition.instructions = instructions
+
+        return Assembled(composition: composition, videoComposition: videoComposition)
     }
 
-    /// Writes the composition to a file.
-    public func write(
-        _ composition: AVMutableComposition,
-        preset: ExportPreset,
-        to destination: URL
-    ) async throws -> URL {
+    /// Places one clip inside the render frame.
+    ///
+    /// Fit rather than fill. Filling a landscape clip into a vertical frame throws away three
+    /// quarters of the width, which on a talking-head shot means throwing away the head. Bars are
+    /// honest about what the footage is; a crop silently destroys the take. Per-clip crop and zoom
+    /// belong to the user, not to an exporter acting behind their back.
+    ///
+    /// `preferredTransform` is applied first — it is what makes a portrait clip portrait, and
+    /// ignoring it is why footage comes back sideways — and its origin is normalised, because a
+    /// rotation leaves the content sitting in negative space.
+    static func fit(natural: CGSize, preferred: CGAffineTransform, into render: CGSize) -> CGAffineTransform {
+        let rotated = CGRect(origin: .zero, size: natural).applying(preferred)
+        let display = CGSize(width: abs(rotated.width), height: abs(rotated.height))
+        guard display.width > 0, display.height > 0, render.width > 0, render.height > 0 else {
+            return preferred
+        }
+
+        let scale = min(render.width / display.width, render.height / display.height)
+        let scaled = CGSize(width: display.width * scale, height: display.height * scale)
+
+        return preferred
+            .concatenating(CGAffineTransform(translationX: -rotated.origin.x, y: -rotated.origin.y))
+            .concatenating(CGAffineTransform(scaleX: scale, y: scale))
+            .concatenating(
+                CGAffineTransform(
+                    translationX: (render.width - scaled.width) / 2,
+                    y: (render.height - scaled.height) / 2
+                )
+            )
+    }
+
+    /// Writes the assembled video to a file.
+    public func write(_ assembled: Assembled, to destination: URL) async throws -> URL {
         try? FileManager.default.removeItem(at: destination)
 
-        let presetName = preset.format.resolution == .uhd4K
-            ? AVAssetExportPreset3840x2160
-            : AVAssetExportPreset1920x1080
-
-        guard let session = AVAssetExportSession(asset: composition, presetName: presetName) else {
+        // A passthrough preset ignores the video composition and hands back the source frames,
+        // sideways and unscaled. The render size lives in the composition, so the preset only has
+        // to be one that re-encodes.
+        guard let session = AVAssetExportSession(
+            asset: assembled.composition,
+            presetName: AVAssetExportPresetHighestQuality
+        ) else {
             throw ComposeError.exportFailed("no export session")
         }
+        session.videoComposition = assembled.videoComposition
 
         do {
             try await session.export(to: destination, as: .mov)

@@ -54,7 +54,7 @@ public final class EditorModel {
             teardownPlayer()
             return
         }
-        guard let composition = try? await VideoComposer().compose(
+        guard let assembled = try? await VideoComposer().compose(
             project: project,
             mediaDirectory: mediaDirectory
         ) else {
@@ -63,7 +63,11 @@ public final class EditorModel {
         }
 
         teardownPlayer()
-        let player = AVPlayer(playerItem: AVPlayerItem(asset: composition))
+        let item = AVPlayerItem(asset: assembled.composition)
+        // Without this the preview plays raw source frames while the export applies the framing,
+        // which is the worst kind of editor: one that shows you something it will not deliver.
+        item.videoComposition = assembled.videoComposition
+        let player = AVPlayer(playerItem: item)
         // Often enough to look continuous, rarely enough not to fight the scrub.
         timeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.03, preferredTimescale: 600),
@@ -155,7 +159,7 @@ public final class EditorModel {
     }
 
     public func skipToStart() {
-        playhead = 0
+        seek(to: 0)
     }
 
     public func seek(to seconds: Double) {
@@ -205,7 +209,15 @@ public final class EditorModel {
     /// lays out against. Same gesture, and the caller does not have to know which case it is in.
     public func setDuration(_ seconds: Double, forSegmentAt index: Int) {
         guard project.segments.indices.contains(index) else { return }
-        let clamped = max(0.4, seconds)
+        var clamped = max(0.4, seconds)
+
+        // A segment cannot be longer than the footage behind it. Dragging past the end used to be
+        // allowed, and the export found out the hard way.
+        if let take = project.segments[index].selectedTake,
+           let recording = project.recordings.first(where: { $0.id == take.recordingID }) {
+            clamped = min(clamped, recording.duration.seconds - take.sourceRange.start.seconds)
+            guard clamped > 0.1 else { return }
+        }
 
         if let takeID = project.segments[index].selectedTakeID,
            let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }) {

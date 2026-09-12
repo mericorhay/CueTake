@@ -120,7 +120,9 @@ final class AppModel {
 
     /// Drives the photo picker.
     var isPickingFootage = false
-    private(set) var isImporting = false
+    /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
+    /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
+    private(set) var busy: String?
 
     /// Turns picked clips into segments, in the order they were chosen.
     ///
@@ -129,8 +131,8 @@ final class AppModel {
     /// without knowing the footage was not shot here.
     func importFootage(_ items: [PhotosPickerItem]) async {
         guard !items.isEmpty else { return }
-        isImporting = true
-        defer { isImporting = false }
+        busy = String(localized: "busy.importing")
+        defer { busy = nil }
 
         let store = dependencies.projectStore
 
@@ -147,12 +149,18 @@ final class AppModel {
         let importer = MediaImporter()
 
         for (index, item) in items.enumerated() {
+            busy = String(localized: "busy.importing.progress \(index + 1) \(items.count)")
             guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
                   let clip = try? await importer.importClip(from: movie.url, into: mediaDirectory)
             else { continue }
 
             try? FileManager.default.removeItem(at: movie.url)
 
+            if fresh.recordings.isEmpty {
+                // Otherwise every import would be forced into the default vertical frame, which is
+                // how a landscape clip came back letterboxed into a shape nobody asked for.
+                fresh.format = clip.recording.format
+            }
             fresh.recordings.append(clip.recording)
             fresh.segments.append(
                 Segment(
@@ -239,20 +247,10 @@ final class AppModel {
             .appending(path: "\(project.id.uuidString).mov", directoryHint: .notDirectory)
 
         do {
-            let composition = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
+            let assembled = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
             exportModel.advance(to: 2)
 
-            let url = try await composer.write(
-                composition,
-                preset: ExportPreset(
-                    format: project.segments.first?.selectedTake != nil
-                        ? .vertical1080
-                        : ExportPreset.shortFormVertical.format,
-                    burnsInCaptions: false,
-                    destination: settingsModel.settings.exportDestination
-                ),
-                to: destination
-            )
+            let url = try await composer.write(assembled, to: destination)
             exportModel.advance(to: 3)
 
             if settingsModel.settings.exportDestination == .photoLibrary {
@@ -414,6 +412,8 @@ final class AppModel {
     /// having bothered until asked.
     func transcribeNewTakes() async {
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
+        busy = String(localized: "busy.transcribing")
+        defer { busy = nil }
         let speech = dependencies.speech
         let locale = project.localeIdentifier
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })

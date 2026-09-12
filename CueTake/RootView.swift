@@ -42,6 +42,12 @@ struct RootView: View {
                     .ignoresSafeArea(.container)
             }
         }
+        .overlay {
+            if let busy = model.busy {
+                BusyOverlay(message: busy)
+            }
+        }
+        .animation(DS.Motion.settle, value: model.busy)
         .animation(DS.Easing.ease(0.22), value: model.screen)
         // Bound here rather than inside CreateScreen: the picker outlives that screen's identity,
         // and the import writes to the project, which is this layer's business.

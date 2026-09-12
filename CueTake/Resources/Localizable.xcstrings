@@ -1,6 +1,57 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "busy.importing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bringing in your clips…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klipler alınıyor…"
+          }
+        }
+      }
+    },
+    "busy.importing.progress %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$lld of %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$lld klipten %1$lld."
+          }
+        }
+      }
+    },
+    "busy.transcribing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening to what you said…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne söylediğin dinleniyor…"
+          }
+        }
+      }
+    },
     "export.failed.generic": {
       "extractionState": "manual",
       "localizations": {
