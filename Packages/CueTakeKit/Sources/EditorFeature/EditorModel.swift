@@ -43,9 +43,6 @@ public final class EditorModel {
         self.project = project
     }
 
-    deinit {
-        if let timeObserver { player?.removeTimeObserver(timeObserver) }
-    }
 
     /// Builds the composition and hands it to a player.
     ///
@@ -73,8 +70,8 @@ public final class EditorModel {
             queue: .main
         ) { [weak self] time in
             MainActor.assumeIsolated {
-                guard let self, !isScrubbing, isPlaying else { return }
-                playhead = min(time.seconds, duration)
+                guard let self, !self.isScrubbing, self.isPlaying else { return }
+                self.playhead = min(time.seconds, self.duration)
             }
         }
         self.player = player
