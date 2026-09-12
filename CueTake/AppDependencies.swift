@@ -32,7 +32,7 @@ struct AppDependencies {
         projectStore: makeProjectStore(),
         settingsStore: UserDefaultsSettingsStore(),
         camera: UnimplementedCameraCapture(),
-        speech: UnimplementedSpeechTranscriber(),
+        speech: SystemSpeechTranscriber(),
         scriptTracker: UnimplementedScriptTracker(),
         composer: UnimplementedMediaComposer(),
         exporter: UnimplementedVideoExporter(),

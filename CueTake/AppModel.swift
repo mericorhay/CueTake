@@ -178,6 +178,7 @@ final class AppModel {
         adopt(fresh)
         await refreshLibrary()
         go(to: .editor)
+        await transcribeNewTakes()
     }
 
     /// Opens a project from the library. The one the user tapped, which is not always the one
@@ -385,6 +386,7 @@ final class AppModel {
         project.updatedAt = .now
         scheduleSave()
         await refreshLibrary()
+        await transcribeNewTakes()
     }
 
     /// The studio finished. Fold the capture in before the Complete screen claims there is one.
@@ -402,6 +404,46 @@ final class AppModel {
         retakeModel.start(
             writingTo: mediaDirectory.appending(path: "\(UUID().uuidString).mov", directoryHint: .notDirectory)
         )
+    }
+
+    /// Transcribes every take that has no transcript yet, and writes the captions that follow.
+    ///
+    /// Runs after footage arrives rather than on demand: by the time the user opens the captions
+    /// screen they expect words to be there, and a spinner at that moment reads as the app not
+    /// having bothered until asked.
+    func transcribeNewTakes() async {
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
+        let speech = dependencies.speech
+        let locale = project.localeIdentifier
+        let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
+
+        for index in project.segments.indices {
+            guard let takeID = project.segments[index].selectedTakeID,
+                  let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }),
+                  project.segments[index].takes[takeIndex].transcript == nil,
+                  let recording = recordings[project.segments[index].takes[takeIndex].recordingID]
+            else { continue }
+
+            let url = mediaDirectory.appending(
+                path: (recording.relativePath as NSString).lastPathComponent,
+                directoryHint: .notDirectory
+            )
+            guard let transcript = try? await speech.transcribeFile(at: url, localeIdentifier: locale) else { continue }
+
+            project.segments[index].takes[takeIndex].transcript = transcript
+            project.segments[index].captions = CaptionBuilder.cues(
+                from: transcript,
+                maxWordsPerCue: project.captionStyle.maxWordsPerCue
+            )
+            // The script is what the prompter shows; for imported footage there was none, so what
+            // was actually said becomes it.
+            if project.segments[index].script.isEmpty {
+                project.segments[index].script = transcript.text
+            }
+        }
+
+        project.updatedAt = .now
+        scheduleSave()
     }
 
     func openStudio() {

@@ -44,9 +44,16 @@ public struct CaptionsScreen: View {
         _style = State(initialValue: Style(style))
     }
 
-    /// Every segment's words, chunked four at a time — the design's cue list.
+    /// The project's real cues, once there are any.
+    ///
+    /// Falls back to chunking the script only for a project that has been written but not shot —
+    /// there is nothing else to show, and an empty screen would suggest captions are broken rather
+    /// than simply not recorded yet.
     private var cues: [String] {
-        project.segments.flatMap { segment -> [String] in
+        let transcribed = project.segments.flatMap(\.captions).map(\.text)
+        guard transcribed.isEmpty else { return transcribed }
+
+        return project.segments.flatMap { segment -> [String] in
             let words = ScriptText.words(in: segment.script).map(String.init)
             return stride(from: 0, to: words.count, by: 4).map { start in
                 words[start..<min(start + 4, words.count)].joined(separator: " ")
