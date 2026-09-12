@@ -8,9 +8,10 @@ public struct LibraryItem: Identifiable, Hashable {
     public var title: String
     public var meta: String
     public var duration: String
-    /// Index into the design's card tints.
-    public var tint: Int
-    /// Masonry height used by the Projects grid.
+    /// The card's background, taken verbatim from the design. Recents and projects share tints
+    /// but not their alphas, so each card carries its own fill rather than an index into a ramp.
+    public var fill: CardFill
+    /// Height used by the Projects grid.
     public var height: CGFloat
 
     public init(
@@ -18,42 +19,55 @@ public struct LibraryItem: Identifiable, Hashable {
         title: String,
         meta: String,
         duration: String,
-        tint: Int,
+        fill: CardFill,
         height: CGFloat = 200
     ) {
         self.id = id
         self.title = title
         self.meta = meta
         self.duration = duration
-        self.tint = tint
+        self.fill = fill
         self.height = height
     }
 }
 
-extension LibraryItem {
-    /// The design's three recent cards.
-    public static let sampleRecents: [LibraryItem] = [
-        LibraryItem(title: "iPhone 17 Pro Max Camera", meta: "Edited 2h ago", duration: "0:30", tint: 0),
-        LibraryItem(title: "Studio Light Setup", meta: "Yesterday", duration: "0:45", tint: 1),
-        LibraryItem(title: "3 Editing Habits", meta: "Draft", duration: "1:02", tint: 2),
-    ]
+public enum CardFill: Hashable {
+    case gradient(angle: Double, from: Color, to: Color)
+    case solid(Color)
 
-    /// `linear-gradient(165deg, <tint>, #121216)` from the design.
-    public var gradient: LinearGradient {
-        let top: Color
-        switch tint {
-        case 0: top = DS.Palette.accent(0.35)
-        case 1: top = DS.Palette.lime(0.22)
-        case 3: top = Color(hex: 0xFF7043, alpha: 0.32)
-        case 4: top = Color(hex: 0xF5F5F7, alpha: 0.16)
-        default: top = Color(hex: 0x17171C)
+    @ViewBuilder
+    var view: some View {
+        switch self {
+        case .gradient(let angle, let from, let to):
+            DS.gradient(angle, [from, to])
+        case .solid(let color):
+            color
         }
-        return LinearGradient(
-            colors: [top, Color(hex: 0x121216)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
     }
+}
+
+extension LibraryItem {
+    /// The design's three recent cards, with their own fills.
+    public static let sampleRecents: [LibraryItem] = [
+        LibraryItem(
+            title: "iPhone 17 Pro Max Camera",
+            meta: "Edited 2h ago",
+            duration: "0:30",
+            fill: .gradient(angle: 165, from: DS.Palette.accent(0.35), to: Color(hex: 0x121216))
+        ),
+        LibraryItem(
+            title: "Studio Light Setup",
+            meta: "Yesterday",
+            duration: "0:45",
+            fill: .gradient(angle: 165, from: DS.Palette.lime(0.22), to: Color(hex: 0x121216))
+        ),
+        LibraryItem(
+            title: "3 Editing Habits",
+            meta: "Draft",
+            duration: "1:02",
+            fill: .gradient(angle: 160, from: Color(hex: 0x141418), to: Color(hex: 0x0F0F12))
+        ),
+    ]
 }
 
 public struct HomeScreen: View {
@@ -114,13 +128,7 @@ public struct HomeScreen: View {
             Spacer(minLength: 0)
 
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [DS.Palette.accentWarm, DS.Palette.accent],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(DS.gradient(140, [DS.Palette.accentWarm, DS.Palette.accent]))
                 .frame(width: 38, height: 38)
                 .padding(.top, 22)
         }
@@ -153,14 +161,13 @@ public struct HomeScreen: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(24)
-            .background(
-                LinearGradient(
-                    colors: [DS.Palette.accent, DS.Palette.accentWarm],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .overlay(SweepShine())
+            // The sheen sits between the fill and the text, as it does in the design.
+            .background {
+                ZStack {
+                    DS.gradient(150, [DS.Palette.accent, DS.Palette.accentWarm])
+                    SweepShine()
+                }
+            }
             .overlay(alignment: .bottomTrailing) {
                 Text("→")
                     .font(.system(size: 20))
@@ -224,7 +231,7 @@ public struct HomeScreen: View {
         }
         .padding(13)
         .frame(width: 158, height: 210, alignment: .bottomLeading)
-        .background(item.gradient)
+        .background(item.fill.view)
         .overlay(alignment: .topLeading) {
             durationChip(item.duration)
                 .padding(11)

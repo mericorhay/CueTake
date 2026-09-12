@@ -98,3 +98,21 @@ extension DS.Palette {
         return ramp.indices.contains(index) ? ramp[index] : ink
     }
 }
+
+extension DS {
+    /// Builds a gradient from a CSS angle.
+    ///
+    /// CSS measures clockwise from "to top", so `linear-gradient(165deg, …)` runs mostly downward
+    /// and slightly right. SwiftUI wants the two endpoints instead, and its default diagonal is a
+    /// flat 135°, which is why the angle has to be converted rather than approximated.
+    public static func gradient(_ degrees: Double, _ colors: [Color]) -> LinearGradient {
+        let radians = degrees * .pi / 180
+        let dx = sin(radians) / 2
+        let dy = -cos(radians) / 2
+        return LinearGradient(
+            colors: colors,
+            startPoint: UnitPoint(x: 0.5 - dx, y: 0.5 - dy),
+            endPoint: UnitPoint(x: 0.5 + dx, y: 0.5 + dy)
+        )
+    }
+}

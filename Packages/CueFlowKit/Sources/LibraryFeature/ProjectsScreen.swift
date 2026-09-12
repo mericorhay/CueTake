@@ -61,7 +61,7 @@ public struct ProjectsScreen: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: project.height, alignment: .bottomLeading)
-        .background(project.gradient)
+        .background(project.fill.view)
         .overlay(alignment: .topTrailing) {
             Text(project.duration)
                 .dsFont(.mono, .medium, 9)
@@ -79,13 +79,50 @@ public struct ProjectsScreen: View {
 }
 
 extension LibraryItem {
-    /// The design's six project cards, including their staggered heights.
+    /// The design's six project cards, with their own heights and fills. The alphas differ from the
+    /// recents rail even where the colour is the same, so they are written out rather than shared.
     public static let sampleProjects: [LibraryItem] = [
-        LibraryItem(title: "iPhone 17 Pro Max Camera", meta: "0:30 · exported", duration: "0:30", tint: 0, height: 206),
-        LibraryItem(title: "Studio Light Setup", meta: "0:45 · draft", duration: "0:45", tint: 1, height: 164),
-        LibraryItem(title: "3 Editing Habits", meta: "1:02 · draft", duration: "1:02", tint: 2, height: 158),
-        LibraryItem(title: "Mic Comparison", meta: "0:38 · exported", duration: "0:38", tint: 3, height: 200),
-        LibraryItem(title: "Why I Left 4K60", meta: "0:52 · exported", duration: "0:52", tint: 2, height: 170),
-        LibraryItem(title: "Desk Tour 2026", meta: "1:14 · draft", duration: "1:14", tint: 4, height: 194),
+        LibraryItem(
+            title: "iPhone 17 Pro Max Camera",
+            meta: "0:30 · exported",
+            duration: "0:30",
+            fill: .gradient(angle: 165, from: DS.Palette.accent(0.4), to: Color(hex: 0x121216)),
+            height: 206
+        ),
+        LibraryItem(
+            title: "Studio Light Setup",
+            meta: "0:45 · draft",
+            duration: "0:45",
+            fill: .gradient(angle: 165, from: DS.Palette.lime(0.3), to: Color(hex: 0x121216)),
+            height: 164
+        ),
+        LibraryItem(
+            title: "3 Editing Habits",
+            meta: "1:02 · draft",
+            duration: "1:02",
+            fill: .solid(DS.Palette.surfaceRaised),
+            height: 158
+        ),
+        LibraryItem(
+            title: "Mic Comparison",
+            meta: "0:38 · exported",
+            duration: "0:38",
+            fill: .gradient(angle: 165, from: Color(hex: 0xFF7043, alpha: 0.32), to: Color(hex: 0x121216)),
+            height: 200
+        ),
+        LibraryItem(
+            title: "Why I Left 4K60",
+            meta: "0:52 · exported",
+            duration: "0:52",
+            fill: .solid(DS.Palette.surfaceRaised),
+            height: 170
+        ),
+        LibraryItem(
+            title: "Desk Tour 2026",
+            meta: "1:14 · draft",
+            duration: "1:14",
+            fill: .gradient(angle: 165, from: Color(hex: 0xF5F5F7, alpha: 0.16), to: Color(hex: 0x121216)),
+            height: 194
+        ),
     ]
 }

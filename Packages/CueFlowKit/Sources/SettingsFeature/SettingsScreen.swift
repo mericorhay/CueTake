@@ -47,13 +47,7 @@ public struct SettingsScreen: View {
     private var profile: some View {
         HStack(spacing: 13) {
             Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [DS.Palette.accentWarm, DS.Palette.accent],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(DS.gradient(140, [DS.Palette.accentWarm, DS.Palette.accent]))
                 .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 3) {

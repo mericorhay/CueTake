@@ -191,9 +191,12 @@ public struct BlueprintScreen: View {
         .padding(.bottom, 30)
         .background(
             LinearGradient(
-                colors: [.clear, DS.Palette.screen],
+                stops: [
+                    .init(color: .clear, location: 0),
+                    .init(color: DS.Palette.screen, location: 0.4),
+                ],
                 startPoint: .top,
-                endPoint: .center
+                endPoint: .bottom
             )
         )
     }

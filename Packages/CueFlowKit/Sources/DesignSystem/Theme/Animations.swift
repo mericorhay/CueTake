@@ -159,6 +159,10 @@ public struct RecordRing: View {
 }
 
 /// `sweep`: the light that crosses the Create card.
+///
+/// The band is 40% of the card wide and travels from -120% to 320% of its own width, which works
+/// out to -48%…128% of the card. In the design it sits behind the card's text, so put it in the
+/// background stack rather than in an overlay.
 public struct SweepShine: View {
     @State private var travelling = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -168,19 +172,15 @@ public struct SweepShine: View {
     public var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            LinearGradient(
-                colors: [.clear, Color(.sRGB, white: 1, opacity: 0.28), .clear],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(width: width * 0.4)
-            .offset(x: travelling ? width * 1.28 : -width * 0.48)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.linear(duration: 3.4).repeatForever(autoreverses: false)) {
-                    travelling = true
+            DS.gradient(100, [.clear, Color(.sRGB, white: 1, opacity: 0.28), .clear])
+                .frame(width: width * 0.4)
+                .offset(x: travelling ? width * 1.28 : -width * 0.48)
+                .onAppear {
+                    guard !reduceMotion else { return }
+                    withAnimation(.linear(duration: 3.4).repeatForever(autoreverses: false)) {
+                        travelling = true
+                    }
                 }
-            }
         }
         .allowsHitTesting(false)
     }
