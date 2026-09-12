@@ -117,3 +117,13 @@ extension SegmentRole {
         }
     }
 }
+
+extension Segment {
+    /// Length used wherever a segment has to be drawn to scale — the blueprint bar, the studio
+    /// progress pips, the editor timeline — before a recording exists to measure.
+    ///
+    /// Public because every feature lays segments out proportionally, not just one of them.
+    public var barWeight: Double {
+        (estimatedDuration ?? MediaTime(seconds: 5)).seconds
+    }
+}

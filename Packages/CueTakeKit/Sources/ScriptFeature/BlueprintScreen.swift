@@ -244,11 +244,6 @@ public struct BlueprintScreen: View {
 }
 
 extension Segment {
-    /// Duration used for proportional bars before anything is recorded.
-    var barWeight: Double {
-        (estimatedDuration ?? MediaTime(seconds: 5)).seconds
-    }
-
     /// The design truncates the blueprint preview at 74 characters.
     var previewText: String {
         script.count > 74 ? String(script.prefix(74)) + "…" : script
