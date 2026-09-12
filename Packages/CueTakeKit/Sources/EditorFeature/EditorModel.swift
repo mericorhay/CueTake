@@ -23,6 +23,13 @@ public final class EditorModel {
     public var inspectedSegment: Segment.ID?
     public var inspectorTab: InspectorTab = .script
 
+    /// How wide one second is drawn. This is what makes the timeline an editing surface rather
+    /// than a diagram: laid out proportionally, a 0.2s trim on a 30s video is two pixels wide and
+    /// cannot be grabbed. Pinching changes this, and at 240pt a second there is room to work.
+    public var pointsPerSecond: Double = TimelineScale.fit
+    /// True while the playhead is being dragged, so playback does not fight the finger.
+    public var isScrubbing = false
+
     private var task: Task<Void, Never>?
 
     public init(project: Project) {
@@ -95,5 +102,66 @@ public final class EditorModel {
 
     public func seek(to seconds: Double) {
         playhead = min(max(0, seconds), duration)
+    }
+
+    public func beginScrub() {
+        pause()
+        isScrubbing = true
+    }
+
+    public func endScrub() {
+        isScrubbing = false
+    }
+
+    // MARK: - Editing
+
+    /// Segment boundaries, plus zero and the end: the points a scrub should snap to.
+    public var snapPoints: [Double] {
+        var points = [0.0]
+        var running = 0.0
+        for segment in project.segments {
+            running += segment.barWeight
+            points.append(running)
+        }
+        return points
+    }
+
+    /// The nearest boundary within `tolerance` seconds, or nil when the finger is between them.
+    public func snapTarget(for seconds: Double, tolerance: Double) -> Double? {
+        snapPoints
+            .min { abs($0 - seconds) < abs($1 - seconds) }
+            .flatMap { abs($0 - seconds) <= tolerance ? $0 : nil }
+    }
+
+    /// Sets a segment's length.
+    ///
+    /// With a take, this trims the range into the recording and never touches the file. Without
+    /// one — a project that has been planned but not shot — it sets the estimate the whole app
+    /// lays out against. Same gesture, and the caller does not have to know which case it is in.
+    public func setDuration(_ seconds: Double, forSegmentAt index: Int) {
+        guard project.segments.indices.contains(index) else { return }
+        let clamped = max(0.4, seconds)
+
+        if let takeID = project.segments[index].selectedTakeID,
+           let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }) {
+            let take = project.segments[index].takes[takeIndex]
+            project.segments[index].takes[takeIndex].sourceRange = MediaTimeRange(
+                start: take.sourceRange.start,
+                duration: MediaTime(seconds: clamped)
+            )
+        } else {
+            project.segments[index].estimatedDuration = MediaTime(seconds: clamped)
+        }
+        project.updatedAt = .now
+    }
+
+    public func move(segmentAt index: Int, to destination: Int) {
+        guard project.segments.indices.contains(index),
+              destination >= 0, destination < project.segments.count,
+              index != destination
+        else { return }
+        let segment = project.segments.remove(at: index)
+        project.segments.insert(segment, at: destination)
+        project.updatedAt = .now
     }
 }

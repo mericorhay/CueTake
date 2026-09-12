@@ -139,24 +139,7 @@ public struct EditorScreen: View {
             }
             .padding(.bottom, 9)
 
-            GeometryReader { proxy in
-                let weights = model.project.segments.map(\.barWeight)
-                let total = max(1, weights.reduce(0, +))
-                let gaps = CGFloat(max(0, weights.count - 1)) * 4
-                let usable = proxy.size.width - gaps
-
-                ZStack(alignment: .topLeading) {
-                    HStack(spacing: 4) {
-                        ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
-                            clip(segment, at: index)
-                                .frame(width: usable * (weights[index] / total))
-                        }
-                    }
-
-                    playhead(in: proxy.size)
-                }
-            }
-            .frame(height: 74)
+            EditorTimeline(model: model)
 
             captionStrip
                 .padding(.top, 7)
@@ -165,63 +148,7 @@ public struct EditorScreen: View {
         .padding(.top, 8)
     }
 
-    private func clip(_ segment: Segment, at index: Int) -> some View {
-        let isActive = model.isActive(at: index)
-        let isSelected = model.inspectedSegment == segment.id
-        let highlighted = isActive || isSelected
 
-        return VStack(alignment: .leading, spacing: 0) {
-            Text(segment.role.displayLabel)
-                .dsFont(.archivo, .bold, 12)
-                .foregroundStyle(DS.Palette.inkInverse)
-            Text("\(Int(segment.barWeight))s")
-                .dsFont(.mono, .medium, 9)
-                .foregroundStyle(DS.Palette.inkInverse(0.55))
-                .padding(.top, 2)
-
-            Spacer(minLength: 0)
-
-            Text(String(localized: "editor.take \(segment.takes.count + 1)", bundle: .module))
-                .dsFont(.mono, .medium, 8)
-                .foregroundStyle(DS.Palette.inkInverse(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 9)
-        .padding(.top, 9)
-        .padding(.bottom, 8)
-        .frame(maxHeight: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(DS.Palette.segment(at: segment.role.paletteIndex))
-        )
-        .opacity(highlighted ? 1 : 0.55)
-        .scaleEffect(y: highlighted ? 1 : 0.86)
-        .shadow(color: isActive ? .black.opacity(0.5) : .clear, radius: 15, y: 10)
-        .animation(DS.Easing.standard(0.35), value: highlighted)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(DS.Easing.standard(0.38)) {
-                model.inspectedSegment = segment.id
-                model.inspectorTab = .script
-            }
-        }
-    }
-
-    private func playhead(in size: CGSize) -> some View {
-        Rectangle()
-            .fill(DS.Palette.ink)
-            .frame(width: 2)
-            .frame(height: size.height + 12)
-            .shadow(color: DS.Palette.ink(0.7), radius: 6)
-            .overlay(alignment: .top) {
-                Circle()
-                    .fill(DS.Palette.ink)
-                    .frame(width: 9, height: 9)
-                    .offset(y: -4)
-            }
-            .offset(x: size.width * model.playheadFraction, y: -6)
-            .allowsHitTesting(false)
-    }
 
     private var captionStrip: some View {
         GeometryReader { proxy in
