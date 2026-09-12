@@ -12,8 +12,10 @@ public final class PromptModel {
 
     private var task: Task<Void, Never>?
 
-    public init(promptText: String = String(localized: "prompt.default", bundle: .module)) {
-        self.promptText = promptText
+    /// `Bundle.module` is internal to the module, so the prefilled brief is resolved in the body
+    /// rather than in a default argument, which would leak it into the public signature.
+    public init(promptText: String? = nil) {
+        self.promptText = promptText ?? String(localized: "prompt.default", bundle: .module)
     }
 
     public var isRunning: Bool { step > 0 }
