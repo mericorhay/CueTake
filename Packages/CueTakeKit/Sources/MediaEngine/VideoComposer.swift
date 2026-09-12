@@ -164,12 +164,14 @@ public struct VideoComposer: Sendable {
         }
         session.videoComposition = assembled.videoComposition
 
+        // `AVAssetExportSession` is not Sendable, so the polling task cannot hold it. Reading one
+        // atomic float from another thread is safe in a way the type system has no way to express,
+        // and this box says so once rather than scattering the claim.
+        let reader = ProgressReader(session: session)
         let reporter: Task<Void, Never>? = onProgress.map { report in
             Task {
-                // Polled rather than observed: the session's states sequence reports phases, and
-                // what the user wants to see is the bar moving between them.
                 while !Task.isCancelled {
-                    let value = Double(session.progress)
+                    let value = reader.value
                     await report(value)
                     if value >= 0.999 { return }
                     try? await Task.sleep(for: .milliseconds(120))
@@ -185,4 +187,10 @@ public struct VideoComposer: Sendable {
         }
         return destination
     }
+}
+
+/// Reads an export session's progress from another task.
+private struct ProgressReader: @unchecked Sendable {
+    let session: AVAssetExportSession
+    var value: Double { Double(session.progress) }
 }
