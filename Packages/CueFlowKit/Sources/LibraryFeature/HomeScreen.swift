@@ -216,10 +216,8 @@ public struct HomeScreen: View {
     private func recentCard(_ item: LibraryItem) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Spacer(minLength: 0)
-            Text(item.title)
-                .dsFont(.archivo, .bold, 15, lineHeight: 1.15)
-                .foregroundStyle(DS.Palette.ink)
-                .multilineTextAlignment(.leading)
+            // line-height:1.15 is tighter than the font's leading, so this one wraps through UILabel.
+            TightText(item.title, .archivo, .bold, 15, lineHeight: 1.15)
             Text(item.meta)
                 .dsFont(.sans, .regular, 11)
                 .foregroundStyle(DS.Palette.ink(0.5))

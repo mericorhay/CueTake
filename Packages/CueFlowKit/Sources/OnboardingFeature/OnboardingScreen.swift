@@ -140,9 +140,14 @@ public struct OnboardingScreen: View {
                         .dsFont(.mono, .medium, 10, letterSpacing: 0.16)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .opacity(0.65)
-                    Text(String(localized: card.title, bundle: .module))
-                        .dsFont(.archivo, .bold, 19, lineHeight: 1.2)
-                        .foregroundStyle(DS.Palette.inkInverse)
+                    TightText(
+                        String(localized: card.title, bundle: .module),
+                        .archivo,
+                        .bold,
+                        19,
+                        lineHeight: 1.2,
+                        color: DS.Palette.inkInverse
+                    )
                 }
                 .frame(width: 250, alignment: .leading)
                 .padding(.horizontal, 18)

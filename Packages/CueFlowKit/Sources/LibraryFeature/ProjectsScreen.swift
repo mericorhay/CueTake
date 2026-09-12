@@ -53,10 +53,7 @@ public struct ProjectsScreen: View {
     private func card(_ project: LibraryItem) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Spacer(minLength: 0)
-            Text(project.title)
-                .dsFont(.archivo, .bold, 14, lineHeight: 1.15)
-                .foregroundStyle(DS.Palette.ink)
-                .multilineTextAlignment(.leading)
+            TightText(project.title, .archivo, .bold, 14, lineHeight: 1.15)
             Text(project.meta)
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.5))

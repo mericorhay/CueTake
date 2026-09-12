@@ -146,16 +146,38 @@ public struct DSHeadline: View {
     }
 
     public var body: some View {
-        let box = size * lineHeight
-        let natural = DS.uiFont(family, weight, size).lineHeight
-        VStack(alignment: alignment, spacing: box - natural) {
+        // Each line carries its own exact line box, so a line that wraps by itself — Turkish runs
+        // longer than the English source — keeps the same tight leading as the authored breaks.
+        VStack(alignment: alignment, spacing: 0) {
             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                Text(line)
-                    .font(DS.custom(family, weight, size))
-                    .tracking(letterSpacing * size)
-                    .fixedSize(horizontal: false, vertical: true)
+                TightText(
+                    line,
+                    family,
+                    weight,
+                    size,
+                    lineHeight: lineHeight,
+                    letterSpacing: letterSpacing,
+                    color: color,
+                    alignment: textAlignment
+                )
+                .frame(maxWidth: .infinity, alignment: frameAlignment)
             }
         }
-        .foregroundStyle(color)
+    }
+
+    private var textAlignment: TextAlignment {
+        switch alignment {
+        case .center: .center
+        case .trailing: .trailing
+        default: .leading
+        }
+    }
+
+    private var frameAlignment: Alignment {
+        switch alignment {
+        case .center: .center
+        case .trailing: .trailing
+        default: .leading
+        }
     }
 }

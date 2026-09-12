@@ -101,11 +101,17 @@ public struct CaptionsScreen: View {
 
         switch style {
         case .pop:
-            Text(text)
-                .dsFont(.archivo, .extrabold, 30, lineHeight: 1.15, letterSpacing: -0.02)
-                .foregroundStyle(DS.Palette.ink)
-                .multilineTextAlignment(.center)
-                .shadow(color: .black.opacity(0.9), radius: 12, y: 4)
+            // 30px/1.15 with text-shadow: 0 4px 24px rgba(0,0,0,.9)
+            TightText(
+                text,
+                .archivo,
+                .extrabold,
+                30,
+                lineHeight: 1.15,
+                letterSpacing: -0.02,
+                alignment: .center,
+                shadow: .init(color: .black.opacity(0.9), offset: CGSize(width: 0, height: 4), blur: 24)
+            )
         case .clean:
             Text(text)
                 .dsFont(.sans, .medium, 20, lineHeight: 1.4)
@@ -119,11 +125,17 @@ public struct CaptionsScreen: View {
                     border: nil
                 )
         case .karaoke:
-            Text(text)
-                .dsFont(.archivo, .bold, 26, lineHeight: 1.2)
-                .foregroundStyle(DS.Palette.lime)
-                .multilineTextAlignment(.center)
-                .shadow(color: .black.opacity(0.85), radius: 9, y: 3)
+            // 26px/1.2 with text-shadow: 0 3px 18px rgba(0,0,0,.85)
+            TightText(
+                text,
+                .archivo,
+                .bold,
+                26,
+                lineHeight: 1.2,
+                color: DS.Palette.lime,
+                alignment: .center,
+                shadow: .init(color: .black.opacity(0.85), offset: CGSize(width: 0, height: 3), blur: 18)
+            )
         }
     }
 
