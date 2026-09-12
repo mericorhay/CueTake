@@ -1,6 +1,134 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "complete.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Bitti" } }
+      }
+    },
+    "complete.edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Düzenle" } }
+      }
+    },
+    "complete.kicker %@" : {
+      "comment" : "The argument is the take's duration, e.g. 0:30.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TAKE COMPLETE · %@" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ÇEKİM TAMAM · %@" } }
+      }
+    },
+    "complete.retake" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retake" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Tekrar çek" } }
+      }
+    },
+    "complete.title %lld" : {
+      "comment" : "Two lines; the line break is part of the design. The argument is the segment count.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld segment\nin the can." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld segments\nin the can." } }
+            }
+          }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld segment\nkutuda." } }
+            }
+          }
+        }
+      }
+    },
+    "retake.keep.new" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep new take" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Yeni çekimi tut" } }
+      }
+    },
+    "retake.keep.old" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep old take" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Eski çekimi tut" } }
+      }
+    },
+    "retake.kicker %@" : {
+      "comment" : "The argument is the segment label, e.g. HOOK.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "RETAKE · %@" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "TEKRAR · %@" } }
+      }
+    },
+    "retake.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only this segment re-records. The rest of the cut stays untouched." } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Sadece bu segment yeniden çekilir. Kurgunun geri kalanına dokunulmaz." } }
+      }
+    },
+    "retake.shootAgain" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shoot again" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Yeniden çek" } }
+      }
+    },
+    "retake.take.new.kicker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TAKE 2 · NEW" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ÇEKİM 2 · YENİ" } }
+      }
+    },
+    "retake.take.new.meta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "0:10 · no stumbles" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "0:10 · takılma yok" } }
+      }
+    },
+    "retake.take.new.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cleaner energy" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Daha temiz enerji" } }
+      }
+    },
+    "retake.take.old.kicker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "TAKE 1 · OLD" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "ÇEKİM 1 · ESKİ" } }
+      }
+    },
+    "retake.take.old.meta" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "0:11 · 2 stumbles" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "0:11 · 2 takılma" } }
+      }
+    },
+    "retake.take.old.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Flat delivery" } },
+        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Düz anlatım" } }
+      }
+    }
   },
   "version" : "1.0"
 }
