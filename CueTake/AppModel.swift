@@ -1,3 +1,4 @@
+import AVFoundation
 import Domain
 import EditorFeature
 import LibraryFeature
@@ -331,6 +332,78 @@ final class AppModel {
 
     /// Rebuilds the studio only when the script actually changed, so the prompter keeps its
     /// layout, size and mode between visits.
+    /// Hands the studio a file to write into, so a take is a recording rather than a timer.
+    func beginStudioCapture() async {
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {
+            studioModel.startRecording()
+            return
+        }
+        let url = mediaDirectory.appending(
+            path: "\(UUID().uuidString).mov",
+            directoryHint: .notDirectory
+        )
+        studioModel.startRecording(writingTo: url)
+    }
+
+    /// Folds a finished capture into the project: one recording, one take per segment.
+    ///
+    /// The segment boundaries come from the prompter, which knew when the speaker moved on. That
+    /// is the whole reason a single continuous file can be edited segment by segment — and why
+    /// retaking one of them later touches nothing else.
+    func adoptStudioCapture() async {
+        guard let capture = studioModel.lastCapture else { return }
+
+        let asset = AVURLAsset(url: capture.url)
+        let measured = (try? await asset.load(.duration).seconds) ?? capture.duration
+        guard measured > 0 else { return }
+
+        let recording = Recording(
+            relativePath: "media/\(capture.url.lastPathComponent)",
+            format: project.format,
+            camera: settingsModel.settings.defaultCamera,
+            duration: MediaTime(seconds: measured)
+        )
+        project.recordings.append(recording)
+
+        // A boundary per segment, plus the end of the file, so every segment gets a range.
+        let bounds = capture.segmentStarts + [measured]
+        for index in project.segments.indices {
+            guard index + 1 < bounds.count else { break }
+            let start = min(bounds[index], measured)
+            let end = min(bounds[index + 1], measured)
+            guard end > start else { continue }
+
+            let take = Take(
+                recordingID: recording.id,
+                sourceRange: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: end - start)),
+                status: .ready
+            )
+            project.segments[index].takes.append(take)
+            project.segments[index].selectedTakeID = take.id
+        }
+
+        project.updatedAt = .now
+        scheduleSave()
+        await refreshLibrary()
+    }
+
+    /// The studio finished. Fold the capture in before the Complete screen claims there is one.
+    func finishStudioCapture() async {
+        await adoptStudioCapture()
+        go(to: .complete)
+    }
+
+    func beginRetakeCapture() async {
+        guard let retakeModel else { return }
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {
+            retakeModel.start()
+            return
+        }
+        retakeModel.start(
+            writingTo: mediaDirectory.appending(path: "\(UUID().uuidString).mov", directoryHint: .notDirectory)
+        )
+    }
+
     func openStudio() {
         if studioModel.project.segments != project.segments {
             studioModel = StudioModel(project: project)
@@ -358,7 +431,30 @@ final class AppModel {
     }
 
     /// Keeping a take is the only thing a retake changes; the rest of the cut is untouched.
+    ///
+    /// Which is the point of the whole model: a retake appends to one segment's takes and moves
+    /// its selection. No other segment's range shifts, because no absolute time was ever stored.
     func keepRetake() {
+        if let retakeModel,
+           let capture = retakeModel.lastCapture,
+           let index = project.segments.firstIndex(where: { $0.id == retakeModel.segment.id }) {
+            let recording = Recording(
+                relativePath: "media/\(capture.url.lastPathComponent)",
+                format: project.format,
+                camera: settingsModel.settings.defaultCamera,
+                duration: MediaTime(seconds: capture.duration)
+            )
+            let take = Take(
+                recordingID: recording.id,
+                sourceRange: MediaTimeRange(start: .zero, duration: recording.duration),
+                status: .ready
+            )
+            project.recordings.append(recording)
+            project.segments[index].takes.append(take)
+            project.segments[index].selectedTakeID = take.id
+            project.updatedAt = .now
+            scheduleSave()
+        }
         retakeModel = nil
         openEditor()
     }

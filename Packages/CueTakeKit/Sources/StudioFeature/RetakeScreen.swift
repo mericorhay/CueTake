@@ -1,3 +1,4 @@
+import CaptureEngine
 import DesignSystem
 import Domain
 import Observation
@@ -26,6 +27,24 @@ public final class RetakeModel {
     public let segment: Segment
     private var task: Task<Void, Never>?
 
+    public let camera = CameraSession()
+    public private(set) var cameraAuthorization: CaptureAuthorization = .notDetermined
+    /// The file this retake produced, for whoever owns the project to fold in.
+    public private(set) var lastCapture: (url: URL, duration: Double)?
+    private var recordingURL: URL?
+    private var recordingStart: Date?
+
+    public func startCamera(position: CameraPosition) async {
+        let status = await CameraSession.requestAuthorization(includingMicrophone: false)
+        cameraAuthorization = status.camera
+        guard status.camera == .authorized else { return }
+        camera.start(camera: position)
+    }
+
+    public func stopCamera() {
+        camera.stop()
+    }
+
     public init(segment: Segment) {
         self.segment = segment
     }
@@ -35,10 +54,17 @@ public final class RetakeModel {
     }
 
     /// Stand-in for speech tracking, at the design's 130ms per word.
-    public func start() {
+    public func start(writingTo url: URL? = nil) {
         guard task == nil else { return }
         state = .rolling
         wordIndex = 0
+
+        recordingURL = url
+        recordingStart = .now
+        if let url {
+            Task { [camera] in _ = await camera.startRecording(to: url) }
+        }
+
         task = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(130))
@@ -68,26 +94,45 @@ public final class RetakeModel {
         task = nil
         state = .ready
         wordIndex = 0
+        lastCapture = nil
     }
 
     private func finish() {
         task?.cancel()
         task = nil
+
+        let elapsed = recordingStart.map { Date.now.timeIntervalSince($0) } ?? 0
+        let wasRecording = recordingURL != nil
+        recordingURL = nil
+        recordingStart = nil
+        if wasRecording {
+            Task { [weak self] in
+                guard let url = await self?.camera.stopRecording() else { return }
+                self?.lastCapture = (url, elapsed)
+            }
+        }
         state = .compare
     }
 }
 
 public struct RetakeScreen: View {
     @Bindable private var model: RetakeModel
+    private let camera: CameraPosition
+    /// Same arrangement as the studio: the screen asks, the project's owner answers with a path.
+    private let onBeginCapture: () async -> Void
     private let onBack: () -> Void
     private let onKeep: (RetakeModel.Choice) -> Void
 
     public init(
         model: RetakeModel,
+        camera: CameraPosition = .front,
+        onBeginCapture: @escaping () async -> Void = {},
         onBack: @escaping () -> Void,
         onKeep: @escaping (RetakeModel.Choice) -> Void
     ) {
         self.model = model
+        self.camera = camera
+        self.onBeginCapture = onBeginCapture
         self.onBack = onBack
         self.onKeep = onKeep
     }
@@ -98,7 +143,9 @@ public struct RetakeScreen: View {
 
     public var body: some View {
         ZStack {
-            CameraBackdrop()
+            CameraBackdrop(
+                session: model.cameraAuthorization == .authorized ? model.camera.session : nil
+            )
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
@@ -122,6 +169,8 @@ public struct RetakeScreen: View {
             .padding(.bottom, 36)
             .dsScreenLayout(scrolls: true)
         }
+        .task { await model.startCamera(position: camera) }
+        .onDisappear { model.stopCamera() }
         .dsEnter(.screen())
     }
 
@@ -156,7 +205,7 @@ public struct RetakeScreen: View {
             .padding(.bottom, 20)
 
             Button {
-                model.start()
+                Task { await onBeginCapture() }
             } label: {
                 ZStack {
                     RecordRing().frame(width: 92, height: 92)

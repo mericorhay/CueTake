@@ -116,7 +116,8 @@ struct RootView: View {
                 camera: model.settingsModel.settings.defaultCamera,
                 onBack: { model.go(to: .blueprint) },
                 onOpenEditor: { model.openEditor() },
-                onFinished: { model.go(to: .complete) }
+                onFinished: { Task { await model.finishStudioCapture() } },
+                onBeginCapture: { await model.beginStudioCapture() }
             )
 
         case .complete:
@@ -141,6 +142,8 @@ struct RootView: View {
             if let retakeModel = model.retakeModel {
                 RetakeScreen(
                     model: retakeModel,
+                    camera: model.settingsModel.settings.defaultCamera,
+                    onBeginCapture: { await model.beginRetakeCapture() },
                     onBack: { model.openEditor() },
                     onKeep: { _ in model.keepRetake() }
                 )

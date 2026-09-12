@@ -14,19 +14,23 @@ public struct StudioScreen: View {
     private let onBack: () -> Void
     private let onOpenEditor: () -> Void
     private let onFinished: () -> Void
+    /// Asks for somewhere to write. Only the layer that owns the project knows where that is.
+    private let onBeginCapture: () async -> Void
 
     public init(
         model: StudioModel,
         camera: CameraPosition = .front,
         onBack: @escaping () -> Void,
         onOpenEditor: @escaping () -> Void,
-        onFinished: @escaping () -> Void
+        onFinished: @escaping () -> Void,
+        onBeginCapture: @escaping () async -> Void = {}
     ) {
         self.model = model
         self.camera = camera
         self.onBack = onBack
         self.onOpenEditor = onOpenEditor
         self.onFinished = onFinished
+        self.onBeginCapture = onBeginCapture
     }
 
     /// Bumped on every shutter press, so the bloom ring fires once per commit.
@@ -240,7 +244,7 @@ public struct StudioScreen: View {
     private var shutter: some View {
         Button {
             shutterPresses += 1
-            model.beginCountdown()
+            Task { await onBeginCapture() }
         } label: {
             ZStack {
                 RecordRing()

@@ -2,12 +2,7 @@ import AVFoundation
 import Domain
 import Observation
 
-/// Owns the `AVCaptureSession` and nothing else.
-///
-/// Recording is not here yet. This is the half that makes the studio real — a live preview instead
-/// of a dark rectangle — and it is worth having on its own: the permission prompt, the device
-/// choice and the session lifecycle are the parts that go wrong, and they are easier to get right
-/// before an asset writer is also in the picture.
+/// Owns the `AVCaptureSession`: preview, device choice, permissions, and writing the file.
 ///
 /// `@unchecked Sendable` with a serial queue is the shape Apple's own samples use, and it is the
 /// only one that works: `AVCaptureSession` is not `Sendable`, `startRunning()` blocks for long
@@ -20,9 +15,14 @@ public final class CameraSession: @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "com.orhay.cuetake.camera")
     private var videoInput: AVCaptureDeviceInput?
+    private var audioInput: AVCaptureDeviceInput?
+    private let movieOutput = AVCaptureMovieFileOutput()
+    private let recordingDelegate = RecordingDelegate()
     private var isConfigured = false
 
     public init() {}
+
+    public var isRecording: Bool { movieOutput.isRecording }
 
     // MARK: - Authorization
 
@@ -92,6 +92,54 @@ public final class CameraSession: @unchecked Sendable {
         }
     }
 
+    // MARK: - Recording
+    //
+    // `AVCaptureMovieFileOutput` rather than an asset writer. The protocol's note asks for a
+    // writer so audio buffers can be teed to speech tracking — and that is still the right end
+    // state — but speech tracking does not exist yet, and a writer brings its own pixel buffer
+    // pipeline, rotation handling and interruption edge cases. Recording that works today beats
+    // a writer that half works, and the seam is one file either way.
+
+    /// Adds the microphone and starts writing. The mic is only asked for here, which is why the
+    /// preview alone never triggers a second permission prompt.
+    public func startRecording(to url: URL) async -> Bool {
+        let status = await Self.requestAuthorization(includingMicrophone: true)
+        guard status.camera == .authorized else { return false }
+
+        return await withCheckedContinuation { continuation in
+            queue.async { [self] in
+                guard isConfigured, !movieOutput.isRecording else {
+                    continuation.resume(returning: false)
+                    return
+                }
+
+                if audioInput == nil, status.microphone == .authorized {
+                    session.beginConfiguration()
+                    if let device = AVCaptureDevice.default(for: .audio),
+                       let input = try? AVCaptureDeviceInput(device: device),
+                       session.canAddInput(input) {
+                        session.addInput(input)
+                        audioInput = input
+                    }
+                    session.commitConfiguration()
+                }
+
+                movieOutput.startRecording(to: url, recordingDelegate: recordingDelegate)
+                continuation.resume(returning: true)
+            }
+        }
+    }
+
+    /// Stops and waits for the file to be closed. Reading a movie before the writer has finished
+    /// is how a recording comes back with a zero duration.
+    public func stopRecording() async -> URL? {
+        guard movieOutput.isRecording else { return nil }
+        return await withCheckedContinuation { continuation in
+            recordingDelegate.onFinish = { url in continuation.resume(returning: url) }
+            queue.async { [self] in movieOutput.stopRecording() }
+        }
+    }
+
     private func configure(camera: CameraPosition) {
         session.beginConfiguration()
         // High rather than a preset resolution: the capture format is chosen at record time, and a
@@ -103,6 +151,10 @@ public final class CameraSession: @unchecked Sendable {
             videoInput = input
         }
 
+        if session.canAddOutput(movieOutput) {
+            session.addOutput(movieOutput)
+        }
+
         session.commitConfiguration()
     }
 
@@ -112,5 +164,24 @@ public final class CameraSession: @unchecked Sendable {
               let input = try? AVCaptureDeviceInput(device: device)
         else { return nil }
         return input
+    }
+}
+
+
+/// Bridges the delegate callback back to the `async` call that started the recording.
+private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDelegate, @unchecked Sendable {
+    /// Set for the duration of one stop. Cleared as soon as it fires, so a later interruption
+    /// cannot resume a continuation twice.
+    var onFinish: ((URL?) -> Void)?
+
+    func fileOutput(
+        _ output: AVCaptureFileOutput,
+        didFinishRecordingTo outputFileURL: URL,
+        from connections: [AVCaptureConnection],
+        error: (any Error)?
+    ) {
+        let handler = onFinish
+        onFinish = nil
+        handler?(error == nil ? outputFileURL : nil)
     }
 }

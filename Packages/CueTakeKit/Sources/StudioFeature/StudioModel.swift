@@ -98,9 +98,10 @@ public final class StudioModel {
     /// Every recording teleprompter ships this, and the reason is not politeness: without it the
     /// first seconds of every take are the reader reaching back from the shutter, which is exactly
     /// the footage they then have to trim.
-    public func beginCountdown(from seconds: Int = 3) {
+    public func beginCountdown(from seconds: Int = 3, writingTo url: URL? = nil) {
         guard task == nil, phase == .idle else { return }
         teleprompter.isSettingsOpen = false
+        pendingRecordingURL = url
         countdown = seconds
         task = Task { [weak self] in
             while true {
@@ -109,7 +110,7 @@ public final class StudioModel {
                 if value <= 1 {
                     countdown = nil
                     task = nil
-                    startRecording()
+                    startRecording(writingTo: pendingRecordingURL)
                     return
                 }
                 countdown = value - 1
@@ -124,13 +125,35 @@ public final class StudioModel {
         countdown = nil
     }
 
-    public func startRecording() {
+    /// Where the file is being written, and when each segment began inside it.
+    ///
+    /// The boundaries are what turn one continuous file into per-segment takes: the prompter
+    /// already knows when the speaker moved on, so the split is recorded as it happens rather than
+    /// guessed afterwards. This is the same shape a real speech tracker will produce — it will just
+    /// be right about the timings instead of assuming a steady pace.
+    private var pendingRecordingURL: URL?
+    private var recordingURL: URL?
+    private var recordingStart: Date?
+    private var segmentStarts: [Double] = []
+
+    /// The finished recording, for whoever owns the project to fold in.
+    public private(set) var lastCapture: (url: URL, segmentStarts: [Double], duration: Double)?
+
+    public func startRecording(writingTo url: URL? = nil) {
         guard task == nil else { return }
         phase = .recording
         segmentIndex = 0
         wordIndex = 0
         teleprompter.isSettingsOpen = false
         publishPosition()
+
+        recordingURL = url
+        recordingStart = .now
+        segmentStarts = [0]
+
+        if let url {
+            Task { [camera] in _ = await camera.startRecording(to: url) }
+        }
 
         task = Task { [weak self] in
             while !Task.isCancelled {
@@ -146,6 +169,18 @@ public final class StudioModel {
         task?.cancel()
         task = nil
         phase = .complete
+
+        let elapsed = recordingStart.map { Date.now.timeIntervalSince($0) } ?? 0
+        let starts = segmentStarts
+        let url = recordingURL
+        recordingURL = nil
+        recordingStart = nil
+
+        guard url != nil else { return }
+        Task { [weak self] in
+            guard let finished = await self?.camera.stopRecording() else { return }
+            self?.lastCapture = (finished, starts, elapsed)
+        }
     }
 
     /// Cancels the running timer without touching what is already on screen, the way the design
@@ -163,6 +198,10 @@ public final class StudioModel {
         segmentIndex = 0
         wordIndex = 0
         countdown = nil
+        lastCapture = nil
+        recordingURL = nil
+        recordingStart = nil
+        segmentStarts = []
     }
 
     /// Real speech tracking calls this instead of the timer.
@@ -183,6 +222,9 @@ public final class StudioModel {
             }
             segmentIndex += 1
             wordIndex = 0
+            if let recordingStart {
+                segmentStarts.append(Date.now.timeIntervalSince(recordingStart))
+            }
         } else {
             wordIndex += 1
         }
