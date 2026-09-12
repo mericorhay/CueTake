@@ -17,6 +17,10 @@ public struct CaptionsScreen: View {
     }
 
     private let project: Project
+    /// Reports the choice upward: the screen owns the picking, the project owns the decision.
+    /// Without this the style is forgotten the moment the screen is left, which is exactly when
+    /// the user believes they have set it.
+    private let onStyleChange: (String, CaptionPosition) -> Void
     private let onBack: () -> Void
     private let onExport: () -> Void
 
@@ -29,10 +33,12 @@ public struct CaptionsScreen: View {
     public init(
         project: Project,
         style: CaptionPreference = .pop,
+        onStyleChange: @escaping (String, CaptionPosition) -> Void = { _, _ in },
         onBack: @escaping () -> Void,
         onExport: @escaping () -> Void
     ) {
         self.project = project
+        self.onStyleChange = onStyleChange
         self.onBack = onBack
         self.onExport = onExport
         _style = State(initialValue: Style(style))
@@ -148,6 +154,10 @@ public struct CaptionsScreen: View {
         }
     }
 
+    private func report() {
+        onStyleChange(style.rawValue.lowercased(), position.captionPosition)
+    }
+
     private var controls: some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView(.horizontal) {
@@ -182,14 +192,20 @@ public struct CaptionsScreen: View {
 
             HStack(spacing: 7) {
                 ForEach(Style.allCases, id: \.self) { option in
-                    DSPill(option.label, isOn: style == option) { style = option }
+                    DSPill(option.label, isOn: style == option) {
+                        style = option
+                        report()
+                    }
                 }
             }
             .padding(.bottom, 14)
 
             HStack(spacing: 7) {
                 ForEach(Position.allCases, id: \.self) { option in
-                    DSPill(option.label, isOn: position == option) { position = option }
+                    DSPill(option.label, isOn: position == option) {
+                        position = option
+                        report()
+                    }
                 }
             }
         }
@@ -256,6 +272,16 @@ extension CaptionsScreen.Style {
 }
 
 extension CaptionsScreen.Position {
+    /// Normalised placement in the frame. Centred horizontally in every case; only the height
+    /// changes, because a caption that drifts sideways reads as a mistake rather than a choice.
+    var captionPosition: CaptionPosition {
+        switch self {
+        case .top: CaptionPosition(x: 0.5, y: 0.12)
+        case .middle: CaptionPosition(x: 0.5, y: 0.5)
+        case .bottom: CaptionPosition(x: 0.5, y: 0.86)
+        }
+    }
+
     var label: String {
         switch self {
         case .top: String(localized: "captions.position.top", bundle: .module)

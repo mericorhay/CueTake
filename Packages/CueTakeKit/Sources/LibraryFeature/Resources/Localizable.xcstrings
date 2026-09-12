@@ -52,6 +52,40 @@
         }
       }
     },
+    "home.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing here yet. Bring in the clips you already shot and put them in order."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burası henüz boş. Çektiğin klipleri getir, sırasına koy."
+          }
+        }
+      }
+    },
+    "home.empty.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir video başlat"
+          }
+        }
+      }
+    },
     "home.greeting.stamp": {
       "comment": "Day and time above the greeting.",
       "extractionState": "manual",
@@ -169,6 +203,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ürün Reel'i"
+          }
+        }
+      }
+    },
+    "projects.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your finished and half-finished videos will live here."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitmiş ve yarım kalmış videoların burada duracak."
           }
         }
       }

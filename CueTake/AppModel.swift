@@ -131,33 +131,81 @@ final class AppModel {
         defer { isImporting = false }
 
         let store = dependencies.projectStore
-        guard let mediaDirectory = try? await store.mediaDirectory(for: project.id) else { return }
+
+        // A fresh project rather than an append. Dropping clips into whatever happened to be open
+        // is how the library ends up with one project that grows forever, and how an import lands
+        // in a timeline next to segments from an unrelated script.
+        var fresh = Project(
+            title: String(localized: "project.untitled \(Date.now.formatted(date: .abbreviated, time: .shortened))"),
+            localeIdentifier: Locale.current.identifier
+        )
+        try? await store.save(fresh)
+
+        guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else { return }
         let importer = MediaImporter()
 
-        for item in items {
+        for (index, item) in items.enumerated() {
             guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
                   let clip = try? await importer.importClip(from: movie.url, into: mediaDirectory)
             else { continue }
 
             try? FileManager.default.removeItem(at: movie.url)
 
-            project.recordings.append(clip.recording)
-            var segment = Segment(
-                role: .custom(clip.suggestedTitle),
-                title: clip.suggestedTitle,
-                script: "",
-                estimatedDuration: clip.take.duration,
-                takes: [clip.take],
-                selectedTakeID: clip.take.id
+            fresh.recordings.append(clip.recording)
+            fresh.segments.append(
+                Segment(
+                    // Numbered, not named after the file: "IMG_4821" on a timeline clip tells the
+                    // user nothing they can use, and the order is the thing that matters.
+                    role: .custom("\(index + 1)"),
+                    title: clip.suggestedTitle,
+                    script: "",
+                    estimatedDuration: clip.take.duration,
+                    takes: [clip.take],
+                    selectedTakeID: clip.take.id
+                )
             )
-            segment.selectedTakeID = clip.take.id
-            project.segments.append(segment)
         }
 
+        guard !fresh.segments.isEmpty else {
+            // Nothing came through — leaving an empty project behind would be litter.
+            try? await store.delete(fresh.id)
+            return
+        }
+
+        fresh.updatedAt = .now
+        try? await store.save(fresh)
+        adopt(fresh)
+        await refreshLibrary()
+        go(to: .editor)
+    }
+
+    /// Opens a project from the library. The one the user tapped, which is not always the one
+    /// already loaded — the library used to ignore the tap and reopen whatever was current.
+    func openProject(id: Project.ID) async {
+        guard id != project.id else {
+            openEditor()
+            return
+        }
+        guard let stored = try? await dependencies.projectStore.load(id) else { return }
+        adopt(stored)
+        go(to: .editor)
+    }
+
+    /// Makes a project the one being worked on. Every per-screen model is rebuilt, because they
+    /// hold segment identifiers that mean nothing in a different project.
+    private func adopt(_ newProject: Project) {
+        project = newProject
+        studioModel = StudioModel(project: newProject)
+        editorModel = EditorModel(project: newProject)
+        retakeModel = nil
+    }
+
+    /// Applies the caption choice to the project, so it survives leaving the screen.
+    func applyCaptionStyle(presetID: String, position: CaptionPosition) {
+        project.captionStyle.presetID = presetID
+        project.captionStyle.position = position
         project.updatedAt = .now
         scheduleSave()
-        await refreshLibrary()
-        openEditor()
     }
 
     /// The editor asks for playback; only this layer knows where the project's media lives.

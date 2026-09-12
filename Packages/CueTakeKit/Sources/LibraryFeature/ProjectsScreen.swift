@@ -23,6 +23,15 @@ public struct ProjectsScreen: View {
                     .foregroundStyle(DS.Palette.ink(0.42))
                     .padding(.top, 6)
 
+                if projects.isEmpty {
+                    LibraryEmptyState(
+                        message: String(localized: "projects.empty", bundle: .module),
+                        action: nil,
+                        onTap: nil
+                    )
+                    .padding(.top, 26)
+                }
+
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible(), spacing: 12, alignment: .top),

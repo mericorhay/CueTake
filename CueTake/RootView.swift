@@ -72,7 +72,7 @@ struct RootView: View {
             HomeScreen(
                 recents: model.recentItems,
                 onCreate: { model.go(to: .create) },
-                onOpenProject: { _ in model.openEditor() },
+                onOpenProject: { item in Task { await model.openProject(id: item.id) } },
                 onOpenAllProjects: { model.go(to: .projects) },
                 onOpenWorkflow: { model.go(to: .workflowDetail) }
             )
@@ -150,6 +150,7 @@ struct RootView: View {
             CaptionsScreen(
                 project: model.project,
                 style: model.settingsModel.settings.captionPreset,
+                onStyleChange: { model.applyCaptionStyle(presetID: $0, position: $1) },
                 onBack: { model.openEditor() },
                 onExport: { model.go(to: .export) }
             )
@@ -163,7 +164,9 @@ struct RootView: View {
             )
 
         case .projects:
-            ProjectsScreen(projects: model.projectItems) { _ in model.openEditor() }
+            ProjectsScreen(projects: model.projectItems) { item in
+                Task { await model.openProject(id: item.id) }
+            }
 
         case .workflows:
             WorkflowsScreen { _ in model.go(to: .workflowDetail) }

@@ -218,6 +218,15 @@ public struct HomeScreen: View {
             .padding(.top, 32)
             .padding(.bottom, 12)
 
+            if recents.isEmpty {
+                LibraryEmptyState(
+                    message: String(localized: "home.empty", bundle: .module),
+                    action: String(localized: "home.empty.action", bundle: .module),
+                    onTap: onCreate
+                )
+                .padding(.horizontal, 22)
+            }
+
             ScrollView(.horizontal) {
                 HStack(spacing: 13) {
                     ForEach(recents) { item in
