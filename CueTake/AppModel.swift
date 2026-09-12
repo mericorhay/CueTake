@@ -66,7 +66,10 @@ final class AppModel {
         self.studioModel = StudioModel(project: project)
         self.editorModel = EditorModel(project: project)
 
-        let settingsModel = SettingsModel(store: dependencies.settingsStore)
+        // `AppDependencies.live` rather than `dependencies`: a property cannot be read off `self`
+        // until every stored property is initialized, and `settingsModel` is the one being assigned
+        // here. Both names refer to the same instance — `live` is a static `let`.
+        let settingsModel = SettingsModel(store: AppDependencies.live.settingsStore)
         self.settingsModel = settingsModel
         // Skipping the intro for someone who has already seen it is the whole point of recording
         // that they did.
