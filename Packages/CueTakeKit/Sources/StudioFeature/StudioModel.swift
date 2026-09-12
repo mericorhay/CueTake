@@ -1,3 +1,4 @@
+import CaptureEngine
 import Domain
 import Observation
 import SwiftUI
@@ -29,6 +30,23 @@ public final class StudioModel {
 
     public let teleprompter = TeleprompterModel()
     public private(set) var project: Project
+
+    public let camera = CameraSession()
+    public private(set) var cameraAuthorization: CaptureAuthorization = .notDetermined
+
+    /// Asks for the camera and starts the preview. The microphone is left alone until there is
+    /// something to record with it — two prompts on first launch reads as an app taking more than
+    /// it needs, and the studio is useful with a preview alone.
+    public func startCamera(position: CameraPosition) async {
+        let status = await CameraSession.requestAuthorization(includingMicrophone: false)
+        cameraAuthorization = status.camera
+        guard status.camera == .authorized else { return }
+        camera.start(camera: position)
+    }
+
+    public func stopCamera() {
+        camera.stop()
+    }
 
     /// Keeps the prompter's preset tables in step with the studio's orientation.
     ///

@@ -94,6 +94,7 @@ struct RootView: View {
         case .studio:
             StudioScreen(
                 model: model.studioModel,
+                camera: model.settingsModel.settings.defaultCamera,
                 onBack: { model.go(to: .blueprint) },
                 onOpenEditor: { model.openEditor() },
                 onFinished: { model.go(to: .complete) }

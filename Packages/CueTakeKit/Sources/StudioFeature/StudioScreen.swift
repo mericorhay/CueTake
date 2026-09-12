@@ -1,3 +1,4 @@
+import CaptureEngine
 import DesignSystem
 import Domain
 import SwiftUI
@@ -8,17 +9,21 @@ import Teleprompter
 public struct StudioScreen: View {
     @Bindable private var model: StudioModel
 
+    /// Which camera the preview opens on, from Settings.
+    private let camera: CameraPosition
     private let onBack: () -> Void
     private let onOpenEditor: () -> Void
     private let onFinished: () -> Void
 
     public init(
         model: StudioModel,
+        camera: CameraPosition = .front,
         onBack: @escaping () -> Void,
         onOpenEditor: @escaping () -> Void,
         onFinished: @escaping () -> Void
     ) {
         self.model = model
+        self.camera = camera
         self.onBack = onBack
         self.onOpenEditor = onOpenEditor
         self.onFinished = onFinished
@@ -27,7 +32,9 @@ public struct StudioScreen: View {
     public var body: some View {
         GeometryReader { proxy in
             ZStack {
-                CameraBackdrop()
+                CameraBackdrop(
+                    session: model.cameraAuthorization == .authorized ? model.camera.session : nil
+                )
 
                 if model.showsGrid {
                     FramingGrid()
@@ -64,6 +71,8 @@ public struct StudioScreen: View {
         }
         .background(DS.Palette.screen)
         .dsEnter(.screen(duration: 0.5))
+        .task { await model.startCamera(position: camera) }
+        .onDisappear { model.stopCamera() }
         .onChange(of: model.phase) { _, phase in
             if phase == .complete { onFinished() }
         }
