@@ -104,27 +104,48 @@ public struct EditorScreen: View {
     }
 
     private var transport: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 18) {
+            // Given a surface of its own. A bare glyph on a dark background is a target you have
+            // to aim at, and this is the control people reach for most after the playhead.
             Button(action: model.skipToStart) {
                 Text("⏮")
-                    .font(.system(size: 18))
-                    .foregroundStyle(DS.Palette.ink(0.55))
+                    .font(.system(size: 16))
+                    .foregroundStyle(DS.Palette.ink(0.75))
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(DS.Palette.hairline(0.08)))
+                    .overlay(Circle().stroke(DS.Palette.hairline(0.1), lineWidth: 1))
             }
-            .buttonStyle(.dsPress)
+            .buttonStyle(.dsPressIcon)
 
             Button(action: model.togglePlayback) {
                 Text(model.isPlaying ? "❚❚" : "▶")
                     .font(.system(size: 17))
                     .foregroundStyle(DS.Palette.inkInverse)
+                    // The play glyph sits visually left of centre inside a circle; the pause bars
+                    // do not. Nudging only the triangle is the difference between a button that
+                    // looks centred and one that looks almost centred.
+                    .offset(x: model.isPlaying ? 0 : 2)
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(DS.Palette.ink))
+                    .shadow(color: DS.Palette.ink(0.25), radius: 12, y: 6)
+                    .contentTransition(.opacity)
+                    .animation(DS.Motion.snap, value: model.isPlaying)
             }
-            .buttonStyle(.dsPress)
+            .buttonStyle(.dsPressIcon)
 
-            Text("\(model.playheadLabel) / \(model.durationLabel)")
-                .dsFont(.mono, .medium, 12)
-                .foregroundStyle(DS.Palette.ink(0.55))
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.playheadLabel)
+                    .dsFont(.mono, .medium, 14)
+                    .foregroundStyle(DS.Palette.ink)
+                    .contentTransition(.numericText())
+                Text(model.durationLabel)
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.38))
+            }
+
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 18)
         .padding(.top, 14)
         .padding(.bottom, 6)
     }

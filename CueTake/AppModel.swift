@@ -1,3 +1,4 @@
+import AIServices
 import AVFoundation
 import Domain
 import EditorFeature
@@ -110,6 +111,26 @@ final class AppModel {
             fill: .ramp(at: index),
             height: height
         )
+    }
+
+    /// Removes a project and its media.
+    ///
+    /// If it is the one open, the app falls back to whatever is newest rather than holding a
+    /// project that no longer exists — and seeds a fresh sample if the library is now empty, so
+    /// there is always something to open.
+    func deleteProject(id: Project.ID) async {
+        try? await dependencies.projectStore.delete(id)
+        await refreshLibrary()
+
+        guard id == project.id else { return }
+        if let next = library.first, let stored = try? await dependencies.projectStore.load(next.id) {
+            adopt(stored)
+        } else {
+            let seed = Project.sample
+            try? await dependencies.projectStore.save(seed)
+            adopt(seed)
+            await refreshLibrary()
+        }
     }
 
     func refreshLibrary() async {
@@ -250,7 +271,9 @@ final class AppModel {
             let assembled = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
             exportModel.advance(to: 2)
 
-            let url = try await composer.write(assembled, to: destination)
+            let url = try await composer.write(assembled, to: destination) { [exportModel] value in
+                exportModel.report(value)
+            }
             exportModel.advance(to: 3)
 
             if settingsModel.settings.exportDestination == .photoLibrary {
@@ -332,6 +355,66 @@ final class AppModel {
 
     /// Rebuilds the studio only when the script actually changed, so the prompter keeps its
     /// layout, size and mode between visits.
+    /// Writes a script from the brief and turns it into a project.
+    ///
+    /// The four steps are the real stages of the work, not a countdown: checking the model is
+    /// there, writing, turning beats into segments, saving. If the device cannot run the model the
+    /// user is told which of those two reasons it is, because "unavailable" is not an answer.
+    func generateScript() async {
+        promptModel.begin()
+
+        let locale = Locale.current.identifier
+
+        // The router only returns a provider that is ready, so a nil answer is the interesting
+        // case: the user deserves to know whether the model is missing or merely still arriving.
+        guard let writer = await dependencies.ai.provider(
+            .scriptWriting,
+            as: (any ScriptWriting).self,
+            localeIdentifier: locale
+        ) else {
+            let reason = await FoundationModelsScriptWriter()
+                .availability(for: .scriptWriting, localeIdentifier: locale)
+            promptModel.fail(
+                reason == .unavailable(.modelNotReady)
+                    ? String(localized: "prompt.failed.notReady")
+                    : String(localized: "prompt.failed.unavailable")
+            )
+            return
+        }
+
+        promptModel.advance(to: 2)
+        let brief = ScriptBrief(
+            topic: promptModel.promptText,
+            targetDuration: MediaTime(seconds: 30),
+            platform: .instagramReels,
+            localeIdentifier: locale
+        )
+
+        do {
+            var draft: ScriptDraft?
+            for try await partial in writer.writeScript(brief, localeIdentifier: locale) {
+                draft = partial
+            }
+            guard let draft, !draft.segments.isEmpty else {
+                promptModel.fail(String(localized: "prompt.failed.empty"))
+                return
+            }
+
+            promptModel.advance(to: 3)
+            var fresh = Project(title: draft.title, localeIdentifier: locale)
+            fresh.segments = draft.segments.map(Segment.init(draft:))
+
+            promptModel.advance(to: 4)
+            try? await dependencies.projectStore.save(fresh)
+            adopt(fresh)
+            await refreshLibrary()
+            promptModel.finish()
+            go(to: .blueprint)
+        } catch {
+            promptModel.fail(String(localized: "prompt.failed.generic"))
+        }
+    }
+
     /// Hands the studio a file to write into, so a take is a recording rather than a timer.
     func beginStudioCapture() async {
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {

@@ -9,6 +9,8 @@ public final class ExportModel {
     /// 0 = not started, 1...4 = the stage currently running, 4 = finished.
     public private(set) var stage = 0
 
+    /// 0...1 while the file is being written. Nil before and after.
+    public private(set) var progress: Double?
     /// Where the finished file landed, once there is one.
     public private(set) var outputURL: URL?
     /// Set when the export could not finish. Shown instead of pretending it did.
@@ -27,7 +29,12 @@ public final class ExportModel {
     public func begin() {
         failure = nil
         outputURL = nil
+        progress = nil
         stage = 1
+    }
+
+    public func report(_ value: Double) {
+        progress = min(max(0, value), 1)
     }
 
     public func advance(to next: Int) {
@@ -37,6 +44,7 @@ public final class ExportModel {
 
     public func succeed(url: URL) {
         outputURL = url
+        progress = nil
         stage = 4
     }
 
@@ -53,6 +61,7 @@ public final class ExportModel {
         stage = 0
         outputURL = nil
         failure = nil
+        progress = nil
     }
 }
 
@@ -113,6 +122,29 @@ public struct ExportScreen: View {
                 ) {
                     onRender()
                 }
+            }
+
+            if let progress = model.progress {
+                // A real bar, moving at the pace of the write. The stages above say what is
+                // happening; this says how much of it is left.
+                VStack(spacing: 8) {
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(DS.Palette.hairline(0.1))
+                        GeometryReader { proxy in
+                            Capsule()
+                                .fill(DS.Palette.accent)
+                                .frame(width: proxy.size.width * progress)
+                        }
+                    }
+                    .frame(height: 3)
+
+                    Text(verbatim: "\(Int(progress * 100))%")
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .contentTransition(.numericText())
+                }
+                .padding(.top, 14)
+                .animation(DS.Motion.settle, value: progress)
             }
 
             if let failure = model.failure {

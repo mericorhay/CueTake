@@ -2,15 +2,15 @@ import DesignSystem
 import Observation
 import SwiftUI
 
-/// Idea → blueprint. Two states: writing the brief, and the four-step generation run.
+/// Idea → blueprint. Two states: writing the brief, and the generation run.
 @MainActor
 @Observable
 public final class PromptModel {
     /// 0 = idle, 1...4 = the step currently running.
     public private(set) var step = 0
     public var promptText: String
-
-    private var task: Task<Void, Never>?
+    /// Set when generation failed, so the user is told rather than dropped back with nothing.
+    public private(set) var failure: String?
 
     /// `Bundle.module` is internal to the module, so the prefilled brief is resolved in the body
     /// rather than in a default argument, which would leak it into the public signature.
@@ -21,45 +21,43 @@ public final class PromptModel {
     public var isRunning: Bool { step > 0 }
     public var progress: Double { Double(step) * 0.25 }
 
-    /// The design advances a step every 850ms, then opens the blueprint.
-    public func generate(onFinish: @escaping @MainActor () -> Void) {
-        guard task == nil else { return }
+    // The steps used to advance on a timer, because there was nothing to time. They are driven by
+    // the work now: the screen draws them, and whoever owns the model moves them.
+
+    public func begin() {
+        failure = nil
         step = 1
-        task = Task { [weak self] in
-            for next in 2...5 {
-                try? await Task.sleep(for: .milliseconds(850))
-                guard let self, !Task.isCancelled else { return }
-                if next > 4 {
-                    step = 0
-                    task = nil
-                    onFinish()
-                    return
-                }
-                step = next
-            }
-        }
     }
 
-    /// Cancels the running timer without touching what is already on screen, the way the design
-    /// clears its intervals on every navigation.
-    public func stopTimers() {
-        task?.cancel()
-        task = nil
+    public func advance(to next: Int) {
+        guard next > step, next <= 4 else { return }
+        step = next
     }
+
+    public func finish() {
+        step = 0
+    }
+
+    public func fail(_ reason: String) {
+        failure = reason
+        step = 0
+    }
+
+    /// Nothing ticks here any more. Kept so navigation can treat every model the same way.
+    public func stopTimers() {}
 
     public func cancel() {
-        task?.cancel()
-        task = nil
         step = 0
+        failure = nil
     }
 }
 
 public struct PromptScreen: View {
     @Bindable private var model: PromptModel
     private let onBack: () -> Void
-    private let onGenerated: () -> Void
+    private let onGenerated: () async -> Void
 
-    public init(model: PromptModel, onBack: @escaping () -> Void, onGenerated: @escaping () -> Void) {
+    public init(model: PromptModel, onBack: @escaping () -> Void, onGenerated: @escaping () async -> Void) {
         self.model = model
         self.onBack = onBack
         self.onGenerated = onGenerated
@@ -143,9 +141,15 @@ public struct PromptScreen: View {
                 verticalPadding: 19,
                 fontSize: 16
             ) {
-                // Wrapped rather than passed straight through: the callback the caller hands us
-                // carries no isolation, and generate() runs its completion on the main actor.
-                model.generate { onGenerated() }
+                Task { await onGenerated() }
+            }
+
+            if let failure = model.failure {
+                Text(failure)
+                    .dsFont(.sans, .regular, 12)
+                    .foregroundStyle(DS.Palette.accent)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 10)
             }
         }
     }

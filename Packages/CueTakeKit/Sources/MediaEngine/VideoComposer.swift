@@ -142,8 +142,15 @@ public struct VideoComposer: Sendable {
             )
     }
 
-    /// Writes the assembled video to a file.
-    public func write(_ assembled: Assembled, to destination: URL) async throws -> URL {
+    /// Writes the assembled video to a file, reporting real progress as it goes.
+    ///
+    /// - Parameter onProgress: called on the main actor with 0...1. The export screen used to
+    ///   advance on a timer, which finished before the file did on anything long.
+    public func write(
+        _ assembled: Assembled,
+        to destination: URL,
+        onProgress: (@MainActor @Sendable (Double) -> Void)? = nil
+    ) async throws -> URL {
         try? FileManager.default.removeItem(at: destination)
 
         // A passthrough preset ignores the video composition and hands back the source frames,
@@ -156,6 +163,20 @@ public struct VideoComposer: Sendable {
             throw ComposeError.exportFailed("no export session")
         }
         session.videoComposition = assembled.videoComposition
+
+        let reporter: Task<Void, Never>? = onProgress.map { report in
+            Task {
+                // Polled rather than observed: the session's states sequence reports phases, and
+                // what the user wants to see is the bar moving between them.
+                while !Task.isCancelled {
+                    let value = Double(session.progress)
+                    await report(value)
+                    if value >= 0.999 { return }
+                    try? await Task.sleep(for: .milliseconds(120))
+                }
+            }
+        }
+        defer { reporter?.cancel() }
 
         do {
             try await session.export(to: destination, as: .mov)

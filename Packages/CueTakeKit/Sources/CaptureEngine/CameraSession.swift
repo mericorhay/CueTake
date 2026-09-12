@@ -15,6 +15,8 @@ public final class CameraSession: @unchecked Sendable {
 
     private let queue = DispatchQueue(label: "com.orhay.cuetake.camera")
     private var videoInput: AVCaptureDeviceInput?
+    /// The lens currently feeding the session, for zoom and for reporting what it can do.
+    private var videoDevice: AVCaptureDevice?
     private var audioInput: AVCaptureDeviceInput?
     private let movieOutput = AVCaptureMovieFileOutput()
     private let recordingDelegate = RecordingDelegate()
@@ -23,6 +25,33 @@ public final class CameraSession: @unchecked Sendable {
     public init() {}
 
     public var isRecording: Bool { movieOutput.isRecording }
+
+    /// What this lens can actually do. A telephoto starts at 1x of its own field of view, so the
+    /// numbers are relative to the current lens rather than to the phone.
+    public var zoomRange: ClosedRange<Double> {
+        guard let device = videoDevice else { return 1...1 }
+        // Capped well below the hardware maximum: past a few times optical, the picture is a
+        // digital crop and offering 100x is a promise of mush.
+        return 1...min(Double(device.activeFormat.videoMaxZoomFactor), 8)
+    }
+
+    public var zoom: Double {
+        Double(videoDevice?.videoZoomFactor ?? 1)
+    }
+
+    /// Sets the zoom, clamped to what the lens allows.
+    ///
+    /// Locked for configuration rather than set directly: another part of the system can be holding
+    /// the device, and writing to it unlocked throws — which on a pinch means a crash mid-gesture.
+    public func setZoom(_ factor: Double) {
+        queue.async { [self] in
+            guard let device = videoDevice else { return }
+            let clamped = min(max(1, factor), min(Double(device.activeFormat.videoMaxZoomFactor), 8))
+            guard (try? device.lockForConfiguration()) != nil else { return }
+            device.videoZoomFactor = CGFloat(clamped)
+            device.unlockForConfiguration()
+        }
+    }
 
     // MARK: - Authorization
 
@@ -84,6 +113,7 @@ public final class CameraSession: @unchecked Sendable {
             if let input = Self.input(for: camera), session.canAddInput(input) {
                 session.addInput(input)
                 videoInput = input
+                videoDevice = input.device
             } else {
                 // Putting the old one back is better than leaving the session with no video at all.
                 session.addInput(current)
@@ -149,6 +179,7 @@ public final class CameraSession: @unchecked Sendable {
         if let input = Self.input(for: camera), session.canAddInput(input) {
             session.addInput(input)
             videoInput = input
+            videoDevice = input.device
         }
 
         if session.canAddOutput(movieOutput) {
@@ -160,10 +191,20 @@ public final class CameraSession: @unchecked Sendable {
 
     private static func input(for camera: CameraPosition) -> AVCaptureDeviceInput? {
         let position: AVCaptureDevice.Position = camera == .front ? .front : .back
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position),
-              let input = try? AVCaptureDeviceInput(device: device)
-        else { return nil }
-        return input
+        // The virtual multi-camera device where there is one: it switches between the ultra-wide,
+        // wide and telephoto lenses by itself as the zoom changes, which is what makes zooming on
+        // the back camera stay sharp instead of turning into a digital crop at 2x.
+        let preferred: [AVCaptureDevice.DeviceType] = position == .back
+            ? [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera]
+            : [.builtInWideAngleCamera]
+
+        for type in preferred {
+            if let device = AVCaptureDevice.default(type, for: .video, position: position),
+               let input = try? AVCaptureDeviceInput(device: device) {
+                return input
+            }
+        }
+        return nil
     }
 }
 

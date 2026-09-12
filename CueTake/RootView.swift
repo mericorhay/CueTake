@@ -98,7 +98,7 @@ struct RootView: View {
             PromptScreen(
                 model: model.promptModel,
                 onBack: { model.go(to: .create) },
-                onGenerated: { model.go(to: .blueprint) }
+                onGenerated: { await model.generateScript() }
             )
 
         case .blueprint:
@@ -173,7 +173,10 @@ struct RootView: View {
             )
 
         case .projects:
-            ProjectsScreen(projects: model.projectItems) { item in
+            ProjectsScreen(
+                projects: model.projectItems,
+                onDeleteProject: { item in Task { await model.deleteProject(id: item.id) } }
+            ) { item in
                 Task { await model.openProject(id: item.id) }
             }
 

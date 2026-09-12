@@ -207,6 +207,23 @@
         }
       }
     },
+    "projects.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
     "projects.empty": {
       "extractionState": "manual",
       "localizations": {

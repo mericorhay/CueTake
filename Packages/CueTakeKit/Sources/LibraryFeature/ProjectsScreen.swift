@@ -5,11 +5,15 @@ public struct ProjectsScreen: View {
     private let projects: [LibraryItem]
     private let onOpenProject: (LibraryItem) -> Void
 
+    private let onDeleteProject: (LibraryItem) -> Void
+
     public init(
         projects: [LibraryItem] = LibraryItem.sampleProjects,
+        onDeleteProject: @escaping (LibraryItem) -> Void = { _ in },
         onOpenProject: @escaping (LibraryItem) -> Void
     ) {
         self.projects = projects
+        self.onDeleteProject = onDeleteProject
         self.onOpenProject = onOpenProject
     }
 
@@ -46,6 +50,16 @@ public struct ProjectsScreen: View {
                             card(project)
                         }
                         .buttonStyle(.dsPress)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                onDeleteProject(project)
+                            } label: {
+                                Label(
+                                    String(localized: "projects.delete", bundle: .module),
+                                    systemImage: "trash"
+                                )
+                            }
+                        }
                     }
                 }
                 .padding(.top, 22)

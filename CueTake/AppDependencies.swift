@@ -36,7 +36,7 @@ struct AppDependencies {
         scriptTracker: UnimplementedScriptTracker(),
         composer: UnimplementedMediaComposer(),
         exporter: UnimplementedVideoExporter(),
-        ai: AICapabilityRouter(providers: [FoundationModelsProvider(), RemoteAIProvider()]),
+        ai: AICapabilityRouter(providers: [FoundationModelsScriptWriter(), RemoteAIProvider()]),
         workflowRunner: WorkflowRunner(handlers: [])
     )
 }

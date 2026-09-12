@@ -33,6 +33,26 @@ public final class StudioModel {
 
     public let camera = CameraSession()
     public private(set) var cameraAuthorization: CaptureAuthorization = .notDetermined
+    public private(set) var cameraPosition: CameraPosition = .front
+    /// Mirrors the lens so the UI can show it without reaching across threads for it.
+    public private(set) var zoom: Double = 1
+
+    /// Flipping mid-take would change the shot inside one file, so it is refused while rolling.
+    public func flipCamera() {
+        guard phase != .recording else { return }
+        cameraPosition = cameraPosition == .front ? .back : .front
+        zoom = 1
+        camera.setZoom(1)
+        camera.switchTo(camera: cameraPosition)
+    }
+
+    public func setZoom(_ factor: Double) {
+        let clamped = min(max(1, factor), camera.zoomRange.upperBound)
+        zoom = clamped
+        camera.setZoom(clamped)
+    }
+
+    public var zoomRange: ClosedRange<Double> { camera.zoomRange }
 
     /// Asks for the camera and starts the preview. The microphone is left alone until there is
     /// something to record with it — two prompts on first launch reads as an app taking more than
@@ -41,6 +61,7 @@ public final class StudioModel {
         let status = await CameraSession.requestAuthorization(includingMicrophone: false)
         cameraAuthorization = status.camera
         guard status.camera == .authorized else { return }
+        cameraPosition = position
         camera.start(camera: position)
     }
 

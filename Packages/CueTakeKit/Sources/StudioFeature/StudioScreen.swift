@@ -36,6 +36,17 @@ public struct StudioScreen: View {
     /// Bumped on every shutter press, so the bloom ring fires once per commit.
     @State private var shutterPresses = 0
     @State private var countdownSweep = false
+    @State private var zoomOrigin: Double?
+
+    private var zoomGesture: some Gesture {
+        MagnifyGesture(minimumScaleDelta: 0.01)
+            .onChanged { gesture in
+                let origin = zoomOrigin ?? model.zoom
+                if zoomOrigin == nil { zoomOrigin = origin }
+                model.setZoom(origin * gesture.magnification)
+            }
+            .onEnded { _ in zoomOrigin = nil }
+    }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public var body: some View {
@@ -44,6 +55,10 @@ public struct StudioScreen: View {
                 CameraBackdrop(
                     session: model.cameraAuthorization == .authorized ? model.camera.session : nil
                 )
+                // The backdrop is behind the prompter, which keeps its own pinch for text size, so
+                // the two gestures never meet: pinch the picture to zoom, pinch the panel to size.
+                .contentShape(Rectangle())
+                .gesture(zoomGesture)
 
                 if model.showsGrid {
                     FramingGrid()
@@ -65,6 +80,10 @@ public struct StudioScreen: View {
 
                 if model.teleprompter.isSettingsOpen {
                     settingsSheet
+                }
+
+                if model.zoom > 1.01 {
+                    zoomReadout
                 }
 
                 if let countdown = model.countdown {
@@ -104,6 +123,11 @@ public struct StudioScreen: View {
                 Spacer(minLength: 0)
 
                 segmentPips
+
+                DSCircleButton(model.cameraPosition == .front ? "◧" : "◨", fontSize: 15, style: .glass) {
+                    model.flipCamera()
+                }
+                .opacity(model.phase == .recording ? 0.3 : 1)
 
                 DSCircleButton("⊞", fontSize: 15, style: .glass) {
                     model.showsGrid.toggle()
@@ -270,6 +294,21 @@ public struct StudioScreen: View {
             }
         }
         .buttonStyle(ShutterButtonStyle())
+    }
+
+    /// Only while it is not 1x. A zoom indicator that is always on screen is one more thing to
+    /// read; one that appears when you have changed something is information.
+    private var zoomReadout: some View {
+        Text(String(format: "%.1f×", model.zoom))
+            .dsFont(.mono, .medium, 11)
+            .foregroundStyle(DS.Palette.ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .dsGlass(in: Capsule())
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, model.isLandscape ? 24 : 150)
+            .allowsHitTesting(false)
+            .transition(.opacity)
     }
 
     /// Covers the frame while the count runs. Tapping anywhere cancels, because the moment you

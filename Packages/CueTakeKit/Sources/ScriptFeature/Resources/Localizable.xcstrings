@@ -448,6 +448,74 @@
         }
       }
     },
+    "prompt.failed.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing came back. Try describing the video differently."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir şey dönmedi. Videoyu farklı anlatmayı dene."
+          }
+        }
+      }
+    },
+    "prompt.failed.generic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not write the script."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metin yazılamadı."
+          }
+        }
+      }
+    },
+    "prompt.failed.notReady": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The model is still downloading. Try again shortly."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model hâlâ iniyor. Birazdan tekrar dene."
+          }
+        }
+      }
+    },
+    "prompt.failed.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This iPhone cannot run the on-device model."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu iPhone cihaz üstü modeli çalıştıramıyor."
+          }
+        }
+      }
+    },
     "prompt.generate": {
       "extractionState": "manual",
       "localizations": {
