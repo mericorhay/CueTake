@@ -4,6 +4,9 @@ import SwiftUI
 /// Entry points into a new video. Four 3D cards; the first one is the accent card.
 public struct CreateScreen: View {
     public enum Destination: Hashable, Sendable {
+        /// Footage the user already has. First, and the accent card: it is the only entry point
+        /// that asks nothing of them — no idea, no script, no change to how they shoot.
+        case importFootage
         case prompt
         case script
         case workflow
@@ -31,12 +34,21 @@ public struct CreateScreen: View {
     private var cards: [Card] {
         [
             Card(
+                titleKey: "create.import.title",
+                subtitleKey: "create.import.subtitle",
+                mark: "↑",
+                destination: .importFootage,
+                isAccent: true,
+                chipFill: DS.Palette.inkInverse,
+                chipInk: DS.Palette.accent
+            ),
+            Card(
                 titleKey: "create.idea.title",
                 subtitleKey: "create.idea.subtitle",
                 mark: "AI",
                 destination: .prompt,
-                isAccent: true,
-                chipFill: DS.Palette.inkInverse,
+                isAccent: false,
+                chipFill: DS.Palette.hairline(0.1),
                 chipInk: DS.Palette.accent
             ),
             Card(

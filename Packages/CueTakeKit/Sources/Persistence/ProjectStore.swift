@@ -32,6 +32,8 @@ public enum ProjectStoreError: Error, Hashable, Sendable {
 public protocol ProjectStore: Sendable {
     /// Newest first.
     func summaries() async throws -> [ProjectSummary]
+    /// Where this project's media files belong. Created if it does not exist yet.
+    func mediaDirectory(for id: Project.ID) async throws -> URL
     func load(_ id: Project.ID) async throws -> Project
     func save(_ project: Project) async throws
     func delete(_ id: Project.ID) async throws
@@ -101,6 +103,15 @@ public actor InMemoryProjectStore: ProjectStore {
 
     public func save(_ project: Project) {
         projects[project.id] = project
+    }
+
+    /// A scratch directory: this store forgets everything on relaunch anyway, so pointing media
+    /// at the caches directory keeps the two halves telling the same story.
+    public func mediaDirectory(for id: Project.ID) throws -> URL {
+        let base = FileManager.default.temporaryDirectory
+            .appending(path: "CueTake/\(id.uuidString)/media", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        return base
     }
 
     public func delete(_ id: Project.ID) {

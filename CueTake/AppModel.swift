@@ -1,7 +1,9 @@
 import Domain
 import EditorFeature
+import MediaEngine
 import Observation
 import Persistence
+import PhotosUI
 import ScriptFeature
 import SettingsFeature
 import StudioFeature
@@ -74,6 +76,51 @@ final class AppModel {
         // Skipping the intro for someone who has already seen it is the whole point of recording
         // that they did.
         self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
+    }
+
+    // MARK: - Import
+
+    /// Drives the photo picker.
+    var isPickingFootage = false
+    private(set) var isImporting = false
+
+    /// Turns picked clips into segments, in the order they were chosen.
+    ///
+    /// One segment per clip, because that is what the user is telling us: these are the beats, in
+    /// this order. Everything downstream — trimming, reordering, retaking one of them — then works
+    /// without knowing the footage was not shot here.
+    func importFootage(_ items: [PhotosPickerItem]) async {
+        guard !items.isEmpty else { return }
+        isImporting = true
+        defer { isImporting = false }
+
+        let store = dependencies.projectStore
+        guard let mediaDirectory = try? await store.mediaDirectory(for: project.id) else { return }
+        let importer = MediaImporter()
+
+        for item in items {
+            guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
+                  let clip = try? await importer.importClip(from: movie.url, into: mediaDirectory)
+            else { continue }
+
+            try? FileManager.default.removeItem(at: movie.url)
+
+            project.recordings.append(clip.recording)
+            var segment = Segment(
+                role: .custom(clip.suggestedTitle),
+                title: clip.suggestedTitle,
+                script: "",
+                estimatedDuration: clip.take.duration,
+                takes: [clip.take],
+                selectedTakeID: clip.take.id
+            )
+            segment.selectedTakeID = clip.take.id
+            project.segments.append(segment)
+        }
+
+        project.updatedAt = .now
+        scheduleSave()
+        openEditor()
     }
 
     // MARK: - Persistence

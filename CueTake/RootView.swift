@@ -3,6 +3,7 @@ import Domain
 import EditorFeature
 import LibraryFeature
 import OnboardingFeature
+import PhotosUI
 import ScriptFeature
 import SettingsFeature
 import StudioFeature
@@ -13,6 +14,8 @@ import WorkflowsFeature
 /// they report what happened and this is the only place that decides where to go.
 struct RootView: View {
     @Bindable var model: AppModel
+
+    @State private var pickedFootage: [PhotosPickerItem] = []
 
     var body: some View {
         ZStack {
@@ -40,6 +43,20 @@ struct RootView: View {
             }
         }
         .animation(DS.Easing.ease(0.22), value: model.screen)
+        // Bound here rather than inside CreateScreen: the picker outlives that screen's identity,
+        // and the import writes to the project, which is this layer's business.
+        .photosPicker(
+            isPresented: $model.isPickingFootage,
+            selection: $pickedFootage,
+            maxSelectionCount: 30,
+            matching: .videos
+        )
+        .onChange(of: pickedFootage) { _, items in
+            guard !items.isEmpty else { return }
+            let picked = items
+            pickedFootage = []
+            Task { await model.importFootage(picked) }
+        }
         .preferredColorScheme(.dark)
         .task { await model.restore() }
         .onChange(of: model.project) { model.scheduleSave() }
@@ -62,6 +79,7 @@ struct RootView: View {
         case .create:
             CreateScreen(onBack: { model.go(to: .home) }) { destination in
                 switch destination {
+                case .importFootage: model.isPickingFootage = true
                 case .prompt: model.go(to: .prompt)
                 case .script: model.go(to: .script)
                 case .workflow: model.go(to: .workflowDetail)

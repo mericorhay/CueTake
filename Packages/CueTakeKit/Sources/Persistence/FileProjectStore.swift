@@ -50,6 +50,12 @@ public actor FileProjectStore: ProjectStore {
             .map(ProjectSummary.init(project:))
     }
 
+    public func mediaDirectory(for id: Project.ID) throws -> URL {
+        let directory = layout.mediaDirectory(for: id)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
     public func load(_ id: Project.ID) throws -> Project {
         try read(id)
     }

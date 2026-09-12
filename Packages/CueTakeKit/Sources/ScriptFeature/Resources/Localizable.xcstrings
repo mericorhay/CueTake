@@ -190,6 +190,40 @@
         }
       }
     },
+    "create.import.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clips you already shot, in your order"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çektiğin klipler, senin sıranla"
+          }
+        }
+      }
+    },
+    "create.import.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import footage"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videolarını at"
+          }
+        }
+      }
+    },
     "create.record.subtitle": {
       "extractionState": "manual",
       "localizations": {
