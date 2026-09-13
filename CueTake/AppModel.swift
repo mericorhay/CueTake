@@ -675,18 +675,39 @@ final class AppModel {
         let locale = project.localeIdentifier
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
 
+        // One listen per file. A studio recording is one file behind every segment, and it used to
+        // be transcribed again for each of them — five segments, five full passes over the same take.
+        var heard: [Recording.ID: Transcript] = [:]
+
         for index in project.segments.indices {
             guard let takeID = project.segments[index].selectedTakeID,
-                  let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }),
-                  project.segments[index].takes[takeIndex].transcript == nil,
-                  let recording = recordings[project.segments[index].takes[takeIndex].recordingID]
+                  let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID })
             else { continue }
 
-            let url = mediaDirectory.appending(
-                path: (recording.relativePath as NSString).lastPathComponent,
-                directoryHint: .notDirectory
-            )
-            guard let transcript = try? await speech.transcribeFile(at: url, localeIdentifier: locale) else { continue }
+            if project.segments[index].takes[takeIndex].transcript != nil {
+                // Already heard, but without captions — earlier builds cleared them on every cut.
+                // Asking to transcribe is how the user says "where did my captions go", so they are
+                // read back from the words that are still there.
+                if project.segments[index].captions.isEmpty {
+                    project.segments[index].refreshCaptions(maxWordsPerCue: project.captionStyle.maxWordsPerCue)
+                }
+                continue
+            }
+
+            guard let recording = recordings[project.segments[index].takes[takeIndex].recordingID] else { continue }
+
+            let transcript: Transcript
+            if let cached = heard[recording.id] {
+                transcript = cached
+            } else {
+                let url = mediaDirectory.appending(
+                    path: (recording.relativePath as NSString).lastPathComponent,
+                    directoryHint: .notDirectory
+                )
+                guard let fresh = try? await speech.transcribeFile(at: url, localeIdentifier: locale) else { continue }
+                heard[recording.id] = fresh
+                transcript = fresh
+            }
 
             // The transcriber reads the whole file; a take is a window into it. Word times are
             // stored relative to the take, so a take that starts thirty seconds in — anything
@@ -699,9 +720,9 @@ final class AppModel {
             )
 
             project.segments[index].takes[takeIndex].transcript = aligned
-            project.segments[index].captions = CaptionBuilder.cues(
-                from: aligned,
-                maxWordsPerCue: project.captionStyle.maxWordsPerCue
+            project.segments[index].refreshCaptions(
+                maxWordsPerCue: project.captionStyle.maxWordsPerCue,
+                carrying: project.segments[index].captions
             )
             // The script is what the prompter shows; for imported footage there was none, so what
             // was actually said becomes it.
@@ -785,6 +806,9 @@ final class AppModel {
         }
         retakeModel = nil
         openEditor()
+        // A kept retake is new speech with no words yet: without this its captions stayed empty
+        // and editing it by text said there was nothing to read.
+        Task { await transcribeNewTakes() }
     }
 
     func finishExport() {

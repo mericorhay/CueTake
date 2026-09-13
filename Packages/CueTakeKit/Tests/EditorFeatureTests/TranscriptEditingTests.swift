@@ -77,4 +77,56 @@ struct TranscriptEditingTests {
         #expect(model.project.segments.count == 1)
         #expect(abs(model.project.segments[0].selectedTake!.sourceRange.duration.seconds - 10) < 0.001)
     }
+
+    // MARK: - Captions survive cuts
+
+    @Test func trimmingPausesKeepsCaptionsOnEveryPiece() {
+        let model = model()
+        model.tightenSilences(at: 0, threshold: 0.6, pad: 0.1)
+        for segment in model.project.segments {
+            #expect(!segment.captions.isEmpty, "a cut must not delete a clip's captions")
+            // Every cue starts inside its own piece of footage.
+            #expect(segment.captions.allSatisfy { $0.range.start.seconds < segment.sourceSeconds })
+        }
+    }
+
+    @Test func splittingGivesEachHalfItsOwnWordsAndCaptions() {
+        let model = model()
+        model.seek(to: 3.5)
+        model.splitAtPlayhead()
+
+        let segments = model.project.segments
+        #expect(segments.count == 2)
+        #expect(segments[0].selectedTake?.transcript?.words.map(\.text) == ["so", "um", "this", "is"])
+        #expect(segments[1].selectedTake?.transcript?.words.map(\.text) == ["the", "point"])
+        #expect(!segments[0].captions.isEmpty)
+        #expect(segments[1].captions.first?.text.hasPrefix("the") == true)
+        // Rebased: "the" was said at 5.0s, 1.5s after the cut.
+        #expect(abs(segments[1].captions[0].range.start.seconds - 1.5) < 0.01)
+    }
+
+    @Test func handTypedCaptionsMoveWithTheirHalf() {
+        let model = model()
+        model.project.segments[0].refreshCaptions(maxWordsPerCue: 3)
+        let last = model.project.segments[0].captions.last!
+        model.updateCaption(last.id, at: 0) { $0.text = "THE POINT" }
+
+        model.seek(to: 3.5)
+        model.splitAtPlayhead()
+        #expect(model.project.segments[1].captions.contains { $0.text == "THE POINT" && $0.isUserEdited })
+        #expect(!model.project.segments[0].captions.contains { $0.text == "THE POINT" })
+    }
+
+    @Test func mergingPutsTheCaptionsBackTogether() {
+        let model = model()
+        model.seek(to: 3.5)
+        model.splitAtPlayhead()
+        #expect(model.canMerge(at: 0))
+        model.mergeWithNext(at: 0)
+
+        let merged = model.project.segments[0]
+        #expect(merged.selectedTake?.transcript?.words.count == 6)
+        #expect(abs((merged.selectedTake?.transcript?.words.last?.range.start.seconds ?? 0) - 5.5) < 0.01)
+        #expect(merged.captions.last?.text.hasSuffix("point") == true)
+    }
 }

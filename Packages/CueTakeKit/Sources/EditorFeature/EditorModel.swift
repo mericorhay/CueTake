@@ -315,6 +315,7 @@ public final class EditorModel {
                 start: take.sourceRange.start,
                 duration: MediaTime(seconds: sourceOffset)
             )
+            leftTake.transcript = take.transcript?.slice(from: 0, to: sourceOffset)
             var rightTake = Take(
                 recordingID: take.recordingID,
                 sourceRange: MediaTimeRange(
@@ -323,7 +324,9 @@ public final class EditorModel {
                 ),
                 status: take.status
             )
-            rightTake.transcript = nil
+            // The words go with their footage. This used to be nil, which left the right half with
+            // no transcript, no captions and nothing to edit by text until it was listened to again.
+            rightTake.transcript = take.transcript?.slice(from: sourceOffset, to: take.sourceRange.duration.seconds)
 
             left.takes = [leftTake]
             left.selectedTakeID = leftTake.id
@@ -336,14 +339,24 @@ public final class EditorModel {
             right.estimatedDuration = MediaTime(seconds: segment.sourceSeconds - sourceOffset)
         }
 
-        let words = ScriptText.words(in: segment.script).map(String.init)
-        if !words.isEmpty {
-            let cut = max(1, min(words.count - 1, Int((offset / segment.barWeight * Double(words.count)).rounded())))
-            left.script = words[..<cut].joined(separator: " ")
-            right.script = words[cut...].joined(separator: " ")
+        if let leftWords = left.selectedTake?.transcript, let rightWords = right.selectedTake?.transcript,
+           segment.selectedTake?.transcript != nil {
+            // What was actually said on each side, rather than the script cut at a guessed ratio.
+            left.script = leftWords.text
+            right.script = rightWords.text
+        } else {
+            let words = ScriptText.words(in: segment.script).map(String.init)
+            if !words.isEmpty {
+                let cut = max(1, min(words.count - 1, Int((offset / segment.barWeight * Double(words.count)).rounded())))
+                left.script = words[..<cut].joined(separator: " ")
+                right.script = words[cut...].joined(separator: " ")
+            }
         }
-        left.captions = []
-        right.captions = []
+        // Read again from each half's words, with anything typed by hand carried to the side it
+        // was on. Clearing them was how a split used to delete a clip's captions.
+        let maxWords = project.captionStyle.maxWordsPerCue
+        left.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions)
+        right.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions.map { $0.shifted(by: -sourceOffset) })
 
         record("editor.change.split", symbol: "scissors")
         project.segments[index] = left
@@ -369,7 +382,10 @@ public final class EditorModel {
         var copy = project.segments[index].copyWithNewIdentity()
         // Takes keep pointing at the same recording: a duplicate is another window onto the same
         // footage, not another copy of it.
-        copy.captions = []
+        // Same words at the same times, under new identities so the two copies can be edited apart.
+        copy.captions = copy.captions.map {
+            CaptionCue(text: $0.text, range: $0.range, styleOverride: $0.styleOverride, position: $0.position, isUserEdited: $0.isUserEdited)
+        }
         project.segments.insert(copy, at: index + 1)
         project.updatedAt = .now
         inspectedSegment = copy.id
@@ -401,13 +417,21 @@ public final class EditorModel {
             start: left.sourceRange.start,
             duration: left.sourceRange.duration + right.sourceRange.duration
         )
-        take.transcript = nil
+        let leftSeconds = left.sourceRange.duration.seconds
+        if left.transcript != nil || right.transcript != nil {
+            take.transcript = (left.transcript ?? Transcript(localeIdentifier: project.localeIdentifier, words: []))
+                .appending(right.transcript, at: leftSeconds)
+        }
         merged.takes = [take]
         merged.selectedTakeID = take.id
         merged.script = [project.segments[index].script, project.segments[index + 1].script]
             .filter { !$0.isEmpty }
             .joined(separator: " ")
-        merged.captions = []
+        merged.refreshCaptions(
+            maxWordsPerCue: project.captionStyle.maxWordsPerCue,
+            carrying: project.segments[index].captions
+                + project.segments[index + 1].captions.map { $0.shifted(by: leftSeconds) }
+        )
 
         project.segments[index] = merged
         project.segments.remove(at: index + 1)

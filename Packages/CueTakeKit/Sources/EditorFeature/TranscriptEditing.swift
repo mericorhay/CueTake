@@ -86,8 +86,12 @@ extension EditorModel {
             piece.selectedTakeID = newTake.id
             piece.estimatedDuration = newTake.sourceRange.duration
             // Captions described the old timing and would be wrong by exactly the amount that was
-            // removed, which is the most misleading kind of wrong.
-            piece.captions = []
+            // removed. They are read again from the words this piece kept — clearing them, which is
+            // what used to happen, made trimming pauses delete every caption in the clip.
+            piece.refreshCaptions(
+                maxWordsPerCue: project.captionStyle.maxWordsPerCue,
+                carrying: original.captions.map { $0.shifted(by: -span.lowerBound) }
+            )
             // The script follows the speech. It is what the prompter shows and what alignment
             // works against, and after a cut the old script describes a take that no longer exists.
             if !kept.isEmpty {

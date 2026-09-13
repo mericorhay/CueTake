@@ -124,7 +124,9 @@ extension Project {
         }
         guard segments[index].selectedTakeID != takeID else { return }
         segments[index].selectedTakeID = takeID
-        segments[index].captions.removeAll()
+        // The old take's captions describe somebody else's sentence. The new take's are read from
+        // its own words — or there are none yet, until it has been listened to.
+        segments[index].refreshCaptions(maxWordsPerCue: captionStyle.maxWordsPerCue)
         updatedAt = .now
     }
 }
