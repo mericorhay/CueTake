@@ -207,9 +207,11 @@ public struct AssistantScreen: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
                     ForEach(model.messages) { message in
-                        AssistantBubble(message: message, onDestination: { destination in
-                            model.onDestination?(destination)
-                        })
+                        AssistantBubble(
+                            message: message,
+                            onDestination: { destination in model.onDestination?(destination) },
+                            onWorkflow: { workflow, run in model.onWorkflow?(workflow, run) }
+                        )
                         .id(message.id)
                         .transition(
                             reduceMotion

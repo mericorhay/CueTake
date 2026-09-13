@@ -37,20 +37,31 @@ public enum AssistantDestination: String, CaseIterable, Hashable, Sendable {
         }
     }
 
-    /// Splits a reply into what to read and where to go. Unknown tokens are dropped rather than
-    /// shown, so a model that invents one produces no broken button and no stray brackets.
-    static func parse(_ reply: String) -> (text: String, destinations: [AssistantDestination]) {
-        var destinations: [AssistantDestination] = []
+    /// Splits a reply into what to read, where to go, and any workflow it proposes. Unknown tokens
+    /// are dropped rather than shown, so a model that invents one produces no broken button and no
+    /// stray brackets; a workflow block that does not decode is dropped the same way.
+    static func parse(_ reply: String) -> (text: String, destinations: [AssistantDestination], workflow: WorkflowDefinition?) {
         var text = reply
+
+        // A proposed workflow arrives as a fenced block tagged `cuetake-workflow`. It is lifted out
+        // of the prose and becomes a card, because JSON in a chat bubble is a wall nobody reads.
+        var workflow: WorkflowDefinition?
+        let block = /```cuetake-workflow\s*([\s\S]*?)```/
+        if let match = text.firstMatch(of: block) {
+            workflow = try? WorkflowDefinition.decode(json: String(match.output.1))
+            text = text.replacing(block, with: "")
+        }
+
+        var destinations: [AssistantDestination] = []
         let pattern = /\[\[go:([a-z]+)\]\]/
-        for match in reply.matches(of: pattern) {
+        for match in text.matches(of: pattern) {
             if let destination = AssistantDestination(rawValue: String(match.output.1)),
                !destinations.contains(destination) {
                 destinations.append(destination)
             }
         }
         text = text.replacing(pattern, with: "")
-        return (text.trimmingCharacters(in: .whitespacesAndNewlines), Array(destinations.prefix(2)))
+        return (text.trimmingCharacters(in: .whitespacesAndNewlines), Array(destinations.prefix(2)), workflow)
     }
 }
 
@@ -79,6 +90,8 @@ public final class AssistantModel {
     /// Where the user is right now, in a line or two, attached to each message they send.
     @ObservationIgnored public var context: (() -> String)?
     @ObservationIgnored public var onDestination: ((AssistantDestination) -> Void)?
+    /// A workflow the assistant proposed, and whether the user asked to run it straight away.
+    @ObservationIgnored public var onWorkflow: ((WorkflowDefinition, Bool) -> Void)?
     /// Turns a failure into a sentence. The app knows which failures are "not connected" and
     /// which are "offline"; the model only knows something went wrong.
     @ObservationIgnored public var describeFailure: ((any Error) -> String)?

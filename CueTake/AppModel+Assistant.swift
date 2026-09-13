@@ -40,6 +40,9 @@ extension AppModel {
         assistant.onDestination = { [weak self] destination in
             self?.go(toAssistantDestination: destination)
         }
+        assistant.onWorkflow = { [weak self] workflow, run in
+            self?.adoptAssistantWorkflow(workflow, run: run)
+        }
         assistant.describeFailure = { error in
             switch error as? AssistantClient.AssistantError {
             case .notConfigured: String(localized: "assistant.failure.notConfigured")
@@ -122,6 +125,28 @@ extension AppModel {
         case .workflows: go(to: .workflows)
         case .settings: go(to: .settings)
         case .studio: openStudio()
+        }
+    }
+
+    /// Takes a workflow the assistant wrote: stored like any other, opened in the studio, and run on
+    /// the open project when that is what the user tapped.
+    func adoptAssistantWorkflow(_ proposed: WorkflowDefinition, run: Bool) {
+        var workflow = proposed
+        workflow.origin = .ai
+        isAssistantOpen = false
+
+        workflowStudio = WorkflowStudioModel(definition: workflow, clips: currentClips())
+        workflows.removeAll { $0.id == workflow.id }
+        workflows.insert(workflow, at: 0)
+        let store = dependencies.workflowStore
+        Task { try? await store?.save(workflow) }
+
+        go(to: .workflowDetail)
+        guard run else { return }
+        Task { [weak self] in
+            // After the sheet has left, so the user watches the rail fill rather than missing it.
+            try? await Task.sleep(for: .milliseconds(500))
+            await self?.runWorkflow()
         }
     }
 

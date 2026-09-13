@@ -11,6 +11,9 @@
 // Response 200     { reply, stop_reason }
 
 const MODEL = "claude-opus-5";
+// Per client, per minute. Enforced only when a rate-limit binding named LIMITER is configured
+// (see wrangler.toml); without one the worker still runs, unlimited.
+const RATE_KEY_HEADER = "cf-connecting-ip";
 const MAX_TURNS = 40;
 const MAX_CHARS = 6000;
 
@@ -29,6 +32,32 @@ How CueTake is laid out (use these names; the user sees them in Turkish or Engli
 - Workflows (Workflow): reusable pipelines — sections (hook, intro, point, example, CTA) with clips dragged onto them, a separate style, and ordered tools (place clips, transcribe, cut pauses, cut filler words, speed, clean audio, music level, captions, caption look, export). Can be written from a sentence.
 - Projects (Projeler), Settings (Ayarlar, includes a file converter).
 - The bar at the top-left of every screen shows which stage the user is in; tapping the stage name opens the journey map.
+
+Proposing a workflow:
+When the user wants an edit that CueTake's automatic tools can do — cut pauses, cut filler words, captions, a caption look, speed, voice cleanup, music level, export — or asks for a workflow, include exactly one workflow after a one-sentence explanation, as a fenced block tagged cuetake-workflow. The app turns it into a card with "Open in studio" and "Run now". Format:
+
+\`\`\`cuetake-workflow
+{
+  "name": "short name",
+  "summary": "one sentence",
+  "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5 } ],
+  "style": { "captions": true, "captionPreset": "pop|clean|karaoke", "captionPosition": "top|middle|bottom", "frameRate": 30 },
+  "steps": [ { "kind": { "type": "<type>", "parameters": { } } } ]
+}
+\`\`\`
+
+Step types, in the order they usually run:
+- assembleSections — put the clips into the sections (only when the user wants a structure).
+- analyzeSpeech — transcribe. Required before trimSilences, cutWords and generateCaptions.
+- trimSilences { "minPause": 0.6, "padding": 0.12 }
+- cutWords { "words": ["um", "uh"] } — use filler words of the user's language (Turkish: "ee", "ıı", "yani", "şey").
+- setSpeed { "target": "all|hook|intro|point|example|cta", "speed": 1.1 } between 0.25 and 4.
+- cleanAudio { "denoise": true, "enhanceVoice": true, "removeRumble": true } — cleans the voice in every clip.
+- musicBed { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } — only if the project already has music.
+- generateCaptions
+- applyCaptionStyle { "presetID": "pop|clean|karaoke" }
+- export
+Use only these types. Leave out sections when the user only wants tools applied to what they already have.
 
 Rules:
 - Reply in the language of the user's message.
@@ -72,6 +101,13 @@ export default {
       return json({ error: "bad json" }, 400);
     }
 
+    // One address sending more than the limit gets told to wait instead of spending the key.
+    if (env.LIMITER) {
+      const key = `${request.headers.get(RATE_KEY_HEADER) || "unknown"}`;
+      const { success } = await env.LIMITER.limit({ key });
+      if (!success) return json({ error: "slow down" }, 429);
+    }
+
     let turns = Array.isArray(body.messages) ? body.messages : [];
     turns = turns.filter((t) => (t.role === "user" || t.role === "assistant") && t.text);
     if (turns.length > MAX_TURNS) turns = turns.slice(-MAX_TURNS);
@@ -98,7 +134,8 @@ export default {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4096,
+        // Room for a workflow block as well as the answer.
+        max_tokens: 6000,
         system: SYSTEM_PROMPT,
         // History is append-only, so the prefix stays cacheable turn after turn.
         cache_control: { type: "ephemeral" },

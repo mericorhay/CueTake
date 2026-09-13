@@ -100,6 +100,7 @@ struct AssistantOrb: View {
 struct AssistantBubble: View {
     let message: AssistantMessage
     let onDestination: (AssistantDestination) -> Void
+    let onWorkflow: (WorkflowDefinition, Bool) -> Void
 
     var body: some View {
         switch message.role {
@@ -143,6 +144,10 @@ struct AssistantBubble: View {
                     .foregroundStyle(DS.Palette.ink(0.92))
                     .tint(DS.Palette.lime)
                     .textSelection(.enabled)
+
+                if let workflow = parsed.workflow {
+                    WorkflowProposalCard(workflow: workflow, onOpen: { onWorkflow(workflow, false) }, onRun: { onWorkflow(workflow, true) })
+                }
 
                 if !parsed.destinations.isEmpty {
                     HStack(spacing: 8) {

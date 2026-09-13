@@ -31,7 +31,9 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 ## Behind competitors
 
 - [x] Thumbnails on timeline clips (coloured boxes today).
-- [ ] Assistant can talk but not act. "Edit like you talk" / AI timeline agent: let it run editor
+- [ ] Assistant can talk but not act. First step done: it proposes workflows as cards that open
+      in the studio or run on the open project. Still to do: acting on the timeline directly.
+      Previously: Assistant can talk but not act. "Edit like you talk" / AI timeline agent: let it run editor
       tools and write workflows (tool use through the proxy).
 - [ ] Remember My Style.
 
@@ -39,4 +41,4 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 - [ ] Tests for transcript editing, audio envelope, composer arithmetic. (Domain side added: playback, caption placement, presets, AI-written workflow JSON. MediaEngine and EditorFeature still have none.)
 - [x] Remove the four unused `Unimplemented*` engines from `AppDependencies`.
-- [ ] Rate limiting on the assistant worker.
+- [x] Rate limiting on the assistant worker (20/min per address via a Cloudflare rate-limit binding).
