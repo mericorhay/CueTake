@@ -1489,13 +1489,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Written out backwards the first time you play it, then cached. Reversed clips have no sound."
+            "value": "Written out backwards the first time you play it, then cached. The sound plays backwards too."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "İlk oynatışta tersine yazılıyor, sonra önbellekten geliyor. Ters oynatılan klipler sessizdir."
+            "value": "İlk oynatışta tersine yazılıyor, sonra önbellekten geliyor. Ses de tersine çalar."
           }
         }
       }
@@ -1897,13 +1897,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Runs backwards, silent"
+            "value": "Picture and sound, backwards"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geriye oynar, sessiz"
+            "value": "Görüntü ve ses, geriye"
           }
         }
       }

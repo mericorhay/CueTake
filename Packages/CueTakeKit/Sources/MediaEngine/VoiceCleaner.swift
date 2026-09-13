@@ -15,10 +15,6 @@ import Foundation
 public struct VoiceCleaner: Sendable {
     public init() {}
 
-    private func extractedURL(for recording: Recording, in directory: URL) -> URL {
-        directory.appending(path: "\(recording.id.uuidString)-voice.m4a", directoryHint: .notDirectory)
-    }
-
     private func cleanedURL(for recording: Recording, effects: AudioEffects, in directory: URL) -> URL {
         directory.appending(
             path: "\(recording.id.uuidString)-voice-\(AudioEffectRenderer.token(for: effects)).m4a",
@@ -45,18 +41,24 @@ public struct VoiceCleaner: Sendable {
             return cleaned
         }
 
-        let extracted = extractedURL(for: recording, in: directory)
-        if !FileManager.default.fileExists(atPath: extracted.path(percentEncoded: false)) {
-            let source = directory.appending(
-                path: (recording.relativePath as NSString).lastPathComponent,
-                directoryHint: .notDirectory
-            )
-            guard await Self.extract(from: source, to: extracted) else { return nil }
-        }
+        guard let extracted = await Self.extractedVoice(for: recording, in: directory) else { return nil }
 
         return await Task.detached(priority: .userInitiated) {
             try? AudioEffectRenderer.render(extracted, to: cleaned, effects: effects)
         }.value
+    }
+
+    /// The recording's sound as an m4a, copied out of its video the first time anyone asks.
+    static func extractedVoice(for recording: Recording, in directory: URL) async -> URL? {
+        let extracted = directory.appending(path: "\(recording.id.uuidString)-voice.m4a", directoryHint: .notDirectory)
+        if FileManager.default.fileExists(atPath: extracted.path(percentEncoded: false)) {
+            return extracted
+        }
+        let source = directory.appending(
+            path: (recording.relativePath as NSString).lastPathComponent,
+            directoryHint: .notDirectory
+        )
+        return await extract(from: source, to: extracted) ? extracted : nil
     }
 
     /// Copies a video's sound out to an m4a. No re-encode of the picture — there is no picture.

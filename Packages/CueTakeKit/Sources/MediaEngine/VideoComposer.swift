@@ -81,11 +81,17 @@ public struct VideoComposer: Sendable {
             let sourceLength = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
 
             // A composition can scale time but it cannot run it backwards, so a reversed clip is a
-            // different file — written once and cached. It carries no audio: reversed speech is
-            // not something anybody wants under a reversed shot, and pretending otherwise would
-            // mean shipping a second, slower pass to produce it.
+            // different file — written once and cached — and so is its sound, written backwards
+            // beside it (see `AudioReverser`).
+            var reversedAudio: URL?
             if playback.isReversed, playback.freeze == nil {
                 let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
+                reversedAudio = await AudioReverser.reversedAudio(
+                    for: recording,
+                    range: CMTimeRange(start: sourceStart, duration: sourceLength),
+                    key: key,
+                    in: mediaDirectory
+                )
                 if let reversed = await VideoReverser().reversedClip(
                     source: url,
                     range: CMTimeRange(start: sourceStart, duration: sourceLength),
@@ -94,6 +100,9 @@ public struct VideoComposer: Sendable {
                 ) {
                     url = reversed
                     sourceStart = .zero
+                } else {
+                    // The picture could not be reversed, so it plays forwards; its sound must too.
+                    reversedAudio = nil
                 }
             }
 
@@ -142,7 +151,13 @@ public struct VideoComposer: Sendable {
                     hasAudio = (try? audioTrack.insertTimeRange(range, of: cleaned, at: cursor)) != nil
                 }
             }
-            if !hasAudio, playback.freeze == nil,
+            // A reversed clip's sound, written backwards to its own file. Starts at zero like the
+            // reversed picture, so the same range addresses both.
+            if !hasAudio, let reversedAudio,
+               let track = try? await AVURLAsset(url: reversedAudio).loadTracks(withMediaType: .audio).first {
+                hasAudio = (try? audioTrack.insertTimeRange(range, of: track, at: cursor)) != nil
+            }
+            if !hasAudio, playback.freeze == nil, !playback.isReversed,
                let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first {
                 hasAudio = (try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)) != nil
             }
