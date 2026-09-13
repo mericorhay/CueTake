@@ -17,6 +17,10 @@ struct AppDependencies {
     var exporter: any VideoExporting
     var ai: AICapabilityRouter
     var workflowRunner: WorkflowRunner
+    /// Nil only when Application Support cannot be opened, in which case workflows live for the
+    /// session and the studio still works.
+    var workflowStore: WorkflowStore?
+    var workflowAuthor: FoundationModelsWorkflowAuthor
 
     /// Falls back to memory if Application Support cannot be opened. Losing projects is bad;
     /// refusing to launch over it is worse, and the fallback keeps the session usable.
@@ -37,6 +41,8 @@ struct AppDependencies {
         composer: UnimplementedMediaComposer(),
         exporter: UnimplementedVideoExporter(),
         ai: AICapabilityRouter(providers: [FoundationModelsScriptWriter(), RemoteAIProvider()]),
-        workflowRunner: WorkflowRunner(handlers: [])
+        workflowRunner: WorkflowRunner(handlers: []),
+        workflowStore: try? WorkflowStore.inApplicationSupport(),
+        workflowAuthor: FoundationModelsWorkflowAuthor()
     )
 }

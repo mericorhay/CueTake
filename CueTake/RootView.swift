@@ -96,7 +96,7 @@ struct RootView: View {
                 onCreate: { model.go(to: .create) },
                 onOpenProject: { item in Task { await model.openProject(id: item.id) } },
                 onOpenAllProjects: { model.go(to: .projects) },
-                onOpenWorkflow: { model.go(to: .workflowDetail) }
+                onOpenWorkflow: { model.go(to: .workflows) }
             )
 
         case .create:
@@ -105,7 +105,7 @@ struct RootView: View {
                 case .importFootage: model.isPickingFootage = true
                 case .prompt: model.go(to: .prompt)
                 case .script: model.go(to: .script)
-                case .workflow: model.go(to: .workflowDetail)
+                case .workflow: model.go(to: .workflows)
                 case .studio: model.openStudio()
                 }
             }
@@ -205,14 +205,25 @@ struct RootView: View {
             }
 
         case .workflows:
-            WorkflowsScreen { _ in model.go(to: .workflowDetail) }
+            WorkflowsScreen(
+                workflows: model.workflows,
+                onOpen: { model.openWorkflow($0) },
+                onCreate: { model.createWorkflow() }
+            )
+            .task { await model.loadWorkflows() }
 
         case .workflowDetail:
-            WorkflowDetailScreen(
-                model: model.workflowModel,
-                onBack: { model.go(to: .workflows) },
-                onOpenResult: { model.openEditor() }
-            )
+            if let studio = model.workflowStudio {
+                WorkflowStudioScreen(
+                    model: studio,
+                    onBack: { model.closeWorkflow() },
+                    onSave: { model.saveWorkflow() },
+                    onRun: { Task { await model.runWorkflow() } },
+                    onAskAI: { Task { await model.askWorkflowAI() } },
+                    onPickClips: { model.pickClipsForWorkflow() },
+                    onDelete: { Task { await model.deleteWorkflow() } }
+                )
+            }
 
         case .settings:
             SettingsScreen(model: model.settingsModel)

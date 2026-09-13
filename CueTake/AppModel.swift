@@ -58,7 +58,6 @@ final class AppModel {
 
     let promptModel = PromptModel()
     let exportModel = ExportModel()
-    let workflowModel = WorkflowRunModel()
     let settingsModel: SettingsModel
 
     private(set) var studioModel: StudioModel
@@ -143,7 +142,17 @@ final class AppModel {
     var isPickingFootage = false
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
-    private(set) var busy: String?
+    var busy: String?
+
+    // MARK: - Workflow state (behaviour in AppModel+Workflows)
+
+    /// Every stored workflow, most recently edited first.
+    var workflows: [WorkflowDefinition] = []
+    /// The workflow open in the studio, if any.
+    var workflowStudio: WorkflowStudioModel?
+    /// Set when clips are being picked from inside a workflow, so the import comes back to it.
+    var importReturnsToWorkflow = false
+    var workflowSaveTask: Task<Void, Never>?
 
     /// Turns picked clips into segments, in the order they were chosen.
     ///
@@ -207,6 +216,16 @@ final class AppModel {
         try? await store.save(fresh)
         adopt(fresh)
         await refreshLibrary()
+
+        // Clips picked from inside a workflow go back to the workflow. The user was dragging
+        // footage onto sections; dropping them into the editor instead would lose their place.
+        if importReturnsToWorkflow {
+            importReturnsToWorkflow = false
+            refreshWorkflowClips()
+            go(to: .workflowDetail)
+            return
+        }
+
         go(to: .editor)
         await transcribeNewTakes()
     }
@@ -225,7 +244,7 @@ final class AppModel {
 
     /// Makes a project the one being worked on. Every per-screen model is rebuilt, because they
     /// hold segment identifiers that mean nothing in a different project.
-    private func adopt(_ newProject: Project) {
+    func adopt(_ newProject: Project) {
         project = newProject
         studioModel = StudioModel(project: newProject)
         editorModel = EditorModel(project: newProject)
@@ -451,7 +470,6 @@ final class AppModel {
         editorModel.pause()
         promptModel.stopTimers()
         exportModel.stopTimers()
-        workflowModel.stopTimers()
         retakeModel?.stopTimers()
     }
 
