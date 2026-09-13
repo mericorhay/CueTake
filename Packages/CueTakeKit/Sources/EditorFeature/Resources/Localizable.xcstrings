@@ -891,13 +891,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The AI edits live in the studio. Watch every change land — and take any of it back."
+            "value": "Tell the AI what to change. It edits in the studio while you watch, and every change can be undone."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "AI stüdyoda canlı düzenler. Her değişikliği yerinde gör, istediğini geri al."
+            "value": "AI'a ne değişsin söyle. Sen izlerken stüdyoda düzenler, her değişiklik geri alınabilir."
           }
         }
       }
@@ -987,6 +987,23 @@
         }
       }
     },
+    "editor.ai.hud.stats %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld clips · %2$lld words"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld klip · %2$lld kelime"
+          }
+        }
+      }
+    },
     "editor.ai.hud.step %lld %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1051,6 +1068,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yapay zekâ bunun için bir düzenleme önermedi."
+          }
+        }
+      }
+    },
+    "editor.ai.nothingDone %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing was changed. The AI said: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiçbir şey değişmedi. AI'ın notu: %@"
           }
         }
       }
@@ -1225,6 +1259,23 @@
         }
       }
     },
+    "editor.ai.op.duplicateOverlay %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay copied: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman kopyalandı: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.footage %@ %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1344,6 +1395,23 @@
         }
       }
     },
+    "editor.ai.op.rename %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@ named “%2$@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@ adı: “%2$@”"
+          }
+        }
+      }
+    },
     "editor.ai.op.reorder": {
       "extractionState": "manual",
       "localizations": {
@@ -1374,6 +1442,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %@: ters oynat"
+          }
+        }
+      }
+    },
+    "editor.ai.op.script %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %@: prompter script rewritten"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@: prompter metni yenilendi"
+          }
+        }
+      }
+    },
+    "editor.ai.op.shiftCaptions %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions moved %@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar %@ sn kaydırıldı"
           }
         }
       }
@@ -1425,6 +1527,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazı stili: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.take %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %@: another take chosen"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@: başka bir çekim seçildi"
           }
         }
       }

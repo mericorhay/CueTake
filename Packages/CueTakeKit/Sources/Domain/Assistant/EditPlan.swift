@@ -70,6 +70,18 @@ public struct EditPlan: Codable, Sendable, Equatable {
         // Project
         case setTitle(String)
 
+        // Only the AI has these
+        /// Names a clip (what the timeline and the inspector call it).
+        case renameClip(clip: String, title: String)
+        /// Rewrites what the prompter shows for a clip.
+        case setScript(clip: String, text: String)
+        /// Uses another recorded attempt for a clip.
+        case selectTake(clip: String, take: String)
+        /// Copies a text or picture to another moment.
+        case duplicateOverlay(overlay: String, start: Double?)
+        /// Moves every caption of one clip (or all clips) earlier or later, for captions out of sync.
+        case shiftCaptions(clip: String?, by: Double)
+
         case unknown(type: String)
 
         public var type: String {
@@ -102,6 +114,11 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .voiceCleanup: "voiceCleanup"
             case .voiceEffects: "voiceEffects"
             case .setTitle: "setTitle"
+            case .renameClip: "renameClip"
+            case .setScript: "setScript"
+            case .selectTake: "selectTake"
+            case .duplicateOverlay: "duplicateOverlay"
+            case .shiftCaptions: "shiftCaptions"
             case .unknown(let type): type
             }
         }
@@ -404,6 +421,21 @@ extension EditPlan.Operation: Codable {
         case "setTitle":
             guard let title = f.string("title") ?? f.string("text"), !title.isEmpty else { self = unknown; return }
             self = .setTitle(title)
+        case "renameClip":
+            guard let clip = f.string("clip"), let title = f.string("title") ?? f.string("text") else { self = unknown; return }
+            self = .renameClip(clip: clip, title: title)
+        case "setScript":
+            guard let clip = f.string("clip"), let text = f.string("text") ?? f.string("script") else { self = unknown; return }
+            self = .setScript(clip: clip, text: text)
+        case "selectTake":
+            guard let clip = f.string("clip"), let take = f.string("take") else { self = unknown; return }
+            self = .selectTake(clip: clip, take: take)
+        case "duplicateOverlay":
+            guard let overlay = f.string("overlay") else { self = unknown; return }
+            self = .duplicateOverlay(overlay: overlay, start: f.number("start"))
+        case "shiftCaptions":
+            guard let by = f.number("by") ?? f.number("seconds") else { self = unknown; return }
+            self = .shiftCaptions(clip: f.string("clip"), by: by)
         default:
             self = unknown
         }
@@ -499,9 +531,59 @@ extension EditPlan.Operation: Codable {
             try put("noiseReduction", noise); try put("voiceEnhance", enhance); try put("deRumble", rumble)
         case .setTitle(let title):
             try put("title", title)
+        case .renameClip(let clip, let title):
+            try put("clip", clip); try put("title", title)
+        case .setScript(let clip, let text):
+            try put("clip", clip); try put("text", text)
+        case .selectTake(let clip, let take):
+            try put("clip", clip); try put("take", take)
+        case .duplicateOverlay(let overlay, let start):
+            try put("overlay", overlay); try put("start", start)
+        case .shiftCaptions(let clip, let by):
+            try put("clip", clip); try put("by", by)
         case .unknown:
             break
         }
+    }
+}
+
+extension EditPlan {
+    /// The plan with every reference the model wrote — `c2`, `k14`, a bare clip number, an id prefix —
+    /// turned into the real id in `project`. Anything that matches nothing is left as written, and the
+    /// step that uses it is skipped rather than guessed.
+    public func resolvingReferences(in project: Project) -> EditPlan {
+        let refs = EditReferences(project: project)
+        return EditPlan(summary: summary, operations: operations.map { op in
+            switch op {
+            case .cut(let clip, let from, let to): .cut(clip: refs.clip(clip), from: from, to: to)
+            case .removeWords(let clip, let words): .removeWords(clip: refs.clip(clip), words: words)
+            case .trimPauses(let clip, let minPause): .trimPauses(clip: clip.map(refs.clip), minPause: minPause)
+            case .trimClip(let clip, let start, let end): .trimClip(clip: refs.clip(clip), start: start, end: end)
+            case .splitClip(let clip, let at): .splitClip(clip: refs.clip(clip), at: at)
+            case .duplicateClip(let clip): .duplicateClip(clip: refs.clip(clip))
+            case .deleteClip(let clip): .deleteClip(clip: refs.clip(clip))
+            case .reorder(let clips): .reorder(clips: clips.map(refs.clip))
+            case .setSpeed(let clip, let speed): .setSpeed(clip: refs.clip(clip), speed: speed)
+            case .reverse(let clip, let on): .reverse(clip: refs.clip(clip), on: on)
+            case .freeze(let clip, let seconds): .freeze(clip: refs.clip(clip), seconds: seconds)
+            case .setCaptionText(let caption, let text): .setCaptionText(caption: refs.caption(caption), text: text)
+            case .captionTiming(let caption, let start, let end): .captionTiming(caption: refs.caption(caption), start: start, end: end)
+            case .splitCaption(let caption): .splitCaption(caption: refs.caption(caption))
+            case .mergeCaption(let caption): .mergeCaption(caption: refs.caption(caption))
+            case .removeCaption(let caption): .removeCaption(caption: refs.caption(caption))
+            case .updateOverlay(let overlay, let patch): .updateOverlay(overlay: refs.overlay(overlay), patch: patch)
+            case .removeOverlay(let overlay): .removeOverlay(overlay: refs.overlay(overlay))
+            case .duplicateOverlay(let overlay, let start): .duplicateOverlay(overlay: refs.overlay(overlay), start: start)
+            case .setMusicLevel(let audio, let gain): .setMusicLevel(audio: refs.audioClip(audio), gainDb: gain)
+            case .updateAudio(let audio, let patch): .updateAudio(audio: refs.audioClip(audio), patch: patch)
+            case .removeAudio(let audio): .removeAudio(audio: refs.audioClip(audio))
+            case .renameClip(let clip, let title): .renameClip(clip: refs.clip(clip), title: title)
+            case .setScript(let clip, let text): .setScript(clip: refs.clip(clip), text: text)
+            case .selectTake(let clip, let take): .selectTake(clip: refs.clip(clip), take: refs.take(take))
+            case .shiftCaptions(let clip, let by): .shiftCaptions(clip: clip.map(refs.clip), by: by)
+            case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
+            }
+        })
     }
 }
 

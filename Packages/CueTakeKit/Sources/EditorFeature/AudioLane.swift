@@ -113,8 +113,7 @@ struct AudioLane: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .aiGlow(
             model.glowToken(.audio(clip.id)),
-            in: RoundedRectangle(cornerRadius: 8, style: .continuous),
-            touched: model.isAITouched(.audio(clip.id))
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous)
         )
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))

@@ -132,7 +132,7 @@ struct ToolDock: View {
                     .lineLimit(1)
             }
             .foregroundStyle(
-                ai ? AnyShapeStyle(AIPalette.linear)
+                ai ? AnyShapeStyle(AIPalette.violet)
                     : !enabled ? AnyShapeStyle(DS.Palette.ink(0.22))
                     : destructive ? AnyShapeStyle(DS.Palette.accent)
                     : accent ? AnyShapeStyle(DS.Palette.lime)

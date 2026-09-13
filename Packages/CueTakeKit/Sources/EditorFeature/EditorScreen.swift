@@ -157,7 +157,7 @@ public struct EditorScreen: View {
         .animation(DS.Motion.settle, value: dockPanel)
         // The AI has the studio: light around the screen, its voice at the top.
         .overlay {
-            AIAuroraBorder(active: model.isAIDriving, fast: model.aiSession?.phase == .applying)
+            AIAuroraBorder(active: model.isAIDriving)
         }
         .overlay(alignment: .top) {
             AIDirectorHUD(model: model) {
@@ -212,10 +212,17 @@ public struct EditorScreen: View {
         // so the preview has to be rebuilt. Watched here rather than pushed from each control:
         // there are four of them and there will be more.
         .onChange(of: model.project.segments.map(\.playback)) {
+            guard !model.isAIDriving else { return }
+            Task { await onPrepare() }
+        }
+        .onChange(of: model.isAIDriving) { _, driving in
+            // Everything the AI changed, rebuilt in one go: picture, sound, frames for new clips.
+            guard !driving, model.aiSession != nil else { return }
             Task { await onPrepare() }
         }
         // The voice repair changes the sound itself, so the preview is rebuilt for it too.
         .onChange(of: model.project.voiceEffects) {
+            guard !model.isAIDriving else { return }
             Task { await onPrepare() }
         }
         .photosPicker(isPresented: $pickingImage, selection: $pickedImage, matching: .images)
@@ -403,11 +410,6 @@ public struct EditorScreen: View {
         }
         // Pictures and text, over the captions, moved with the fingers.
         .overlay { OverlayCanvas(model: model) }
-        .overlay {
-            if model.aiSession?.phase == .thinking {
-                AIShimmer().transition(.opacity)
-            }
-        }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .aiGlow(model.aiBeat, in: RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .allowsHitTesting(!model.isAIDriving)
@@ -528,8 +530,6 @@ public struct EditorScreen: View {
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .allowsHitTesting(!model.isAIDriving)
-        .opacity(model.aiSession?.phase == .thinking ? 0.85 : 1)
-        .animation(.easeInOut(duration: 0.4), value: model.isAIDriving)
     }
 
     private var captionStrip: some View {
@@ -558,8 +558,7 @@ public struct EditorScreen: View {
                         }
                         .aiGlow(
                             model.glowToken(.captions(segment.id)) + model.glowToken(.captionStyle),
-                            in: RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous),
-                            touched: model.isAITouched(.captions(segment.id))
+                            in: RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous)
                         )
                 }
             }

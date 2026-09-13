@@ -150,14 +150,19 @@ struct EditPlanTests {
         return EditorModel(project: Project(title: "t", localeIdentifier: "en", segments: [segment], recordings: [recording]))
     }
 
-    @Test func documentCarriesWordsPausesAndBeats() throws {
-        let document = model().document(beatStep: 0.5)
-        #expect(document.clips.count == 1)
-        #expect(document.clips[0].words.map(\.text) == ["so", "um", "this", "works"])
-        #expect(document.clips[0].pauses.contains { $0.start == 2.0 && $0.end == 4.0 })
-        #expect(document.beats.count == 12)
-        #expect(document.beats.first { $0.t == 1.0 }?.word == "um")
-        _ = try document.jsonData()
+    @Test func documentCarriesWordsAndOptionalBeats() throws {
+        let model = model()
+        let small = model.document()
+        #expect(small.clips.count == 1)
+        #expect(small.clips[0].id == "c1")
+        #expect(small.clips[0].words.map(\.text) == ["so", "um", "this", "works"])
+        #expect(small.clips[0].captions.first?.id == "k1")
+        #expect(small.beats == nil)
+
+        let detailed = model.document(beatStep: 0.5)
+        #expect(detailed.beats?.count == 12)
+        #expect(detailed.beats?.first { $0.t == 1.0 }?.word == "um")
+        #expect(try detailed.jsonData().count > small.jsonData().count)
     }
 
     @Test func messyModelOutputDecodes() throws {

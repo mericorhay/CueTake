@@ -141,6 +141,34 @@ struct AIDirectorTests {
         #expect(abs(model.project.captionStyle.position.y - 0.2) < 0.0001)
     }
 
+    @Test func toolsOnlyTheAIHas() throws {
+        let model = model()
+        model.project.segments[0].refreshCaptions(maxWordsPerCue: 2)
+        let before = model.project.segments[0].captions.map(\.range.start.seconds)
+        model.addTextOverlay("Hi")
+        let plan = EditPlan(summary: "", operations: [
+            .renameClip(clip: "c1", title: "Opening"),
+            .setScript(clip: "c1", text: "New words"),
+            .shiftCaptions(clip: nil, by: 0.3),
+            .duplicateOverlay(overlay: "o1", start: 5),
+        ])
+        let outcome = model.apply(plan)
+        #expect(outcome.applied == 4)
+        #expect(model.project.segments[0].title == "Opening")
+        #expect(model.project.segments[0].script == "New words")
+        let after = model.project.segments[0].captions.map(\.range.start.seconds)
+        #expect(zip(before, after).allSatisfy { abs(($1 - $0) - 0.3) < 0.001 })
+        #expect(model.project.overlays.count == 2)
+        #expect(model.project.overlays[1].start.seconds == 5)
+    }
+
+    @Test func aPlanThatChangesNothingIsNamedForTheRetry() {
+        let model = model()
+        #expect(model.problem(with: EditPlan(summary: "Video is ready", operations: [])) != nil)
+        #expect(model.problem(with: EditPlan(summary: "", operations: [.deleteClip(clip: "c7")])) != nil)
+        #expect(model.problem(with: EditPlan(summary: "", operations: [.setTitle("x")])) == nil)
+    }
+
     @Test func missingThingsAreSkippedNotGuessed() {
         let model = model()
         let plan = EditPlan(summary: "", operations: [

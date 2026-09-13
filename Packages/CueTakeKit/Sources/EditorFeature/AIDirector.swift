@@ -22,10 +22,9 @@ public struct AISession: Equatable {
     public var steps: [AIStepInfo] = []
     public var current = 0
     public var changeSetID: UUID?
-    /// What was sent: clips, words and moments, for the "reading" line.
+    /// What was sent: clips and words, for the "reading" line.
     public var clips: Int
     public var words: Int
-    public var beats: Int
 }
 
 public struct AIStepInfo: Identifiable, Equatable {
@@ -120,7 +119,7 @@ extension EditorModel {
         }
     }
 
-    public func document(beatStep: Double = 0.25) -> EditDocument {
+    public func document(beatStep: Double? = nil) -> EditDocument {
         EditDocument(project: project, beatStep: beatStep)
     }
 
@@ -136,30 +135,48 @@ extension EditorModel {
         selectedAudio = nil
         selectedOverlay = nil
 
-        let snapshot = self.document()
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+        let project = self.project
+        withAnimation(.snappy(duration: 0.3)) {
             aiSession = AISession(
                 instruction: text,
-                clips: snapshot.clips.count,
-                words: snapshot.clips.reduce(0) { $0 + $1.words.count },
-                beats: snapshot.beats.count
+                clips: project.segments.count,
+                words: project.segments.reduce(0) { $0 + ($1.selectedTake?.transcript?.words.count ?? 0) }
             )
         }
         aiTask?.cancel()
         aiTask = Task { [weak self] in
             do {
-                let plan = try await request(snapshot, text)
+                // Written off the main thread: on a long video it is enough work to drop frames.
+                let document = await Task.detached(priority: .userInitiated) { EditDocument(project: project) }.value
+                var plan = try await request(document, text)
                 guard let self, !Task.isCancelled else { return }
+                // A plan that would change nothing gets one more try, told why.
+                if let problem = self.problem(with: plan) {
+                    let second = try await request(document, text + "\n\n" + problem)
+                    guard !Task.isCancelled else { return }
+                    if self.problem(with: second) == nil { plan = second }
+                }
                 await self.drive(plan)
             } catch {
                 guard let self, !Task.isCancelled else { return }
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                withAnimation(.snappy(duration: 0.3)) {
                     self.aiSession?.phase = .failed(
                         String(localized: "editor.ai.failed \(error.localizedDescription)", bundle: .module)
                     )
                 }
             }
         }
+    }
+
+    /// Why a plan would change nothing, written for the model; nil when it would change something.
+    func problem(with plan: EditPlan) -> String? {
+        let resolved = plan.resolvingReferences(in: project)
+        let (steps, skipped) = aiSteps(for: resolved)
+        guard steps.isEmpty else { return nil }
+        if resolved.operations.isEmpty {
+            return "[Your previous answer had no operations and changed nothing. The user wants this change: carry it out with operations. Return an empty list only if no operation can do it, and then say in summary which tool is missing.]"
+        }
+        return "[Your previous answer changed nothing: these operations referred to things that do not exist: \(skipped.joined(separator: ", ")). Use only ids from the document: c1… for clips, k1… for captions, o1… for overlays, a1… for audio, t1… for takes.]"
     }
 
     /// Stops asking, or stops between two changes. What already landed stays, and stays reversible.
@@ -185,16 +202,22 @@ extension EditorModel {
 
     // MARK: - Running
 
-    func drive(_ plan: EditPlan) async {
+    func drive(_ original: EditPlan) async {
+        let plan = original.resolvingReferences(in: project)
         let (steps, skipped) = aiSteps(for: plan)
         guard !steps.isEmpty else {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+            withAnimation(.snappy(duration: 0.3)) {
                 aiSession?.phase = .failed(
-                    plan.summary.isEmpty ? String(localized: "editor.ai.nothing", bundle: .module) : plan.summary
+                    plan.summary.isEmpty
+                        ? String(localized: "editor.ai.nothing", bundle: .module)
+                        : String(localized: "editor.ai.nothingDone \(plan.summary)", bundle: .module)
                 )
             }
             return
         }
+        // About six seconds for the whole run, however many changes: slow enough to follow a few,
+        // fast enough that thirty do not become a wait.
+        let pace = min(1.0, max(0.28, 6.0 / Double(steps.count)))
 
         let before = project
         record("editor.change.ai", symbol: "sparkles")
@@ -220,11 +243,13 @@ extension EditorModel {
             let place = step.locate(self)
             if let time = place.time { seek(to: min(max(0, time), duration)) }
             if let scan = place.scan { aiScan = AIScanMark(id: (aiScan?.id ?? 0) + 1, range: scan) }
-            try? await Task.sleep(for: .milliseconds(380))
+            if place.time != nil {
+                try? await Task.sleep(for: .seconds(pace * 0.4))
+            }
             if Task.isCancelled { break }
 
             let stepBefore = project
-            let targets = withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) {
+            let targets = withAnimation(.snappy(duration: 0.3)) {
                 let touched = step.perform(self)
                 project.updatedAt = .now
                 // The tools select what they make; mid-run that would open a panel over the timeline.
@@ -246,7 +271,7 @@ extension EditorModel {
             try? await Task.sleep(for: .milliseconds(40))
             aiBeat += 1
             glow(targets)
-            try? await Task.sleep(for: .milliseconds(620))
+            try? await Task.sleep(for: .seconds(pace * 0.6))
         }
 
         isApplyingPlan = false
@@ -285,7 +310,8 @@ extension EditorModel {
 
     /// Carries out a whole plan at once, as one undoable step. The same steps as the live run.
     @discardableResult
-    public func apply(_ plan: EditPlan) -> EditPlanOutcome {
+    public func apply(_ original: EditPlan) -> EditPlanOutcome {
+        let plan = original.resolvingReferences(in: project)
         let (steps, skipped) = aiSteps(for: plan)
         let before = project
         record("editor.change.ai", symbol: "sparkles")
@@ -495,9 +521,78 @@ extension EditorModel {
             }
         }
 
+        // Names, scripts and takes — before anything that reads a clip's words
+        for op in ops {
+            let clipStart: (String) -> (EditorModel) -> (time: Double?, scan: ClosedRange<Double>?) = { clip in
+                { m in
+                    guard let i = m.index(ofClip: clip) else { return (nil, nil) }
+                    return (m.start(at: i) + 0.05, m.clipRange(i))
+                }
+            }
+            switch op {
+            case .renameClip(let clip, let title):
+                guard index(ofClip: clip) != nil else { skipped.append(op.type); continue }
+                add("tag", L("editor.ai.op.rename \(clipNumber(clip)) \(title)"), op, locate: clipStart(clip)) { m in
+                    guard let i = m.index(ofClip: clip) else { return nil }
+                    m.project.segments[i].title = String(title.prefix(60))
+                    return [.clip(m.project.segments[i].id)]
+                }
+            case .setScript(let clip, let text):
+                guard index(ofClip: clip) != nil else { skipped.append(op.type); continue }
+                add("text.alignleft", L("editor.ai.op.script \(clipNumber(clip))"), op, locate: clipStart(clip)) { m in
+                    guard let i = m.index(ofClip: clip) else { return nil }
+                    m.project.segments[i].script = text
+                    return [.clip(m.project.segments[i].id)]
+                }
+            case .selectTake(let clip, let take):
+                guard let i = index(ofClip: clip),
+                      let takeID = UUID(uuidString: take),
+                      project.segments[i].takes.contains(where: { $0.id == takeID })
+                else { skipped.append(op.type); continue }
+                add("film.stack", L("editor.ai.op.take \(clipNumber(clip))"), op, locate: clipStart(clip)) { m in
+                    guard let i = m.index(ofClip: clip) else { return nil }
+                    m.selectTake(takeID, at: i)
+                    return [.clip(m.project.segments[i].id)]
+                }
+            default:
+                continue
+            }
+        }
+
         // Individual captions — before the look, whose words-per-caption can give every cue a new id
         for op in ops {
+            // Checked now, so a plan pointing at captions that do not exist is known to do nothing.
             switch op {
+            case .setCaptionText(let id, _), .captionTiming(let id, _, _), .splitCaption(let id), .mergeCaption(let id), .removeCaption(let id):
+                if caption(id) == nil { skipped.append(op.type); continue }
+            default:
+                break
+            }
+            switch op {
+            case .shiftCaptions(let clip, let by):
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                add("arrow.left.and.right", L("editor.ai.op.shiftCaptions \(Self.seconds(by))"), op) { m in
+                    var indices = Array(m.project.segments.indices)
+                    if let clip {
+                        guard let i = m.index(ofClip: clip) else { return nil }
+                        indices = [i]
+                    }
+                    var touched: [AITarget] = []
+                    for i in indices {
+                        let length = m.project.segments[i].sourceSeconds
+                        m.project.segments[i].captions = m.project.segments[i].captions.compactMap { cue in
+                            let start = max(0, cue.range.start.seconds + by)
+                            let end = min(length, cue.range.end.seconds + by)
+                            guard end - start >= Segment.shortestCaption else { return nil }
+                            var moved = cue
+                            moved.range = MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: end - start))
+                            moved.isUserEdited = true
+                            return moved
+                        }
+                        touched.append(.captions(m.project.segments[i].id))
+                    }
+                    return touched.isEmpty ? nil : touched
+                }
             case .setCaptionText(let id, let text):
                 add("text.bubble", L("editor.ai.op.caption \(text)"), op, locate: { $0.captionPlace(id) }) { m in
                     guard let found = m.caption(id) else { return nil }
@@ -596,6 +691,12 @@ extension EditorModel {
         // Sound
         for op in ops {
             switch op {
+            case .setMusicLevel(let id, _), .updateAudio(let id, _), .removeAudio(let id):
+                if !project.audio.contains(where: { $0.id.uuidString == id }) { skipped.append(op.type); continue }
+            default:
+                break
+            }
+            switch op {
             case .setMusicLevel(let id, let gain):
                 add("music.note", L("editor.ai.op.music \(String(format: "%.0f", gain))"), op, locate: { $0.audioPlace(id) }) { m in
                     guard let uuid = UUID(uuidString: id), m.project.audio.contains(where: { $0.id == uuid }) else { return nil }
@@ -629,6 +730,12 @@ extension EditorModel {
         // Text and pictures over the video
         for op in ops {
             switch op {
+            case .updateOverlay(let id, _), .removeOverlay(let id):
+                if !project.overlays.contains(where: { $0.id.uuidString == id }) { skipped.append(op.type); continue }
+            default:
+                break
+            }
+            switch op {
             case .addText(let patch):
                 let id = UUID()
                 let here = playhead
@@ -658,6 +765,27 @@ extension EditorModel {
                     guard let uuid = UUID(uuidString: id), m.project.overlays.contains(where: { $0.id == uuid }) else { return nil }
                     m.updateOverlay(uuid, coalescing: "ai") { Self.apply(patch, to: &$0) }
                     return [.overlay(uuid)]
+                }
+            case .duplicateOverlay(let id, let start):
+                guard let uuid = UUID(uuidString: id), project.overlays.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                let copyID = UUID()
+                add("plus.square.on.square", L("editor.ai.op.duplicateOverlay \(overlayName(id))"), op, locate: { m in
+                    let at = start ?? m.project.overlays.first(where: { $0.id == uuid })?.start.seconds ?? 0
+                    return (at + 0.2, nil)
+                }) { m in
+                    guard let original = m.project.overlays.first(where: { $0.id == uuid }) else { return nil }
+                    var copy = original
+                    copy.id = copyID
+                    if let start {
+                        copy.start = MediaTime(seconds: max(0, start))
+                    } else {
+                        copy.transform.y = min(0.95, copy.transform.y + 0.08)
+                    }
+                    m.project.overlays.append(copy)
+                    if let image = m.overlayImages[uuid] { m.overlayImages[copyID] = image }
+                    return [.overlay(copyID)]
                 }
             case .removeOverlay(let id):
                 add("rectangle.badge.minus", L("editor.ai.op.removeOverlay \(overlayName(id))"), op, locate: { $0.overlayPlace(id) }) { m in
@@ -1010,6 +1138,11 @@ extension EditorModel {
         case .setMusicLevel, .updateAudio, .removeAudio: "music.note"
         case .voiceCleanup, .voiceEffects: "waveform.and.person.filled"
         case .setTitle: "character.cursor.ibeam"
+        case .renameClip: "tag"
+        case .setScript: "text.alignleft"
+        case .selectTake: "film.stack"
+        case .duplicateOverlay: "plus.square.on.square"
+        case .shiftCaptions: "arrow.left.and.right"
         case .unknown: "questionmark"
         }
     }
@@ -1074,6 +1207,16 @@ extension EditorModel {
             L("editor.ai.op.voice")
         case .setTitle(let title):
             L("editor.ai.op.title \(title)")
+        case .renameClip(let clip, let title):
+            L("editor.ai.op.rename \(clipNumber(clip)) \(title)")
+        case .setScript(let clip, _):
+            L("editor.ai.op.script \(clipNumber(clip))")
+        case .selectTake(let clip, _):
+            L("editor.ai.op.take \(clipNumber(clip))")
+        case .duplicateOverlay(let id, _):
+            L("editor.ai.op.duplicateOverlay \(overlayName(id))")
+        case .shiftCaptions(_, let by):
+            L("editor.ai.op.shiftCaptions \(Self.seconds(by))")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

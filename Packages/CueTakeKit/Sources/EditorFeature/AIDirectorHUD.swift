@@ -18,14 +18,14 @@ struct AIDirectorHUD: View {
                         reduceMotion
                             ? .opacity
                             : .asymmetric(
-                                insertion: .scale(scale: 0.35, anchor: .top).combined(with: .opacity).combined(with: .offset(y: -24)),
-                                removal: .scale(scale: 0.6, anchor: .top).combined(with: .opacity)
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .move(edge: .top).combined(with: .opacity)
                             )
                     )
             }
         }
         .frame(maxWidth: .infinity)
-        .animation(.spring(response: 0.5, dampingFraction: 0.74), value: model.aiSession == nil)
+        .animation(.snappy(duration: 0.35), value: model.aiSession == nil)
         .task(id: finishedID) {
             // A finished run tidies itself away; failures wait to be read.
             guard finishedID != nil else { return }
@@ -58,7 +58,7 @@ struct AIDirectorHUD: View {
             shape.fill(DS.Palette.glassSheet(0.86))
         }
         .overlay { AIRing(shape: shape, active: model.isAIDriving) }
-        .shadow(color: AIPalette.violet.opacity(model.isAIDriving ? 0.35 : 0.15), radius: 24, y: 10)
+        .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
         // It sits over the title bar; once the AI is done, a flick up puts it away.
         .gesture(
             DragGesture(minimumDistance: 12).onEnded { value in
@@ -67,7 +67,7 @@ struct AIDirectorHUD: View {
             including: model.isAIDriving ? .subviews : .all
         )
         .padding(.horizontal, 14)
-        .animation(.spring(response: 0.45, dampingFraction: 0.82), value: session.phase)
+        .animation(.snappy(duration: 0.3), value: session.phase)
     }
 
     // MARK: - Phases
@@ -83,7 +83,7 @@ struct AIDirectorHUD: View {
                     .dsFont(.sans, .regular, 11)
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .lineLimit(1)
-                Text("editor.ai.reading \(session.clips) \(session.words) \(session.beats)", bundle: .module)
+                Text("editor.ai.hud.stats \(session.clips) \(session.words)", bundle: .module)
                     .dsFont(.mono, .medium, 9)
                     .foregroundStyle(AIPalette.linear)
             }
@@ -143,7 +143,6 @@ struct AIDirectorHUD: View {
                     .fill(done || now ? AnyShapeStyle(AIPalette.linear) : AnyShapeStyle(DS.Palette.hairline(0.12)))
                     .frame(width: now ? 26 : nil, height: 5)
                     .frame(maxWidth: now ? 26 : .infinity)
-                    .shadow(color: now ? AIPalette.violet.opacity(0.9) : .clear, radius: 5)
             }
         }
         .frame(height: 6)
@@ -157,7 +156,6 @@ struct AIDirectorHUD: View {
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(AIPalette.linear)
                     .symbolEffect(.bounce, value: applied)
-                    .shadow(color: AIPalette.violet.opacity(0.6), radius: 8)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("editor.ai.hud.done \(applied)", bundle: .module)
                         .dsFont(.sans, .semibold, 14)
@@ -277,60 +275,5 @@ struct AIDirectorHUD: View {
                 .background(Circle().fill(DS.Palette.hairline(0.1)))
         }
         .buttonStyle(.dsPressIcon)
-    }
-}
-
-/// A living sphere of the AI's colours with sparkles on it: turning slowly while it reads, quickly
-/// while it works.
-struct AIOrb: View {
-    let fast: Bool
-    var size: CGFloat = 36
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: reduceMotion)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let angle = (t * (fast ? 220 : 90)).truncatingRemainder(dividingBy: 360)
-            let breath = 0.5 + 0.5 * sin(t * (fast ? 6 : 2.4))
-            ZStack {
-                Circle()
-                    .fill(AIPalette.angular(angle))
-                    .blur(radius: 8)
-                    .scaleEffect(0.9 + breath * 0.25)
-                    .opacity(0.8)
-                Circle()
-                    .fill(AIPalette.angular(-angle * 0.7))
-                    .overlay {
-                        Circle().fill(
-                            RadialGradient(colors: [.white.opacity(0.5), .clear], center: .init(x: 0.35, y: 0.3), startRadius: 0, endRadius: size * 0.5)
-                        )
-                    }
-                    .scaleEffect(0.82 + breath * 0.06)
-                Image(systemName: "sparkles")
-                    .font(.system(size: size * 0.4, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.25), radius: 2)
-                    .rotationEffect(.degrees(sin(t * 1.6) * 8))
-            }
-        }
-        .frame(width: size, height: size)
-        .allowsHitTesting(false)
-    }
-}
-
-/// A turning spectrum outline for the HUD, still when the AI is idle.
-struct AIRing<S: InsettableShape>: View {
-    let shape: S
-    let active: Bool
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !active)) { context in
-            let angle = active ? (context.date.timeIntervalSinceReferenceDate * 160).truncatingRemainder(dividingBy: 360) : 30
-            shape
-                .strokeBorder(AIPalette.angular(angle), lineWidth: active ? 1.6 : 1)
-                .opacity(active ? 1 : 0.5)
-        }
-        .allowsHitTesting(false)
     }
 }

@@ -86,8 +86,7 @@ struct OverlayLane: View {
         }
         .aiGlow(
             model.glowToken(.overlay(overlay.id)),
-            in: RoundedRectangle(cornerRadius: 7, style: .continuous),
-            touched: model.isAITouched(.overlay(overlay.id))
+            in: RoundedRectangle(cornerRadius: 7, style: .continuous)
         )
         .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         .onTapGesture {

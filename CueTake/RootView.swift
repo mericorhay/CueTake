@@ -197,7 +197,13 @@ struct RootView: View {
                 onTranscribe: { Task { await model.transcribeNewTakes() } },
                 onAIEdit: aiEdit
             )
-            .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
+            .onChange(of: model.editorModel.project) {
+                guard !model.editorModel.isAIDriving else { return }
+                model.adoptEditorEdits()
+            }
+            .onChange(of: model.editorModel.isAIDriving) { _, driving in
+                if !driving { model.adoptEditorEdits() }
+            }
 
         case .retake:
             if let retakeModel = model.retakeModel {

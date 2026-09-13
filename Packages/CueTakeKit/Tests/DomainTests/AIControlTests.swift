@@ -94,14 +94,55 @@ struct AIControlTests {
         project.overlays = [
             Overlay(content: .text(OverlayText(text: "Hi")), start: MediaTime(seconds: 1), duration: MediaTime(seconds: 1)),
         ]
-        let document = EditDocument(project: project, beatStep: 0.5)
-        #expect(document.schema == "cuetake.edit-document/2")
-        #expect(document.overlays.first?.text == "Hi")
-        #expect(document.overlays.first?.end == 2)
-        #expect(document.beats.first { $0.t == 1.5 }?.overlays == [project.overlays[0].id.uuidString])
-        #expect(document.beats.first { $0.t == 0 }?.overlays == nil)
-        #expect(document.captionStyle.textColor.hasPrefix("#"))
-        #expect(document.overlayOptions.fonts == OverlayText.fonts)
-        _ = try document.jsonData()
+        let document = EditDocument(project: project)
+        #expect(document.schema == "cuetake.edit-document/3")
+        #expect(document.overlays?.first?.id == "o1")
+        #expect(document.overlays?.first?.text == "Hi")
+        #expect(document.overlays?.first?.length == 1)
+        #expect(document.audio == nil)
+        #expect(document.style.textColor.hasPrefix("#"))
+        #expect(document.fonts == OverlayText.fonts)
+        let json = String(decoding: try document.jsonData(), as: UTF8.self)
+        // Short names only: no full ids spent on the model's token budget.
+        #expect(!json.contains(project.overlays[0].id.uuidString))
+    }
+
+    @Test func shortReferencesResolveToRealIDs() {
+        let recording = UUID()
+        func take(_ words: [String]) -> Take {
+            Take(
+                recordingID: recording,
+                sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 3)),
+                status: .ready,
+                transcript: Transcript(localeIdentifier: "en", words: words.enumerated().map { i, text in
+                    TimedWord(text: text, range: MediaTimeRange(start: MediaTime(seconds: Double(i)), duration: MediaTime(seconds: 0.4)))
+                })
+            )
+        }
+        let first = take(["a", "b"])
+        let second = take(["c"])
+        var a = Segment(role: .hook, script: "", takes: [first, second], selectedTakeID: first.id)
+        a.refreshCaptions(maxWordsPerCue: 1)
+        let b = Segment(role: .mainPoint, script: "b", estimatedDuration: MediaTime(seconds: 2))
+        var project = Project(title: "t", localeIdentifier: "en", segments: [a, b])
+        project.overlays = [Overlay(content: .text(OverlayText(text: "Hi")), start: .zero)]
+
+        let plan = EditPlan(summary: "", operations: [
+            .deleteClip(clip: "c2"),
+            .setSpeed(clip: "1", speed: 2),
+            .setCaptionText(caption: "K2", text: "x"),
+            .removeOverlay(overlay: "o1"),
+            .selectTake(clip: "c1", take: "t2"),
+            .reorder(clips: ["c2", String(a.id.uuidString.prefix(8))]),
+            .deleteClip(clip: "c9"),
+        ]).resolvingReferences(in: project)
+
+        #expect(plan.operations[0] == .deleteClip(clip: b.id.uuidString))
+        #expect(plan.operations[1] == .setSpeed(clip: a.id.uuidString, speed: 2))
+        #expect(plan.operations[2] == .setCaptionText(caption: a.captions[1].id.uuidString, text: "x"))
+        #expect(plan.operations[3] == .removeOverlay(overlay: project.overlays[0].id.uuidString))
+        #expect(plan.operations[4] == .selectTake(clip: a.id.uuidString, take: second.id.uuidString))
+        #expect(plan.operations[5] == .reorder(clips: [b.id.uuidString, a.id.uuidString]))
+        #expect(plan.operations[6] == .deleteClip(clip: "c9"))
     }
 }

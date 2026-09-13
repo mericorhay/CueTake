@@ -127,7 +127,7 @@ struct AIChangesSheet: View {
                     .padding(.vertical, 8)
                     .background {
                         if set.isFullyReverted {
-                            Capsule().fill(AIPalette.linear)
+                            Capsule().fill(AIPalette.violet)
                         } else {
                             Capsule().fill(DS.Palette.hairline(0.1))
                         }
@@ -141,8 +141,7 @@ struct AIChangesSheet: View {
         .padding(14)
         .background(shape.fill(DS.Palette.surfaceRaised))
         .overlay {
-            shape.strokeBorder(AIPalette.linear, lineWidth: 1)
-                .opacity(set.isFullyReverted ? 0.18 : 0.55)
+            shape.strokeBorder(DS.Palette.hairline(set.isFullyReverted ? 0.05 : 0.1), lineWidth: 1)
         }
         .animation(DS.Motion.settle, value: set.items.map(\.reverted))
     }
@@ -151,7 +150,7 @@ struct AIChangesSheet: View {
         HStack(spacing: 10) {
             Image(systemName: item.symbol)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(item.reverted ? AnyShapeStyle(DS.Palette.ink(0.3)) : AnyShapeStyle(AIPalette.linear))
+                .foregroundStyle(item.reverted ? DS.Palette.ink(0.3) : AIPalette.violet)
                 .frame(width: 26, height: 26)
                 .background(Circle().fill(DS.Palette.hairline(item.reverted ? 0.03 : 0.07)))
 

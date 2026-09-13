@@ -4,38 +4,14 @@ import SwiftUI
 
 /// The AI's own colour, so a change it made never reads as one you made.
 ///
-/// Every other colour in the studio already means something — coral is the brand and destructive,
-/// lime is selection and snapping. The AI gets a moving spectrum instead of one more flat colour:
-/// cyan through violet to rose, turning, which nothing else in the app does.
+/// One quiet violet with a lighter tint beside it. Coral is the brand and lime is selection; the AI
+/// needs to be told apart from both, not to compete with the footage.
 nonisolated enum AIPalette {
-    static let cyan = Color(red: 0.31, green: 0.84, blue: 1.0)
-    static let violet = Color(red: 0.55, green: 0.42, blue: 1.0)
-    static let rose = Color(red: 1.0, green: 0.36, blue: 0.78)
-    static let amber = Color(red: 1.0, green: 0.62, blue: 0.33)
-
-    static let spectrum: [Color] = [cyan, violet, rose, amber, cyan]
-
-    static func angular(_ degrees: Double) -> AngularGradient {
-        AngularGradient(colors: spectrum, center: .center, angle: .degrees(degrees))
-    }
+    static let violet = Color(red: 0.58, green: 0.50, blue: 1.0)
+    static let lilac = Color(red: 0.74, green: 0.68, blue: 1.0)
 
     static var linear: LinearGradient {
-        LinearGradient(colors: [cyan, violet, rose], startPoint: .leading, endPoint: .trailing)
-    }
-
-    /// A soft white band at `position` along the diagonal, stops kept inside 0…1 and in order.
-    static func sheen(at position: Double) -> [Gradient.Stop] {
-        let centre = min(max(position, 0), 1)
-        let low = min(max(position - 0.18, 0), centre)
-        let high = max(min(position + 0.18, 1), centre)
-        let strength = position < -0.1 || position > 1.1 ? 0 : 0.55
-        return [
-            .init(color: .clear, location: 0),
-            .init(color: .clear, location: low),
-            .init(color: .white.opacity(strength), location: centre),
-            .init(color: .clear, location: high),
-            .init(color: .clear, location: 1),
-        ]
+        LinearGradient(colors: [violet, lilac], startPoint: .leading, endPoint: .trailing)
     }
 }
 
@@ -44,192 +20,113 @@ nonisolated enum AIPalette {
 nonisolated private struct GlowFrame {
     var intensity: Double = 0
     var bump: Double = 0
-    var angle: Double = 0
-    var sweep: Double = -0.3
 }
 
-/// Lights a view when its token moves: a spectrum ring that turns, a bloom behind it, a sheen that
-/// crosses it and a small spring, then everything settles back to nothing. At rest it draws nothing
-/// but, when the thing still carries an AI change, a faint ring.
+/// Lights a view when its token moves: a violet outline and a faint wash that come up quickly and
+/// fade, with a small lift. Nothing is drawn at rest, and nothing blurs — this runs over live
+/// video on a timeline that may be scrolling.
 private struct AIGlowModifier<S: InsettableShape>: ViewModifier {
     let token: Int
     let shape: S
-    let touched: Bool
     let inset: CGFloat
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        // Copied out: the animator draws off the main actor and may only hold plain values.
+        // Copied out: the animator's content closure may only hold plain values.
         let shape = shape
         let inset = inset
         let reduceMotion = reduceMotion
         return content
-            .overlay {
-                if touched {
-                    shape
-                        .strokeBorder(AIPalette.angular(0), lineWidth: 1.2)
-                        .opacity(0.55)
-                        .padding(-inset)
-                        .allowsHitTesting(false)
-                }
-            }
             .keyframeAnimator(initialValue: GlowFrame(), trigger: token) { view, frame in
                 view
                     .overlay {
                         ZStack {
-                            shape
-                                .strokeBorder(AIPalette.angular(frame.angle), lineWidth: 2.5)
-                            shape
-                                .fill(
-                                    LinearGradient(
-                                        stops: AIPalette.sheen(at: frame.sweep),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .blendMode(.plusLighter)
+                            shape.fill(AIPalette.violet.opacity(0.16))
+                            shape.strokeBorder(AIPalette.violet, lineWidth: 2)
                         }
                         .padding(-inset)
                         .opacity(frame.intensity)
                         .allowsHitTesting(false)
                     }
-                    .background {
-                        shape
-                            .fill(AIPalette.angular(frame.angle))
-                            .padding(-inset - 2)
-                            .blur(radius: 14)
-                            .opacity(frame.intensity * 0.85)
-                            .allowsHitTesting(false)
-                    }
                     .scaleEffect(reduceMotion ? 1 : 1 + frame.bump)
             } keyframes: { _ in
                 KeyframeTrack(\.intensity) {
-                    CubicKeyframe(1, duration: 0.16)
-                    LinearKeyframe(1, duration: 0.9)
-                    CubicKeyframe(0, duration: 0.9)
+                    CubicKeyframe(1, duration: 0.12)
+                    LinearKeyframe(1, duration: 0.6)
+                    CubicKeyframe(0, duration: 0.5)
                 }
                 KeyframeTrack(\.bump) {
-                    SpringKeyframe(0.07, duration: 0.18, spring: .bouncy)
-                    SpringKeyframe(0, duration: 0.6, spring: .bouncy(duration: 0.5, extraBounce: 0.2))
-                }
-                KeyframeTrack(\.angle) {
-                    LinearKeyframe(0, duration: 0.01)
-                    LinearKeyframe(620, duration: 1.95)
-                }
-                KeyframeTrack(\.sweep) {
-                    LinearKeyframe(-0.3, duration: 0.08)
-                    CubicKeyframe(1.3, duration: 0.8)
+                    SpringKeyframe(0.03, duration: 0.14, spring: .snappy)
+                    SpringKeyframe(0, duration: 0.3, spring: .snappy)
                 }
             }
     }
-
 }
 
 extension View {
     /// Lights this view each time `token` changes. See `AIGlowModifier`.
-    func aiGlow<S: InsettableShape>(_ token: Int, in shape: S, touched: Bool = false, inset: CGFloat = 0) -> some View {
-        modifier(AIGlowModifier(token: token, shape: shape, touched: touched, inset: inset))
+    func aiGlow<S: InsettableShape>(_ token: Int, in shape: S, inset: CGFloat = 0) -> some View {
+        modifier(AIGlowModifier(token: token, shape: shape, inset: inset))
     }
 }
 
 // MARK: - The whole studio, while the AI has it
 
-/// A spectrum light around the edge of the screen while the AI reads and edits.
+/// A thin violet edge around the screen while the AI works, breathing slowly.
 ///
-/// Slow and breathing while it reads, quicker while it changes things. Three strokes of the same
-/// turning gradient — a sharp line, a glow and a wide haze — which is what makes it read as light
-/// rather than as a border.
+/// One stroke whose opacity is animated by the render server rather than redrawn by SwiftUI every
+/// frame; the earlier version redrew three blurred gradients sixty times a second over the video.
 struct AIAuroraBorder: View {
     let active: Bool
-    let fast: Bool
 
+    @State private var breathing = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !active || reduceMotion)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            let angle = (t * (fast ? 150 : 70)).truncatingRemainder(dividingBy: 360)
-            let breath = 0.5 + 0.5 * sin(t * (fast ? 5 : 2.2))
-            let shape = RoundedRectangle(cornerRadius: 56, style: .continuous)
-            ZStack {
-                shape.strokeBorder(AIPalette.angular(angle), lineWidth: 2.5 + breath)
-                shape.strokeBorder(AIPalette.angular(angle), lineWidth: 10 + breath * 6)
-                    .blur(radius: 12)
-                    .opacity(0.8)
-                shape.strokeBorder(AIPalette.angular(angle + 40), lineWidth: 34)
-                    .blur(radius: 38)
-                    .opacity(0.35 + breath * 0.25)
-            }
-        }
-        .ignoresSafeArea()
-        .opacity(active ? 1 : 0)
-        .animation(.easeInOut(duration: 0.6), value: active)
-        .allowsHitTesting(false)
-    }
-}
-
-/// A beam that sweeps back and forth across the timeline while the AI reads it.
-struct AIReadingBeam: View {
-    var body: some View {
-        TimelineView(.animation) { context in
-            GeometryReader { proxy in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let phase = 0.5 - 0.5 * cos(t * 2.1)
-                let width = max(proxy.size.width * 0.28, 60)
-                LinearGradient(
-                    colors: [.clear, AIPalette.cyan.opacity(0.35), AIPalette.violet.opacity(0.55), AIPalette.rose.opacity(0.3), .clear],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(width: width)
-                .overlay {
-                    Rectangle()
-                        .fill(.white.opacity(0.85))
-                        .frame(width: 1.5)
-                        .shadow(color: AIPalette.violet, radius: 6)
+        RoundedRectangle(cornerRadius: 56, style: .continuous)
+            .strokeBorder(AIPalette.violet, lineWidth: 2.5)
+            .opacity(active ? (breathing ? 0.9 : 0.35) : 0)
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .animation(.easeInOut(duration: 0.35), value: active)
+            .onChange(of: active, initial: true) { _, on in
+                guard on, !reduceMotion else {
+                    breathing = false
+                    return
                 }
-                .blendMode(.plusLighter)
-                .offset(x: CGFloat(phase) * (proxy.size.width - width))
+                withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                    breathing = true
+                }
             }
-        }
-        .allowsHitTesting(false)
     }
 }
 
-/// A diagonal sheen crossing the picture over and over while the AI reads the frames.
-struct AIShimmer: View {
+/// A soft band that slides back and forth across the timeline while the AI reads it.
+struct AIReadingBeam: View {
+    @State private var across = false
+
     var body: some View {
-        TimelineView(.animation) { context in
-            GeometryReader { proxy in
-                let t = context.date.timeIntervalSinceReferenceDate
-                let travel = (t / 1.6).truncatingRemainder(dividingBy: 1)
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: AIPalette.violet.opacity(0.0), location: max(0, travel - 0.2)),
-                        .init(color: AIPalette.cyan.opacity(0.28), location: travel),
-                        .init(color: AIPalette.rose.opacity(0.0), location: min(1, travel + 0.2)),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .blendMode(.plusLighter)
-            }
+        GeometryReader { proxy in
+            let width = max(proxy.size.width * 0.25, 60)
+            LinearGradient(
+                colors: [.clear, AIPalette.violet.opacity(0.28), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: width)
+            .offset(x: across ? proxy.size.width - width : 0)
         }
         .allowsHitTesting(false)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
+                across = true
+            }
+        }
     }
 }
 
-nonisolated private struct ScanFrame {
-    var open: Double = 0
-    var glow: Double = 0
-}
-
-/// The stretch of the timeline an AI step works on: it opens out from its centre, glows while the
-/// change lands and fades away.
+/// The stretch of the timeline an AI step works on: it opens from its left edge and fades.
 struct AIScanBand: View {
     let mark: AIScanMark
     let scale: Double
@@ -238,25 +135,24 @@ struct AIScanBand: View {
     var body: some View {
         let width = max(CGFloat((mark.range.upperBound - mark.range.lowerBound) * scale), 6)
         RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(AIPalette.linear.opacity(0.28))
+            .fill(AIPalette.violet.opacity(0.18))
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(AIPalette.linear, lineWidth: 1.5)
+                    .strokeBorder(AIPalette.violet.opacity(0.8), lineWidth: 1.5)
             }
             .frame(width: width, height: height)
             .keyframeAnimator(initialValue: ScanFrame(), repeating: false) { view, frame in
                 view
-                    .scaleEffect(x: frame.open, y: 1)
-                    .shadow(color: AIPalette.violet.opacity(frame.glow), radius: 12)
+                    .scaleEffect(x: frame.open, y: 1, anchor: .leading)
                     .opacity(frame.glow)
             } keyframes: { _ in
                 KeyframeTrack(\.open) {
-                    SpringKeyframe(1, duration: 0.35, spring: .snappy)
+                    SpringKeyframe(1, duration: 0.25, spring: .snappy)
                 }
                 KeyframeTrack(\.glow) {
-                    CubicKeyframe(1, duration: 0.2)
-                    LinearKeyframe(1, duration: 0.9)
-                    CubicKeyframe(0, duration: 0.5)
+                    CubicKeyframe(1, duration: 0.12)
+                    LinearKeyframe(1, duration: 0.7)
+                    CubicKeyframe(0, duration: 0.4)
                 }
             }
             .offset(x: CGFloat(mark.range.lowerBound * scale))
@@ -264,14 +160,50 @@ struct AIScanBand: View {
     }
 }
 
-/// A small spectrum sparkle, for "the AI did this".
+nonisolated private struct ScanFrame {
+    var open: Double = 0
+    var glow: Double = 0
+}
+
+/// A small violet sparkle, for "the AI did this".
 struct AISparkle: View {
     var size: CGFloat = 9
 
     var body: some View {
         Image(systemName: "sparkle")
             .font(.system(size: size, weight: .bold))
-            .foregroundStyle(AIPalette.linear)
-            .shadow(color: AIPalette.violet.opacity(0.7), radius: 3)
+            .foregroundStyle(AIPalette.violet)
+    }
+}
+
+/// The AI's mark: a violet disc with sparkles, which shimmer while it works.
+struct AIOrb: View {
+    let fast: Bool
+    var size: CGFloat = 36
+
+    var body: some View {
+        Circle()
+            .fill(AIPalette.linear)
+            .overlay {
+                Image(systemName: "sparkles")
+                    .font(.system(size: size * 0.42, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.variableColor.iterative, options: .repeating, isActive: fast)
+            }
+            .frame(width: size, height: size)
+            .allowsHitTesting(false)
+    }
+}
+
+/// A still violet outline, stronger while the AI works.
+struct AIRing<S: InsettableShape>: View {
+    let shape: S
+    let active: Bool
+
+    var body: some View {
+        shape
+            .strokeBorder(AIPalette.violet, lineWidth: 1)
+            .opacity(active ? 0.9 : 0.4)
+            .allowsHitTesting(false)
     }
 }

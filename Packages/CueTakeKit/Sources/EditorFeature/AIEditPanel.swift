@@ -52,30 +52,16 @@ struct AIEditPanel: View {
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.07)))
                     .overlay {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(AIPalette.linear, lineWidth: 1)
-                            .opacity(focused ? 0.8 : 0)
+                            .strokeBorder(AIPalette.violet.opacity(focused ? 0.7 : 0), lineWidth: 1)
                     }
-                    .animation(.easeOut(duration: 0.2), value: focused)
 
                 Button(action: send) {
-                    ZStack {
-                        if canSend {
-                            AIOrb(fast: false, size: 44)
-                                .transition(.scale.combined(with: .opacity))
-                        } else {
-                            Circle()
-                                .fill(DS.Palette.hairline(0.1))
-                                .frame(width: 44, height: 44)
-                                .overlay {
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(DS.Palette.ink(0.35))
-                                }
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    .frame(width: 44, height: 44)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.7), value: canSend)
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(canSend ? Color.white : DS.Palette.ink(0.35))
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(canSend ? AIPalette.violet : DS.Palette.hairline(0.1)))
+                        .animation(.easeOut(duration: 0.15), value: canSend)
                 }
                 .buttonStyle(.dsPressIcon)
                 .disabled(!canSend)
@@ -83,10 +69,12 @@ struct AIEditPanel: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: 6) {
-                    ForEach(Array(suggestions.enumerated()), id: \.element) { position, suggestion in
+                    ForEach(suggestions, id: \.self) { suggestion in
                         Button {
+                            // Fills the field rather than sending: a second tap on the AI button used
+                            // to land on a suggestion as the panel opened and start an edit nobody asked for.
                             instruction = suggestion
-                            send()
+                            focused = true
                         } label: {
                             Text(suggestion)
                                 .dsFont(.sans, .medium, 11)
@@ -94,10 +82,8 @@ struct AIEditPanel: View {
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 7)
                                 .background(Capsule().fill(DS.Palette.hairline(0.07)))
-                                .overlay(Capsule().strokeBorder(AIPalette.linear, lineWidth: 1).opacity(0.45))
                         }
                         .buttonStyle(.dsPress(radius: 20))
-                        .dsEnter(.rise(duration: 0.35, delay: Double(position) * 0.04))
                     }
                 }
                 .padding(.vertical, 1)
@@ -117,7 +103,7 @@ struct AIEditPanel: View {
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(AIPalette.linear))
+                            .background(Capsule().fill(AIPalette.violet))
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
                             .font(.system(size: 10, weight: .bold))

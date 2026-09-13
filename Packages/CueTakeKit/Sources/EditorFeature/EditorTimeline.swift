@@ -91,7 +91,7 @@ struct EditorTimeline: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.35), value: model.aiSession?.phase == .thinking)
+
         .frame(height: 116 + audioHeight)
         .sensoryFeedback(.selection, trigger: snapCount)
     }
@@ -322,12 +322,8 @@ struct EditorTimeline: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .opacity(isActive || isSelected || model.glowToken(.clip(segment.id)) > 0 && model.isAIDriving ? 1 : 0.62)
-        .aiGlow(
-            model.glowToken(.clip(segment.id)),
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous),
-            touched: model.isAITouched(.clip(segment.id))
-        )
+        .opacity(isActive || isSelected ? 1 : 0.62)
+        .aiGlow(model.glowToken(.clip(segment.id)), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .scaleEffect(isLifted && !reduceMotion ? 1.04 : 1)
         .shadow(color: .black.opacity(isLifted ? 0.55 : 0), radius: 18, y: 10)
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)
