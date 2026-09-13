@@ -116,17 +116,20 @@ enum CaptionRenderer {
             return CTFontCreateWithFontDescriptor(descriptor, fontSize, nil)
         }()
 
+        // Core Text's own attribute names rather than UIKit's. They are the same attributes —
+        // UIKit's are a thin renaming — and an engine that has no business drawing a view has no
+        // business importing the view framework.
         var attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: cgColor(style.textColor),
+            NSAttributedString.Key(kCTFontAttributeName as String): font,
+            NSAttributedString.Key(kCTForegroundColorAttributeName as String): cgColor(style.textColor),
         ]
 
         // An outline rather than a shadow. Short video is watched over whatever happens to be
         // behind the words, and a stroke is the only thing that survives white footage.
         if style.backgroundColor == nil {
-            attributes[.strokeColor] = cgColor(.black)
+            attributes[NSAttributedString.Key(kCTStrokeColorAttributeName as String)] = cgColor(.black)
             // Negative means stroke *and* fill; positive would draw the outline only.
-            attributes[.strokeWidth] = -fontSize * 0.14
+            attributes[NSAttributedString.Key(kCTStrokeWidthAttributeName as String)] = -fontSize * 0.14
         }
 
         return NSAttributedString(string: text, attributes: attributes)
