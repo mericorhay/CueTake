@@ -62,5 +62,7 @@ let package = Package(
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),
         .testTarget(name: "WorkflowEngineTests", dependencies: ["Domain", "WorkflowEngine"], swiftSettings: concurrency),
+        .testTarget(name: "MediaEngineTests", dependencies: ["Domain", "MediaEngine"], swiftSettings: concurrency),
+        .testTarget(name: "EditorFeatureTests", dependencies: ["Domain", "EditorFeature"], swiftSettings: ui),
     ]
 )

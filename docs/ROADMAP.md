@@ -7,7 +7,9 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 - [ ] Connect the assistant: deploy `backend/assistant`, set `CUETAKE_ASSISTANT_URL` and
       `CUETAKE_ASSISTANT_TOKEN` repository secrets, rerun TestFlight. (Owner: Meriç)
 - [ ] Payments: StoreKit 2, paywall, free-tier limits. Settings' "Subscription" row is static text.
-- [ ] Privacy policy URL and App Store privacy labels (the assistant sends messages and project
+- [ ] Privacy policy URL and App Store privacy labels. Draft in `docs/PRIVACY.md` (EN + TR) — needs
+      legal name, contact and a public URL, then review.
+      Was: Privacy policy URL and App Store privacy labels (the assistant sends messages and project
       context to our server). Likely also why external TestFlight review said "missing information".
 - [x] App icon and in-app mark from the Gemini artwork (build 21). A vector version would still be nicer for print and the App Store page.
 - [x] First launch: new users are dropped into `Project.sample`. Replace with an empty state that
@@ -39,6 +41,8 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 ## Hygiene
 
-- [ ] Tests for transcript editing, audio envelope, composer arithmetic. (Domain side added: playback, caption placement, presets, AI-written workflow JSON. MediaEngine and EditorFeature still have none.)
+- [x] Tests for transcript editing, audio envelope, caption placement, presets and AI-written
+      workflow JSON (Domain, MediaEngine and EditorFeature test targets). Composer itself still
+      untested — it needs real media files.
 - [x] Remove the four unused `Unimplemented*` engines from `AppDependencies`.
 - [x] Rate limiting on the assistant worker (20/min per address via a Cloudflare rate-limit binding).
