@@ -2,7 +2,7 @@ import DesignSystem
 import SwiftUI
 
 /// The editing gestures, named.
-enum ToolKind: String, Sendable, Equatable {
+public enum ToolKind: String, Sendable, Equatable {
     case split
     case merge
     case duplicate
@@ -12,11 +12,17 @@ enum ToolKind: String, Sendable, Equatable {
 }
 
 /// One tool firing, so the timeline can answer it.
-struct ToolPulse: Equatable, Sendable {
-    var id: Int
-    var kind: ToolKind
+public struct ToolPulse: Equatable, Sendable {
+    public var id: Int
+    public var kind: ToolKind
     /// Where on the timeline it happened, 0…1.
-    var position: Double
+    public var position: Double
+
+    public init(id: Int, kind: ToolKind, position: Double) {
+        self.id = id
+        self.kind = kind
+        self.position = position
+    }
 }
 
 /// What a tool looks like when it works.
