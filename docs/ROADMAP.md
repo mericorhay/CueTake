@@ -23,7 +23,7 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 - [x] Caption styles: Pop / Clean / Karaoke only store an id; preview and export draw them all the
       same. Karaoke word highlight is not implemented although word timings exist.
 - [ ] Teleprompter does not follow speech: Studio and Retake still advance on a 130–135 ms timer.
-- [ ] Prompt screen options (length, tone, format) are static.
+- [x] Prompt screen options (length, tone, format) are static.
 - [ ] Clean audio applies to added audio only, not the footage's own voice.
 - [ ] Reversed clips are silent.
 - [ ] Workflows: script and record steps are skipped; music level needs music added by hand first.
@@ -37,6 +37,6 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 ## Hygiene
 
-- [ ] Tests for transcript editing, audio envelope, composer arithmetic.
-- [ ] Remove the four unused `Unimplemented*` engines from `AppDependencies`.
+- [ ] Tests for transcript editing, audio envelope, composer arithmetic. (Domain side added: playback, caption placement, presets, AI-written workflow JSON. MediaEngine and EditorFeature still have none.)
+- [x] Remove the four unused `Unimplemented*` engines from `AppDependencies`.
 - [ ] Rate limiting on the assistant worker.

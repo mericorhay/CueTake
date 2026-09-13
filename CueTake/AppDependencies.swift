@@ -1,22 +1,14 @@
 import AIServices
-import CaptureEngine
-import MediaEngine
 import Persistence
 import SpeechEngine
-import WorkflowEngine
 
 /// Composition root: the only place that knows concrete implementations.
 /// Features receive the protocols they need through their initializers; there is no global container.
 struct AppDependencies {
     var projectStore: any ProjectStore
     var settingsStore: any SettingsStore
-    var camera: any CameraCapturing
     var speech: any SpeechTranscribing
-    var scriptTracker: any ScriptTracking
-    var composer: any MediaComposing
-    var exporter: any VideoExporting
     var ai: AICapabilityRouter
-    var workflowRunner: WorkflowRunner
     /// Nil only when Application Support cannot be opened, in which case workflows live for the
     /// session and the studio still works.
     var workflowStore: WorkflowStore?
@@ -33,17 +25,14 @@ struct AppDependencies {
         return InMemoryProjectStore()
     }
 
-    /// Every engine is a placeholder until it is implemented. Storage is not.
+    /// The concrete capabilities the app runs on. Placeholders that used to stand here for engines
+    /// not yet built are gone: the camera, composer and exporter are used directly by the features
+    /// that own them, and a dependency nothing reads is a dependency that lies about the design.
     static let live = AppDependencies(
         projectStore: makeProjectStore(),
         settingsStore: UserDefaultsSettingsStore(),
-        camera: UnimplementedCameraCapture(),
         speech: SystemSpeechTranscriber(),
-        scriptTracker: UnimplementedScriptTracker(),
-        composer: UnimplementedMediaComposer(),
-        exporter: UnimplementedVideoExporter(),
         ai: AICapabilityRouter(providers: [FoundationModelsScriptWriter(), RemoteAIProvider()]),
-        workflowRunner: WorkflowRunner(handlers: []),
         workflowStore: try? WorkflowStore.inApplicationSupport(),
         workflowAuthor: FoundationModelsWorkflowAuthor(),
         assistantStore: try? AssistantStore.inApplicationSupport(),

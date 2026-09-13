@@ -1,4 +1,5 @@
 import DesignSystem
+import Domain
 import Observation
 import SwiftUI
 
@@ -11,6 +12,31 @@ public final class PromptModel {
     public var promptText: String
     /// Set when generation failed, so the user is told rather than dropped back with nothing.
     public private(set) var failure: String?
+
+    /// How long the video should be, in seconds.
+    public var lengthSeconds = 30
+    public var tone: Tone = .energetic
+    public var platform: TargetPlatform = .instagramReels
+
+    public static let lengthChoices = [15, 30, 60, 90]
+    public static let platformChoices: [TargetPlatform] = [.instagramReels, .tiktok, .youtubeShorts, .youtube]
+
+    /// The voice of the script. Named in the user's language on screen, and in plain English in
+    /// the brief, because English is what the model follows most reliably whatever language it is
+    /// writing in.
+    public enum Tone: String, CaseIterable, Sendable {
+        case energetic, calm, funny, expert, story
+
+        public var briefValue: String {
+            switch self {
+            case .energetic: "energetic and punchy"
+            case .calm: "calm and warm"
+            case .funny: "funny, light, a little self-aware"
+            case .expert: "confident and expert, no fluff"
+            case .story: "told as a short personal story"
+            }
+        }
+    }
 
     /// `Bundle.module` is internal to the module, so the prefilled brief is resolved in the body
     /// rather than in a default argument, which would leak it into the public signature.
@@ -126,10 +152,24 @@ public struct PromptScreen: View {
             }
             .padding(.top, 16)
 
+            // Three real choices. They used to be three labels showing fixed values, which read as
+            // settings and did nothing: the script was always thirty seconds, energetic, a Reel.
             HStack(spacing: 10) {
-                option("prompt.option.length", "prompt.option.length.value")
-                option("prompt.option.tone", "prompt.option.tone.value")
-                option("prompt.option.format", "prompt.option.format.value")
+                choice("prompt.option.length", value: Self.lengthLabel(model.lengthSeconds)) {
+                    ForEach(PromptModel.lengthChoices, id: \.self) { seconds in
+                        Button(Self.lengthLabel(seconds)) { model.lengthSeconds = seconds }
+                    }
+                }
+                choice("prompt.option.tone", value: Self.toneLabel(model.tone)) {
+                    ForEach(PromptModel.Tone.allCases, id: \.self) { tone in
+                        Button(Self.toneLabel(tone)) { model.tone = tone }
+                    }
+                }
+                choice("prompt.option.format", value: Self.platformLabel(model.platform)) {
+                    ForEach(PromptModel.platformChoices, id: \.self) { platform in
+                        Button(Self.platformLabel(platform)) { model.platform = platform }
+                    }
+                }
             }
             .padding(.top, 26)
 
@@ -161,18 +201,60 @@ public struct PromptScreen: View {
         "prompt.chip.storytelling",
     ]
 
-    private func option(_ key: String.LocalizationValue, _ valueKey: String.LocalizationValue) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(String(localized: key, bundle: .module))
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
-            Text(String(localized: valueKey, bundle: .module))
-                .dsFont(.sans, .semibold, 14)
-                .foregroundStyle(DS.Palette.ink)
+    private func choice<Options: View>(
+        _ key: String.LocalizationValue,
+        value: String,
+        @ViewBuilder options: () -> Options
+    ) -> some View {
+        Menu {
+            options()
+        } label: {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 3) {
+                    Text(String(localized: key, bundle: .module))
+                        .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
+                        .foregroundStyle(DS.Palette.ink(0.38))
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.3))
+                }
+                Text(value)
+                    .dsFont(.sans, .semibold, 14)
+                    .foregroundStyle(DS.Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .contentTransition(.opacity)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .dsCard(radius: 15)
+            .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .dsCard(radius: 15)
+        .animation(DS.Motion.snap, value: value)
+    }
+
+    static func lengthLabel(_ seconds: Int) -> String {
+        String(localized: "prompt.length.seconds \(seconds)", bundle: .module)
+    }
+
+    static func toneLabel(_ tone: PromptModel.Tone) -> String {
+        switch tone {
+        case .energetic: String(localized: "prompt.tone.energetic", bundle: .module)
+        case .calm: String(localized: "prompt.tone.calm", bundle: .module)
+        case .funny: String(localized: "prompt.tone.funny", bundle: .module)
+        case .expert: String(localized: "prompt.tone.expert", bundle: .module)
+        case .story: String(localized: "prompt.tone.story", bundle: .module)
+        }
+    }
+
+    static func platformLabel(_ platform: TargetPlatform) -> String {
+        switch platform {
+        case .instagramReels: "Reels · 9:16"
+        case .tiktok: "TikTok · 9:16"
+        case .youtubeShorts: "Shorts · 9:16"
+        case .youtube: "YouTube · 16:9"
+        case .generic: "9:16"
+        }
     }
 
     // MARK: - Running

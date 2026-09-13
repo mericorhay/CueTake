@@ -551,8 +551,9 @@ final class AppModel {
         promptModel.advance(to: 2)
         let brief = ScriptBrief(
             topic: promptModel.promptText,
-            targetDuration: MediaTime(seconds: 30),
-            platform: .instagramReels,
+            targetDuration: MediaTime(seconds: Double(promptModel.lengthSeconds)),
+            platform: promptModel.platform,
+            tone: promptModel.tone.briefValue,
             localeIdentifier: locale
         )
 
@@ -567,7 +568,8 @@ final class AppModel {
             }
 
             promptModel.advance(to: 3)
-            var fresh = Project(title: draft.title, localeIdentifier: locale)
+            // Framed for where it is going: a YouTube script is a landscape project from the start.
+            var fresh = Project(title: draft.title, format: promptModel.platform.defaultFormat, localeIdentifier: locale)
             fresh.segments = draft.segments.map(Segment.init(draft:))
 
             promptModel.advance(to: 4)
