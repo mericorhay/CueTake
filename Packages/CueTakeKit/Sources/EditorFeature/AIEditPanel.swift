@@ -309,4 +309,3 @@ struct AIEditPanel: View {
     }
 }
 
-extension EditPlanOutcome: Hashable {}
