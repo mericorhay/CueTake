@@ -1,5 +1,6 @@
 import AssistantFeature
 import DesignSystem
+import Domain
 import SwiftUI
 
 /// Where you are, what is next, and the way to ask.
