@@ -69,6 +69,23 @@
         }
       }
     },
+    "busy.aligning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lining your take up with the script…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekim metinle eşleştiriliyor…"
+          }
+        }
+      }
+    },
     "busy.cleaningVoice": {
       "extractionState": "manual",
       "localizations": {

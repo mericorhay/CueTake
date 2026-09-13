@@ -20,6 +20,11 @@ public final class CameraSession: @unchecked Sendable {
     private var audioInput: AVCaptureDeviceInput?
     private let movieOutput = AVCaptureMovieFileOutput()
     private let recordingDelegate = RecordingDelegate()
+    /// A copy of the microphone for following the script. The movie file gets its own; this one
+    /// only listens.
+    private let audioOutput = AVCaptureAudioDataOutput()
+    private let audioTap = AudioTap()
+    private let audioQueue = DispatchQueue(label: "com.orhay.cuetake.camera.audio")
     private var isConfigured = false
 
     public init() {}
@@ -122,6 +127,26 @@ public final class CameraSession: @unchecked Sendable {
         }
     }
 
+    // MARK: - Listening
+
+    private static let tapDisabledKey = "CueTake.audioTapDisabled"
+
+    /// Whether recordings also feed the microphone to speech tracking. On unless a recording ever
+    /// came back without sound while the tap was attached — then off for good on this device,
+    /// because a prompter that follows you is worth less than a take that has its audio.
+    public static var tapsAudio: Bool {
+        !UserDefaults.standard.bool(forKey: tapDisabledKey)
+    }
+
+    public static func disableAudioTap() {
+        UserDefaults.standard.set(true, forKey: tapDisabledKey)
+    }
+
+    /// Receives microphone audio while recording, on a background queue. Nil stops it.
+    public func setAudioHandler(_ handler: (@Sendable (AVAudioPCMBuffer) -> Void)?) {
+        audioTap.setHandler(handler)
+    }
+
     // MARK: - Recording
     //
     // `AVCaptureMovieFileOutput` rather than an asset writer. The protocol's note asks for a
@@ -150,6 +175,17 @@ public final class CameraSession: @unchecked Sendable {
                        session.canAddInput(input) {
                         session.addInput(input)
                         audioInput = input
+                    }
+                    session.commitConfiguration()
+                }
+
+                // Apps built for iOS 16 and later may run a data output beside the movie output;
+                // before that only one of them received anything.
+                if audioInput != nil, Self.tapsAudio, !session.outputs.contains(audioOutput) {
+                    session.beginConfiguration()
+                    if session.canAddOutput(audioOutput) {
+                        session.addOutput(audioOutput)
+                        audioOutput.setSampleBufferDelegate(audioTap, queue: audioQueue)
                     }
                     session.commitConfiguration()
                 }
@@ -286,6 +322,39 @@ public final class CameraSession: @unchecked Sendable {
     }
 }
 
+
+/// Turns the microphone's sample buffers into PCM buffers for whoever is listening.
+private final class AudioTap: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var handler: (@Sendable (AVAudioPCMBuffer) -> Void)?
+
+    func setHandler(_ handler: (@Sendable (AVAudioPCMBuffer) -> Void)?) {
+        lock.withLock { self.handler = handler }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let handler = lock.withLock({ handler }), let buffer = Self.pcm(from: sampleBuffer) else { return }
+        handler(buffer)
+    }
+
+    static func pcm(from sampleBuffer: CMSampleBuffer) -> AVAudioPCMBuffer? {
+        guard let description = CMSampleBufferGetFormatDescription(sampleBuffer),
+              let basic = CMAudioFormatDescriptionGetStreamBasicDescription(description)
+        else { return nil }
+        var stream = basic.pointee
+        guard let format = AVAudioFormat(streamDescription: &stream) else { return nil }
+        let frames = AVAudioFrameCount(CMSampleBufferGetNumSamples(sampleBuffer))
+        guard frames > 0, let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else { return nil }
+        buffer.frameLength = frames
+        let status = CMSampleBufferCopyPCMDataIntoAudioBufferList(
+            sampleBuffer,
+            at: 0,
+            frameCount: Int32(frames),
+            into: buffer.mutableAudioBufferList
+        )
+        return status == noErr ? buffer : nil
+    }
+}
 
 /// Bridges the delegate callback back to the `async` call that started the recording.
 private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDelegate, @unchecked Sendable {

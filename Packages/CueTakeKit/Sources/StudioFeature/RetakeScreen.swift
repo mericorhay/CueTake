@@ -2,6 +2,7 @@ import CaptureEngine
 import DesignSystem
 import Domain
 import Observation
+import SpeechEngine
 import SwiftUI
 
 /// Re-records exactly one segment. The rest of the cut is never touched — that is the whole point
@@ -48,37 +49,44 @@ public final class RetakeModel {
         camera.stop()
     }
 
-    public init(segment: Segment) {
+    private let driver: PrompterDriver
+    /// The file is being closed. "Keep" waits for it: keeping a take that has not been written yet
+    /// keeps nothing.
+    public private(set) var isSaving = false
+
+    /// - Parameter localeIdentifier: the project's language, for listening to the reader.
+    public init(segment: Segment, localeIdentifier: String = Locale.current.identifier, speech: any SpeechTranscribing = SystemSpeechTranscriber()) {
         self.segment = segment
+        driver = PrompterDriver(scripts: [segment.script], localeIdentifier: localeIdentifier, speech: speech)
+        driver.onMove = { [weak self] position in
+            guard let self, state == .rolling else { return }
+            wordIndex = position.word
+        }
     }
+
+    /// The last word has been reached; the take rolls on until stop.
+    public var reachedEnd: Bool { driver.reachedEnd }
+
+    public var isFollowingVoice: Bool { driver.mode == .following }
 
     public var words: [String] {
         ScriptText.words(in: segment.script).map(String.init)
     }
 
-    /// Stand-in for speech tracking, at the design's 130ms per word.
+    /// Rolls, with the text following the reader's voice — or a real speaking pace when the voice
+    /// cannot be heard. It used to run a 130 ms timer and stop the take when the words ran out.
     public func start(writingTo url: URL? = nil) {
-        guard task == nil else { return }
+        guard state != .rolling else { return }
         state = .rolling
         wordIndex = 0
+        lastCapture = nil
 
         recordingURL = url
         recordingStart = .now
         if let url {
             Task { [camera] in _ = await camera.startRecording(to: url) }
         }
-
-        task = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(130))
-                guard let self, state == .rolling else { return }
-                if wordIndex + 1 >= words.count {
-                    finish()
-                    return
-                }
-                wordIndex += 1
-            }
-        }
+        driver.start(camera: url == nil ? nil : camera)
     }
 
     public func stop() {
@@ -90,6 +98,7 @@ public final class RetakeModel {
     public func stopTimers() {
         task?.cancel()
         task = nil
+        if state == .rolling { finish() }
     }
 
     public func redo() {
@@ -103,15 +112,19 @@ public final class RetakeModel {
     private func finish() {
         task?.cancel()
         task = nil
+        driver.stop(camera: camera)
 
         let elapsed = recordingStart.map { Date.now.timeIntervalSince($0) } ?? 0
         let wasRecording = recordingURL != nil
         recordingURL = nil
         recordingStart = nil
         if wasRecording {
+            isSaving = true
             Task { [weak self] in
-                guard let url = await self?.camera.stopRecording() else { return }
-                self?.lastCapture = (url, elapsed)
+                let url = await self?.camera.stopRecording()
+                guard let self else { return }
+                if let url { lastCapture = (url, elapsed) }
+                isSaving = false
             }
         }
         state = .compare
@@ -247,7 +260,18 @@ public struct RetakeScreen: View {
                 in: RoundedRectangle(cornerRadius: 24, style: .continuous),
                 border: DS.Palette.accent(0.4)
             )
-            .padding(.bottom, 20)
+            .padding(.bottom, model.reachedEnd ? 10 : 20)
+
+            if model.reachedEnd {
+                Text("studio.end.hint", bundle: .module)
+                    .dsFont(.sans, .semibold, 13)
+                    .foregroundStyle(DS.Palette.ink)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .dsGlass(tint: DS.Palette.glass(0.7), in: Capsule())
+                    .padding(.bottom, 12)
+                    .transition(.scale(scale: 0.85).combined(with: .opacity))
+            }
 
             Button {
                 model.stop()
@@ -265,6 +289,7 @@ public struct RetakeScreen: View {
             }
             .buttonStyle(.dsPress)
         }
+        .animation(DS.Motion.bloom, value: model.reachedEnd)
         .dsEnter(.rise(duration: 0.4))
     }
 
@@ -306,6 +331,9 @@ public struct RetakeScreen: View {
                 ) {
                     onKeep(model.choice)
                 }
+                // Keeping the new take waits for its file to be closed.
+                .disabled(model.isSaving && model.choice == .new)
+                .opacity(model.isSaving && model.choice == .new ? 0.5 : 1)
             }
         }
         .dsEnter(.rise(duration: 0.4))

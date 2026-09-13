@@ -1,6 +1,7 @@
 import AIServices
 import AssistantFeature
 import AVFoundation
+import CaptureEngine
 import Domain
 import EditorFeature
 import LibraryFeature
@@ -599,20 +600,32 @@ final class AppModel {
             path: "\(UUID().uuidString).mov",
             directoryHint: .notDirectory
         )
-        studioModel.startRecording(writingTo: url)
+        // Three seconds to get back into frame, then rolling.
+        studioModel.beginCountdown(writingTo: url)
     }
 
     /// Folds a finished capture into the project: one recording, one take per segment.
     ///
-    /// The segment boundaries come from the prompter, which knew when the speaker moved on. That
-    /// is the whole reason a single continuous file can be edited segment by segment — and why
-    /// retaking one of them later touches nothing else.
+    /// The file is listened to once, and what was said decides where each segment begins: the
+    /// transcript is matched against the script, which is accurate to the word where the live
+    /// prompter could only be accurate to the moment it heard it. Where a segment cannot be found
+    /// the live boundary stands. Both ends are tightened too — the reach back from the shutter
+    /// before the first word, and the reach for stop after the last — which is the trim every
+    /// take used to need by hand.
     func adoptStudioCapture() async {
         guard let capture = studioModel.lastCapture else { return }
 
         let asset = AVURLAsset(url: capture.url)
         let measured = (try? await asset.load(.duration).seconds) ?? capture.duration
         guard measured > 0 else { return }
+
+        // A take without sound while the microphone was allowed means listening got in the way of
+        // recording on this phone. Listening is switched off for good; the sound matters more.
+        let soundTracks = (try? await asset.loadTracks(withMediaType: .audio)) ?? []
+        if soundTracks.isEmpty, CameraSession.tapsAudio,
+           CameraSession.authorization(for: .audio) == .authorized {
+            CameraSession.disableAudioTap()
+        }
 
         let recording = Recording(
             relativePath: "media/\(capture.url.lastPathComponent)",
@@ -622,21 +635,51 @@ final class AppModel {
         )
         project.recordings.append(recording)
 
-        // A boundary per segment, plus the end of the file, so every segment gets a range.
-        let bounds = capture.segmentStarts + [measured]
-        for index in project.segments.indices {
-            guard index + 1 < bounds.count else { break }
-            let start = min(bounds[index], measured)
-            let end = min(bounds[index + 1], measured)
-            guard end > start else { continue }
+        busy = String(localized: "busy.aligning")
+        let heard = try? await dependencies.speech.transcribeFile(at: capture.url, localeIdentifier: project.localeIdentifier)
+        busy = nil
 
-            let take = Take(
+        var starts: [Double] = project.segments.indices.map { index in
+            capture.segmentStarts.indices.contains(index) ? capture.segmentStarts[index] : measured
+        }
+        var end = measured
+        if let heard, !heard.words.isEmpty {
+            let found = ScriptAligner.segmentStarts(
+                scripts: project.segments.map(\.script),
+                words: heard.words,
+                locale: project.locale
+            )
+            for index in starts.indices where found.indices.contains(index) {
+                if let start = found[index] { starts[index] = start }
+            }
+            if let first = heard.words.first, !starts.isEmpty {
+                starts[0] = max(0, min(starts[0], first.range.start.seconds) - 0.3)
+            }
+            if let last = heard.words.last {
+                end = min(measured, last.range.end.seconds + 0.6)
+            }
+        }
+        // Never backwards: a segment cannot begin before the one it follows.
+        for index in starts.indices.dropFirst() {
+            starts[index] = max(starts[index], starts[index - 1])
+        }
+
+        let edges = starts + [end]
+        for index in project.segments.indices {
+            let start = min(edges[index], end)
+            let stop = min(edges[index + 1], end)
+            // A segment the speaker never reached gets no take, rather than a sliver of silence.
+            guard stop - start > 0.25 else { continue }
+
+            var take = Take(
                 recordingID: recording.id,
-                sourceRange: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: end - start)),
+                sourceRange: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: stop - start)),
                 status: .ready
             )
+            take.transcript = heard?.slice(from: start, to: stop)
             project.segments[index].takes.append(take)
             project.segments[index].selectedTakeID = take.id
+            project.segments[index].refreshCaptions(maxWordsPerCue: project.captionStyle.maxWordsPerCue)
         }
 
         project.updatedAt = .now
@@ -765,7 +808,7 @@ final class AppModel {
 
     func startRetake(of segmentID: Segment.ID) {
         guard let segment = project.segment(id: segmentID) else { return }
-        retakeModel = RetakeModel(segment: segment)
+        retakeModel = RetakeModel(segment: segment, localeIdentifier: project.localeIdentifier)
         // Matched to the rest of the project, or the retake comes back a different shape from the
         // shot it is replacing.
         retakeModel?.format = project.format

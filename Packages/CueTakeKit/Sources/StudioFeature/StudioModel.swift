@@ -1,21 +1,24 @@
 import CaptureEngine
 import Domain
 import Observation
+import SpeechEngine
 import SwiftUI
 import Teleprompter
 
 /// Drives the studio: which segment and word the speaker is on, and the elapsed time.
 ///
-/// Until CaptureEngine and SpeechEngine are implemented, `startRecording` advances through the
-/// script on a timer at the design's 135ms per word. Swapping that stand-in for real speech
-/// tracking means feeding `ScriptPosition` values into `advance(to:)` instead — the screens,
-/// the teleprompter and the progress pips already read from here.
+/// The place in the script comes from `PrompterDriver` — the speaker's own voice while it can be
+/// heard, a real speaking pace when it cannot. It used to be a 135 ms timer, which ran through the
+/// script at three times the speed of speech and then stopped the recording on its own.
 @MainActor
 @Observable
 public final class StudioModel {
     public enum Phase: Sendable {
         case idle
         case recording
+        /// Stop was pressed and the file is being closed. The take does not exist until this ends,
+        /// and moving on before it did is how a recording used to go missing.
+        case finishing
         case complete
     }
 
@@ -27,6 +30,8 @@ public final class StudioModel {
     public var showsGrid = false
     /// Seconds left before recording starts, or nil when no countdown is running.
     public private(set) var countdown: Int?
+    /// Seconds since recording began.
+    public private(set) var elapsed: Double = 0
 
     public let teleprompter = TeleprompterModel()
     public private(set) var project: Project
@@ -84,28 +89,42 @@ public final class StudioModel {
     }
 
     private var task: Task<Void, Never>?
+    private var clock: Task<Void, Never>?
+    private let driver: PrompterDriver
 
-    public init(project: Project) {
+    public init(project: Project, speech: any SpeechTranscribing = SystemSpeechTranscriber()) {
         self.project = project
+        driver = PrompterDriver(
+            scripts: project.segments.map(\.script),
+            localeIdentifier: project.localeIdentifier,
+            speech: speech
+        )
         teleprompter.load(project.segments)
+        driver.onMove = { [weak self] position in self?.move(to: position) }
+        driver.isPaused = { [weak self] in self?.teleprompter.isPaused ?? false }
+        // The prompter's speed control, 0–100, shown as 0.6×–1.6×, now means what it says.
+        driver.speedMultiplier = { [weak self] in 0.6 + (self?.teleprompter.speed ?? 40) / 100 }
     }
+
+    /// How the text is moving right now: following the voice, waiting for it, or by pace.
+    public var prompterMode: PrompterMode {
+        switch driver.mode {
+        case .waiting: .listening
+        case .following: .followingVoice
+        case .pacing: .autoScroll
+        }
+    }
+
+    /// The last word of the script has been reached. The take keeps rolling until stop.
+    public var reachedEnd: Bool { driver.reachedEnd }
 
     public var currentSegment: Segment? {
         project.segments.indices.contains(segmentIndex) ? project.segments[segmentIndex] : project.segments.first
     }
 
-    /// Elapsed time, accumulated per finished segment plus progress through the current one.
     public var elapsedLabel: String {
-        var elapsed = 0.0
-        for (index, segment) in project.segments.enumerated() {
-            let words = max(1, ScriptText.words(in: segment.script).count)
-            if index < segmentIndex {
-                elapsed += segment.barWeight
-            } else if index == segmentIndex {
-                elapsed += segment.barWeight * (Double(wordIndex) / Double(words))
-            }
-        }
-        return "0:" + String(format: "%02d", Int(elapsed))
+        let whole = Int(elapsed)
+        return String(format: "%d:%02d", whole / 60, whole % 60)
     }
 
     /// Per-segment progress for the recording pips: 0, partial, or 100 percent.
@@ -123,7 +142,7 @@ public final class StudioModel {
     /// first seconds of every take are the reader reaching back from the shutter, which is exactly
     /// the footage they then have to trim.
     public func beginCountdown(from seconds: Int = 3, writingTo url: URL? = nil) {
-        guard task == nil, phase == .idle else { return }
+        guard task == nil, phase == .idle || phase == .complete else { return }
         teleprompter.isSettingsOpen = false
         pendingRecordingURL = url
         countdown = seconds
@@ -151,10 +170,9 @@ public final class StudioModel {
 
     /// Where the file is being written, and when each segment began inside it.
     ///
-    /// The boundaries are what turn one continuous file into per-segment takes: the prompter
-    /// already knows when the speaker moved on, so the split is recorded as it happens rather than
-    /// guessed afterwards. This is the same shape a real speech tracker will produce — it will just
-    /// be right about the timings instead of assuming a steady pace.
+    /// The boundaries are recorded as the voice moves from one segment to the next. They are a
+    /// first answer: once the file is closed its transcript is matched against the script, and
+    /// those times replace these wherever a segment could be found.
     private var pendingRecordingURL: URL?
     private var recordingURL: URL?
     private var recordingStart: Date?
@@ -164,10 +182,12 @@ public final class StudioModel {
     public private(set) var lastCapture: (url: URL, segmentStarts: [Double], duration: Double)?
 
     public func startRecording(writingTo url: URL? = nil) {
-        guard task == nil else { return }
+        guard phase == .idle || phase == .complete else { return }
         phase = .recording
         segmentIndex = 0
         wordIndex = 0
+        elapsed = 0
+        lastCapture = nil
         teleprompter.isSettingsOpen = false
         publishPosition()
 
@@ -178,49 +198,71 @@ public final class StudioModel {
         if let url {
             Task { [camera] in _ = await camera.startRecording(to: url) }
         }
+        driver.start(camera: url == nil ? nil : camera)
 
-        task = Task { [weak self] in
+        clock = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(135))
-                guard let self, phase == .recording else { return }
-                step()
-                if phase == .complete { return }
+                try? await Task.sleep(for: .milliseconds(250))
+                guard let self, phase == .recording, let recordingStart else { return }
+                elapsed = Date.now.timeIntervalSince(recordingStart)
             }
         }
     }
 
     public func stopRecording() {
-        task?.cancel()
-        task = nil
-        phase = .complete
+        guard phase == .recording else { return }
+        driver.stop(camera: camera)
+        clock?.cancel()
+        clock = nil
 
-        let elapsed = recordingStart.map { Date.now.timeIntervalSince($0) } ?? 0
+        let duration = recordingStart.map { Date.now.timeIntervalSince($0) } ?? elapsed
         let starts = segmentStarts
         let url = recordingURL
         recordingURL = nil
         recordingStart = nil
 
-        guard url != nil else { return }
+        guard url != nil else {
+            phase = .complete
+            return
+        }
+        phase = .finishing
         Task { [weak self] in
-            guard let finished = await self?.camera.stopRecording() else { return }
-            self?.lastCapture = (finished, starts, elapsed)
+            let finished = await self?.camera.stopRecording()
+            guard let self else { return }
+            if let finished {
+                lastCapture = (finished, starts, duration)
+            }
+            phase = .complete
         }
     }
 
-    /// Cancels the running timer without touching what is already on screen, the way the design
-    /// clears its intervals on every navigation.
+    /// Moves the place on by one word, for a tap on the prompter when the voice is not being heard.
+    public func nudgeForward() {
+        guard phase == .recording else { return }
+        driver.step()
+    }
+
+    /// Cancels anything ticking, the way the design clears its intervals on every navigation. A
+    /// take still rolling is stopped properly rather than left writing behind a screen.
     public func stopTimers() {
         task?.cancel()
         task = nil
         countdown = nil
+        if phase == .recording {
+            stopRecording()
+        }
     }
 
     public func reset() {
         task?.cancel()
         task = nil
+        driver.stop(camera: camera)
+        clock?.cancel()
+        clock = nil
         phase = .idle
         segmentIndex = 0
         wordIndex = 0
+        elapsed = 0
         countdown = nil
         lastCapture = nil
         recordingURL = nil
@@ -228,30 +270,26 @@ public final class StudioModel {
         segmentStarts = []
     }
 
-    /// Real speech tracking calls this instead of the timer.
+    /// A place in the script from outside, by segment identifier.
     public func advance(to position: ScriptPosition) {
         guard let index = project.segments.firstIndex(where: { $0.id == position.segmentID }) else { return }
-        segmentIndex = index
-        wordIndex = position.wordIndex
-        teleprompter.speakerDidReach(position)
+        move(to: .init(segment: index, word: position.wordIndex))
     }
 
-    private func step() {
-        guard let segment = currentSegment else { return }
-        let words = ScriptText.words(in: segment.script).count
-        if wordIndex + 1 >= words {
-            if segmentIndex + 1 >= project.segments.count {
-                stopRecording()
-                return
+    private func move(to position: ScriptFollower.Position) {
+        guard phase == .recording, project.segments.indices.contains(position.segment),
+              position.segment >= segmentIndex
+        else { return }
+        if position.segment > segmentIndex, let recordingStart {
+            // A beat before the word was recognised: results arrive a few hundred milliseconds
+            // after the sound, and a cut that lands on the word clips its first consonant.
+            let at = max(0, Date.now.timeIntervalSince(recordingStart) - 0.45)
+            for _ in segmentIndex..<position.segment {
+                segmentStarts.append(at)
             }
-            segmentIndex += 1
-            wordIndex = 0
-            if let recordingStart {
-                segmentStarts.append(Date.now.timeIntervalSince(recordingStart))
-            }
-        } else {
-            wordIndex += 1
         }
+        segmentIndex = position.segment
+        wordIndex = position.word
         publishPosition()
     }
 
@@ -259,4 +297,11 @@ public final class StudioModel {
         guard let segment = currentSegment else { return }
         teleprompter.speakerDidReach(ScriptPosition(segmentID: segment.id, wordIndex: wordIndex))
     }
+}
+
+/// How the prompter is moving, for the recording badge.
+public enum PrompterMode: Sendable {
+    case listening
+    case followingVoice
+    case autoScroll
 }

@@ -31,6 +31,9 @@ public struct ScriptFollower: Sendable {
     private let locale: Locale
     /// Index into `entries` of the last word matched, or -1 before the first.
     public private(set) var cursor = -1
+    /// What was heard last time. A recogniser re-sends the same guess many times while it firms
+    /// up, and matching it again would walk the place forward onto the next copy of the same word.
+    private var lastHeard: [String] = []
 
     /// How far ahead a match may land. Enough to skip a sentence, not enough to lose the page.
     public var lookAhead = 24
@@ -60,7 +63,23 @@ public struct ScriptFollower: Sendable {
     public mutating func jump(to position: Position) {
         if let index = entries.firstIndex(where: { $0.segment == position.segment && $0.word == position.word }) {
             cursor = index - 1
+            lastHeard = []
         }
+    }
+
+    /// Puts the place exactly on a word, as though it had just been heard.
+    public mutating func place(at position: Position) {
+        if let index = entries.firstIndex(where: { $0.segment == position.segment && $0.word == position.word }) {
+            cursor = index
+            lastHeard = []
+        }
+    }
+
+    /// Steps the place back, so a match can land a little behind it. Used when the prompter ran
+    /// ahead on its own before the voice was heard: the reader is somewhere behind the text.
+    public mutating func rewind(words: Int) {
+        cursor = max(-1, cursor - words)
+        lastHeard = []
     }
 
     /// Feeds the words heard most recently, oldest first. Returns the new place when it moved.
@@ -72,6 +91,8 @@ public struct ScriptFollower: Sendable {
             .suffix(tail)
         guard !heard.isEmpty, !entries.isEmpty else { return nil }
         let recent = Array(heard)
+        guard recent != lastHeard else { return nil }
+        lastHeard = recent
 
         let first = max(0, cursor + 1)
         let last = min(entries.count - 1, cursor + lookAhead)

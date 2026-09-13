@@ -20,11 +20,68 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         await SpeechTranscriber.supportedLocales.map(\.identifier)
     }
 
+    /// Live transcription of the microphone while recording, for following the script.
+    ///
+    /// Volatile results on: they arrive within a fraction of a second and are replaced as the
+    /// recogniser firms up, which is exactly what a prompter needs — an early guess at the word
+    /// being said now beats a certain answer about the word said a second ago. Words carry no
+    /// timings here; the file is transcribed properly once the take ends.
     public func transcribe(
         _ audio: AsyncStream<SpeechAudioFrame>,
         localeIdentifier: String
     ) -> AsyncThrowingStream<TranscriptUpdate, any Error> {
-        AsyncThrowingStream { $0.finish(throwing: SpeechError.notImplemented) }
+        AsyncThrowingStream { continuation in
+            let work = Task {
+                do {
+                    let requested = Locale(identifier: localeIdentifier)
+                    guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: requested) else {
+                        throw SpeechError.localeNotSupported(localeIdentifier)
+                    }
+                    let transcriber = SpeechTranscriber(
+                        locale: locale,
+                        transcriptionOptions: [],
+                        reportingOptions: [.volatileResults],
+                        attributeOptions: []
+                    )
+                    // The model for a language is downloaded the first time it is needed. Until it
+                    // is here nothing can be heard, and the prompter scrolls by itself meanwhile.
+                    if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+                        try await request.downloadAndInstall()
+                    }
+                    guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
+                        throw SpeechError.localeNotSupported(localeIdentifier)
+                    }
+
+                    let analyzer = SpeechAnalyzer(modules: [transcriber])
+                    let (inputs, feed) = AsyncStream<AnalyzerInput>.makeStream()
+                    try await analyzer.start(inputSequence: inputs)
+
+                    let reader = Task {
+                        for try await result in transcriber.results {
+                            let words = ScriptText.words(in: String(result.text.characters)).map {
+                                TimedWord(text: String($0), range: MediaTimeRange(start: .zero, duration: .zero))
+                            }
+                            continuation.yield(TranscriptUpdate(words: words, isFinal: result.isFinal))
+                        }
+                    }
+
+                    let converter = PCMConverter(target: format)
+                    for await frame in audio {
+                        if Task.isCancelled { break }
+                        if let converted = converter.convert(frame.buffer) {
+                            feed.yield(AnalyzerInput(buffer: converted))
+                        }
+                    }
+                    feed.finish()
+                    try await analyzer.finalizeAndFinishThroughEndOfInput()
+                    try await reader.value
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in work.cancel() }
+        }
     }
 
     public func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
@@ -40,6 +97,12 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
             // which is what makes editing by text possible at all.
             attributeOptions: [.audioTimeRange]
         )
+
+        // The language model arrives on first use. Without it the analyzer hears nothing and the
+        // transcript comes back empty, which reads as "no one spoke".
+        if let request = try? await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
+            try? await request.downloadAndInstall()
+        }
 
         let analyzer = SpeechAnalyzer(modules: [transcriber])
         let file = try AVAudioFile(forReading: url)
@@ -136,5 +199,46 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
             cursor += share
             return TimedWord(text: word, range: range)
         }
+    }
+}
+
+/// Converts microphone buffers to the format the analyzer wants.
+///
+/// The microphone speaks 48 kHz interleaved integers; the analyzer asks for something else, and a
+/// buffer in the wrong format is not an error it reports but silence it hears.
+final class PCMConverter {
+    private let target: AVAudioFormat
+    private var converter: AVAudioConverter?
+    private var source: AVAudioFormat?
+
+    init(target: AVAudioFormat) {
+        self.target = target
+    }
+
+    func convert(_ buffer: AVAudioPCMBuffer) -> AVAudioPCMBuffer? {
+        if buffer.format == target { return buffer }
+        if converter == nil || source != buffer.format {
+            converter = AVAudioConverter(from: buffer.format, to: target)
+            // No priming: the analyzer lines results up against the audio it was given, and
+            // priming frames shift everything by a few milliseconds each buffer.
+            converter?.primeMethod = .none
+            source = buffer.format
+        }
+        guard let converter else { return nil }
+
+        let ratio = target.sampleRate / buffer.format.sampleRate
+        let capacity = AVAudioFrameCount((Double(buffer.frameLength) * ratio).rounded(.up)) + 16
+        guard let output = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity) else { return nil }
+
+        // Read and written only inside the synchronous convert call below.
+        nonisolated(unsafe) var consumed = false
+        var failure: NSError?
+        let status = converter.convert(to: output, error: &failure) { _, inputStatus in
+            defer { consumed = true }
+            inputStatus.pointee = consumed ? .noDataNow : .haveData
+            return consumed ? nil : buffer
+        }
+        guard status != .error, failure == nil, output.frameLength > 0 else { return nil }
+        return output
     }
 }

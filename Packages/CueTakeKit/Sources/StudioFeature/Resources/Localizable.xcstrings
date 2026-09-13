@@ -175,6 +175,23 @@
         }
       }
     },
+    "retake.saving": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydediliyor…"
+          }
+        }
+      }
+    },
     "retake.shootAgain": {
       "extractionState": "manual",
       "localizations": {
@@ -307,6 +324,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "İptal için dokun"
+          }
+        }
+      }
+    },
+    "studio.end.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's the script. Stop when you're ready."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metin bitti. Hazır olunca durdur."
+          }
+        }
+      }
+    },
+    "studio.prompter.auto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AUTO-SCROLL · TAP TO NUDGE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OTOMATİK · İLERLETMEK İÇİN DOKUN"
+          }
+        }
+      }
+    },
+    "studio.prompter.following": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FOLLOWING YOUR VOICE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SESİNİ TAKİP EDİYOR"
+          }
+        }
+      }
+    },
+    "studio.prompter.listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LISTENING…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DİNLİYOR…"
+          }
+        }
+      }
+    },
+    "studio.saving": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving your take…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekimin kaydediliyor…"
           }
         }
       }

@@ -59,6 +59,13 @@ public struct StudioScreen: View {
                 // the two gestures never meet: pinch the picture to zoom, pinch the panel to size.
                 .contentShape(Rectangle())
                 .gesture(zoomGesture)
+                // When the text is scrolling by itself, a tap moves it on a word — the way to keep
+                // up with a reader who is faster than the pace without opening settings mid-take.
+                .onTapGesture {
+                    if model.phase == .recording, model.prompterMode == .autoScroll {
+                        model.nudgeForward()
+                    }
+                }
 
                 if model.showsGrid {
                     FramingGrid()
@@ -110,7 +117,7 @@ public struct StudioScreen: View {
 
     @ViewBuilder
     private var topBar: some View {
-        if model.phase == .recording {
+        if model.phase == .recording || model.phase == .finishing {
             HStack {
                 Spacer(minLength: 0)
                 recordingStatus
@@ -194,6 +201,35 @@ public struct StudioScreen: View {
             .overlay(Capsule().stroke(DS.Palette.accent(0.45), lineWidth: 1))
 
             progressPips
+
+            prompterBadge
+        }
+    }
+
+    /// Says how the text is moving, so a prompter that is waiting for a voice is not mistaken for
+    /// one that is stuck, and one scrolling by itself is not mistaken for one that is listening.
+    private var prompterBadge: some View {
+        let mode = model.prompterMode
+        return HStack(spacing: 6) {
+            Image(systemName: mode == .autoScroll ? "text.line.first.and.arrowtriangle.forward" : "waveform")
+                .font(.system(size: 10, weight: .semibold))
+                .symbolEffect(.variableColor.iterative, options: .repeating, isActive: mode != .autoScroll)
+            Text(Self.badgeText(for: mode))
+                .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
+        }
+        .foregroundStyle(mode == .followingVoice ? DS.Palette.lime : DS.Palette.ink(0.7))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .dsGlass(tint: DS.Palette.glass(0.5), in: Capsule())
+        .contentTransition(.opacity)
+        .animation(DS.Motion.settle, value: mode)
+    }
+
+    private static func badgeText(for mode: PrompterMode) -> String {
+        switch mode {
+        case .listening: String(localized: "studio.prompter.listening", bundle: .module)
+        case .followingVoice: String(localized: "studio.prompter.following", bundle: .module)
+        case .autoScroll: String(localized: "studio.prompter.auto", bundle: .module)
         }
     }
 
@@ -230,6 +266,40 @@ public struct StudioScreen: View {
                 EmptyView()
             } center: {
                 stopButton
+                    .overlay(alignment: .top) {
+                        if model.reachedEnd {
+                            // The script is done; the take is not. Said once, near the button
+                            // that ends it, instead of the recording ending by itself mid-sentence.
+                            Text("studio.end.hint", bundle: .module)
+                                .dsFont(.sans, .semibold, 13)
+                                .foregroundStyle(DS.Palette.ink)
+                                .fixedSize()
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 9)
+                                .dsGlass(tint: DS.Palette.glass(0.7), in: Capsule())
+                                .offset(y: -58)
+                                .transition(.scale(scale: 0.8, anchor: .bottom).combined(with: .opacity))
+                        }
+                    }
+                    .animation(DS.Motion.bloom, value: model.reachedEnd)
+            } trailing: {
+                EmptyView()
+            }
+        } else if model.phase == .finishing {
+            StudioControlCluster(isLandscape: model.isLandscape) {
+                EmptyView()
+            } center: {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .tint(DS.Palette.ink)
+                    Text("studio.saving", bundle: .module)
+                        .dsFont(.sans, .semibold, 14)
+                        .foregroundStyle(DS.Palette.ink)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .dsGlass(tint: DS.Palette.glass(0.7), in: Capsule())
+                .transition(.scale.combined(with: .opacity))
             } trailing: {
                 EmptyView()
             }
