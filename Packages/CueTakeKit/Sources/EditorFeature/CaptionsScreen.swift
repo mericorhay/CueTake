@@ -1,357 +1,744 @@
+import CoreGraphics
 import DesignSystem
 import Domain
 import SwiftUI
 
-/// Caption cue picker with live style and position preview over the video.
+/// The captions studio: pick a look, place it on the picture, and fix every line by hand.
+///
+/// It used to be a style picker over a grey plate showing the first nine cues, none of which could
+/// be touched — so a misheard word went all the way to the export. Now the preview is the clip's own
+/// frame with the real overlay drawn on it (the same one the editor uses, from the same numbers the
+/// export burns in), the caption is dragged to where it should sit, and the list below is every cue
+/// in the video: tap one to retype it, move its start and end, split it or join it to the next.
 public struct CaptionsScreen: View {
     public enum Style: String, CaseIterable, Sendable {
         case pop = "Pop"
         case clean = "Clean"
         case karaoke = "Karaoke"
+
+        var presetID: String { rawValue.lowercased() }
     }
 
-    public enum Position: String, CaseIterable, Sendable {
-        case top = "Top"
-        case middle = "Middle"
-        case bottom = "Bottom"
-    }
-
-    private let project: Project
-    /// Reports the choice upward: the screen owns the picking, the project owns the decision.
-    /// Without this the style is forgotten the moment the screen is left, which is exactly when
-    /// the user believes they have set it.
+    @Binding private var project: Project
+    /// Frames sampled from each take, for putting the caption over the picture it belongs to.
+    private let frames: [Take.ID: [CGImage]]
+    /// Reports the look upward: the app regroups cues when the number of words per line changes.
     private let onStyleChange: (String, CaptionPosition) -> Void
     private let onBack: () -> Void
     private let onExport: () -> Void
-    /// Runs speech transcription, which is where cues come from.
     private let onTranscribe: () -> Void
 
-    @State private var cueIndex = 0
-    @State private var style: Style = .pop
-    @State private var position: Position = .bottom
+    @State private var style: Style
+    @State private var positionY: Double
+    @State private var selectedCueID: CaptionCue.ID?
+    @State private var dragOriginY: Double?
+    @State private var previewHeight: CGFloat = 1
+    @State private var snapTick = 0
+    @State private var confirmsRebuild = false
+    @FocusState private var focusedCue: CaptionCue.ID?
+    @Namespace private var styleSelection
 
-    /// - Parameter style: the preset from Settings. `.off` has no screen of its own — the user
-    ///   asked for no captions, not for a blank editor — so it opens on Pop like a fresh choice.
+    /// Where a caption clicks into place while it is dragged: top, middle, lower third, bottom.
+    private static let snapPoints: [Double] = [0.12, 0.5, 0.72, 0.86]
+
+    private static let quickPositions: [(point: Double, symbol: String)] = [
+        (0.12, "arrow.up.to.line"),
+        (0.5, "align.vertical.center"),
+        (0.86, "arrow.down.to.line"),
+    ]
+
     public init(
-        project: Project,
-        style: CaptionPreference = .pop,
+        project: Binding<Project>,
+        frames: [Take.ID: [CGImage]] = [:],
         onStyleChange: @escaping (String, CaptionPosition) -> Void = { _, _ in },
         onBack: @escaping () -> Void,
         onExport: @escaping () -> Void,
         onTranscribe: @escaping () -> Void = {}
     ) {
-        self.project = project
+        self._project = project
+        self.frames = frames
         self.onStyleChange = onStyleChange
         self.onBack = onBack
         self.onExport = onExport
         self.onTranscribe = onTranscribe
-        _style = State(initialValue: Style(style))
+        let current = project.wrappedValue.captionStyle
+        _style = State(initialValue: Style.allCases.first { $0.presetID == current.presetID } ?? .pop)
+        _positionY = State(initialValue: current.position.y)
     }
 
-    /// The project's real cues, once there are any.
-    ///
-    /// Falls back to chunking the script only for a project that has been written but not shot —
-    /// there is nothing else to show, and an empty screen would suggest captions are broken rather
-    /// than simply not recorded yet.
-    private var cues: [String] {
-        let transcribed = project.segments.flatMap(\.captions).map(\.text)
-        guard transcribed.isEmpty else { return transcribed }
+    // MARK: - Data
 
-        return project.segments.flatMap { segment -> [String] in
-            let words = ScriptText.words(in: segment.script).map(String.init)
-            return stride(from: 0, to: words.count, by: 4).map { start in
-                words[start..<min(start + 4, words.count)].joined(separator: " ")
-            }
+    struct CueRow: Identifiable {
+        var id: CaptionCue.ID { cue.id }
+        let segmentIndex: Int
+        let cue: CaptionCue
+        /// Where it lands in the finished video, with its spoken words. Nil for a cue that sits
+        /// past the end of its trimmed clip and will not be shown.
+        let placed: PlacedCue?
+    }
+
+    private var rows: [CueRow] {
+        let placed = Dictionary(project.captionCues.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return project.segments.enumerated().flatMap { index, segment in
+            segment.captions.map { CueRow(segmentIndex: index, cue: $0, placed: placed[$0.id]) }
         }
     }
 
-    private var visibleCues: [String] { Array(cues.prefix(9)) }
-
-    /// True when the project has footage but nothing has listened to it yet.
-    ///
-    /// This is the state the screen used to show as a blank rectangle, which reads as "captions
-    /// are broken" rather than "there is nothing to caption yet". The difference between those two
-    /// is a sentence and a button.
-    private var needsTranscription: Bool {
-        project.segments.allSatisfy(\.captions.isEmpty)
-            && project.segments.contains { $0.selectedTake != nil }
+    private var selectedRow: CueRow? {
+        let all = rows
+        return all.first { $0.id == selectedCueID } ?? all.first
     }
 
-    /// Shown over the preview when there is nothing to preview.
-    private var transcribePrompt: some View {
-        VStack(spacing: 14) {
-            Text("captions.empty.title", bundle: .module)
-                .dsFont(.archivo, .bold, 20)
-                .foregroundStyle(DS.Palette.ink)
-                .multilineTextAlignment(.center)
-
-            Text("captions.empty.note", bundle: .module)
-                .dsFont(.sans, .regular, 13, lineHeight: 1.45)
-                .foregroundStyle(DS.Palette.ink(0.5))
-                .multilineTextAlignment(.center)
-
-            Button {
-                onTranscribe()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "waveform.and.person.filled")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("captions.empty.action", bundle: .module)
-                        .dsFont(.sans, .semibold, 15)
-                }
-                .foregroundStyle(DS.Palette.inkInverse)
-                .padding(.horizontal, 22)
-                .padding(.vertical, 15)
-                .background(
-                    Capsule().fill(DS.Palette.accent)
-                )
-            }
-            .buttonStyle(.dsPress(radius: 30))
-        }
-        .padding(26)
-        .frame(maxWidth: 320)
-        .dsGlass(
-            tint: DS.Palette.glassSheet(0.93),
-            in: RoundedRectangle(cornerRadius: DS.Radius.sheet, style: .continuous),
-            border: DS.Palette.hairline(0.12)
-        )
-        .dsEnter(.rise(duration: 0.4))
+    private var hasFootage: Bool {
+        project.segments.contains { $0.selectedTake != nil }
     }
+
+    /// The look being previewed. Built locally so a drag moves the caption at sixty frames a second
+    /// rather than at the pace of a project write.
+    private var previewStyle: CaptionStyle {
+        CaptionStyle.preset(style.presetID, position: CaptionPosition(x: 0.5, y: positionY))
+    }
+
+    private var aspect: CGFloat {
+        let size = project.format.renderSize
+        return CGFloat(size.width) / CGFloat(max(1, size.height))
+    }
+
+    // MARK: - Body
 
     public var body: some View {
-        ZStack {
-            CaptionsBackdrop()
+        VStack(spacing: 0) {
+            header
+                .padding(.horizontal, 18)
 
-            VStack(spacing: 0) {
-                header
+            preview
+                .frame(maxHeight: focusedCue == nil ? 330 : 150)
+                .padding(.top, 12)
+                .padding(.horizontal, 18)
 
-                captionPreview
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, 24)
-                    .overlay {
-                        if needsTranscription { transcribePrompt }
-                    }
-
-                controls
+            if focusedCue == nil {
+                looks
+                    .padding(.top, 14)
+                    .padding(.horizontal, 18)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            .padding(.top, 58)
-            .padding(.bottom, 34)
-            .dsScreenLayout(scrolls: true)
+
+            cueList
+                .padding(.top, 12)
+        }
+        .padding(.top, 58)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .dsScreenLayout(scrolls: true)
+        .background(DS.Palette.screen)
+        .animation(DS.Motion.settle, value: focusedCue)
+        .sensoryFeedback(.selection, trigger: snapTick)
+        .confirmationDialog(
+            String(localized: "captions.rebuild", bundle: .module),
+            isPresented: $confirmsRebuild,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "captions.rebuild", bundle: .module), role: .destructive) {
+                rebuildFromSpeech()
+            }
+        } message: {
+            Text("captions.rebuild.note", bundle: .module)
         }
         .dsEnter(.screen())
     }
 
     private var header: some View {
         HStack(spacing: 10) {
-            DSBackButton(size: 34, fontSize: 15, style: .glass, action: onBack)
+            DSBackButton(size: 34, fontSize: 15, action: onBack)
             DSKicker(String(localized: "captions.kicker", bundle: .module), color: DS.Palette.ink(0.55))
             Spacer(minLength: 0)
-            Button(action: onExport) {
-                Text("captions.export", bundle: .module)
-                    .dsFont(.sans, .semibold, 13)
-                    .foregroundStyle(DS.Palette.inkInverse)
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(DS.Palette.accent)
-                    )
+
+            if focusedCue != nil {
+                Button {
+                    focusedCue = nil
+                } label: {
+                    Text("captions.done", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.ink)
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 8)
+                        .dsGlass(tint: DS.Palette.glass(0.6), in: Capsule())
+                }
+                .buttonStyle(.dsPress)
+                .transition(.scale.combined(with: .opacity))
+            } else {
+                Menu {
+                    Button {
+                        onTranscribe()
+                    } label: {
+                        Label(String(localized: "captions.listen", bundle: .module), systemImage: "waveform.and.person.filled")
+                    }
+                    .disabled(!hasFootage)
+
+                    Button(role: .destructive) {
+                        confirmsRebuild = true
+                    } label: {
+                        Label(String(localized: "captions.rebuild", bundle: .module), systemImage: "arrow.counterclockwise")
+                    }
+                    .disabled(rows.isEmpty)
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(DS.Palette.ink)
+                        .frame(width: 34, height: 34)
+                        .dsGlass(tint: DS.Palette.glass(0.6), in: Circle())
+                }
+
+                Button(action: onExport) {
+                    Text("captions.export", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 15)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(DS.Palette.accent))
+                }
+                .buttonStyle(.dsPress)
             }
-            .buttonStyle(.dsPress)
         }
-        .padding(.horizontal, 18)
     }
 
-    private var captionPreview: some View {
-        VStack {
-            if position != .top { Spacer(minLength: 0) }
+    // MARK: - Preview
 
-            cueText
-                .containerRelativeFrame(.horizontal) { width, _ in width * 0.88 }
+    private var preview: some View {
+        ZStack {
+            backdrop
 
-            if position != .bottom { Spacer(minLength: 0) }
+            if let row = selectedRow {
+                let cue = row.placed ?? PlacedCue(id: row.cue.id, text: row.cue.text, range: row.cue.range)
+                TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
+                    CaptionOverlay(
+                        cue: cue,
+                        style: previewStyle,
+                        locale: project.locale,
+                        time: Self.loopTime(for: cue, at: timeline.date)
+                    )
+                }
+                .id("\(cue.id)-\(cue.text)-\(style.rawValue)")
+                .transition(CaptionOverlay.transition(for: previewStyle))
+            }
+
+            if dragOriginY != nil {
+                guides
+            }
         }
-        .animation(DS.Easing.ease(0.3), value: position)
-        .animation(DS.Easing.ease(0.3), value: style)
+        .aspectRatio(aspect, contentMode: .fit)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.height
+        } action: { height in
+            previewHeight = max(1, height)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
+                .stroke(DS.Palette.hairline(dragOriginY == nil ? 0.08 : 0.3), lineWidth: 1)
+        }
+        .overlay {
+            if rows.isEmpty { emptyState }
+        }
+        .contentShape(Rectangle())
+        .gesture(positionDrag, including: rows.isEmpty ? .subviews : .all)
+        .animation(DS.Motion.settle, value: selectedCueID)
+        .animation(DS.Motion.snap, value: style)
     }
 
     @ViewBuilder
-    private var cueText: some View {
-        let text = visibleCues.indices.contains(cueIndex) ? visibleCues[cueIndex] : (visibleCues.first ?? "")
-
-        switch style {
-        case .pop:
-            // 30px/1.15 with text-shadow: 0 4px 24px rgba(0,0,0,.9)
-            TightText(
-                text,
-                .archivo,
-                .extrabold,
-                30,
-                lineHeight: 1.15,
-                letterSpacing: -0.02,
-                alignment: .center,
-                shadow: .init(color: .black.opacity(0.9), offset: CGSize(width: 0, height: 4), blur: 24)
-            )
-        case .clean:
-            Text(text)
-                .dsFont(.sans, .medium, 20, lineHeight: 1.4)
-                .foregroundStyle(DS.Palette.ink)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .dsGlass(
-                    tint: DS.Palette.inkInverse(0.55),
-                    in: RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous),
-                    border: nil
-                )
-        case .karaoke:
-            // 26px/1.2 with text-shadow: 0 3px 18px rgba(0,0,0,.85)
-            TightText(
-                text,
-                .archivo,
-                .bold,
-                26,
-                lineHeight: 1.2,
-                color: DS.Palette.lime,
-                alignment: .center,
-                shadow: .init(color: .black.opacity(0.85), offset: CGSize(width: 0, height: 3), blur: 18)
+    private var backdrop: some View {
+        if let image = frame(for: selectedRow) {
+            Image(decorative: image, scale: 1)
+                .resizable()
+                .scaledToFill()
+                .overlay(Color.black.opacity(0.12))
+                .transition(.opacity)
+                .id(ObjectIdentifier(image))
+        } else {
+            LinearGradient(
+                colors: [DS.Palette.camera, Color(hex: 0x1C1C24), DS.Palette.camera],
+                startPoint: .top,
+                endPoint: .bottom
             )
         }
+    }
+
+    /// Dashed lines at the places a caption usually belongs, shown only while one is being moved.
+    private var guides: some View {
+        GeometryReader { proxy in
+            ForEach(Self.snapPoints, id: \.self) { point in
+                let isOn = abs(positionY - point) < 0.001
+                Path { path in
+                    let y = proxy.size.height * point
+                    path.move(to: CGPoint(x: 12, y: y))
+                    path.addLine(to: CGPoint(x: proxy.size.width - 12, y: y))
+                }
+                .stroke(
+                    isOn ? DS.Palette.lime : DS.Palette.hairline(0.28),
+                    style: StrokeStyle(lineWidth: isOn ? 1.5 : 1, dash: [5, 5])
+                )
+            }
+        }
+        .allowsHitTesting(false)
+        .transition(.opacity)
+    }
+
+    /// Drag anywhere on the picture to move the caption up or down. It clicks into the usual
+    /// places, with a tick you can feel, and anywhere between is allowed too.
+    private var positionDrag: some Gesture {
+        DragGesture(minimumDistance: 3)
+            .onChanged { value in
+                if dragOriginY == nil {
+                    withAnimation(DS.Easing.ease(0.2)) { dragOriginY = positionY }
+                    focusedCue = nil
+                }
+                let raw = (dragOriginY ?? positionY) + value.translation.height / previewHeight
+                var next = min(max(raw, 0.08), 0.92)
+                if let snap = Self.snapPoints.first(where: { abs($0 - next) < 0.025 }) {
+                    next = snap
+                    if abs(positionY - snap) > 0.001 { snapTick += 1 }
+                }
+                positionY = next
+            }
+            .onEnded { _ in
+                withAnimation(DS.Easing.ease(0.25)) { dragOriginY = nil }
+                report()
+            }
+    }
+
+    /// A clock that plays the cue over and over with a short rest, so karaoke visibly fills and
+    /// every look can be judged moving rather than frozen.
+    static func loopTime(for cue: PlacedCue, at date: Date) -> Double {
+        let length = max(0.3, cue.range.duration.seconds)
+        let cycle = length + 0.7
+        let phase = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: cycle)
+        return cue.range.start.seconds + min(phase, length - 0.01)
+    }
+
+    private func frame(for row: CueRow?) -> CGImage? {
+        guard let row, project.segments.indices.contains(row.segmentIndex),
+              let take = project.segments[row.segmentIndex].selectedTake,
+              let images = frames[take.id], !images.isEmpty
+        else { return nil }
+        let length = max(0.01, take.sourceRange.duration.seconds)
+        let middle = row.cue.range.start.seconds + row.cue.range.duration.seconds / 2
+        let index = Int(middle / length * Double(images.count))
+        return images[min(max(0, index), images.count - 1)]
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: hasFootage ? "captions.bubble" : "film.stack")
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(DS.Palette.ink(0.7))
+                .symbolEffect(.pulse, options: .repeating)
+
+            Text(hasFootage ? "captions.empty.title" : "captions.noFootage.title", bundle: .module)
+                .dsFont(.archivo, .bold, 18)
+                .foregroundStyle(DS.Palette.ink)
+                .multilineTextAlignment(.center)
+
+            Text(hasFootage ? "captions.empty.note" : "captions.noFootage.note", bundle: .module)
+                .dsFont(.sans, .regular, 12, lineHeight: 1.45)
+                .foregroundStyle(DS.Palette.ink(0.55))
+                .multilineTextAlignment(.center)
+
+            if hasFootage {
+                Button(action: onTranscribe) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "waveform.and.person.filled")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("captions.empty.action", bundle: .module)
+                            .dsFont(.sans, .semibold, 14)
+                    }
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Capsule().fill(DS.Palette.accent))
+                }
+                .buttonStyle(.dsPress(radius: 30))
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: 290)
+        .dsGlass(
+            tint: DS.Palette.glassSheet(0.9),
+            in: RoundedRectangle(cornerRadius: DS.Radius.sheet, style: .continuous),
+            border: DS.Palette.hairline(0.12)
+        )
+        .dsEnter(.rise(duration: 0.4))
+    }
+
+    // MARK: - Looks
+
+    private var looks: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                ForEach(Style.allCases, id: \.self) { option in
+                    lookCard(option)
+                }
+            }
+
+            HStack(spacing: 8) {
+                DSKicker(String(localized: "captions.position", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                Text("captions.drag.hint", bundle: .module)
+                    .dsFont(.sans, .regular, 11)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
+                ForEach(Self.quickPositions, id: \.point) { item in
+                    quickPositionButton(item.point, symbol: item.symbol)
+                }
+            }
+        }
+    }
+
+    private func quickPositionButton(_ point: Double, symbol: String) -> some View {
+        let isOn = abs(positionY - point) < 0.001
+        return Button {
+            withAnimation(DS.Motion.snap) { positionY = point }
+            snapTick += 1
+            report()
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                .frame(width: 30, height: 30)
+                .background(Circle().fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPressIcon)
+    }
+
+    /// Each look shown in its own type and colour, so choosing is recognising rather than reading.
+    private func lookCard(_ option: Style) -> some View {
+        let isOn = style == option
+        let preset = CaptionStyle.preset(option.presetID)
+        let font = preset.fontName.map { Font.custom($0, fixedSize: 17) } ?? .system(size: 17, weight: .heavy)
+
+        return Button {
+            guard style != option else { return }
+            withAnimation(DS.Motion.snap) { style = option }
+            snapTick += 1
+            report()
+        } label: {
+            VStack(spacing: 7) {
+                lookSample(option, font: font)
+                    .frame(height: 26)
+
+                Text(option.label)
+                    .dsFont(.sans, .medium, 11)
+                    .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.5))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 11)
+            .background {
+                if isOn {
+                    RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                        .fill(DS.Palette.accent(0.14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                                .stroke(DS.Palette.accent(0.7), lineWidth: 1.2)
+                        )
+                        .matchedGeometryEffect(id: "look", in: styleSelection)
+                } else {
+                    RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
+                        .fill(DS.Palette.hairline(0.05))
+                }
+            }
+            .scaleEffect(isOn ? 1 : 0.97)
+        }
+        .buttonStyle(.dsPress(radius: DS.Radius.m))
+    }
+
+    @ViewBuilder
+    private func lookSample(_ option: Style, font: Font) -> some View {
+        switch option {
+        case .pop:
+            Text(verbatim: "WOW")
+                .font(font)
+                .foregroundStyle(.white)
+                .shadow(color: .black, radius: 0.5, x: 1, y: 1)
+                .shadow(color: .black, radius: 0.5, x: -1, y: -1)
+        case .clean:
+            Text(verbatim: "Aa")
+                .font(font)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.62)))
+        case .karaoke:
+            (Text(verbatim: "la ").foregroundStyle(DS.Palette.lime) + Text(verbatim: "la").foregroundStyle(.white))
+                .font(font)
+        }
+    }
+
+    // MARK: - Cue list
+
+    private var cueList: some View {
+        let all = rows
+        let selected = selectedRow?.id
+        let edited = all.filter(\.cue.isUserEdited).count
+
+        return VStack(alignment: .leading, spacing: 8) {
+            if !all.isEmpty {
+                HStack {
+                    DSKicker(String(localized: "captions.count \(all.count)", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                    Spacer(minLength: 0)
+                    if edited > 0 {
+                        Text("captions.editedCount \(edited)", bundle: .module)
+                            .dsFont(.mono, .medium, 9)
+                            .foregroundStyle(DS.Palette.lime.opacity(0.8))
+                            .contentTransition(.numericText())
+                    }
+                }
+                .padding(.horizontal, 22)
+            }
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 6) {
+                        ForEach(all) { row in
+                            cueRow(row, isSelected: row.id == selected)
+                                .id(row.id)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 40)
+                    .animation(DS.Motion.settle, value: all.map(\.id))
+                }
+                .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: selectedCueID) { _, id in
+                    guard let id else { return }
+                    withAnimation(DS.Motion.settle) { proxy.scrollTo(id, anchor: .center) }
+                }
+            }
+        }
+    }
+
+    private func cueRow(_ row: CueRow, isSelected: Bool) -> some View {
+        let start = row.placed?.range.start.seconds
+        let length = row.placed?.range.duration.seconds ?? row.cue.range.duration.seconds
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(verbatim: start.map(Self.timecode) ?? "—")
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(isSelected ? DS.Palette.accent : DS.Palette.ink(0.4))
+                    .contentTransition(.numericText())
+
+                if row.cue.isUserEdited {
+                    Text("captions.edited", bundle: .module)
+                        .dsFont(.mono, .medium, 8)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(DS.Palette.lime))
+                        .transition(.scale.combined(with: .opacity))
+                }
+
+                Spacer(minLength: 0)
+
+                Text(verbatim: String(format: "%.1fs", length))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.3))
+                    .contentTransition(.numericText())
+            }
+
+            if isSelected {
+                TextField(
+                    String(localized: "captions.placeholder", bundle: .module),
+                    text: textBinding(for: row),
+                    axis: .vertical
+                )
+                .dsFont(.sans, .semibold, 16)
+                .foregroundStyle(DS.Palette.ink)
+                .tint(DS.Palette.accent)
+                .focused($focusedCue, equals: row.id)
+                .submitLabel(.done)
+
+                timing(row)
+                actions(row)
+            } else {
+                Text(row.cue.text)
+                    .dsFont(.sans, .medium, 15)
+                    .foregroundStyle(DS.Palette.ink(0.78))
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(isSelected ? DS.Palette.surfaceActive : DS.Palette.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(isSelected ? DS.Palette.accent(0.45) : DS.Palette.hairline(0.06), lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .onTapGesture {
+            guard !isSelected else { return }
+            withAnimation(DS.Motion.settle) { selectedCueID = row.id }
+        }
+        .opacity(row.placed == nil ? 0.5 : 1)
+    }
+
+    private func timing(_ row: CueRow) -> some View {
+        HStack(spacing: 8) {
+            stepper(String(localized: "captions.edit.start", bundle: .module), value: row.cue.range.start.seconds) { delta in
+                edit(row) { $0.nudgeCaption(row.id, start: delta) }
+            }
+            stepper(String(localized: "captions.edit.end", bundle: .module), value: row.cue.range.end.seconds) { delta in
+                edit(row) { $0.nudgeCaption(row.id, end: delta) }
+            }
+        }
+    }
+
+    /// Minus and plus a tenth of a second, repeating while held. Seconds within the clip, which is
+    /// what the numbers mean to someone lining a word up with a mouth.
+    private func stepper(_ title: String, value: Double, onStep: @escaping (Double) -> Void) -> some View {
+        HStack(spacing: 0) {
+            stepButton("minus") { onStep(-0.1) }
+
+            VStack(spacing: 1) {
+                Text(title)
+                    .dsFont(.mono, .medium, 8)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+                Text(verbatim: String(format: "%.1f s", value))
+                    .dsFont(.mono, .medium, 13)
+                    .foregroundStyle(DS.Palette.ink)
+                    .contentTransition(.numericText(value: value))
+                    .animation(DS.Motion.snap, value: value)
+            }
+            .frame(maxWidth: .infinity)
+
+            stepButton("plus") { onStep(0.1) }
+        }
+        .padding(4)
+        .background(Capsule().fill(DS.Palette.hairline(0.06)))
+    }
+
+    private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(DS.Palette.ink)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(DS.Palette.hairline(0.08)))
+        }
+        .buttonRepeatBehavior(.enabled)
+        .buttonStyle(.dsPressIcon)
+    }
+
+    private func actions(_ row: CueRow) -> some View {
+        let segment = project.segments[row.segmentIndex]
+        return HStack(spacing: 6) {
+            actionButton("captions.edit.split", symbol: "scissors", enabled: segment.canSplitCaption(row.id)) {
+                edit(row) { $0.splitCaption(row.id) }
+            }
+            actionButton("captions.edit.merge", symbol: "arrow.trianglehead.merge", enabled: segment.canMergeCaption(row.id)) {
+                edit(row) { $0.mergeCaptionWithNext(row.id) }
+            }
+            Spacer(minLength: 0)
+            actionButton("captions.edit.delete", symbol: "trash", enabled: true, destructive: true) {
+                delete(row)
+            }
+        }
+    }
+
+    private func actionButton(
+        _ key: String.LocalizationValue,
+        symbol: String,
+        enabled: Bool,
+        destructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            withAnimation(DS.Motion.settle) { action() }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(String(localized: key, bundle: .module))
+                    .dsFont(.sans, .medium, 12)
+            }
+            .foregroundStyle(destructive ? DS.Palette.accent : DS.Palette.ink(0.85))
+            .padding(.horizontal, 11)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(destructive ? DS.Palette.accent(0.12) : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 20))
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
+    }
+
+    // MARK: - Editing
+
+    private func textBinding(for row: CueRow) -> Binding<String> {
+        Binding(
+            get: {
+                guard project.segments.indices.contains(row.segmentIndex) else { return "" }
+                return project.segments[row.segmentIndex].captions.first { $0.id == row.id }?.text ?? ""
+            },
+            set: { text in
+                guard project.segments.indices.contains(row.segmentIndex) else { return }
+                // Return on a vertical field inserts a newline; on a caption it means "done".
+                if text.contains("\n") {
+                    focusedCue = nil
+                }
+                let clean = text.replacingOccurrences(of: "\n", with: " ")
+                    .trimmingCharacters(in: .newlines)
+                project.segments[row.segmentIndex].setCaptionText(row.id, to: clean)
+                project.updatedAt = .now
+            }
+        )
+    }
+
+    private func edit(_ row: CueRow, _ change: (inout Segment) -> Void) {
+        guard project.segments.indices.contains(row.segmentIndex) else { return }
+        change(&project.segments[row.segmentIndex])
+        project.updatedAt = .now
+    }
+
+    /// Removes a cue and moves the selection to its neighbour, so a run of bad lines can be
+    /// cleared with repeated taps in one place.
+    private func delete(_ row: CueRow) {
+        let all = rows
+        let index = all.firstIndex { $0.id == row.id } ?? 0
+        let next = all.indices.contains(index + 1) ? all[index + 1].id : (index > 0 ? all[index - 1].id : nil)
+        focusedCue = nil
+        edit(row) { $0.removeCaption(row.id) }
+        selectedCueID = next
+    }
+
+    private func rebuildFromSpeech() {
+        let maxWords = CaptionStyle.preset(style.presetID).maxWordsPerCue
+        for index in project.segments.indices {
+            project.segments[index].refreshCaptions(maxWordsPerCue: maxWords)
+        }
+        project.updatedAt = .now
+        selectedCueID = nil
     }
 
     private func report() {
-        onStyleChange(style.rawValue.lowercased(), position.captionPosition)
+        onStyleChange(style.presetID, CaptionPosition(x: 0.5, y: positionY))
     }
 
-    private var controls: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ScrollView(.horizontal) {
-                HStack(spacing: 5) {
-                    ForEach(Array(visibleCues.enumerated()), id: \.offset) { index, cue in
-                        let isOn = cueIndex == index
-                        Button {
-                            cueIndex = index
-                        } label: {
-                            Text(cue.split(separator: " ").prefix(2).joined(separator: " "))
-                                .dsFont(.sans, .medium, 11)
-                                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.6))
-                                .lineLimit(1)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous)
-                                        .fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07))
-                                )
-                        }
-                        .buttonStyle(.dsPress)
-                    }
-                }
-            }
-            .scrollIndicators(.hidden)
-            .padding(.bottom, 14)
-
-            Text("captions.style", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.14)
-                .foregroundStyle(DS.Palette.ink(0.35))
-                .padding(.bottom, 8)
-
-            HStack(spacing: 7) {
-                ForEach(Style.allCases, id: \.self) { option in
-                    DSPill(option.label, isOn: style == option) {
-                        style = option
-                        report()
-                    }
-                }
-            }
-            .padding(.bottom, 14)
-
-            HStack(spacing: 7) {
-                ForEach(Position.allCases, id: \.self) { option in
-                    DSPill(option.label, isOn: position == option) {
-                        position = option
-                        report()
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-        .background {
-            UnevenRoundedRectangle(
-                topLeadingRadius: DS.Radius.sheet,
-                topTrailingRadius: DS.Radius.sheet,
-                style: .continuous
-            )
-            .fill(.ultraThinMaterial)
-            .overlay(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: DS.Radius.sheet,
-                    topTrailingRadius: DS.Radius.sheet,
-                    style: .continuous
-                )
-                .fill(DS.Palette.glassSheet(0.9))
-            )
-        }
-        .overlay(alignment: .top) {
-            Rectangle().fill(DS.Palette.hairline(0.1)).frame(height: 1)
-        }
-    }
-}
-
-/// Same plate the studio uses, so captions are judged against the footage.
-private struct CaptionsBackdrop: View {
-    var body: some View {
-        DS.Palette.camera
-            .overlay {
-                LinearGradient(
-                    stops: [
-                        .init(color: Color(hex: 0x0B0B0D, alpha: 0.55), location: 0),
-                        .init(color: Color(hex: 0x0B0B0D, alpha: 0.15), location: 0.35),
-                        .init(color: Color(hex: 0x0B0B0D, alpha: 0.82), location: 1),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-            .ignoresSafeArea()
+    static func timecode(_ seconds: Double) -> String {
+        let whole = Int(seconds)
+        let tenth = Int((seconds - Double(whole)) * 10)
+        return String(format: "%d:%02d.%d", whole / 60, whole % 60, tenth)
     }
 }
 
 extension CaptionsScreen.Style {
-    init(_ preference: CaptionPreference) {
-        switch preference {
-        case .off, .pop: self = .pop
-        case .clean: self = .clean
-        case .karaoke: self = .karaoke
-        }
-    }
-
     var label: String {
         switch self {
         case .pop: String(localized: "captions.style.pop", bundle: .module)
         case .clean: String(localized: "captions.style.clean", bundle: .module)
         case .karaoke: String(localized: "captions.style.karaoke", bundle: .module)
-        }
-    }
-}
-
-extension CaptionsScreen.Position {
-    /// Normalised placement in the frame. Centred horizontally in every case; only the height
-    /// changes, because a caption that drifts sideways reads as a mistake rather than a choice.
-    var captionPosition: CaptionPosition {
-        switch self {
-        case .top: CaptionPosition(x: 0.5, y: 0.12)
-        case .middle: CaptionPosition(x: 0.5, y: 0.5)
-        case .bottom: CaptionPosition(x: 0.5, y: 0.86)
-        }
-    }
-
-    var label: String {
-        switch self {
-        case .top: String(localized: "captions.position.top", bundle: .module)
-        case .middle: String(localized: "captions.position.middle", bundle: .module)
-        case .bottom: String(localized: "captions.position.bottom", bundle: .module)
         }
     }
 }

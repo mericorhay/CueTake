@@ -198,11 +198,9 @@ struct RootView: View {
 
         case .captions:
             CaptionsScreen(
-                project: model.project,
-                // The project's own look first; the Settings default only for a project that has
-                // never chosen one.
-                style: CaptionPreference(rawValue: model.project.captionStyle.presetID)
-                    ?? model.settingsModel.settings.captionPreset,
+                // Bound, not copied: every retyped word and nudged timing is the project's.
+                project: $model.project,
+                frames: model.editorModel.thumbnails,
                 onStyleChange: { model.applyCaptionStyle(presetID: $0, position: $1) },
                 onBack: { model.openEditor() },
                 onExport: { model.go(to: .export) },
