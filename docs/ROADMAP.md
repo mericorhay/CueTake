@@ -10,7 +10,7 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 - [ ] Privacy policy URL and App Store privacy labels (the assistant sends messages and project
       context to our server). Likely also why external TestFlight review said "missing information".
 - [x] App icon and in-app mark from the Gemini artwork (build 21). A vector version would still be nicer for print and the App Store page.
-- [ ] First launch: new users are dropped into `Project.sample`. Replace with an empty state that
+- [x] First launch: new users are dropped into `Project.sample`. Replace with an empty state that
       says "import your footage".
 - [ ] On-device test pass: Liquid Glass, animations, 8K export, reverse memory, filler-word cutting.
 - [ ] Export crash (reported 2026-09-13). Fixed in build 20, awaiting on-device confirmation:
@@ -20,7 +20,7 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 ## Looks like it works, does not
 
-- [ ] Caption styles: Pop / Clean / Karaoke only store an id; preview and export draw them all the
+- [x] Caption styles: Pop / Clean / Karaoke only store an id; preview and export draw them all the
       same. Karaoke word highlight is not implemented although word timings exist.
 - [ ] Teleprompter does not follow speech: Studio and Retake still advance on a 130–135 ms timer.
 - [ ] Prompt screen options (length, tone, format) are static.
@@ -30,7 +30,7 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 ## Behind competitors
 
-- [ ] Thumbnails on timeline clips (coloured boxes today).
+- [x] Thumbnails on timeline clips (coloured boxes today).
 - [ ] Assistant can talk but not act. "Edit like you talk" / AI timeline agent: let it run editor
       tools and write workflows (tool use through the proxy).
 - [ ] Remember My Style.

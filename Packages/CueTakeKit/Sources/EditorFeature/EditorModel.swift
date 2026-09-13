@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreGraphics
 import Domain
 import MediaEngine
 import Observation
@@ -31,6 +32,9 @@ public final class EditorModel {
     /// Drawn peaks, per clip. Computed once per file and kept, because reading a three minute song
     /// to draw it again on every layout pass is how a timeline starts to stutter.
     public private(set) var waveforms: [AudioClip.ID: [Float]] = [:]
+    /// Frames for the timeline, per take. Keyed by take rather than segment: a split makes new
+    /// segments over the same take range, and a take is what the frames were read from.
+    public private(set) var thumbnails: [Take.ID: [CGImage]] = [:]
 
     /// How wide one second is drawn. This is what makes the timeline an editing surface rather
     /// than a diagram: laid out proportionally, a 0.2s trim on a 30s video is two pixels wide and
@@ -560,6 +564,34 @@ extension EditorModel {
             }
         }
         return ends.count
+    }
+
+    /// Reads frames for any take that does not have them yet.
+    ///
+    /// One frame for every two seconds of footage, between one and six: enough to recognise the
+    /// shot at any zoom, few enough that a thirty clip import is not thirty decodes a second.
+    public func loadThumbnails(mediaDirectory: URL) async {
+        let sampler = ThumbnailSampler()
+        for segment in project.segments {
+            guard let take = segment.selectedTake, thumbnails[take.id] == nil,
+                  let recording = project.recordings.first(where: { $0.id == take.recordingID })
+            else { continue }
+            let url = mediaDirectory.appending(
+                path: (recording.relativePath as NSString).lastPathComponent,
+                directoryHint: .notDirectory
+            )
+            let seconds = take.sourceRange.duration.seconds
+            let frames = await sampler.frames(
+                of: url,
+                from: take.sourceRange.start.seconds,
+                duration: seconds,
+                count: min(6, max(1, Int(seconds / 2)))
+            )
+            guard !frames.isEmpty else { continue }
+            withAnimation(.easeOut(duration: 0.3)) {
+                thumbnails[take.id] = frames
+            }
+        }
     }
 
     /// How long the timeline is once the audio is taken into account.

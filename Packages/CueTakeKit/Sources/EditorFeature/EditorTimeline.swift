@@ -119,19 +119,52 @@ struct EditorTimeline: View {
         let isSelected = model.inspectedSegment == segment.id
         let isLifted = lift?.index == index
         let isActive = model.isActive(at: index)
+        let frames = segment.selectedTakeID.flatMap { model.thumbnails[$0] } ?? []
+        let tint = DS.Palette.segment(at: segment.role.paletteIndex)
+        // Over pictures the label is light with a shadow; over a flat role colour it stays dark.
+        let labelInk = frames.isEmpty ? DS.Palette.inkInverse : DS.Palette.ink
 
         return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(DS.Palette.segment(at: segment.role.paletteIndex))
+                .fill(tint)
+
+            if !frames.isEmpty {
+                // The shot itself, as a strip of frames. The role colour stays as a cap along the
+                // top, so the timeline still reads as hook / intro / point at a glance.
+                GeometryReader { proxy in
+                    HStack(spacing: 0) {
+                        ForEach(Array(frames.enumerated()), id: \.offset) { _, frame in
+                            Image(decorative: frame, scale: 1)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: proxy.size.width / CGFloat(frames.count), height: proxy.size.height)
+                                .clipped()
+                        }
+                    }
+                }
+                .overlay {
+                    LinearGradient(
+                        colors: [.black.opacity(0.55), .black.opacity(0.05)],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                }
+                .overlay(alignment: .top) {
+                    tint.frame(height: 4)
+                }
+                .transition(.opacity)
+                .allowsHitTesting(false)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(segment.role.displayLabel)
                     .dsFont(.archivo, .bold, 12)
-                    .foregroundStyle(DS.Palette.inkInverse)
+                    .foregroundStyle(labelInk)
+                    .shadow(color: .black.opacity(frames.isEmpty ? 0 : 0.6), radius: 3)
                 HStack(spacing: 5) {
                     Text(MediaTime(seconds: segment.barWeight).timecode)
                         .dsFont(.mono, .medium, 9)
-                        .foregroundStyle(DS.Palette.inkInverse(0.55))
+                        .foregroundStyle(frames.isEmpty ? DS.Palette.inkInverse(0.55) : DS.Palette.ink(0.8))
 
                     // What is being done to this clip, on the clip. A speed set in a panel and
                     // visible only in that panel is a setting people forget they turned on.

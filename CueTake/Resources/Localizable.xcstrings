@@ -919,6 +919,23 @@
         }
       }
     },
+    "project.blank": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New project"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni proje"
+          }
+        }
+      }
+    },
     "project.untitled %@": {
       "comment": "The argument is the date the import happened.",
       "extractionState": "manual",

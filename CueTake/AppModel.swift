@@ -66,9 +66,9 @@ final class AppModel {
     private(set) var retakeModel: RetakeModel?
 
     init() {
-        // `Project.sample` mints fresh identifiers on every call, so the models have to be seeded
-        // from this one instance or their segment IDs would not match the project's.
-        let project = Project.sample
+        // A blank project until the library says otherwise. The models are seeded from this one
+        // instance so their identifiers match the project's.
+        let project = Self.blankProject()
         self.project = project
         self.studioModel = StudioModel(project: project)
         self.editorModel = EditorModel(project: project)
@@ -126,11 +126,16 @@ final class AppModel {
         if let next = library.first, let stored = try? await dependencies.projectStore.load(next.id) {
             adopt(stored)
         } else {
-            let seed = Project.sample
-            try? await dependencies.projectStore.save(seed)
-            adopt(seed)
-            await refreshLibrary()
+            adopt(Self.blankProject())
         }
+    }
+
+    /// Nothing yet: no segments, no footage, not written to disk until something is put in it.
+    static func blankProject() -> Project {
+        Project(
+            title: String(localized: "project.blank"),
+            localeIdentifier: Locale.current.identifier
+        )
     }
 
     func refreshLibrary() async {
@@ -328,6 +333,7 @@ final class AppModel {
         // After playback, not before: the waveforms are for looking at and the player is for
         // working with, and reading three minutes of song should never be what delays a play.
         await editorModel.loadWaveforms(mediaDirectory: mediaDirectory)
+        await editorModel.loadThumbnails(mediaDirectory: mediaDirectory)
     }
 
     // MARK: - Audio
@@ -429,6 +435,9 @@ final class AppModel {
     /// observers and the `@Observable` macro's generated accessors do not mix, and the view layer
     /// already knows precisely when the value it is bound to has changed.
     func scheduleSave() {
+        // An empty project is not written. It exists so the app has something to hold before
+        // anything has been made, and saving it would put an empty card in the library.
+        guard !(project.segments.isEmpty && project.recordings.isEmpty && project.audio.isEmpty) else { return }
         saveTask?.cancel()
         let project = project
         let store = dependencies.projectStore
@@ -478,7 +487,9 @@ final class AppModel {
         guard let summary = try? await store.summaries().first,
               let stored = try? await store.load(summary.id)
         else {
-            try? await store.save(project)
+            // A first launch starts empty. It used to write a sample review reel into the library,
+            // so a new user's first project was someone else's — and the first thing they had to
+            // do in the app was work out what to delete.
             await refreshLibrary()
             return
         }
