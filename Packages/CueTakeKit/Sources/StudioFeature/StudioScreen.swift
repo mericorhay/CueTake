@@ -79,7 +79,7 @@ public struct StudioScreen: View {
                 controls
 
                 if model.teleprompter.isSettingsOpen {
-                    settingsSheet
+                    settingsSheet(in: proxy.size)
                 }
 
                 if model.zoom > 1.01 {
@@ -360,19 +360,57 @@ public struct StudioScreen: View {
     }
 
     /// Portrait docks the sheet above the controls; landscape pins it beside the right-hand column.
+    ///
+    /// Two things were wrong here and both came from the same assumption — that the sheet is
+    /// small. It is not: it carries presets, two tabs, sliders and two segmented rows, and on a
+    /// short phone it ran straight through the prompter panel behind it and under the shutter
+    /// below it. So it scrolls, it is capped at a fraction of the window, and it sits on a scrim.
+    ///
+    /// The scrim is the important part. It separates the sheet from the picture behind it, and it
+    /// gives the sheet the one gesture every panel of this kind needs: tap anywhere else to put it
+    /// away. Without it the only way out was the same small button that opened it.
     @ViewBuilder
-    private var settingsSheet: some View {
+    private func settingsSheet(in frame: CGSize) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(DS.Palette.inkInverse(0.42))
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(DS.Motion.settle) { model.teleprompter.isSettingsOpen = false }
+                }
+                .transition(.opacity)
+
+            sheetBody(in: frame)
+        }
+    }
+
+    @ViewBuilder
+    private func sheetBody(in frame: CGSize) -> some View {
         if model.isLandscape {
-            TeleprompterSettingsSheet(model: model.teleprompter)
+            scrollingSheet(maxHeight: frame.height - 28)
                 .frame(width: 290)
                 .padding(.vertical, 14)
                 .padding(.trailing, 124)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
         } else {
-            TeleprompterSettingsSheet(model: model.teleprompter)
+            // 116pt clears the control cluster; the cap keeps the top of the sheet clear of the
+            // top bar on the shortest phone we support.
+            scrollingSheet(maxHeight: frame.height - 116 - 96)
                 .padding(.horizontal, 14)
                 .padding(.bottom, 116)
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }
+    }
+
+    private func scrollingSheet(maxHeight: CGFloat) -> some View {
+        ScrollView {
+            TeleprompterSettingsSheet(model: model.teleprompter)
+        }
+        .scrollIndicators(.hidden)
+        // Only scrolls when it has to, so a sheet that fits keeps its own height instead of
+        // stretching to fill the allowance.
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxHeight: max(220, maxHeight))
     }
 }

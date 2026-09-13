@@ -46,6 +46,23 @@ public struct EditorScreen: View {
 
     @State private var showsTools = false
     @State private var showsChanges = false
+    @State private var previewExpanded = false
+
+    /// The preview gives up its height to whichever panel is open, and takes it all back when the
+    /// user asks for a proper look.
+    ///
+    /// This is the fix for the panel running off the bottom of the screen: the inspector grew real
+    /// controls and there was nothing in the column willing to make room for them. A fixed 212pt
+    /// picture above a panel that can be four hundred points tall is a layout that can only work
+    /// by luck.
+    private var previewHeight: CGFloat {
+        if previewExpanded { return 430 }
+        return isPanelOpen ? 128 : 212
+    }
+
+    private var isPanelOpen: Bool {
+        model.inspectedSegment != nil || model.selectedAudio != nil
+    }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -57,21 +74,31 @@ public struct EditorScreen: View {
 
             Spacer(minLength: 0)
 
+            Text("editor.hint", bundle: .module)
+                .dsFont(.sans, .regular, 12)
+                .foregroundStyle(DS.Palette.ink(0.32))
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 18)
+                .padding(.bottom, 30)
+                .opacity(isPanelOpen ? 0 : 1)
+        }
+        .padding(.top, 58)
+        // The panels sit *over* the column rather than in it.
+        //
+        // In the column they were one more thing competing for a fixed 874 points, and the loser
+        // was whatever came last — which is why the reverse and freeze buttons were under the
+        // bottom edge of the phone. A panel that covers the timeline while it is open is the
+        // normal behaviour of a sheet, and it is the only version of this that cannot run out of
+        // room.
+        .overlay(alignment: .bottom) {
             if let clip = model.selectedAudioClip {
                 audioPanel(clip)
             } else if let id = model.inspectedSegment,
-               let index = model.project.segments.firstIndex(where: { $0.id == id }) {
+                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
                 inspector(at: index)
-            } else {
-                Text("editor.hint", bundle: .module)
-                    .dsFont(.sans, .regular, 12)
-                    .foregroundStyle(DS.Palette.ink(0.32))
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 30)
             }
         }
-        .padding(.top, 58)
+        .animation(DS.Motion.settle, value: isPanelOpen)
         .sheet(isPresented: $showsTools) {
             ToolBrowser(
                 model: model,
@@ -230,10 +257,37 @@ public struct EditorScreen: View {
                     .fill(DS.Palette.camera)
             }
         }
-        .frame(height: 212)
+        .frame(height: previewHeight)
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+        .overlay(alignment: .topTrailing) {
+            // Discoverable rather than a secret tap. The whole picture is the target, but nobody
+            // taps a video expecting it to grow unless something says it will.
+            Button {
+                withAnimation(DS.Motion.settle) {
+                    previewExpanded.toggle()
+                    if previewExpanded {
+                        // Opening the picture closes the panel: they are competing for the same
+                        // column, and pretending otherwise is what put controls off-screen.
+                        model.inspectedSegment = nil
+                        model.selectedAudio = nil
+                    }
+                }
+            } label: {
+                Image(systemName: previewExpanded
+                    ? "arrow.down.right.and.arrow.up.left"
+                    : "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(DS.Palette.ink(0.85))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(DS.Palette.inkInverse(0.45)))
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.dsPressIcon)
+            .padding(9)
+        }
         .padding(.horizontal, 18)
         .padding(.top, 4)
+        .animation(DS.Motion.settle, value: previewHeight)
     }
 
     private var transport: some View {
@@ -438,9 +492,19 @@ public struct EditorScreen: View {
             }
             .padding(.bottom, 14)
 
-            inspectorBody(for: segment, at: index)
-                .frame(minHeight: 96, alignment: .top)
+            // Scrolls, and is bounded. The timing tab alone is taller than the space this panel
+            // used to assume it had, which is how "reverse" and "freeze" ended up under the
+            // bottom edge of the phone.
+            ScrollView {
+                inspectorBody(for: segment, at: index)
+                    .padding(.bottom, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: 236)
 
+            // Pinned under the scroll area rather than inside it: these two are how the panel is
+            // left, and a way out that scrolls away is not a way out.
             HStack(spacing: 9) {
                 Button {
                     onRetake(segment.id)
@@ -519,7 +583,13 @@ public struct EditorScreen: View {
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 14)
 
-            AudioInspector(model: model, clip: clip)
+            ScrollView {
+                AudioInspector(model: model, clip: clip)
+                    .padding(.bottom, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(maxHeight: 268)
 
             Button {
                 withAnimation(DS.Motion.snap) { model.selectedAudio = nil }
