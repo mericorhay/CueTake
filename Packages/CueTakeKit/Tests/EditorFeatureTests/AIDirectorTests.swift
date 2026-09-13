@@ -121,7 +121,7 @@ struct AIDirectorTests {
         model.undo()
         #expect(model.aiChanges[0].items.last?.reverted == false)
         model.undo()
-        #expect(model.aiChanges[0].items.allSatisfy(\.reverted))
+        #expect(model.aiChanges[0].isFullyReverted)
     }
 
     @Test func captionsAndTheirWindowAreReachable() throws {
