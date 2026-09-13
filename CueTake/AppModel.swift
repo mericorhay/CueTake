@@ -158,6 +158,8 @@ final class AppModel {
     var activity: String?
     /// A short message that fades by itself: how listening went, what was restored.
     var notice: String?
+    /// What the app takes on the phone, once measured.
+    var storageBytes: Int64?
     var noticeTask: Task<Void, Never>?
 
     // MARK: - Workflow state (behaviour in AppModel+Workflows)

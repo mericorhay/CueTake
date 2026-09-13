@@ -46,7 +46,7 @@ public struct AudioEffectRenderer: Sendable {
 
     /// The cache name. Changing which effects are on changes the file, so a stale render can never
     /// be mistaken for a fresh one.
-    static func token(for effects: AudioEffects) -> String {
+    public static func token(for effects: AudioEffects) -> String {
         var flags = ""
         flags += effects.noiseReduction ? "n" : ""
         flags += effects.voiceEnhance ? "v" : ""

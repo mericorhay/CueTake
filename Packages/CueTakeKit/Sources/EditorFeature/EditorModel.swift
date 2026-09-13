@@ -153,7 +153,7 @@ public final class EditorModel {
     }
 
     public func start(at index: Int) -> Double {
-        project.segments.prefix(index).reduce(0) { $0 + $1.barWeight }
+        project.segments.prefix(max(0, index)).reduce(0) { $0 + $1.barWeight }
     }
 
     public func isActive(at index: Int) -> Bool {
@@ -162,6 +162,7 @@ public final class EditorModel {
     }
 
     public func rangeLabel(at index: Int) -> String {
+        guard project.segments.indices.contains(index) else { return "" }
         let start = start(at: index)
         let end = start + project.segments[index].barWeight
         return "\(MediaTime(seconds: start).timecode) – \(MediaTime(seconds: end).timecode)"

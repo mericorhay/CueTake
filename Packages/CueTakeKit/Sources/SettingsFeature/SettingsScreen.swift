@@ -7,8 +7,14 @@ import UIKit
 public struct SettingsScreen: View {
     private let model: SettingsModel
 
-    public init(model: SettingsModel) {
+    /// What the app takes on the phone, or nil while it is measured.
+    private let storage: String?
+    private let onCleanStorage: (() -> Void)?
+
+    public init(model: SettingsModel, storage: String? = nil, onCleanStorage: (() -> Void)? = nil) {
         self.model = model
+        self.storage = storage
+        self.onCleanStorage = onCleanStorage
     }
 
     @State private var showsConverter = false
@@ -68,6 +74,17 @@ public struct SettingsScreen: View {
                         )
                     }
                     .buttonStyle(.dsPress)
+
+                    if let onCleanStorage {
+                        Button(action: onCleanStorage) {
+                            row(
+                                String(localized: "settings.storage", bundle: .module),
+                                value: storage.map { String(localized: "settings.storage.value \($0)", bundle: .module) }
+                                    ?? String(localized: "settings.storage.measuring", bundle: .module)
+                            )
+                        }
+                        .buttonStyle(.dsPress)
+                    }
 
                     staticRow("settings.subscription", String(localized: "settings.subscription.value", bundle: .module))
                     staticRow("settings.version", Self.version, isLast: true)

@@ -103,6 +103,7 @@ struct RootView: View {
         .task {
             await model.restore()
             model.wireAssistant()
+            await model.cleanStorageAfterLaunch()
         }
         .onChange(of: model.project) { model.scheduleSave() }
     }
@@ -239,7 +240,7 @@ struct RootView: View {
         case .projects:
             ProjectsScreen(
                 projects: model.projectItems,
-                onDeleteProject: { item in Task { await model.deleteProject(id: item.id) } }
+                onDeleteProjects: { items in Task { await model.deleteProjects(ids: items.map(\.id)) } }
             ) { item in
                 Task { await model.openProject(id: item.id) }
             }
@@ -269,7 +270,12 @@ struct RootView: View {
             }
 
         case .settings:
-            SettingsScreen(model: model.settingsModel)
+            SettingsScreen(
+                model: model.settingsModel,
+                storage: model.storageLabel,
+                onCleanStorage: { Task { await model.cleanStorageNow() } }
+            )
+            .task { await model.refreshStorage() }
         }
     }
 

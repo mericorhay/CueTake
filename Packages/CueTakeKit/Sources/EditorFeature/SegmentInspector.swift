@@ -14,21 +14,33 @@ import SwiftUI
 /// gesture or one of these fields.
 struct SegmentInspector: View {
     @Bindable var model: EditorModel
-    let index: Int
+    /// By identity, not position: a cut, an AI edit or an undo can remove or move the clip while
+    /// this panel is on screen, and a stored position then reads past the end of the array.
+    let segmentID: Segment.ID
     /// Opens the captions screen, where the look and every caption in the video are edited at once.
     var onOpenCaptions: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var segment: Segment { model.project.segments[index] }
+    /// Where the clip is now. Past the end when it is gone, so every model call guarding its index
+    /// does nothing rather than editing whichever clip took its place.
+    private var index: Int {
+        model.project.segments.firstIndex { $0.id == segmentID } ?? Int.max
+    }
+
+    private var segment: Segment {
+        model.project.segments.first { $0.id == segmentID } ?? Segment(id: segmentID, role: .mainPoint, script: "")
+    }
 
     var body: some View {
-        switch model.inspectorTab {
-        case .script: script
-        case .caption: captions
-        case .timing: timing
-        case .take: takes
-        case .style: style
+        if model.project.segments.contains(where: { $0.id == segmentID }) {
+            switch model.inspectorTab {
+            case .script: script
+            case .caption: captions
+            case .timing: timing
+            case .take: takes
+            case .style: style
+            }
         }
     }
 
