@@ -72,12 +72,17 @@ public struct AudioEffectRenderer: Sendable {
         let eq = AVAudioUnitEQ(numberOfBands: 4)
         configure(eq, with: effects)
 
+        // Manual rendering first, then the graph. Connecting to the main mixer while the engine is
+        // still bound to the hardware output makes the connection in the hardware's format, and a
+        // format disagreement inside AVAudioEngine is an Objective-C exception — a crash, not an
+        // error Swift can catch.
+        try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 4096)
+
         engine.attach(player)
         engine.attach(eq)
         engine.connect(player, to: eq, format: format)
         engine.connect(eq, to: engine.mainMixerNode, format: format)
 
-        try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: 4096)
         player.scheduleFile(file, at: nil)
         try engine.start()
         player.play()

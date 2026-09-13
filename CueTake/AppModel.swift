@@ -385,10 +385,16 @@ final class AppModel {
 
     /// Asks only for permission to add, never to read: the app writes one video and has no business
     /// with the rest of someone's library.
-    private static func saveToPhotoLibrary(_ url: URL) async throws {
+    ///
+    /// `nonisolated`, and the change block explicitly `@Sendable`, because this was the export
+    /// crash. The app target is main-actor by default, so a closure written here was inferred to
+    /// belong to the main actor — and PhotoKit runs the change block on its own queue. Swift 6
+    /// checks that at runtime and traps, which is why the export got all the way to the end,
+    /// wrote the file, and then took the app down at the moment it saved to Photos.
+    nonisolated private static func saveToPhotoLibrary(_ url: URL) async throws {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
         guard status == .authorized || status == .limited else { return }
-        try await PHPhotoLibrary.shared().performChanges {
+        try await PHPhotoLibrary.shared().performChanges { @Sendable in
             PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
         }
     }

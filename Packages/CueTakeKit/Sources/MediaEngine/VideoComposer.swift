@@ -241,15 +241,24 @@ public struct VideoComposer: Sendable {
             }
 
             let input = AVMutableAudioMixInputParameters(track: track)
+            // Ramps are placed on whole ticks, each starting no earlier than the last one ended.
+            // AVFoundation raises an Objective-C exception for overlapping ramps — which Swift
+            // cannot catch, so it is a crash — and converting each start and duration from seconds
+            // separately can round two neighbours into overlapping by a single 1/600 s tick.
+            var previousEnd = CMTime.zero
             for ramp in AudioEnvelope.ramps(for: clip, spoken: spoken) {
+                let start = CMTimeMaximum(
+                    CMTime(seconds: clip.start.seconds + ramp.start, preferredTimescale: 600),
+                    previousEnd
+                )
+                let end = CMTime(seconds: clip.start.seconds + ramp.start + ramp.duration, preferredTimescale: 600)
+                guard end > start else { continue }
                 input.setVolumeRamp(
                     fromStartVolume: Float(ramp.from),
                     toEndVolume: Float(ramp.to),
-                    timeRange: CMTimeRange(
-                        start: CMTime(seconds: clip.start.seconds + ramp.start, preferredTimescale: 600),
-                        duration: CMTime(seconds: ramp.duration, preferredTimescale: 600)
-                    )
+                    timeRange: CMTimeRange(start: start, end: end)
                 )
+                previousEnd = end
             }
             parameters.append(input)
         }
