@@ -1,3 +1,4 @@
+import AIServices
 import AssistantFeature
 import DesignSystem
 import Domain
@@ -184,7 +185,10 @@ struct RootView: View {
                 saveLabel: model.saveLabel,
                 isSaving: model.isSaving,
                 onSave: { model.saveNow() },
-                onTranscribe: { Task { await model.transcribeNewTakes() } }
+                onTranscribe: { Task { await model.transcribeNewTakes() } },
+                onAIEdit: model.dependencies.assistantClient.isConfigured
+                    ? { document, instruction in try await model.requestEditPlan(document, instruction) }
+                    : nil
             )
             .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
 

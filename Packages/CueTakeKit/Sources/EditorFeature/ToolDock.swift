@@ -14,13 +14,15 @@ struct ToolDock: View {
     let onCaptions: () -> Void
     let onAddAudio: () -> Void
     let onMore: () -> Void
+    /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
+    var aiRequest: ((EditDocument, String) async throws -> EditPlan)? = nil
 
     enum Item: String, CaseIterable, Identifiable {
-        case split, trim, speed, captions, audio, duplicate, delete, more
+        case ai, split, trim, speed, captions, audio, duplicate, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { self == .trim || self == .speed }
+        var opensPanel: Bool { self == .trim || self == .speed || self == .ai }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -54,7 +56,8 @@ struct ToolDock: View {
         .animation(reduceMotion ? .easeOut(duration: 0.2) : DS.Motion.bloom, value: open)
         // A tool that acts on a clip closes when there is no clip to act on.
         .onChange(of: index == nil) { _, lost in
-            if lost { open = nil }
+            // The AI works on the whole video, not the clip under the playhead.
+            if lost, open != .ai { open = nil }
         }
     }
 
@@ -63,7 +66,7 @@ struct ToolDock: View {
     private var row: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 7) {
-                ForEach(Array(Item.allCases.enumerated()), id: \.element.id) { position, item in
+                ForEach(Array(visibleItems.enumerated()), id: \.element.id) { position, item in
                     let hidden = open != nil
                     Group {
                         if open == item {
@@ -92,8 +95,12 @@ struct ToolDock: View {
         .scrollClipDisabled()
     }
 
+    private var visibleItems: [Item] {
+        Item.allCases.filter { $0 != .ai || aiRequest != nil }
+    }
+
     private func distance(from position: Int) -> Int {
-        guard let open, let origin = Item.allCases.firstIndex(of: open) else { return position }
+        guard let open, let origin = visibleItems.firstIndex(of: open) else { return position }
         return abs(position - origin)
     }
 
@@ -102,14 +109,14 @@ struct ToolDock: View {
         case .split: model.segmentAtPlayhead != nil
         case .trim, .speed, .duplicate: index != nil
         case .delete: index != nil && model.project.segments.count > 1
-        case .captions, .audio, .more: true
+        case .captions, .audio, .more, .ai: true
         }
     }
 
     private func chip(_ item: Item) -> some View {
         let enabled = isEnabled(item)
         let destructive = item == .delete
-        let accent = item == .captions
+        let accent = item == .captions || item == .ai
 
         return Button {
             fired[item, default: 0] += 1
@@ -152,12 +159,14 @@ struct ToolDock: View {
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .duplicate: glyph.symbolEffect(.bounce.up, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
+        case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
     }
 
     private func symbol(_ item: Item) -> String {
         switch item {
+        case .ai: "sparkles"
         case .split: "scissors"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
@@ -171,6 +180,7 @@ struct ToolDock: View {
 
     private func title(_ item: Item) -> String {
         switch item {
+        case .ai: String(localized: "editor.dock.ai", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
@@ -203,7 +213,7 @@ struct ToolDock: View {
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
-        case .trim, .speed: break
+        case .trim, .speed, .ai: break
         }
     }
 
@@ -237,7 +247,9 @@ struct ToolDock: View {
             }
 
             Group {
-                if let index {
+                if item == .ai, let aiRequest {
+                    AIEditPanel(model: model, request: aiRequest)
+                } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)
                     case .speed: speedPanel(at: index)

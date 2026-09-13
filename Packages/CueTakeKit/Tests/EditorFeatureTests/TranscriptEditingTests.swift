@@ -130,3 +130,71 @@ struct TranscriptEditingTests {
         #expect(merged.captions.last?.text.hasSuffix("point") == true)
     }
 }
+
+/// AI edit plans: the document the model reads, and the plan it sends back applied as one step.
+@MainActor
+struct EditPlanTests {
+    private func model() -> EditorModel {
+        let recording = Recording(relativePath: "media/a.mov", format: .vertical1080, camera: .front, duration: MediaTime(seconds: 20))
+        func word(_ text: String, _ start: Double) -> TimedWord {
+            TimedWord(text: text, range: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: 0.4)))
+        }
+        let take = Take(
+            recordingID: recording.id,
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 6)),
+            status: .ready,
+            transcript: Transcript(localeIdentifier: "en", words: [word("so", 0.2), word("um", 1.0), word("this", 1.6), word("works", 4.0)])
+        )
+        var segment = Segment(role: .hook, script: "so um this works", takes: [take], selectedTakeID: take.id)
+        segment.refreshCaptions(maxWordsPerCue: 3)
+        return EditorModel(project: Project(title: "t", localeIdentifier: "en", segments: [segment], recordings: [recording]))
+    }
+
+    @Test func documentCarriesWordsPausesAndBeats() throws {
+        let document = model().document(beatStep: 0.5)
+        #expect(document.clips.count == 1)
+        #expect(document.clips[0].words.map(\.text) == ["so", "um", "this", "works"])
+        #expect(document.clips[0].pauses.contains { $0.start == 2.0 && $0.end == 4.0 })
+        #expect(document.beats.count == 12)
+        #expect(document.beats.first { $0.t == 1.0 }?.word == "um")
+        _ = try document.jsonData()
+    }
+
+    @Test func messyModelOutputDecodes() throws {
+        let text = """
+        Here is the plan:
+        {"summary":"Cut the filler.","operations":[
+          {"op":"removeWords","clip":"X","words":[1]},
+          {"op":"setSpeed","clip":"X","speed":"1.2"},
+          {"op":"teleport","clip":"X"}
+        ]}
+        """
+        let plan = try EditPlan.decode(from: text)
+        #expect(plan.summary == "Cut the filler.")
+        #expect(plan.operations.count == 3)
+        #expect(plan.operations[1] == .setSpeed(clip: "X", speed: 1.2))
+        #expect(plan.operations[2] == .unknown(type: "teleport"))
+    }
+
+    @Test func applyingAPlanIsOneUndo() {
+        let model = model()
+        let id = model.project.segments[0].id.uuidString
+        let plan = EditPlan(summary: "", operations: [
+            .removeWords(clip: id, words: [1]),
+            .setSpeed(clip: id, speed: 1.5),
+            .captionStyle(preset: "bold", position: nil),
+            .unknown(type: "teleport"),
+        ])
+        let outcome = model.apply(plan)
+        #expect(outcome.applied == 3)
+        #expect(outcome.skipped == ["teleport"])
+        #expect(model.project.segments.count == 2)
+        #expect(model.project.segments.allSatisfy { !($0.selectedTake?.transcript?.words.contains { $0.text == "um" } ?? false) })
+        #expect(model.project.captionStyle.presetID == "bold")
+
+        model.undo()
+        #expect(model.project.segments.count == 1)
+        #expect(model.project.captionStyle.presetID != "bold")
+        #expect(!model.canUndo)
+    }
+}

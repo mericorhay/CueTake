@@ -43,22 +43,7 @@ extension AppModel {
         assistant.onWorkflow = { [weak self] workflow, run in
             self?.adoptAssistantWorkflow(workflow, run: run)
         }
-        assistant.describeFailure = { error in
-            switch error as? AssistantClient.AssistantError {
-            case .notConfigured: String(localized: "assistant.failure.notConfigured")
-            case .offline: String(localized: "assistant.failure.offline")
-            case .declined: String(localized: "assistant.failure.declined")
-            // Said precisely, because "something went wrong" cannot be acted on and each of these
-            // has a different fix: a key that does not match, too many messages, the model failing.
-            case .rejected(let status) where status == 401:
-                String(localized: "assistant.failure.unauthorized")
-            case .rejected(let status) where status == 429:
-                String(localized: "assistant.failure.busy")
-            case .rejected(let status):
-                String(localized: "assistant.failure.server \(status)")
-            default: String(localized: "assistant.failure.generic")
-            }
-        }
+        assistant.describeFailure = { error in Self.assistantFailureMessage(error) }
 
         Task { [weak self] in
             guard let store else { return }
@@ -237,4 +222,41 @@ extension AppModel {
         default: go(to: .export)
         }
     }
+
+    /// A failure from the assistant endpoint, as a sentence someone can act on.
+    static func assistantFailureMessage(_ error: any Error) -> String {
+        switch error as? AssistantClient.AssistantError {
+        case .notConfigured: String(localized: "assistant.failure.notConfigured")
+        case .offline: String(localized: "assistant.failure.offline")
+        case .declined: String(localized: "assistant.failure.declined")
+        // Said precisely, because "something went wrong" cannot be acted on and each of these
+        // has a different fix: a key that does not match, too many messages, the model failing.
+        case .rejected(let status) where status == 401:
+            String(localized: "assistant.failure.unauthorized")
+        case .rejected(let status) where status == 429:
+            String(localized: "assistant.failure.busy")
+        case .rejected(let status):
+            String(localized: "assistant.failure.server \(status)")
+        default: String(localized: "assistant.failure.generic")
+        }
+    }
+
+    /// Asks the model for an edit plan of the open project.
+    func requestEditPlan(_ document: EditDocument, _ instruction: String) async throws -> EditPlan {
+        do {
+            return try await dependencies.assistantClient.editPlan(
+                for: document,
+                instruction: instruction,
+                localeIdentifier: project.localeIdentifier
+            )
+        } catch {
+            throw DescribedError(message: Self.assistantFailureMessage(error))
+        }
+    }
+}
+
+/// An error whose description is already written for people.
+struct DescribedError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }

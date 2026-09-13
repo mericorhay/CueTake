@@ -52,6 +52,8 @@ public final class EditorModel {
     var past: [EditSnapshot] = []
     var future: [EditSnapshot] = []
     var editCount = 0
+    /// True while an AI plan is being carried out, so its many tool calls make one undo step.
+    @ObservationIgnored var isApplyingPlan = false
 
     private var task: Task<Void, Never>?
 

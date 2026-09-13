@@ -111,4 +111,51 @@ public struct AssistantClient: Sendable {
         }
         return reply
     }
+
+    // MARK: - Editing
+
+    private struct EditRequest: Encodable {
+        var instruction: String
+        var locale: String
+        var document: EditDocument
+    }
+
+    private struct EditResponse: Decodable {
+        var plan: String?
+    }
+
+    /// Sends the whole editor as a document with an instruction, and gets back a plan of edits.
+    ///
+    /// Longer timeout than a chat reply: a three minute video is a large document and the model
+    /// reads every beat of it before answering.
+    public func editPlan(for document: EditDocument, instruction: String, localeIdentifier: String) async throws -> EditPlan {
+        guard let endpoint else { throw AssistantError.notConfigured }
+
+        var request = URLRequest(url: endpoint.url.appending(path: "edit"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 180
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(endpoint.appToken, forHTTPHeaderField: "x-cuetake-app")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.withoutEscapingSlashes]
+        request.httpBody = try encoder.encode(
+            EditRequest(instruction: instruction, locale: localeIdentifier, document: document)
+        )
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw AssistantError.offline
+        }
+        guard let http = response as? HTTPURLResponse else { throw AssistantError.offline }
+        guard (200..<300).contains(http.statusCode) else {
+            throw AssistantError.rejected(status: http.statusCode)
+        }
+
+        let decoded = try JSONDecoder().decode(EditResponse.self, from: data)
+        guard let text = decoded.plan, !text.isEmpty else { throw AssistantError.empty }
+        return try EditPlan.decode(from: text)
+    }
 }

@@ -33,7 +33,8 @@ public struct EditorScreen: View {
         saveLabel: String = "",
         isSaving: Bool = false,
         onSave: @escaping () -> Void = {},
-        onTranscribe: @escaping () -> Void = {}
+        onTranscribe: @escaping () -> Void = {},
+        onAIEdit: ((EditDocument, String) async throws -> EditPlan)? = nil
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -46,7 +47,10 @@ public struct EditorScreen: View {
         self.isSaving = isSaving
         self.onSave = onSave
         self.onTranscribe = onTranscribe
+        self.onAIEdit = onAIEdit
     }
+
+    private let onAIEdit: ((EditDocument, String) async throws -> EditPlan)?
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
@@ -426,6 +430,7 @@ public struct EditorScreen: View {
                     onCaptions: onCaptions,
                     onAddAudio: onAddAudio,
                     onMore: { showsTools = true },
+                    aiRequest: onAIEdit,
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)
