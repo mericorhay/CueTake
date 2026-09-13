@@ -232,6 +232,136 @@ public final class EditorModel {
         project.updatedAt = .now
     }
 
+    /// The segment under the playhead, and how far into it the playhead sits.
+    public var segmentAtPlayhead: (index: Int, offset: Double)? {
+        var running = 0.0
+        for (index, segment) in project.segments.enumerated() {
+            let end = running + segment.barWeight
+            if playhead >= running && playhead < end {
+                return (index, playhead - running)
+            }
+            running = end
+        }
+        return nil
+    }
+
+    /// Splits the segment under the playhead in two.
+    ///
+    /// The razor, and the tool our model was waiting for: both halves point at the same recording
+    /// with adjacent source ranges, so nothing is copied, nothing is re-encoded, and the file on
+    /// disk is untouched. A split is two numbers.
+    ///
+    /// The script goes with it, cut at the same proportion, so the prompter and the captions still
+    /// describe the right half.
+    public func splitAtPlayhead() {
+        guard let (index, offset) = segmentAtPlayhead else { return }
+        let segment = project.segments[index]
+        // A split right on a boundary produces an empty clip, which is never what was meant.
+        guard offset > 0.15, segment.barWeight - offset > 0.15 else { return }
+
+        var left = segment
+        var right = segment.copyWithNewIdentity()
+
+        if let take = segment.selectedTake {
+            var leftTake = take
+            leftTake.sourceRange = MediaTimeRange(
+                start: take.sourceRange.start,
+                duration: MediaTime(seconds: offset)
+            )
+            var rightTake = Take(
+                recordingID: take.recordingID,
+                sourceRange: MediaTimeRange(
+                    start: take.sourceRange.start + MediaTime(seconds: offset),
+                    duration: take.sourceRange.duration - MediaTime(seconds: offset)
+                ),
+                status: take.status
+            )
+            rightTake.transcript = nil
+
+            left.takes = [leftTake]
+            left.selectedTakeID = leftTake.id
+            right.takes = [rightTake]
+            right.selectedTakeID = rightTake.id
+        } else {
+            left.estimatedDuration = MediaTime(seconds: offset)
+            right.estimatedDuration = MediaTime(seconds: segment.barWeight - offset)
+        }
+
+        let words = ScriptText.words(in: segment.script).map(String.init)
+        if !words.isEmpty {
+            let cut = max(1, min(words.count - 1, Int((offset / segment.barWeight * Double(words.count)).rounded())))
+            left.script = words[..<cut].joined(separator: " ")
+            right.script = words[cut...].joined(separator: " ")
+        }
+        left.captions = []
+        right.captions = []
+
+        project.segments[index] = left
+        project.segments.insert(right, at: index + 1)
+        project.updatedAt = .now
+        inspectedSegment = right.id
+    }
+
+    /// Removes a segment. Everything after it closes up on its own, because the timeline is
+    /// derived — there is no ripple to perform, only one less thing to lay out.
+    public func deleteSegment(at index: Int) {
+        guard project.segments.indices.contains(index), project.segments.count > 1 else { return }
+        let removed = project.segments.remove(at: index)
+        if inspectedSegment == removed.id { inspectedSegment = nil }
+        project.updatedAt = .now
+        playhead = min(playhead, duration)
+    }
+
+    public func duplicateSegment(at index: Int) {
+        guard project.segments.indices.contains(index) else { return }
+        var copy = project.segments[index].copyWithNewIdentity()
+        // Takes keep pointing at the same recording: a duplicate is another window onto the same
+        // footage, not another copy of it.
+        copy.captions = []
+        project.segments.insert(copy, at: index + 1)
+        project.updatedAt = .now
+        inspectedSegment = copy.id
+    }
+
+    /// Joins a segment with the one after it, when they are two halves of the same shot.
+    ///
+    /// Refused across different recordings: there is one range per take, so a join would have to
+    /// invent a clip that spans two files, and that is a different feature wearing this one's name.
+    public func canMerge(at index: Int) -> Bool {
+        guard project.segments.indices.contains(index + 1),
+              let left = project.segments[index].selectedTake,
+              let right = project.segments[index + 1].selectedTake,
+              left.recordingID == right.recordingID
+        else { return false }
+        return abs(left.sourceRange.end.seconds - right.sourceRange.start.seconds) < 0.05
+    }
+
+    public func mergeWithNext(at index: Int) {
+        guard canMerge(at: index),
+              let left = project.segments[index].selectedTake,
+              let right = project.segments[index + 1].selectedTake
+        else { return }
+
+        var merged = project.segments[index]
+        var take = left
+        take.sourceRange = MediaTimeRange(
+            start: left.sourceRange.start,
+            duration: left.sourceRange.duration + right.sourceRange.duration
+        )
+        take.transcript = nil
+        merged.takes = [take]
+        merged.selectedTakeID = take.id
+        merged.script = [project.segments[index].script, project.segments[index + 1].script]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        merged.captions = []
+
+        project.segments[index] = merged
+        project.segments.remove(at: index + 1)
+        project.updatedAt = .now
+        inspectedSegment = merged.id
+    }
+
     public func move(segmentAt index: Int, to destination: Int) {
         guard project.segments.indices.contains(index),
               destination >= 0, destination < project.segments.count,

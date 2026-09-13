@@ -108,8 +108,12 @@ public struct EditorScreen: View {
             // Given a surface of its own. A bare glyph on a dark background is a target you have
             // to aim at, and this is the control people reach for most after the playhead.
             Button(action: model.skipToStart) {
-                Text("⏮")
-                    .font(.system(size: 16))
+                // A symbol, not an emoji. Emoji are pictures of things — they carry a colour, a
+                // platform's house style, and a font the rest of the interface does not use. This
+                // one inherits weight and size from the type around it, which is why it sits in a
+                // control instead of on top of one.
+                Image(systemName: "backward.end.fill")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(DS.Palette.ink(0.75))
                     .frame(width: 40, height: 40)
                     .background(Circle().fill(DS.Palette.hairline(0.08)))
@@ -118,17 +122,17 @@ public struct EditorScreen: View {
             .buttonStyle(.dsPressIcon)
 
             Button(action: model.togglePlayback) {
-                Text(model.isPlaying ? "❚❚" : "▶")
-                    .font(.system(size: 17))
+                Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(DS.Palette.inkInverse)
-                    // The play glyph sits visually left of centre inside a circle; the pause bars
-                    // do not. Nudging only the triangle is the difference between a button that
-                    // looks centred and one that looks almost centred.
+                    // The play triangle sits visually left of centre inside a circle; the pause
+                    // bars do not. Nudging only the triangle is the difference between a button
+                    // that looks centred and one that looks almost centred.
                     .offset(x: model.isPlaying ? 0 : 2)
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(DS.Palette.ink))
                     .shadow(color: DS.Palette.ink(0.25), radius: 12, y: 6)
-                    .contentTransition(.opacity)
+                    .contentTransition(.symbolEffect(.replace))
                     .animation(DS.Motion.snap, value: model.isPlaying)
             }
             .buttonStyle(.dsPressIcon)
@@ -180,6 +184,8 @@ public struct EditorScreen: View {
 
             captionStrip
                 .padding(.top, 7)
+
+            EditorToolbar(model: model)
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)

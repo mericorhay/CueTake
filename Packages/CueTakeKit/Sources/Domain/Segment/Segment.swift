@@ -119,6 +119,25 @@ extension SegmentRole {
 }
 
 extension Segment {
+    /// A copy under a new identity.
+    ///
+    /// Splitting and duplicating both need one, and `id` is `let` on purpose: two segments sharing
+    /// an identity would make the timeline, the inspector and SwiftUI's own diffing disagree about
+    /// which one is which, in ways that look like random state corruption.
+    public func copyWithNewIdentity() -> Segment {
+        Segment(
+            role: role,
+            title: title,
+            script: script,
+            estimatedDuration: estimatedDuration,
+            teleprompter: teleprompter,
+            takes: takes,
+            selectedTakeID: selectedTakeID,
+            captions: captions,
+            metadata: metadata
+        )
+    }
+
     /// Length used wherever a segment has to be drawn to scale — the blueprint bar, the studio
     /// progress pips, the editor timeline — before a recording exists to measure.
     ///

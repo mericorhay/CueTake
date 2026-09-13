@@ -44,7 +44,7 @@ struct RootView: View {
         }
         .overlay {
             if let busy = model.busy {
-                BusyOverlay(message: busy)
+                BusyOverlay(status: busy)
             }
         }
         .animation(DS.Motion.settle, value: model.busy)
