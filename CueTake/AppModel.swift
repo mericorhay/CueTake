@@ -88,6 +88,8 @@ final class AppModel {
 
     /// What the store holds, newest first. The library screens read this rather than a sample.
     private(set) var library: [ProjectSummary] = []
+    /// Library covers drawn from each project's footage. See `ProjectCovers`.
+    var covers: [Project.ID: UIImage] = [:]
 
     var recentItems: [LibraryFeature.LibraryItem] {
         library.prefix(3).enumerated().map { index, summary in
@@ -110,7 +112,8 @@ final class AppModel {
             meta: summary.updatedAt.formatted(.relative(presentation: .named)),
             duration: "\(summary.segmentCount)",
             fill: .ramp(at: index),
-            height: height
+            height: height,
+            cover: covers[summary.id]
         )
     }
 
@@ -141,6 +144,7 @@ final class AppModel {
 
     func refreshLibrary() async {
         library = (try? await dependencies.projectStore.summaries()) ?? []
+        Task { await refreshCovers() }
     }
 
     // MARK: - Import

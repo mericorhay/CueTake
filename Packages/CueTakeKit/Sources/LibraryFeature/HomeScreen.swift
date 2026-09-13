@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import SwiftUI
+import UIKit
 
 /// Card shown in the Recent rail and the Projects grid.
 public struct LibraryItem: Identifiable, Hashable {
@@ -13,6 +14,8 @@ public struct LibraryItem: Identifiable, Hashable {
     public var fill: CardFill
     /// Height used by the Projects grid.
     public var height: CGFloat
+    /// Frames from the project's own clips. Shown instead of the fill when there is one.
+    public var cover: UIImage?
 
     public init(
         id: UUID = UUID(),
@@ -20,8 +23,10 @@ public struct LibraryItem: Identifiable, Hashable {
         meta: String,
         duration: String,
         fill: CardFill,
-        height: CGFloat = 200
+        height: CGFloat = 200,
+        cover: UIImage? = nil
     ) {
+        self.cover = cover
         self.id = id
         self.title = title
         self.meta = meta
@@ -256,7 +261,7 @@ public struct HomeScreen: View {
         }
         .padding(13)
         .frame(width: 158, height: 210, alignment: .bottomLeading)
-        .background(item.fill.view)
+        .background { LibraryCardBackground(item: item) }
         .overlay(alignment: .topLeading) {
             durationChip(item.duration)
                 .padding(11)
@@ -322,5 +327,30 @@ public struct HomeScreen: View {
         Text(text)
             .dsFont(.sans, .semibold, 13, letterSpacing: 0.12)
             .foregroundStyle(DS.Palette.ink(0.45))
+    }
+}
+
+/// A card's picture: the project's cover as it is, with a shade along the bottom only so the title
+/// stays readable; the design's tint when there is no footage yet.
+struct LibraryCardBackground: View {
+    let item: LibraryItem
+
+    var body: some View {
+        if let cover = item.cover {
+            Color.clear
+                .overlay {
+                    Image(uiImage: cover)
+                        .resizable()
+                        .scaledToFill()
+                }
+                .clipped()
+                .overlay(alignment: .bottom) {
+                    LinearGradient(colors: [.clear, .black.opacity(0.75)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 90)
+                }
+                .transition(.opacity)
+        } else {
+            item.fill.view
+        }
     }
 }

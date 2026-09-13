@@ -242,7 +242,10 @@ struct RootView: View {
             WorkflowsScreen(
                 workflows: model.workflows,
                 onOpen: { model.openWorkflow($0) },
-                onCreate: { model.createWorkflow() }
+                onCreate: { model.createWorkflow() },
+                onCreateWithAI: { await model.createWorkflowWithAI($0) },
+                onDuplicate: { workflow in Task { await model.duplicateWorkflow(workflow) } },
+                onDelete: { workflow in Task { await model.deleteWorkflow(id: workflow.id) } }
             )
             .task { await model.loadWorkflows() }
 

@@ -35,8 +35,10 @@ public struct WorkflowSection: Identifiable, Hashable, Sendable, Codable {
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         role = try container.decodeIfPresent(String.self, forKey: .role) ?? "point"
         title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
-        seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? 5
-        clip = try container.decodeIfPresent(Int.self, forKey: .clip)
+        seconds = (try? container.decodeIfPresent(Double.self, forKey: .seconds))
+            ?? (try? container.decodeIfPresent(String.self, forKey: .seconds)).flatMap { Double($0) }
+            ?? 5
+        clip = try? container.decodeIfPresent(Int.self, forKey: .clip)
     }
 
     /// The segment role this section becomes.

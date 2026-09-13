@@ -1,8 +1,10 @@
 import AIServices
+import DesignSystem
 import Domain
 import EditorFeature
 import Foundation
 import Persistence
+import SwiftUI
 import WorkflowsFeature
 
 /// Opening, saving, writing with AI and running workflows.
@@ -80,6 +82,65 @@ extension AppModel {
         Task { try? await store?.save(definition) }
     }
 
+    /// Removes a workflow from the list, without opening it first.
+    func deleteWorkflow(id: WorkflowDefinition.ID) async {
+        await dependencies.workflowStore?.delete(id: id)
+        withAnimation(DS.Motion.settle) {
+            workflows.removeAll { $0.id == id }
+        }
+    }
+
+    /// A copy to change without touching the original.
+    func duplicateWorkflow(_ workflow: WorkflowDefinition) async {
+        guard var copy = try? WorkflowDefinition.decode(json: (try? workflow.jsonString()) ?? "") else { return }
+        // Decoding without an id gives a fresh one; the copy is named as a copy.
+        copy = WorkflowDefinition(
+            name: workflow.name + " " + String(localized: "workflow.copySuffix"),
+            summary: copy.summary,
+            origin: .user,
+            sections: copy.sections,
+            style: copy.style,
+            steps: copy.steps
+        )
+        try? await dependencies.workflowStore?.save(copy)
+        withAnimation(DS.Motion.settle) {
+            workflows.insert(copy, at: 0)
+        }
+    }
+
+    /// Writes a workflow from a sentence and opens it in the studio. Returns a message when it
+    /// could not, for the sheet to show.
+    func createWorkflowWithAI(_ description: String) async -> String? {
+        let text = description.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+
+        var written: WorkflowDefinition?
+        var failure: (any Error)?
+        if dependencies.assistantClient.isConfigured {
+            do {
+                written = try await dependencies.assistantClient.workflow(
+                    from: text,
+                    clipCount: currentClips().count,
+                    localeIdentifier: project.localeIdentifier
+                )
+            } catch {
+                failure = error
+            }
+        }
+        if written == nil, dependencies.workflowAuthor.isAvailable {
+            written = try? await dependencies.workflowAuthor.author(request: text, current: nil, clipCount: currentClips().count)
+        }
+        guard let written else {
+            return failure.map { Self.assistantFailureMessage($0) } ?? String(localized: "workflow.ai.failed")
+        }
+
+        try? await dependencies.workflowStore?.save(written)
+        workflows.removeAll { $0.id == written.id }
+        workflows.insert(written, at: 0)
+        openWorkflow(written)
+        return nil
+    }
+
     func deleteWorkflow() async {
         guard let id = workflowStudio?.definition.id else { return }
         workflowSaveTask?.cancel()
@@ -125,16 +186,37 @@ extension AppModel {
         let request = studio.aiRequest
         studio.beginAuthoring()
 
+        // An empty workflow is a request for a new one; anything else is a request to change it.
+        let current = studio.definition.sections.isEmpty && studio.definition.steps.isEmpty
+            ? nil
+            : studio.definition
+
+        // The server model first: it writes far better workflows than the on-device one. The
+        // on-device model stays as the way it works offline or in a build without the assistant.
+        if dependencies.assistantClient.isConfigured {
+            let description = current.map {
+                "Change this workflow as requested and return the whole workflow.\nCurrent: \((try? $0.jsonString()) ?? "")\nRequest: \(request)"
+            } ?? request
+            if let written = try? await dependencies.assistantClient.workflow(
+                from: description,
+                clipCount: studio.clips.count,
+                localeIdentifier: project.localeIdentifier
+            ) {
+                studio.finishAuthoring(with: written)
+                if let current, current.id != written.id {
+                    workflows.removeAll { $0.id == current.id }
+                    await dependencies.workflowStore?.delete(id: current.id)
+                }
+                saveWorkflow()
+                return
+            }
+        }
+
         let author = dependencies.workflowAuthor
         guard author.isAvailable else {
             studio.finishAuthoring(with: nil)
             return
         }
-
-        // An empty workflow is a request for a new one; anything else is a request to change it.
-        let current = studio.definition.sections.isEmpty && studio.definition.steps.isEmpty
-            ? nil
-            : studio.definition
 
         let written = try? await author.author(
             request: request,

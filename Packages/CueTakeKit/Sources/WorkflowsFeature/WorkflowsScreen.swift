@@ -11,15 +11,27 @@ public struct WorkflowsScreen: View {
     private let workflows: [WorkflowDefinition]
     private let onOpen: (WorkflowDefinition) -> Void
     private let onCreate: () -> Void
+    private let onCreateWithAI: (String) async -> String?
+    private let onDuplicate: (WorkflowDefinition) -> Void
+    private let onDelete: (WorkflowDefinition) -> Void
+
+    @State private var showsAI = false
+    @State private var pendingDelete: WorkflowDefinition?
 
     public init(
         workflows: [WorkflowDefinition],
         onOpen: @escaping (WorkflowDefinition) -> Void,
-        onCreate: @escaping () -> Void
+        onCreate: @escaping () -> Void,
+        onCreateWithAI: @escaping (String) async -> String? = { _ in nil },
+        onDuplicate: @escaping (WorkflowDefinition) -> Void = { _ in },
+        onDelete: @escaping (WorkflowDefinition) -> Void = { _ in }
     ) {
         self.workflows = workflows
         self.onOpen = onOpen
         self.onCreate = onCreate
+        self.onCreateWithAI = onCreateWithAI
+        self.onDuplicate = onDuplicate
+        self.onDelete = onDelete
     }
 
     public var body: some View {
@@ -44,6 +56,22 @@ public struct WorkflowsScreen: View {
                             card(workflow)
                         }
                         .buttonStyle(.dsPress)
+                        // Long press for the same actions as the ••• button, the way lists
+                        // everywhere else on the phone work.
+                        .contextMenu { actions(for: workflow) }
+                        .overlay(alignment: .topTrailing) {
+                            Menu {
+                                actions(for: workflow)
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(DS.Palette.ink(0.7))
+                                    .frame(width: 40, height: 40)
+                                    .contentShape(Rectangle())
+                            }
+                            .padding(6)
+                        }
+                        .transition(.asymmetric(insertion: .scale(scale: 0.95).combined(with: .opacity), removal: .scale(scale: 0.8).combined(with: .opacity)))
                         .dsEnter(.rise(duration: 0.5, delay: Double(index + 1) * 0.06))
                     }
                 }
@@ -56,38 +84,96 @@ public struct WorkflowsScreen: View {
         .scrollIndicators(.hidden)
         .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
+        .animation(DS.Motion.settle, value: workflows.map(\.id))
+        .sheet(isPresented: $showsAI) {
+            WorkflowAISheet(onSubmit: onCreateWithAI, onClose: { showsAI = false })
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(30)
+        }
+        .confirmationDialog(
+            String(localized: "workflows.delete.title", bundle: .module),
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { workflow in
+            Button(String(localized: "workflows.delete", bundle: .module), role: .destructive) {
+                onDelete(workflow)
+            }
+        } message: { workflow in
+            Text(workflow.name)
+        }
         .dsEnter(.screen())
     }
 
+    @ViewBuilder
+    private func actions(for workflow: WorkflowDefinition) -> some View {
+        Button {
+            onOpen(workflow)
+        } label: {
+            Label(String(localized: "workflows.action.open", bundle: .module), systemImage: "slider.horizontal.3")
+        }
+        Button {
+            onDuplicate(workflow)
+        } label: {
+            Label(String(localized: "workflows.action.duplicate", bundle: .module), systemImage: "plus.square.on.square")
+        }
+        Button(role: .destructive) {
+            pendingDelete = workflow
+        } label: {
+            Label(String(localized: "workflows.delete", bundle: .module), systemImage: "trash")
+        }
+    }
+
+    /// Two ways in, side by side: describe it and let AI write it, or build it by hand.
     private var createCard: some View {
-        Button(action: onCreate) {
-            HStack(spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(DS.Palette.inkInverse)
-                    .frame(width: 42, height: 42)
-                    .background(
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .fill(DS.gradient(135, [DS.Palette.lime, DS.Palette.accent]))
-                    )
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("workflows.new", bundle: .module)
-                        .dsFont(.archivo, .bold, 17)
-                        .foregroundStyle(DS.Palette.ink)
-                    Text("workflows.new.note", bundle: .module)
-                        .dsFont(.sans, .regular, 12)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+        HStack(spacing: 10) {
+            Button {
+                showsAI = true
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .symbolEffect(.breathe, options: .repeating)
+                    Text("workflows.new.ai", bundle: .module)
+                        .dsFont(.archivo, .bold, 16)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                    Text("workflows.new.ai.note", bundle: .module)
+                        .dsFont(.sans, .medium, 11)
+                        .foregroundStyle(DS.Palette.inkInverse.opacity(0.7))
+                        .lineLimit(2)
                 }
+                .padding(16)
+                .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
+                        .fill(DS.gradient(135, [DS.Palette.lime, DS.Palette.accent]))
+                )
+                .contentShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+            }
+            .buttonStyle(.dsPress(radius: DS.Radius.cardLarge))
 
-                Spacer(minLength: 0)
+            manualCard
+        }
+    }
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(DS.Palette.ink(0.3))
+    private var manualCard: some View {
+        Button(action: onCreate) {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: "hand.draw")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
+                Text("workflows.new.manual", bundle: .module)
+                    .dsFont(.archivo, .bold, 16)
+                    .foregroundStyle(DS.Palette.ink)
+                Text("workflows.new.manual.note", bundle: .module)
+                    .dsFont(.sans, .medium, 11)
+                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .lineLimit(2)
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
             .background(
                 RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
                     .fill(DS.Palette.hairline(0.05))
@@ -133,6 +219,8 @@ public struct WorkflowsScreen: View {
                         .font(.system(size: 11))
                         .foregroundStyle(DS.Palette.lime)
                 }
+                // Room for the ••• menu laid over this corner.
+                Color.clear.frame(width: 26, height: 1)
             }
 
             // The structure, to scale.

@@ -85,7 +85,8 @@ public struct ProjectsScreen: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: project.height, alignment: .bottomLeading)
-        .background(project.fill.view)
+        .background { LibraryCardBackground(item: project) }
+        .animation(.easeOut(duration: 0.35), value: project.cover)
         .overlay(alignment: .topTrailing) {
             Text(project.duration)
                 .dsFont(.mono, .medium, 9)

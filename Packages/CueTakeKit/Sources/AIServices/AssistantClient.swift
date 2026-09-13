@@ -158,4 +158,48 @@ public struct AssistantClient: Sendable {
         guard let text = decoded.plan, !text.isEmpty else { throw AssistantError.empty }
         return try EditPlan.decode(from: text)
     }
+
+    // MARK: - Workflows
+
+    private struct WorkflowRequest: Encodable {
+        var description: String
+        var locale: String
+        var clipCount: Int
+    }
+
+    private struct WorkflowResponse: Decodable {
+        var workflow: String?
+    }
+
+    /// A workflow written from a sentence, by the server model.
+    public func workflow(from description: String, clipCount: Int, localeIdentifier: String) async throws -> WorkflowDefinition {
+        guard let endpoint else { throw AssistantError.notConfigured }
+
+        var request = URLRequest(url: endpoint.url.appending(path: "workflow"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 90
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(endpoint.appToken, forHTTPHeaderField: "x-cuetake-app")
+        request.httpBody = try JSONEncoder().encode(
+            WorkflowRequest(description: description, locale: localeIdentifier, clipCount: clipCount)
+        )
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw AssistantError.offline
+        }
+        guard let http = response as? HTTPURLResponse else { throw AssistantError.offline }
+        guard (200..<300).contains(http.statusCode) else {
+            throw AssistantError.rejected(status: http.statusCode)
+        }
+        let decoded = try JSONDecoder().decode(WorkflowResponse.self, from: data)
+        guard let text = decoded.workflow, !text.isEmpty else { throw AssistantError.empty }
+        var workflow = try WorkflowDefinition.decode(json: text)
+        guard !workflow.steps.isEmpty else { throw AssistantError.empty }
+        workflow.origin = .ai
+        return workflow
+    }
 }

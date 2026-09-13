@@ -1311,6 +1311,23 @@
         }
       }
     },
+    "workflow.ai.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't write a workflow. Try describing it differently."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow yazılamadı. Farklı anlatmayı dene."
+          }
+        }
+      }
+    },
     "workflow.clip %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1324,6 +1341,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %lld"
+          }
+        }
+      }
+    },
+    "workflow.copySuffix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "copy"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kopya"
           }
         }
       }

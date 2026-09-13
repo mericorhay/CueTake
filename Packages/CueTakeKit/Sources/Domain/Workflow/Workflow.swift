@@ -63,9 +63,14 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Workflow"
         summary = try container.decodeIfPresent(String.self, forKey: .summary)
         origin = try container.decodeIfPresent(WorkflowOrigin.self, forKey: .origin) ?? .user
-        sections = try container.decodeIfPresent([WorkflowSection].self, forKey: .sections) ?? []
-        style = try container.decodeIfPresent(WorkflowStyle.self, forKey: .style) ?? WorkflowStyle()
-        steps = try container.decodeIfPresent([WorkflowStep].self, forKey: .steps) ?? []
+        // Lossy, element by element: one malformed section or step from a model must cost that
+        // element, not the whole workflow. Throwing here is how an assistant could say "I made you
+        // a workflow" and no card ever appeared.
+        sections = (try? container.decodeIfPresent([Lossy<WorkflowSection>].self, forKey: .sections))?
+            .compactMap(\.value) ?? []
+        style = (try? container.decodeIfPresent(WorkflowStyle.self, forKey: .style)) ?? WorkflowStyle()
+        steps = (try? container.decodeIfPresent([Lossy<WorkflowStep>].self, forKey: .steps))?
+            .compactMap(\.value) ?? []
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
@@ -97,9 +102,14 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
-        kind = try container.decode(WorkflowStepKind.self, forKey: .kind)
-        isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        id = (try? container.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
+        // Either `{"kind": {"type": …}}` or the flatter `{"type": …}` models often write.
+        if let nested = try? container.decode(WorkflowStepKind.self, forKey: .kind) {
+            kind = nested
+        } else {
+            kind = try WorkflowStepKind(from: decoder)
+        }
+        isEnabled = (try? container.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
     }
 }
 
@@ -284,4 +294,13 @@ extension ScriptBrief {
         targetDuration: MediaTime(seconds: 30),
         platform: .instagramReels
     )
+}
+
+/// Decodes an element or gives nil, so one bad element does not fail an array.
+struct Lossy<Value: Decodable>: Decodable {
+    let value: Value?
+
+    init(from decoder: any Decoder) throws {
+        value = try? Value(from: decoder)
+    }
 }

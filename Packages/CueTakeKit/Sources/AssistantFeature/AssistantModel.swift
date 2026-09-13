@@ -46,11 +46,16 @@ public enum AssistantDestination: String, CaseIterable, Hashable, Sendable {
         // A proposed workflow arrives as a fenced block tagged `cuetake-workflow`. It is lifted out
         // of the prose and becomes a card, because JSON in a chat bubble is a wall nobody reads.
         var workflow: WorkflowDefinition?
-        let block = /```cuetake-workflow\s*([\s\S]*?)```/
-        if let match = text.firstMatch(of: block) {
-            workflow = try? WorkflowDefinition.decode(json: String(match.output.1))
-            text = text.replacing(block, with: "")
+        // Any fenced block that holds a workflow counts — models tag it `json` as often as not. Code
+        // is never shown in the chat either way: a block that is not a workflow is dropped too.
+        let block = /```[a-zA-Z-]*\s*([\s\S]*?)```/
+        for match in text.matches(of: block) where workflow == nil {
+            let body = String(match.output.1)
+            if body.contains("\"steps\"") || body.contains("\"sections\"") {
+                workflow = try? WorkflowDefinition.decode(json: body)
+            }
         }
+        text = text.replacing(block, with: "")
 
         var destinations: [AssistantDestination] = []
         let pattern = /\[\[go:([a-z]+)\]\]/

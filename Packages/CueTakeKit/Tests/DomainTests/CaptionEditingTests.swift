@@ -79,3 +79,18 @@ struct CaptionEditingTests {
         #expect(abs((right?.words.first?.range.start.seconds ?? -1) - 0.3) < 0.001)
     }
 }
+
+/// What a model actually writes for a workflow: flat steps, strings for numbers, one bad entry.
+struct WorkflowLenientDecodingTests {
+    @Test func oneBadStepDoesNotLoseTheWorkflow() throws {
+        let json = """
+        {"name":"Temiz","sections":[{"role":"hook","seconds":"3"},{"role":42}],
+         "steps":[{"type":"analyzeSpeech"},{"kind":{"type":"trimSilences","parameters":{"minPause":0.5}}},{"oops":true},{"type":"generateCaptions"}]}
+        """
+        let workflow = try WorkflowDefinition.decode(json: json)
+        #expect(workflow.name == "Temiz")
+        #expect(workflow.sections.first?.seconds == 3)
+        #expect(workflow.steps.count >= 3)
+        #expect(workflow.steps.first?.kind.typeName == "analyzeSpeech")
+    }
+}
