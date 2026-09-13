@@ -108,6 +108,15 @@ struct RootView: View {
         .onChange(of: model.project) { model.scheduleSave() }
     }
 
+    /// The script screen's rewrites on the server, or nil in a build without the assistant.
+    private var scriptRewrite: ScriptScreen.ServerRewrite? {
+        guard model.dependencies.assistantClient.isConfigured else { return nil }
+        let model = model
+        return { text, direction, role, script, locale in
+            try await model.rewriteOnServer(text: text, direction: direction, role: role, script: script, localeIdentifier: locale)
+        }
+    }
+
     /// The AI edit tool's line to the model, or nil in a build without the assistant.
     private var aiEdit: ((EditDocument, String) async throws -> EditPlan)? {
         guard model.dependencies.assistantClient.isConfigured else { return nil }
@@ -137,9 +146,9 @@ struct RootView: View {
                 switch destination {
                 case .importFootage: model.isPickingFootage = true
                 case .prompt: model.go(to: .prompt)
-                case .script: model.go(to: .script)
+                case .script: model.startWithScript()
                 case .workflow: model.go(to: .workflows)
-                case .studio: model.openStudio()
+                case .studio: model.startRecording()
                 }
             }
 
@@ -154,22 +163,23 @@ struct RootView: View {
             BlueprintScreen(
                 project: $model.project,
                 onBack: { model.go(to: .prompt) },
-                onOpenScript: { model.go(to: .script) },
-                onOpenStudio: { model.openStudio() }
+                onOpenScript: { model.openScriptFromBlueprint() },
+                onOpenStudio: { model.openStudioFromPlan() }
             )
 
         case .script:
             ScriptScreen(
                 project: $model.project,
-                onBack: { model.go(to: .blueprint) },
-                onOpenStudio: { model.openStudio() }
+                onBack: { model.go(to: model.scriptReturn == .blueprint && !model.project.segments.isEmpty ? .blueprint : .create) },
+                onOpenStudio: { model.openStudioFromPlan() },
+                serverRewrite: scriptRewrite
             )
 
         case .studio:
             StudioScreen(
                 model: model.studioModel,
                 camera: model.settingsModel.settings.defaultCamera,
-                onBack: { model.go(to: .blueprint) },
+                onBack: { model.go(to: model.studioReturn) },
                 onOpenEditor: { model.openEditor() },
                 onFinished: { Task { await model.finishStudioCapture() } },
                 onBeginCapture: { await model.beginStudioCapture() }

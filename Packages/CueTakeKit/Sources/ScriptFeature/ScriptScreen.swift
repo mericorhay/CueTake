@@ -20,15 +20,33 @@ public struct ScriptScreen: View {
 
     private let onBack: () -> Void
     private let onOpenStudio: () -> Void
+    /// Rewrites a beat on the server, for phones without the on-device model. Nil when there is none.
+    private let serverRewrite: ServerRewrite?
+
+    /// The text, the direction, the beat's role, the whole script, the language.
+    public typealias ServerRewrite = (String, String, String, String, String) async throws -> String
+
+    /// What is typed or pasted before the script has any beats.
+    @State private var pasted = ""
+    @FocusState private var pasteFocused: Bool
 
     public init(
         project: Binding<Project>,
         onBack: @escaping () -> Void,
-        onOpenStudio: @escaping () -> Void
+        onOpenStudio: @escaping () -> Void,
+        serverRewrite: ServerRewrite? = nil
     ) {
         self._project = project
         self.onBack = onBack
         self.onOpenStudio = onOpenStudio
+        self.serverRewrite = serverRewrite
+    }
+
+    private var canRewrite: Bool { ScriptRewriter.isAvailable || serverRewrite != nil }
+
+    /// Nothing written yet: the screen opens on a place to paste or type the whole script.
+    private var isBlank: Bool {
+        project.segments.allSatisfy { $0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     public var body: some View {
@@ -38,6 +56,10 @@ public struct ScriptScreen: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 11) {
+                        if isBlank {
+                            pasteCard
+                        }
+
                         ForEach(Array(project.segments.enumerated()), id: \.element.id) { index, segment in
                             card(for: segment, at: index)
                                 .id(segment.id)
@@ -69,7 +91,7 @@ public struct ScriptScreen: View {
                     .transition(.opacity)
             }
 
-            if focused == nil {
+            if focused == nil, !pasteFocused, !isBlank {
                 DSPrimaryButton(
                     String(localized: "script.studio", bundle: .module),
                     verticalPadding: 18,
@@ -257,7 +279,7 @@ public struct ScriptScreen: View {
             }
             .padding(.bottom, 9)
 
-            if ScriptRewriter.isAvailable {
+            if canRewrite {
                 FlowLayout(horizontalSpacing: 7, verticalSpacing: 7) {
                     ForEach(RewriteAction.allCases, id: \.self) { action in
                         rewriteButton(action, index: index, enabled: working == nil && !segment.script.isEmpty)
@@ -292,6 +314,70 @@ public struct ScriptScreen: View {
         .buttonStyle(.dsPress)
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
+    }
+
+    /// The whole script in one go: pasted from notes, or typed, then cut into beats.
+    private var pasteCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("script.paste.title", bundle: .module)
+                    .dsFont(.sans, .semibold, 15)
+                    .foregroundStyle(DS.Palette.ink)
+                Spacer(minLength: 0)
+                PasteButton(payloadType: String.self) { strings in
+                    guard let text = strings.first else { return }
+                    Task { @MainActor in pasted = text }
+                }
+                .buttonBorderShape(.capsule)
+                .labelStyle(.titleAndIcon)
+                .tint(DS.Palette.lime)
+                .controlSize(.small)
+            }
+
+            TextField(String(localized: "script.paste.placeholder", bundle: .module), text: $pasted, axis: .vertical)
+                .lineLimit(6...14)
+                .dsFont(.sans, .regular, 15, lineHeight: 1.45)
+                .foregroundStyle(DS.Palette.ink)
+                .tint(DS.Palette.lime)
+                .focused($pasteFocused)
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.05)))
+
+            Text("script.paste.hint", bundle: .module)
+                .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.45))
+
+            DSPrimaryButton(
+                String(localized: "script.paste.split", bundle: .module),
+                verticalPadding: 14,
+                fontSize: 15,
+                glow: false
+            ) {
+                splitPasted()
+            }
+            .disabled(pasted.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .opacity(pasted.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+        }
+        .padding(16)
+        .dsCard(radius: DS.Radius.card)
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private func splitPasted() {
+        let beats = ScriptText.beats(from: pasted, localeIdentifier: project.localeIdentifier)
+        guard !beats.isEmpty else { return }
+        pasteFocused = false
+        withAnimation(DS.Motion.settle) {
+            // Beats with footage stay; only the empty placeholders are replaced.
+            project.segments.removeAll { $0.takes.isEmpty && $0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            project.segments.append(contentsOf: beats.map(Segment.init(draft:)))
+            // A project with no footage yet is named after its opening words.
+            if project.recordings.isEmpty {
+                project.title = String(ScriptText.words(in: beats[0].script).prefix(5).joined(separator: " "))
+            }
+            project.updatedAt = .now
+            pasted = ""
+        }
     }
 
     private var addButton: some View {
@@ -348,13 +434,27 @@ public struct ScriptScreen: View {
         defer { withAnimation(DS.Motion.settle) { working = nil } }
 
         do {
-            let result = try await ScriptRewriter().rewrite(
-                segment.script,
-                instruction: action.instruction,
-                role: segment.role.displayLabel,
-                script: project.segments.map(\.script).joined(separator: "\n"),
-                localeIdentifier: project.localeIdentifier
-            )
+            let whole = project.segments.map(\.script).joined(separator: "\n")
+            let result: String
+            if ScriptRewriter.isAvailable {
+                result = try await ScriptRewriter().rewrite(
+                    segment.script,
+                    instruction: action.instruction,
+                    role: segment.role.displayLabel,
+                    script: whole,
+                    localeIdentifier: project.localeIdentifier
+                )
+            } else if let serverRewrite {
+                result = try await serverRewrite(
+                    segment.script,
+                    action.instruction.directionText,
+                    segment.role.displayLabel,
+                    whole,
+                    project.localeIdentifier
+                )
+            } else {
+                return
+            }
             guard !result.isEmpty, let current = project.segments.firstIndex(where: { $0.id == segment.id }) else { return }
             beforeRewrite[segment.id] = segment.script
             withAnimation(DS.Easing.ease(0.3)) { setScript(result, at: current) }

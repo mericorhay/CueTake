@@ -1056,6 +1056,74 @@
         }
       }
     },
+    "prompt.failed.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The script came back empty. Try describing the idea in a sentence or two."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryo boş geldi. Fikri bir iki cümleyle anlatıp tekrar dene."
+          }
+        }
+      }
+    },
+    "prompt.failed.generic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The script could not be written. Try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryo yazılamadı. Tekrar dene."
+          }
+        }
+      }
+    },
+    "prompt.failed.notReady": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence is still getting ready on this iPhone. Try again in a few minutes."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence bu iPhone'da hâlâ hazırlanıyor. Birkaç dakika sonra tekrar dene."
+          }
+        }
+      }
+    },
+    "prompt.failed.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writing a script needs Apple Intelligence or the CueTake assistant, and neither is available in this build."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryo yazmak için Apple Intelligence ya da CueTake asistanı gerekiyor; bu sürümde ikisi de yok."
+          }
+        }
+      }
+    },
     "save.never": {
       "extractionState": "manual",
       "localizations": {

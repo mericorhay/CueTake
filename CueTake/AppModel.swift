@@ -160,6 +160,9 @@ final class AppModel {
     var notice: String?
     /// What the app takes on the phone, once measured.
     var storageBytes: Int64?
+    /// Where the script screen and the studio go back to: the plan they came from, or Create.
+    var scriptReturn: Screen = .blueprint
+    var studioReturn: Screen = .blueprint
     var noticeTask: Task<Void, Never>?
 
     // MARK: - Workflow state (behaviour in AppModel+Workflows)
@@ -516,7 +519,7 @@ final class AppModel {
     func scheduleSave() {
         // An empty project is not written. It exists so the app has something to hold before
         // anything has been made, and saving it would put an empty card in the library.
-        guard !(project.segments.isEmpty && project.recordings.isEmpty && project.audio.isEmpty) else { return }
+        guard projectHasContent else { return }
         saveTask?.cancel()
         let project = project
         let store = dependencies.projectStore
@@ -617,6 +620,17 @@ final class AppModel {
             as: (any ScriptWriting).self,
             localeIdentifier: locale
         ) else {
+            if dependencies.assistantClient.isConfigured {
+                let brief = ScriptBrief(
+                    topic: promptModel.promptText,
+                    targetDuration: MediaTime(seconds: Double(promptModel.lengthSeconds)),
+                    platform: promptModel.platform,
+                    tone: promptModel.tone.briefValue,
+                    localeIdentifier: locale
+                )
+                await generateScriptOnServer(brief, localeIdentifier: locale)
+                return
+            }
             let reason = await FoundationModelsScriptWriter()
                 .availability(for: .scriptWriting, localeIdentifier: locale)
             promptModel.fail(
@@ -707,6 +721,10 @@ final class AppModel {
             duration: MediaTime(seconds: measured)
         )
         project.recordings.append(recording)
+        // Recorded without a script: one beat to hold the take, its words filled in once heard.
+        if project.segments.isEmpty {
+            project.segments = [Segment(role: .mainPoint, script: "")]
+        }
 
         busy = String(localized: "busy.aligning")
         let heard = try? await dependencies.speech.transcribeFile(at: capture.url, localeIdentifier: project.localeIdentifier)
@@ -750,6 +768,9 @@ final class AppModel {
                 status: .ready
             )
             take.transcript = heard?.slice(from: start, to: stop)
+            if project.segments[index].script.isEmpty, let words = take.transcript?.words, !words.isEmpty {
+                project.segments[index].script = words.map(\.text).joined(separator: " ")
+            }
             project.segments[index].takes.append(take)
             project.segments[index].selectedTakeID = take.id
             project.segments[index].refreshCaptions(maxWordsPerCue: project.captionStyle.maxWordsPerCue)

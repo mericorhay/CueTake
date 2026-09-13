@@ -1148,6 +1148,74 @@
         }
       }
     },
+    "script.paste.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paragraphs become parts. One block of text is cut at sentences: the first is the hook, the last the call to action."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paragraflar bölüm olur. Tek parça metin cümlelerden bölünür: ilki kanca, sonuncusu çağrı olur."
+          }
+        }
+      }
+    },
+    "script.paste.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste or type the whole script here…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryonun tamamını buraya yapıştır ya da yaz…"
+          }
+        }
+      }
+    },
+    "script.paste.split": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split into parts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bölümlere ayır"
+          }
+        }
+      }
+    },
+    "script.paste.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryon"
+          }
+        }
+      }
+    },
     "script.placeholder": {
       "extractionState": "manual",
       "localizations": {
