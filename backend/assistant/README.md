@@ -12,10 +12,14 @@ an app release.
 ```bash
 cd backend/assistant
 npx wrangler login
-npx wrangler secret put ANTHROPIC_API_KEY
+npx wrangler secret put GROQ_API_KEY
 npx wrangler secret put APP_TOKEN
 npx wrangler deploy
 ```
+
+Either provider works. With `GROQ_API_KEY` the worker uses Groq's `openai/gpt-oss-120b`; with
+`ANTHROPIC_API_KEY` it uses Claude. If both are set, Claude is used unless the `PROVIDER`
+variable is `groq`. `GROQ_MODEL` overrides the Groq model.
 
 `APP_TOKEN` is any long random string you choose, for example the output of
 `openssl rand -hex 32`. `wrangler deploy` prints the worker URL.

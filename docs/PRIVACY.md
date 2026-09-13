@@ -38,13 +38,14 @@ When you send a message to the assistant, CueTake sends to our server ([assistan
   name, your project's title, how many clips it has, and whether it has captions,
 - your device's language setting.
 
-Our server adds instructions and forwards the request to **Anthropic** ([anthropic.com](https://www.anthropic.com)),
-which provides the AI model, and returns the reply. Your videos, audio and files are never sent.
+Our server adds instructions and forwards the request to our AI provider — **Groq**
+([groq.com](https://groq.com)) or **Anthropic** ([anthropic.com](https://www.anthropic.com)); state the one
+in use before publishing — and returns the reply. Your videos, audio and files are never sent.
 
 Our server does not store conversations. It processes the request and returns the reply. Your IP
 address is used briefly to limit how many messages can be sent per minute, to prevent abuse.
-Anthropic processes the request under its commercial terms; see its privacy policy for how long it
-retains API data.
+The provider processes the request under its commercial terms; see its privacy policy for how long
+it retains API data.
 
 You can use every other part of CueTake without ever using the assistant.
 
@@ -111,13 +112,14 @@ Asistana mesaj gönderdiğinde CueTake sunucumuza ([asistan adresi]) şunları g
   projenin başlığı, kaç klip olduğu ve altyazı olup olmadığı,
 - cihazının dil ayarı.
 
-Sunucumuz talimatları ekleyip isteği yapay zekâ modelini sağlayan **Anthropic**'e
-([anthropic.com](https://www.anthropic.com)) iletir ve cevabı geri döndürür. Videoların, seslerin ve
+Sunucumuz talimatları ekleyip isteği yapay zekâ sağlayıcımıza — **Groq** ([groq.com](https://groq.com))
+ya da **Anthropic** ([anthropic.com](https://www.anthropic.com)); yayınlamadan önce kullanılanı yazın —
+iletir ve cevabı geri döndürür. Videoların, seslerin ve
 dosyaların asla gönderilmez.
 
 Sunucumuz sohbetleri saklamaz; isteği işler ve cevabı döndürür. Kötüye kullanımı önlemek için IP
 adresin dakikada gönderilebilecek mesaj sayısını sınırlamak amacıyla kısa süreliğine kullanılır.
-Anthropic isteği kendi ticari koşulları altında işler; API verilerini ne kadar sakladığı için onun
+Sağlayıcı isteği kendi ticari koşulları altında işler; API verilerini ne kadar sakladığı için onun
 gizlilik politikasına bakın.
 
 Asistanı hiç kullanmadan CueTake'in diğer tüm bölümlerini kullanabilirsin.

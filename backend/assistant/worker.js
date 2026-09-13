@@ -11,6 +11,7 @@
 // Response 200     { reply, stop_reason }
 
 const MODEL = "claude-opus-5";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 // Per client, per minute. Enforced only when a rate-limit binding named LIMITER is configured
 // (see wrangler.toml); without one the worker still runs, unlimited.
 const RATE_KEY_HEADER = "cf-connecting-ip";
@@ -87,6 +88,62 @@ function json(body, status = 200) {
   });
 }
 
+async function askAnthropic(env, messages) {
+  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      // Re-runs a declined request on the recommended fallback model instead of refusing.
+      "anthropic-beta": "server-side-fallback-2026-07-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      // Room for a workflow block as well as the answer.
+      max_tokens: 6000,
+      system: SYSTEM_PROMPT,
+      // History is append-only, so the prefix stays cacheable turn after turn.
+      cache_control: { type: "ephemeral" },
+      fallbacks: "default",
+      // Short conversational answers: medium effort holds quality at a lower cost.
+      output_config: { effort: "medium" },
+      messages,
+    }),
+  });
+  if (!upstream.ok) return { error: true, status: upstream.status };
+
+  const result = await upstream.json();
+  const reply = (result.content || [])
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+  return { reply, stop_reason: result.stop_reason };
+}
+
+// Groq's OpenAI-compatible chat endpoint. gpt-oss-120b is the strongest reasoning model it serves
+// and writes Turkish well; the system prompt goes in as the first message.
+async function askGroq(env, messages) {
+  const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: env.GROQ_MODEL || GROQ_MODEL,
+      max_completion_tokens: 6000,
+      reasoning_effort: "medium",
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+    }),
+  });
+  if (!upstream.ok) return { error: true, status: upstream.status };
+
+  const result = await upstream.json();
+  const choice = (result.choices || [])[0] || {};
+  return { reply: (choice.message && choice.message.content) || "", stop_reason: choice.finish_reason };
+}
+
 export default {
   async fetch(request, env) {
     if (request.method !== "POST") return json({ error: "method" }, 405);
@@ -123,39 +180,14 @@ export default {
         : { role: "assistant", content: String(t.text).slice(0, MAX_CHARS) }
     );
 
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        // Re-runs a declined request on the recommended fallback model instead of refusing.
-        "anthropic-beta": "server-side-fallback-2026-07-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        // Room for a workflow block as well as the answer.
-        max_tokens: 6000,
-        system: SYSTEM_PROMPT,
-        // History is append-only, so the prefix stays cacheable turn after turn.
-        cache_control: { type: "ephemeral" },
-        fallbacks: "default",
-        // Short conversational answers: medium effort holds quality at a lower cost.
-        output_config: { effort: "medium" },
-        messages,
-      }),
-    });
-
-    if (!upstream.ok) {
-      return json({ error: "upstream", status: upstream.status }, 502);
+    // Whichever provider has a key. Both can be set; PROVIDER picks between them.
+    const provider = env.PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : "groq");
+    const answer = provider === "groq" ? await askGroq(env, messages) : await askAnthropic(env, messages);
+    if (answer.error) {
+      return json({ error: "upstream", status: answer.status }, 502);
     }
+    const { reply, stop_reason } = answer;
 
-    const result = await upstream.json();
-    const reply = (result.content || [])
-      .filter((block) => block.type === "text")
-      .map((block) => block.text)
-      .join("");
-
-    return json({ reply, stop_reason: result.stop_reason });
+    return json({ reply, stop_reason });
   },
 };
