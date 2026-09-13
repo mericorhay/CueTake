@@ -375,6 +375,40 @@
         }
       }
     },
+    "editor.caption.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No captions yet"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz altyazı yok"
+          }
+        }
+      }
+    },
+    "editor.caption.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "They are built from what is actually said in the take, so there is nothing to write until there is a recording."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar çekimde gerçekten söylenenden üretiliyor; bir kayıt olmadan yazacak bir şey yok."
+          }
+        }
+      }
+    },
     "editor.captions": {
       "extractionState": "manual",
       "localizations": {
@@ -581,6 +615,74 @@
         }
       }
     },
+    "editor.style.notes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SPEAKER NOTES"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KONUŞMACI NOTU"
+          }
+        }
+      }
+    },
+    "editor.style.notesPlaceholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only you see this"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bunu sadece sen görürsün"
+          }
+        }
+      }
+    },
+    "editor.style.prompterSpeed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PROMPTER SPEED"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PROMPTER HIZI"
+          }
+        }
+      }
+    },
+    "editor.style.role": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ROLE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ROL"
+          }
+        }
+      }
+    },
     "editor.tab.caption": {
       "extractionState": "manual",
       "localizations": {
@@ -684,6 +786,108 @@
         }
       }
     },
+    "editor.take.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing shot yet"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz çekim yok"
+          }
+        }
+      }
+    },
+    "editor.take.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import a clip or record this beat, and every attempt is kept here to choose between."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir klip yükle ya da bu bölümü çek; her deneme burada, seçilmek üzere duruyor."
+          }
+        }
+      }
+    },
+    "editor.take.status.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FAILED"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BAŞARISIZ"
+          }
+        }
+      }
+    },
+    "editor.take.status.processing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORKING"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İŞLENİYOR"
+          }
+        }
+      }
+    },
+    "editor.take.status.ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "READY"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HAZIR"
+          }
+        }
+      }
+    },
+    "editor.take.status.recording": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REC"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KAYIT"
+          }
+        }
+      }
+    },
     "editor.timeline": {
       "extractionState": "manual",
       "localizations": {
@@ -697,6 +901,159 @@
           "stringUnit": {
             "state": "translated",
             "value": "ZAMAN ÇİZELGESİ"
+          }
+        }
+      }
+    },
+    "editor.timing.duration": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LENGTH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÜRE"
+          }
+        }
+      }
+    },
+    "editor.timing.freeze": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freeze"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dondur"
+          }
+        }
+      }
+    },
+    "editor.timing.freezeNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One frame, held. The clip's own length no longer decides anything — drag its edge, or use the length control."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tek kare, sabit tutuluyor. Klibin kendi süresi artık bir şey belirlemiyor — kenarından sürükle ya da süre kontrolünü kullan."
+          }
+        }
+      }
+    },
+    "editor.timing.held": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HELD FOR"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TUTMA"
+          }
+        }
+      }
+    },
+    "editor.timing.position": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "POSITION"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KONUM"
+          }
+        }
+      }
+    },
+    "editor.timing.reverse": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ters"
+          }
+        }
+      }
+    },
+    "editor.timing.reverseNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Written out backwards the first time you play it, then cached. Reversed clips have no sound."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İlk oynatışta tersine yazılıyor, sonra önbellekten geliyor. Ters oynatılan klipler sessizdir."
+          }
+        }
+      }
+    },
+    "editor.timing.slowNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slow motion looks its best when the footage was shot at 60 or 120fps."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ağır çekim, görüntü 60 ya da 120 fps çekildiyse en iyi sonucu verir."
+          }
+        }
+      }
+    },
+    "editor.timing.speed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SPEED"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HIZ"
           }
         }
       }

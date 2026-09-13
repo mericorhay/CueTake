@@ -392,6 +392,23 @@
         }
       }
     },
+    "busy.reversing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running it backwards…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ters oynatma hazırlanıyor…"
+          }
+        }
+      }
+    },
     "busy.transcribing": {
       "extractionState": "manual",
       "localizations": {

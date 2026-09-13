@@ -59,6 +59,12 @@ public struct EditorScreen: View {
         }
         .padding(.top, 58)
         .task { await onPrepare() }
+        // Speed, freeze and reverse change what the composition *is*, not just how it is drawn,
+        // so the preview has to be rebuilt. Watched here rather than pushed from each control:
+        // there are four of them and there will be more.
+        .onChange(of: model.project.segments.map(\.playback)) {
+            Task { await onPrepare() }
+        }
         .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
@@ -440,56 +446,8 @@ public struct EditorScreen: View {
 
     @ViewBuilder
     private func inspectorBody(for segment: Segment, at index: Int) -> some View {
-        switch model.inspectorTab {
-        case .script:
-            infoCard(
-                segment.script,
-                sub: String(localized: "editor.info.words \(segment.wordCount) \(Int(segment.barWeight))", bundle: .module)
-            )
-        case .caption:
-            infoCard(
-                segment.captionPreview + " …",
-                sub: String(localized: "editor.info.caption", bundle: .module)
-            )
-        case .timing:
-            infoCard(
-                "\(model.rangeLabel(at: index))  ·  \(String(format: "%.1f", segment.barWeight))s",
-                sub: String(localized: "editor.info.pace \(segment.wordsPerMinute)", bundle: .module)
-            )
-        case .take:
-            infoCard(
-                String(localized: "editor.info.takeSelected", bundle: .module),
-                sub: String(localized: "editor.info.recorded", bundle: .module)
-            )
-        case .style:
-            infoCard(
-                String(localized: "editor.info.style", bundle: .module),
-                sub: String(localized: "editor.info.styleSub", bundle: .module)
-            )
-        }
+        SegmentInspector(model: model, index: index)
     }
-
-    private func infoCard(_ text: String, sub: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(text)
-                .dsFont(.sans, .regular, 14, lineHeight: 1.5)
-                .foregroundStyle(DS.Palette.ink)
-            Text(sub)
-                .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.35))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(DS.Palette.hairline(0.04))
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(DS.Palette.hairline(0.07), lineWidth: 1)
-        }
-    }
-}
 
 extension Segment {
     /// First four words, as the design previews captions under the timeline.

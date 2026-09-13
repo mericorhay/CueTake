@@ -19,6 +19,9 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     public var selectedTakeID: Take.ID?
     /// Captions for the selected take. Times are relative to the start of the segment.
     public var captions: [CaptionCue]
+    /// Speed, reverse and freeze. Never baked into the take: a take is what the camera recorded,
+    /// and everything here is a decision about it that has to stay undoable.
+    public var playback: ClipPlayback
     public var metadata: [String: String]
 
     public init(
@@ -31,6 +34,7 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         takes: [Take] = [],
         selectedTakeID: Take.ID? = nil,
         captions: [CaptionCue] = [],
+        playback: ClipPlayback = .normal,
         metadata: [String: String] = [:]
     ) {
         self.id = id
@@ -42,7 +46,25 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         self.takes = takes
         self.selectedTakeID = selectedTakeID
         self.captions = captions
+        self.playback = playback
         self.metadata = metadata
+    }
+
+    /// Hand-written so projects saved before speed and freeze existed still open. See the same
+    /// note on `Project`.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        role = try container.decode(SegmentRole.self, forKey: .role)
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        script = try container.decodeIfPresent(String.self, forKey: .script) ?? ""
+        estimatedDuration = try container.decodeIfPresent(MediaTime.self, forKey: .estimatedDuration)
+        teleprompter = try container.decodeIfPresent(TeleprompterHints.self, forKey: .teleprompter) ?? TeleprompterHints()
+        takes = try container.decodeIfPresent([Take].self, forKey: .takes) ?? []
+        selectedTakeID = try container.decodeIfPresent(Take.ID.self, forKey: .selectedTakeID)
+        captions = try container.decodeIfPresent([CaptionCue].self, forKey: .captions) ?? []
+        playback = try container.decodeIfPresent(ClipPlayback.self, forKey: .playback) ?? .normal
+        metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 
     public init(draft: SegmentDraft) {
@@ -134,6 +156,7 @@ extension Segment {
             takes: takes,
             selectedTakeID: selectedTakeID,
             captions: captions,
+            playback: playback,
             metadata: metadata
         )
     }
@@ -143,6 +166,15 @@ extension Segment {
     ///
     /// Public because every feature lays segments out proportionally, not just one of them.
     public var barWeight: Double {
-        (estimatedDuration ?? MediaTime(seconds: 5)).seconds
+        playback.timelineSeconds(forSource: sourceSeconds)
+    }
+
+    /// How much footage this segment plays, before speed and freeze have their say.
+    ///
+    /// The take wins over the estimate wherever there is one. The estimate is a guess made from
+    /// the script before anything was shot; once there is footage, the guess is the wrong answer
+    /// and keeping it is why a trimmed clip used to keep its old width on the timeline.
+    public var sourceSeconds: Double {
+        (actualDuration ?? estimatedDuration ?? MediaTime(seconds: 5)).seconds
     }
 }

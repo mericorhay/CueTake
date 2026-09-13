@@ -225,7 +225,20 @@ public final class EditorModel {
     /// lays out against. Same gesture, and the caller does not have to know which case it is in.
     public func setDuration(_ seconds: Double, forSegmentAt index: Int) {
         guard project.segments.indices.contains(index) else { return }
-        var clamped = max(0.4, seconds)
+        let playback = project.segments[index].playback
+        let wanted = max(0.4, seconds)
+
+        // A frozen segment has no footage to trim: dragging its edge changes how long the frame is
+        // held. Same gesture, and it edits the thing the clip's length actually comes from.
+        if playback.freeze != nil {
+            project.segments[index].playback.freeze = MediaTime(seconds: wanted)
+            project.updatedAt = .now
+            return
+        }
+
+        // The handle is dragged in timeline seconds; what it edits is source seconds. At half
+        // speed a centimetre of finger is two seconds of footage.
+        var clamped = playback.sourceSeconds(forTimeline: wanted)
 
         // A segment cannot be longer than the footage behind it. Dragging past the end used to be
         // allowed, and the export found out the hard way.
@@ -274,6 +287,13 @@ public final class EditorModel {
         let segment = project.segments[index]
         // A split right on a boundary produces an empty clip, which is never what was meant.
         guard offset > 0.15, segment.barWeight - offset > 0.15 else { return }
+        // A freeze has one frame to divide and a reversed clip runs the other way, so where the
+        // playhead is does not map to where the cut would be. Both are refused rather than cut
+        // somewhere plausible-looking and wrong.
+        guard segment.playback.freeze == nil, !segment.playback.isReversed else { return }
+
+        // In source seconds, which is what the take's range is measured in.
+        let sourceOffset = segment.playback.sourceSeconds(forTimeline: offset)
 
         var left = segment
         var right = segment.copyWithNewIdentity()
@@ -282,13 +302,13 @@ public final class EditorModel {
             var leftTake = take
             leftTake.sourceRange = MediaTimeRange(
                 start: take.sourceRange.start,
-                duration: MediaTime(seconds: offset)
+                duration: MediaTime(seconds: sourceOffset)
             )
             var rightTake = Take(
                 recordingID: take.recordingID,
                 sourceRange: MediaTimeRange(
-                    start: take.sourceRange.start + MediaTime(seconds: offset),
-                    duration: take.sourceRange.duration - MediaTime(seconds: offset)
+                    start: take.sourceRange.start + MediaTime(seconds: sourceOffset),
+                    duration: take.sourceRange.duration - MediaTime(seconds: sourceOffset)
                 ),
                 status: take.status
             )
@@ -299,8 +319,10 @@ public final class EditorModel {
             right.takes = [rightTake]
             right.selectedTakeID = rightTake.id
         } else {
-            left.estimatedDuration = MediaTime(seconds: offset)
-            right.estimatedDuration = MediaTime(seconds: segment.barWeight - offset)
+            // Estimates are in source seconds like everything else a segment stores, so the split
+            // point has to be converted even when there is no footage behind it yet.
+            left.estimatedDuration = MediaTime(seconds: sourceOffset)
+            right.estimatedDuration = MediaTime(seconds: segment.sourceSeconds - sourceOffset)
         }
 
         let words = ScriptText.words(in: segment.script).map(String.init)
@@ -529,5 +551,56 @@ extension EditorModel {
     /// timeline that refuses to draw it makes the tail impossible to trim.
     public var timelineDuration: Double {
         max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0)
+    }
+}
+
+
+// MARK: - The inspector's edits
+
+extension EditorModel {
+    /// Everything the inspector changes goes through one of these rather than through a binding
+    /// straight into the array. One place stamps `updatedAt`, one place decides what a legal value
+    /// is, and the app-level save sees every edit the same way.
+    public func updateSegment(at index: Int, _ change: (inout Segment) -> Void) {
+        guard project.segments.indices.contains(index) else { return }
+        change(&project.segments[index])
+        project.updatedAt = .now
+    }
+
+    public func updatePlayback(at index: Int, _ change: (inout ClipPlayback) -> Void) {
+        guard project.segments.indices.contains(index) else { return }
+        change(&project.segments[index].playback)
+        let speed = project.segments[index].playback.speed
+        project.segments[index].playback.speed = min(max(speed, 0.25), 4)
+        if let freeze = project.segments[index].playback.freeze {
+            project.segments[index].playback.freeze = MediaTime(seconds: min(max(freeze.seconds, 0.2), 30))
+        }
+        project.updatedAt = .now
+        playhead = min(playhead, duration)
+    }
+
+    /// Switches which attempt at a segment is the one in the video.
+    ///
+    /// Captions go with it. They describe the old take's speech and keeping them would leave the
+    /// video saying one thing and the words on screen saying another.
+    public func selectTake(_ id: Take.ID, at index: Int) {
+        guard project.segments.indices.contains(index) else { return }
+        try? project.selectTake(id, inSegment: project.segments[index].id)
+    }
+
+    public func updateCaption(_ id: CaptionCue.ID, at index: Int, _ change: (inout CaptionCue) -> Void) {
+        guard project.segments.indices.contains(index),
+              let cue = project.segments[index].captions.firstIndex(where: { $0.id == id })
+        else { return }
+        change(&project.segments[index].captions[cue])
+        // Marked by hand, so a later transcription knows not to overwrite it.
+        project.segments[index].captions[cue].isUserEdited = true
+        project.updatedAt = .now
+    }
+
+    /// Seeks to where a segment begins. What the inspector's timing rows do when tapped, so a
+    /// number on screen can always be checked against the picture.
+    public func seekToStart(of index: Int) {
+        seek(to: start(at: index))
     }
 }

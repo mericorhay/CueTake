@@ -63,10 +63,31 @@ public struct VideoComposer: Sendable {
                   let recording = recordings[take.recordingID]
             else { continue }
 
-            let url = mediaDirectory.appending(
+            let playback = segment.playback
+            var url = mediaDirectory.appending(
                 path: (recording.relativePath as NSString).lastPathComponent,
                 directoryHint: .notDirectory
             )
+            var sourceStart = CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600)
+            let sourceLength = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
+
+            // A composition can scale time but it cannot run it backwards, so a reversed clip is a
+            // different file — written once and cached. It carries no audio: reversed speech is
+            // not something anybody wants under a reversed shot, and pretending otherwise would
+            // mean shipping a second, slower pass to produce it.
+            if playback.isReversed, playback.freeze == nil {
+                let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
+                if let reversed = await VideoReverser().reversedClip(
+                    source: url,
+                    range: CMTimeRange(start: sourceStart, duration: sourceLength),
+                    key: key,
+                    in: mediaDirectory
+                ) {
+                    url = reversed
+                    sourceStart = .zero
+                }
+            }
+
             let asset = AVURLAsset(url: url)
 
             guard let sourceVideo = try await asset.loadTracks(withMediaType: .video).first else {
@@ -77,17 +98,48 @@ public struct VideoComposer: Sendable {
             // recording asked AVFoundation for time that does not exist, which it answers by
             // trapping — that was the crash on export.
             let assetDuration = try await asset.load(.duration)
-            let start = CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600)
-            guard start < assetDuration else { continue }
-            let wanted = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
-            let range = CMTimeRange(start: start, duration: min(wanted, assetDuration - start))
-            guard range.duration.seconds > 0.01 else { continue }
+            guard sourceStart < assetDuration else { continue }
+            var range = CMTimeRange(
+                start: sourceStart,
+                duration: min(sourceLength, assetDuration - sourceStart)
+            )
+
+            // A freeze is one frame held open. That is the whole trick: insert a single frame and
+            // stretch it. No still image, no second asset, and the frame held is the one the clip
+            // starts on, which is the one the user was looking at when they froze it.
+            if playback.freeze != nil {
+                let oneFrame = CMTime(
+                    value: 1,
+                    timescale: CMTimeScale(max(24, recording.format.frameRate))
+                )
+                range = CMTimeRange(start: sourceStart, duration: min(oneFrame, range.duration))
+            }
+            guard range.duration.seconds > 0.001 else { continue }
 
             try videoTrack.insertTimeRange(range, of: sourceVideo, at: cursor)
             // Audio is optional on purpose: a clip with no audio track is a legitimate thing to
-            // put in a video, and refusing the whole export over it would be absurd.
-            if let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first {
-                try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)
+            // put in a video, and refusing the whole export over it would be absurd. A frozen
+            // frame is asked for silence — a held picture playing a second of sound under it is
+            // the one thing a freeze must never do.
+            var hasAudio = false
+            if playback.freeze == nil,
+               let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first {
+                hasAudio = (try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)) != nil
+            }
+
+            // Speed and freeze are the same operation to a composition: take the range that was
+            // just inserted and say how long it should last instead. Both tracks, or the voice
+            // walks away from the picture at the first slowed clip.
+            let target = CMTime(
+                seconds: playback.timelineSeconds(forSource: range.duration.seconds),
+                preferredTimescale: 600
+            )
+            if abs(target.seconds - range.duration.seconds) > 0.001 {
+                let inserted = CMTimeRange(start: cursor, duration: range.duration)
+                videoTrack.scaleTimeRange(inserted, toDuration: target)
+                if hasAudio {
+                    audioTrack.scaleTimeRange(inserted, toDuration: target)
+                }
             }
 
             let natural = try await sourceVideo.load(.naturalSize)
@@ -97,11 +149,11 @@ public struct VideoComposer: Sendable {
             layer.setTransform(Self.fit(natural: natural, preferred: preferred, into: renderSize), at: cursor)
 
             let instruction = AVMutableVideoCompositionInstruction()
-            instruction.timeRange = CMTimeRange(start: cursor, duration: range.duration)
+            instruction.timeRange = CMTimeRange(start: cursor, duration: target)
             instruction.layerInstructions = [layer]
             instructions.append(instruction)
 
-            cursor = cursor + range.duration
+            cursor = cursor + target
         }
 
         guard !instructions.isEmpty else { throw ComposeError.nothingToCompose }
@@ -266,6 +318,8 @@ public struct VideoComposer: Sendable {
         session.audioMix = assembled.audioMix
         // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
         // leaves a sped-up voice sounding like the same person.
+        // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
+        // leaves a slowed or sped-up voice sounding like the same person.
         session.audioTimePitchAlgorithm = .spectral
 
         // `AVAssetExportSession` is not Sendable, so the polling task cannot hold it. Reading one

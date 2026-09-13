@@ -119,9 +119,24 @@ struct EditorTimeline: View {
                 Text(segment.role.displayLabel)
                     .dsFont(.archivo, .bold, 12)
                     .foregroundStyle(DS.Palette.inkInverse)
-                Text(MediaTime(seconds: segment.barWeight).timecode)
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.inkInverse(0.55))
+                HStack(spacing: 5) {
+                    Text(MediaTime(seconds: segment.barWeight).timecode)
+                        .dsFont(.mono, .medium, 9)
+                        .foregroundStyle(DS.Palette.inkInverse(0.55))
+
+                    // What is being done to this clip, on the clip. A speed set in a panel and
+                    // visible only in that panel is a setting people forget they turned on.
+                    if let badge = segment.playback.badge {
+                        Text(badge)
+                            .dsFont(.mono, .medium, 8)
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(DS.Palette.inkInverse(0.22))
+                            )
+                    }
+                }
             }
             .padding(.horizontal, 9)
             .padding(.top, 8)
