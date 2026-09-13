@@ -448,6 +448,7 @@ public struct EditorScreen: View {
     private func inspectorBody(for segment: Segment, at index: Int) -> some View {
         SegmentInspector(model: model, index: index)
     }
+}
 
 extension Segment {
     /// First four words, as the design previews captions under the timeline.
