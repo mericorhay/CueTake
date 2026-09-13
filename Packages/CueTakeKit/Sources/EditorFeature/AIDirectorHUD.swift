@@ -29,7 +29,7 @@ struct AIDirectorHUD: View {
         .task(id: finishedID) {
             // A finished run tidies itself away; failures wait to be read.
             guard finishedID != nil else { return }
-            try? await Task.sleep(for: .seconds(10))
+            try? await Task.sleep(for: .seconds(7))
             guard !Task.isCancelled else { return }
             model.dismissAISession()
         }
@@ -59,6 +59,13 @@ struct AIDirectorHUD: View {
         }
         .overlay { AIRing(shape: shape, active: model.isAIDriving) }
         .shadow(color: AIPalette.violet.opacity(model.isAIDriving ? 0.35 : 0.15), radius: 24, y: 10)
+        // It sits over the title bar; once the AI is done, a flick up puts it away.
+        .gesture(
+            DragGesture(minimumDistance: 12).onEnded { value in
+                if value.translation.height < -16 { model.dismissAISession() }
+            },
+            including: model.isAIDriving ? .subviews : .all
+        )
         .padding(.horizontal, 14)
         .animation(.spring(response: 0.45, dampingFraction: 0.82), value: session.phase)
     }
@@ -128,7 +135,7 @@ struct AIDirectorHUD: View {
 
     /// One dot per change: done ones filled with the spectrum, the current one wide and glowing.
     private func stepTrack(_ session: AISession) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: session.steps.count > 16 ? 2 : 4) {
             ForEach(session.steps) { step in
                 let done = step.id < session.current
                 let now = step.id == session.current

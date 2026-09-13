@@ -75,6 +75,32 @@ extension Project {
         return result
     }
 
+    /// Whether the targeted things are the same here as in `other`.
+    public func matches(_ targets: [AITarget], in other: Project) -> Bool {
+        targets.allSatisfy { target in
+            switch target {
+            case .clip(let id):
+                segments.first(where: { $0.id == id }) == other.segments.first(where: { $0.id == id })
+            case .clipOrder:
+                segments.map(\.id) == other.segments.map(\.id)
+            case .captions(let id):
+                segments.first(where: { $0.id == id })?.captions == other.segments.first(where: { $0.id == id })?.captions
+            case .captionStyle:
+                captionStyle == other.captionStyle
+            case .captionWindow:
+                captionWindow == other.captionWindow
+            case .overlay(let id):
+                overlays.first(where: { $0.id == id }) == other.overlays.first(where: { $0.id == id })
+            case .audio(let id):
+                audio.first(where: { $0.id == id }) == other.audio.first(where: { $0.id == id })
+            case .voice:
+                voiceEffects == other.voiceEffects
+            case .title:
+                title == other.title
+            }
+        }
+    }
+
     private static func restore<Item: Identifiable>(
         _ id: Item.ID,
         in current: inout [Item],

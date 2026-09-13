@@ -83,6 +83,7 @@ extension EditorModel {
             EditSnapshot(project: project, entry: snapshot.entry, coalescingKey: nil)
         )
         adopt(snapshot.project)
+        reconcileAIChanges()
         pulse(.undo)
     }
 
@@ -92,6 +93,7 @@ extension EditorModel {
             EditSnapshot(project: snapshot.project, entry: snapshot.entry, coalescingKey: nil)
         )
         adopt(snapshot.project)
+        reconcileAIChanges()
         pulse(.redo)
     }
 
@@ -106,6 +108,7 @@ extension EditorModel {
         // likely to be pressed by accident.
         record("editor.change.revert", symbol: "arrow.counterclockwise")
         adopt(original)
+        reconcileAIChanges()
     }
 
     /// Puts a project back and repairs whatever pointed into the old one.

@@ -296,6 +296,8 @@ public struct EditorScreen: View {
                 .contentShape(Capsule())
             }
             .buttonStyle(.dsPress(radius: 20))
+            // Undoing from the history while the AI is mid-run would land between its steps.
+            .disabled(model.isAIDriving)
             // The pill changes text as edits land, so it animates rather than snapping.
             .animation(DS.Motion.snap, value: model.changes.count)
 
@@ -326,6 +328,7 @@ public struct EditorScreen: View {
                     .overlay { AIRing(shape: RoundedRectangle(cornerRadius: 11, style: .continuous), active: model.isAIDriving) }
                 }
                 .buttonStyle(.dsPressIcon)
+                .disabled(model.isAIDriving)
                 .transition(.scale.combined(with: .opacity))
             }
 

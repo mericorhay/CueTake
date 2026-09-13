@@ -180,7 +180,10 @@ extension EditDocument {
 
         var clips: [Clip] = []
         var cursor = 0.0
-        let captionFrames = Dictionary(project.captionCues.map { ($0.id, $0.range) }, uniquingKeysWith: { a, _ in a })
+        // Placed without the caption window, so a caption the window hides still has a place.
+        var unwindowed = project
+        unwindowed.captionWindow = nil
+        let captionFrames = Dictionary(unwindowed.captionCues.map { ($0.id, $0.range) }, uniquingKeysWith: { a, _ in a })
         for (index, segment) in project.segments.enumerated() {
             let take = segment.selectedTake
             let words = take?.transcript?.words ?? []

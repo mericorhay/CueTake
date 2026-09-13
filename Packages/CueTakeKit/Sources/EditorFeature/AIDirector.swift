@@ -49,6 +49,12 @@ public struct AIChangeItem: Identifiable, Equatable {
     public var time: Double?
     public var targets: [AITarget]
     public var reverted = false
+    /// The project just before and just after this one change. Taking back a single change restores
+    /// from these rather than from the start of the run: a cut made to the second half of a clip the
+    /// same run split exists only after the split, and restoring it from before the run would delete
+    /// that half.
+    var before: Project
+    var after: Project
 }
 
 /// Everything one instruction changed, with the project as it was before and after, so any part of
@@ -217,6 +223,7 @@ extension EditorModel {
             try? await Task.sleep(for: .milliseconds(380))
             if Task.isCancelled { break }
 
+            let stepBefore = project
             let targets = withAnimation(.spring(response: 0.55, dampingFraction: 0.78)) {
                 let touched = step.perform(self)
                 project.updatedAt = .now
@@ -230,7 +237,10 @@ extension EditorModel {
                 continue
             }
             applied += step.types.count
-            items.append(AIChangeItem(id: n, symbol: step.info.symbol, text: step.info.text, time: place.time, targets: targets))
+            items.append(AIChangeItem(
+                id: n, symbol: step.info.symbol, text: step.info.text, time: place.time, targets: targets,
+                before: stepBefore, after: project
+            ))
 
             // A moment for anything new to appear before it is lit, or it would appear already lit.
             try? await Task.sleep(for: .milliseconds(40))
@@ -247,7 +257,12 @@ extension EditorModel {
         guard !items.isEmpty else {
             if past.last?.entry.id == entry { past.removeLast() }
             withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-                aiSession?.phase = .failed(String(localized: "editor.ai.nothing", bundle: .module))
+                if Task.isCancelled {
+                    // Stopped before the first change landed: nothing to report.
+                    aiSession = nil
+                } else {
+                    aiSession?.phase = .failed(String(localized: "editor.ai.nothing", bundle: .module))
+                }
             }
             return
         }
@@ -281,13 +296,19 @@ extension EditorModel {
         var skippedTypes = skipped
         var items: [AIChangeItem] = []
         for (n, step) in steps.enumerated() {
+            let stepBefore = project
             guard let targets = step.perform(self) else {
                 skippedTypes.append(contentsOf: step.types)
                 continue
             }
             applied += step.types.count
-            items.append(AIChangeItem(id: n, symbol: step.info.symbol, text: step.info.text, time: nil, targets: targets))
+            items.append(AIChangeItem(
+                id: n, symbol: step.info.symbol, text: step.info.text, time: nil, targets: targets,
+                before: stepBefore, after: project
+            ))
         }
+        inspectedSegment = nil
+        selectedOverlay = nil
 
         project.updatedAt = .now
         seek(to: min(playhead, duration))
@@ -346,6 +367,22 @@ extension EditorModel {
         setAIChanges(set.items.map(\.id), in: setID, reverted: false)
     }
 
+    /// After undo or redo: marks each AI change by whether what it touched now looks as it did
+    /// before it or after it. Anything that matches neither — edited by hand since — keeps its mark.
+    func reconcileAIChanges() {
+        for s in aiChanges.indices {
+            for i in aiChanges[s].items.indices {
+                let item = aiChanges[s].items[i]
+                if project.matches(item.targets, in: item.after) {
+                    aiChanges[s].items[i].reverted = false
+                } else if project.matches(item.targets, in: item.before)
+                            || project.matches(item.targets, in: aiChanges[s].before) {
+                    aiChanges[s].items[i].reverted = true
+                }
+            }
+        }
+    }
+
     /// Goes to a change and lights it again.
     public func showAIChange(_ item: AIChangeItem) {
         if let time = item.time { seek(to: min(max(0, time), duration)) }
@@ -368,7 +405,14 @@ extension EditorModel {
         } else {
             record("editor.change.aiReapply", symbol: "sparkles")
         }
-        let source = reverted ? aiChanges[s].before : aiChanges[s].after
+        // One change: its own moment. Several: the whole run, whose before and after hold them all.
+        let source: Project
+        if indices.count == 1 {
+            let item = aiChanges[s].items[indices[0]]
+            source = reverted ? item.before : item.after
+        } else {
+            source = reverted ? aiChanges[s].before : aiChanges[s].after
+        }
         adopt(project.restoring(targets, from: source))
         for index in indices { aiChanges[s].items[index].reverted = reverted }
 
@@ -587,15 +631,16 @@ extension EditorModel {
             switch op {
             case .addText(let patch):
                 let id = UUID()
+                let here = playhead
                 add("textformat", L("editor.ai.op.addText \(patch.text ?? "")"), op, locate: { m in
-                    let start = max(0, patch.start ?? m.playhead)
+                    let start = max(0, patch.start ?? here)
                     let length = patch.duration ?? patch.end.map { $0 - start } ?? 3
                     return (start + min(0.3, max(0, length) / 2), start...(start + max(Overlay.shortest, length)))
                 }) { m in
                     var overlay = Overlay(
                         id: id,
                         content: .text(OverlayText(text: patch.text ?? "")),
-                        start: MediaTime(seconds: max(0, patch.start ?? m.playhead)),
+                        start: MediaTime(seconds: max(0, patch.start ?? here)),
                         transform: OverlayTransform(y: 0.3),
                         animation: .pop
                     )

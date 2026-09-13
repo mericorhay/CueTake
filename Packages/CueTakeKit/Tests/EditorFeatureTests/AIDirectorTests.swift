@@ -102,6 +102,28 @@ struct AIDirectorTests {
         #expect(words.contains("um"))
     }
 
+    @Test func takingBackACutAfterASplitKeepsBothHalves() throws {
+        let model = model()
+        let clip = model.project.segments[0].id.uuidString
+        model.apply(EditPlan(summary: "", operations: [
+            .splitClip(clip: clip, at: 4),
+            .cut(clip: clip, from: 5.0, to: 5.4),
+        ]))
+        let set = try #require(model.aiChanges.first)
+        let cut = try #require(set.items.last)
+        model.revertAIChange(cut.id, in: set.id)
+
+        #expect(model.project.segments.count == 2)
+        let words = model.project.segments.flatMap { $0.selectedTake?.transcript?.words.map(\.text) ?? [] }
+        #expect(words == ["so", "um", "this", "is", "the", "point"])
+
+        // Undo the take-back: the list follows the project.
+        model.undo()
+        #expect(model.aiChanges[0].items.last?.reverted == false)
+        model.undo()
+        #expect(model.aiChanges[0].items.allSatisfy(\.reverted))
+    }
+
     @Test func captionsAndTheirWindowAreReachable() throws {
         let model = model()
         model.project.segments[0].refreshCaptions(maxWordsPerCue: 3)

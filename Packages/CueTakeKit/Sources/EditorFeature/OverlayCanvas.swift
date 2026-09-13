@@ -63,10 +63,11 @@ struct OverlayCanvas: View {
     private func item(_ overlay: Overlay, in rect: CGRect, selected: Bool, visible: Bool) -> some View {
         let t = overlay.transform
         content(overlay, in: rect)
+            // Before the turn, so the light turns with the overlay instead of framing its old box.
+            .aiGlow(model.glowToken(.overlay(overlay.id)), in: RoundedRectangle(cornerRadius: 6, style: .continuous), inset: 6)
             .scaleEffect(x: t.flipX ? -1 : 1, y: t.flipY ? -1 : 1)
             .rotationEffect(.degrees(t.rotation))
             .opacity(t.opacity * (visible ? 1 : 0.35))
-            .aiGlow(model.glowToken(.overlay(overlay.id)), in: RoundedRectangle(cornerRadius: 6, style: .continuous), inset: 6)
             .overlay {
                 if selected {
                     RoundedRectangle(cornerRadius: 4)
