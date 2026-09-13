@@ -687,7 +687,7 @@ public struct EditorScreen: View {
 
     @ViewBuilder
     private func inspectorBody(for segment: Segment, at index: Int) -> some View {
-        SegmentInspector(model: model, index: index)
+        SegmentInspector(model: model, index: index, onOpenCaptions: onCaptions)
     }
 }
 

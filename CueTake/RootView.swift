@@ -215,7 +215,7 @@ struct RootView: View {
                 // Bound, not copied: every retyped word and nudged timing is the project's.
                 project: $model.project,
                 frames: model.editorModel.thumbnails,
-                onStyleChange: { model.applyCaptionStyle(presetID: $0, position: $1) },
+                onStyleChange: { model.applyCaptionStyle($0) },
                 onBack: { model.openEditor() },
                 onExport: { model.go(to: .export) },
                 onTranscribe: { Task { await model.transcribeNewTakes() } }

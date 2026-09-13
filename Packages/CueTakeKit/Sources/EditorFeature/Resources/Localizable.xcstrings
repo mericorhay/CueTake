@@ -579,6 +579,176 @@
         }
       }
     },
+    "captions.tune": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine-tune the look"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görünümü ince ayarla"
+          }
+        }
+      }
+    },
+    "captions.tune.allClips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "all clips"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tüm klipler"
+          }
+        }
+      }
+    },
+    "captions.tune.case": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LETTERS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HARFLER"
+          }
+        }
+      }
+    },
+    "captions.tune.color": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TEXT COLOUR"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YAZI RENGİ"
+          }
+        }
+      }
+    },
+    "captions.tune.customized": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CUSTOM"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÖZEL"
+          }
+        }
+      }
+    },
+    "captions.tune.highlight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SPOKEN WORD LIGHTS UP IN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÖYLENEN KELİME BU RENKTE YANAR"
+          }
+        }
+      }
+    },
+    "captions.tune.plate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BACKGROUND"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ARKA PLAN"
+          }
+        }
+      }
+    },
+    "captions.tune.reset": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the preset"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazır stile dön"
+          }
+        }
+      }
+    },
+    "captions.tune.size": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIZE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BOYUT"
+          }
+        }
+      }
+    },
+    "captions.tune.words": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAX WORDS ON SCREEN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EKRANDA EN FAZLA KELİME"
+          }
+        }
+      }
+    },
     "editor.ai.applied %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1323,6 +1493,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazılar çekimde gerçekten söylenenden üretiliyor; bir kayıt olmadan yazacak bir şey yok."
+          }
+        }
+      }
+    },
+    "editor.caption.openAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Style & edit all captions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm altyazıları düzenle ve stillendir"
           }
         }
       }

@@ -28,13 +28,15 @@ public struct CaptionsScreen: View {
     /// Frames sampled from each take, for putting the caption over the picture it belongs to.
     private let frames: [Take.ID: [CGImage]]
     /// Reports the look upward: the app regroups cues when the number of words per line changes.
-    private let onStyleChange: (String, CaptionPosition) -> Void
+    private let onStyleChange: (CaptionStyle) -> Void
     private let onBack: () -> Void
     private let onExport: () -> Void
     private let onTranscribe: () -> Void
 
-    @State private var style: Style
+    /// The whole look, preset plus every adjustment. One value for every caption in the video.
+    @State private var look: CaptionStyle
     @State private var positionY: Double
+    @State private var showsTuning = false
     @State private var selectedCueID: CaptionCue.ID?
     @State private var dragOriginY: Double?
     @State private var previewHeight: CGFloat = 1
@@ -55,7 +57,7 @@ public struct CaptionsScreen: View {
     public init(
         project: Binding<Project>,
         frames: [Take.ID: [CGImage]] = [:],
-        onStyleChange: @escaping (String, CaptionPosition) -> Void = { _, _ in },
+        onStyleChange: @escaping (CaptionStyle) -> Void = { _ in },
         onBack: @escaping () -> Void,
         onExport: @escaping () -> Void,
         onTranscribe: @escaping () -> Void = {}
@@ -67,7 +69,7 @@ public struct CaptionsScreen: View {
         self.onExport = onExport
         self.onTranscribe = onTranscribe
         let current = project.wrappedValue.captionStyle
-        _style = State(initialValue: Style.allCases.first { $0.presetID == current.presetID } ?? .pop)
+        _look = State(initialValue: current)
         _positionY = State(initialValue: current.position.y)
     }
 
@@ -101,7 +103,9 @@ public struct CaptionsScreen: View {
     /// The look being previewed. Built locally so a drag moves the caption at sixty frames a second
     /// rather than at the pace of a project write.
     private var previewStyle: CaptionStyle {
-        CaptionStyle.preset(style.presetID, position: CaptionPosition(x: 0.5, y: positionY))
+        var style = look
+        style.position = CaptionPosition(x: 0.5, y: positionY)
+        return style
     }
 
     private var aspect: CGFloat {
@@ -117,7 +121,7 @@ public struct CaptionsScreen: View {
                 .padding(.horizontal, 18)
 
             preview
-                .frame(maxHeight: focusedCue == nil ? 330 : 150)
+                .frame(maxHeight: focusedCue != nil ? 150 : (showsTuning ? 210 : 330))
                 .padding(.top, 12)
                 .padding(.horizontal, 18)
 
@@ -222,7 +226,7 @@ public struct CaptionsScreen: View {
                         time: Self.loopTime(for: cue, at: timeline.date)
                     )
                 }
-                .id("\(cue.id)-\(cue.text)-\(style.rawValue)")
+                .id("\(cue.id)-\(cue.text)-\(look.presetID)")
                 .transition(CaptionOverlay.transition(for: previewStyle))
             }
 
@@ -247,7 +251,7 @@ public struct CaptionsScreen: View {
         .contentShape(Rectangle())
         .gesture(positionDrag, including: rows.isEmpty ? .subviews : .all)
         .animation(DS.Motion.settle, value: selectedCueID)
-        .animation(DS.Motion.snap, value: style)
+        .animation(DS.Motion.snap, value: look)
     }
 
     @ViewBuilder
@@ -406,6 +410,48 @@ public struct CaptionsScreen: View {
                     quickPositionButton(item.point, symbol: item.symbol)
                 }
             }
+
+            Button {
+                withAnimation(DS.Motion.bloom) { showsTuning.toggle() }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 12, weight: .semibold))
+                        .symbolEffect(.bounce, value: showsTuning)
+                    Text("captions.tune", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                    if isCustomized {
+                        Text("captions.tune.customized", bundle: .module)
+                            .dsFont(.mono, .medium, 8)
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(DS.Palette.lime))
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                    Spacer(minLength: 0)
+                    Text("captions.tune.allClips", bundle: .module)
+                        .dsFont(.sans, .regular, 11)
+                        .foregroundStyle(DS.Palette.ink(0.4))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .rotationEffect(.degrees(showsTuning ? 180 : 0))
+                }
+                .foregroundStyle(DS.Palette.ink)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.06)))
+            }
+            .buttonStyle(.dsPress(radius: 14))
+
+            if showsTuning {
+                ScrollView {
+                    CaptionTuningPanel(look: $look, onCommit: report)
+                }
+                .frame(maxHeight: 300)
+                .scrollIndicators(.hidden)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
     }
 
@@ -433,7 +479,8 @@ public struct CaptionsScreen: View {
 
         return Button {
             guard style != option else { return }
-            withAnimation(DS.Motion.snap) { style = option }
+            // A preset is a fresh start: its own size, colours and words per line.
+            withAnimation(DS.Motion.snap) { look = CaptionStyle.preset(option.presetID, position: look.position) }
             snapTick += 1
             report()
         } label: {
@@ -756,7 +803,7 @@ public struct CaptionsScreen: View {
     }
 
     private func rebuildFromSpeech() {
-        let maxWords = CaptionStyle.preset(style.presetID).maxWordsPerCue
+        let maxWords = look.maxWordsPerCue
         for index in project.segments.indices {
             project.segments[index].refreshCaptions(maxWordsPerCue: maxWords)
         }
@@ -765,7 +812,18 @@ public struct CaptionsScreen: View {
     }
 
     private func report() {
-        onStyleChange(style.presetID, CaptionPosition(x: 0.5, y: positionY))
+        onStyleChange(previewStyle)
+    }
+
+    /// The preset card the look came from.
+    private var style: Style {
+        Style.allCases.first { $0.presetID == look.presetID } ?? .pop
+    }
+
+    private var isCustomized: Bool {
+        var preset = CaptionStyle.preset(look.presetID, position: look.position)
+        preset.position = look.position
+        return preset != look
     }
 
     static func timecode(_ seconds: Double) -> String {
@@ -787,5 +845,226 @@ extension CaptionsScreen.Style {
         case .neon: String(localized: "captions.style.neon", bundle: .module)
         case .story: String(localized: "captions.style.story", bundle: .module)
         }
+    }
+}
+
+// MARK: - Fine tuning
+
+extension CaptionsScreen {
+    static let colorSwatches: [(id: String, color: RGBAColor)] = [
+        ("white", .white),
+        ("black", .black),
+        ("lime", RGBAColor(red: 0xE8 / 255, green: 1, blue: 0x4F / 255)),
+        ("yellow", RGBAColor(red: 1, green: 0.84, blue: 0.04)),
+        ("coral", RGBAColor(red: 1, green: 0x5A / 255, blue: 0x4F / 255)),
+        ("sky", RGBAColor(red: 0.35, green: 0.78, blue: 1)),
+    ]
+
+    static let plateSwatches: [(id: String, color: RGBAColor)] = [
+        ("dark", RGBAColor(red: 0.04, green: 0.04, blue: 0.05, alpha: 0.62)),
+        ("white", RGBAColor(red: 1, green: 1, blue: 1, alpha: 0.96)),
+        ("coral", RGBAColor(red: 1, green: 0x5A / 255, blue: 0x4F / 255, alpha: 0.95)),
+        ("lime", RGBAColor(red: 0xE8 / 255, green: 1, blue: 0x4F / 255, alpha: 0.95)),
+    ]
+
+    static let sizeRange: ClosedRange<Double> = 0.018...0.075
+}
+
+/// Every setting of the look, for all captions at once.
+///
+/// The presets decide a lot — face, size, case, colour, plate, words per line — and the only way to
+/// change any of it used to be to pick a different preset, or to fix captions one clip at a time.
+/// These controls change the look of every caption in the video together, on top of whichever
+/// preset they started from, and the preview shows each change as it happens.
+struct CaptionTuningPanel: View {
+    @Binding var look: CaptionStyle
+    /// Called when a change is finished, rather than for every step of a slider.
+    let onCommit: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Size
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.size") {
+                    Text(verbatim: "\(Int((look.relativeFontSize / 0.04 * 100).rounded()))%")
+                        .dsFont(.mono, .medium, 11)
+                        .foregroundStyle(DS.Palette.ink(0.7))
+                        .contentTransition(.numericText())
+                }
+                HStack(spacing: 10) {
+                    Image(systemName: "textformat.size.smaller")
+                        .font(.system(size: 12))
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                    Slider(
+                        value: $look.relativeFontSize,
+                        in: CaptionsScreen.sizeRange,
+                        onEditingChanged: { editing in if !editing { onCommit() } }
+                    )
+                    .tint(DS.Palette.accent)
+                    Image(systemName: "textformat.size.larger")
+                        .font(.system(size: 15))
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                }
+            }
+
+            // Words per line
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.words") {
+                    Text(verbatim: "\(look.maxWordsPerCue)")
+                        .dsFont(.mono, .medium, 11)
+                        .foregroundStyle(DS.Palette.ink(0.7))
+                        .contentTransition(.numericText())
+                }
+                HStack(spacing: 5) {
+                    ForEach(1...8, id: \.self) { count in
+                        let isOn = look.maxWordsPerCue == count
+                        Button {
+                            guard !isOn else { return }
+                            withAnimation(DS.Motion.snap) { look.maxWordsPerCue = count }
+                            onCommit()
+                        } label: {
+                            Text(verbatim: "\(count)")
+                                .dsFont(.mono, .medium, 12)
+                                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                        .fill(isOn ? DS.Palette.accent : DS.Palette.hairline(0.07))
+                                )
+                        }
+                        .buttonStyle(.dsPress(radius: 9))
+                    }
+                }
+            }
+
+            // Case
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.case") { EmptyView() }
+                HStack(spacing: 6) {
+                    caseChip(.natural, "Aa")
+                    caseChip(.uppercase, "AA")
+                    caseChip(.lowercase, "aa")
+                }
+            }
+
+            // Colours
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.color") { EmptyView() }
+                swatches(CaptionsScreen.colorSwatches, selected: look.textColor, allowsNone: false) { color in
+                    look.textColor = color ?? .white
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.highlight") { EmptyView() }
+                swatches(CaptionsScreen.colorSwatches, selected: look.highlightColor, allowsNone: true) { color in
+                    look.highlightColor = color
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                row("captions.tune.plate") { EmptyView() }
+                swatches(CaptionsScreen.plateSwatches, selected: look.backgroundColor, allowsNone: true) { color in
+                    look.backgroundColor = color
+                }
+            }
+
+            Button {
+                withAnimation(DS.Motion.settle) {
+                    look = CaptionStyle.preset(look.presetID, position: look.position)
+                }
+                onCommit()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("captions.tune.reset", bundle: .module)
+                        .dsFont(.sans, .medium, 12)
+                }
+                .foregroundStyle(DS.Palette.ink(0.7))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(DS.Palette.hairline(0.07)))
+            }
+            .buttonStyle(.dsPress(radius: 20))
+            .disabled(look == CaptionStyle.preset(look.presetID, position: look.position))
+            .opacity(look == CaptionStyle.preset(look.presetID, position: look.position) ? 0.4 : 1)
+        }
+        .padding(14)
+        .dsGlass(
+            tint: DS.Palette.glassSheet(0.9),
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous),
+            border: DS.Palette.hairline(0.1)
+        )
+    }
+
+    private func row<Trailing: View>(_ key: String.LocalizationValue, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack {
+            DSKicker(String(localized: key, bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            Spacer(minLength: 0)
+            trailing()
+        }
+    }
+
+    private func caseChip(_ textCase: CaptionTextCase, _ label: String) -> some View {
+        let isOn = look.textCase == textCase
+        return Button {
+            withAnimation(DS.Motion.snap) { look.textCase = textCase }
+            onCommit()
+        } label: {
+            Text(verbatim: label)
+                .dsFont(.sans, .semibold, 13)
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.75))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 10))
+    }
+
+    private func swatches(
+        _ options: [(id: String, color: RGBAColor)],
+        selected: RGBAColor?,
+        allowsNone: Bool,
+        onPick: @escaping (RGBAColor?) -> Void
+    ) -> some View {
+        HStack(spacing: 8) {
+            if allowsNone {
+                let isOn = selected == nil
+                Button {
+                    withAnimation(DS.Motion.snap) { onPick(nil) }
+                    onCommit()
+                } label: {
+                    Image(systemName: "nosign")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(DS.Palette.hairline(0.07)))
+                        .overlay(Circle().stroke(isOn ? DS.Palette.accent : .clear, lineWidth: 2).padding(-3))
+                }
+                .buttonStyle(.dsPressIcon)
+            }
+            ForEach(options, id: \.id) { option in
+                let isOn = selected.map { Self.close($0, option.color) } ?? false
+                Button {
+                    withAnimation(DS.Motion.snap) { onPick(option.color) }
+                    onCommit()
+                } label: {
+                    Circle()
+                        .fill(CaptionOverlay.color(option.color))
+                        .frame(width: 30, height: 30)
+                        .overlay(Circle().stroke(DS.Palette.hairline(0.25), lineWidth: 1))
+                        .overlay(Circle().stroke(isOn ? DS.Palette.accent : .clear, lineWidth: 2).padding(-3))
+                        .scaleEffect(isOn ? 1.08 : 1)
+                }
+                .buttonStyle(.dsPressIcon)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private static func close(_ a: RGBAColor, _ b: RGBAColor) -> Bool {
+        abs(a.red - b.red) < 0.02 && abs(a.green - b.green) < 0.02 && abs(a.blue - b.blue) < 0.02
     }
 }

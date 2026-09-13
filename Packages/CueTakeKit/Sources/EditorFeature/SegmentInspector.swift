@@ -15,6 +15,8 @@ import SwiftUI
 struct SegmentInspector: View {
     @Bindable var model: EditorModel
     let index: Int
+    /// Opens the captions screen, where the look and every caption in the video are edited at once.
+    var onOpenCaptions: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -76,6 +78,26 @@ struct SegmentInspector: View {
     /// the only way to check a caption: against the moment it is on screen.
     private var captions: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // This tab is one clip's captions. The look, and all captions in one list, live on the
+            // captions screen — said here, so nobody styles a video clip by clip.
+            Button(action: onOpenCaptions) {
+                HStack(spacing: 8) {
+                    Image(systemName: "captions.bubble.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("editor.caption.openAll", bundle: .module)
+                        .dsFont(.sans, .semibold, 12)
+                    Spacer(minLength: 0)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundStyle(DS.Palette.inkInverse)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.lime))
+            }
+            .buttonStyle(.dsPress(radius: 12))
+            .padding(.bottom, 4)
+
             if segment.captions.isEmpty {
                 empty("editor.caption.empty", "editor.caption.hint", symbol: "text.bubble")
             } else {

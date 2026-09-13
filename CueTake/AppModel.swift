@@ -326,7 +326,32 @@ final class AppModel {
         }
     }
 
-    /// Applies the caption choice to the project, so it survives leaving the screen.
+    /// Applies a whole look — preset plus every adjustment — to every caption in the project.
+    ///
+    /// Words per line decides where cues break, so a change to it regroups captions from the
+    /// transcript, except in clips where the user has typed their own.
+    func applyCaptionStyle(_ style: CaptionStyle) {
+        let previous = project.captionStyle
+        project.captionStyle = style
+        if previous.maxWordsPerCue != style.maxWordsPerCue {
+            for index in project.segments.indices {
+                guard project.segments[index].selectedTake?.transcript?.words.isEmpty == false,
+                      !project.segments[index].captions.contains(where: \.isUserEdited)
+                else { continue }
+                project.segments[index].refreshCaptions(maxWordsPerCue: style.maxWordsPerCue)
+            }
+        }
+        project.updatedAt = .now
+        editorModel.project = project
+        scheduleSave()
+
+        if let preference = CaptionPreference(rawValue: style.presetID) {
+            settingsModel.update(\.captionPreset, to: preference)
+        }
+        settingsModel.update(\.captionPosition, to: style.position)
+    }
+
+    /// Applies a preset to the project, so it survives leaving the screen.
     func applyCaptionStyle(presetID: String, position: CaptionPosition) {
         // The preset is the whole look now, not a label: face, size, colours, plate and how many
         // words sit on screen at once. Position is the user's own choice and is kept.
