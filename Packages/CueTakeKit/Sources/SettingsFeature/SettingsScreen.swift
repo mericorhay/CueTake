@@ -180,15 +180,6 @@ extension CameraPosition {
     }
 }
 
-extension VideoFormat.Resolution {
-    var label: String {
-        switch self {
-        case .hd1080: "1080p"
-        case .uhd4K: "4K"
-        }
-    }
-}
-
 extension CaptionPreference {
     var label: String {
         switch self {
