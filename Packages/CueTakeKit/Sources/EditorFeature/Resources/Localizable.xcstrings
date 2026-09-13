@@ -2755,6 +2755,23 @@
         }
       }
     },
+    "editor.change.workflow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow run"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow çalıştırıldı"
+          }
+        }
+      }
+    },
     "editor.changes.empty": {
       "extractionState": "manual",
       "localizations": {

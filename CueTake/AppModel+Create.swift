@@ -1,4 +1,6 @@
 import AIServices
+import ScriptFeature
+import SettingsFeature
 import Domain
 import Foundation
 import Persistence

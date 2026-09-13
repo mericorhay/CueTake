@@ -67,6 +67,32 @@ extension EditorModel {
         future.removeAll()
     }
 
+    /// Starts work done from outside the editor — a workflow run — whose many tool calls should be
+    /// one edit. Nothing is recorded until `endBatch(startingFrom:)`.
+    public func beginBatch() {
+        isApplyingPlan = true
+    }
+
+    /// Ends a batch as a single undo step back to `before`.
+    public func endBatch(startingFrom before: Project) {
+        isApplyingPlan = false
+        guard before != project else { return }
+        editCount += 1
+        past.append(
+            EditSnapshot(
+                project: before,
+                entry: ChangeEntry(
+                    id: editCount,
+                    label: String(localized: "editor.change.workflow", bundle: .module),
+                    symbol: "flowchart"
+                ),
+                coalescingKey: nil
+            )
+        )
+        if past.count > 60 { past.removeFirst() }
+        future.removeAll()
+    }
+
     public var canUndo: Bool { !past.isEmpty }
     public var canRedo: Bool { !future.isEmpty }
 

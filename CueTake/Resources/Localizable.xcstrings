@@ -1701,6 +1701,23 @@
           }
         }
       }
+    },
+    "workflow.undoable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow applied. One undo in the editor takes it all back."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow uygulandı. Editörde tek geri al ile hepsi geri döner."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

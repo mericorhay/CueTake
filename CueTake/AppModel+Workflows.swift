@@ -239,6 +239,13 @@ extension AppModel {
         let definition = studio.definition
         studio.beginRun()
 
+        // The whole run is one edit the editor can undo: assembling sections replaces the clips,
+        // and a workflow run on a project someone had already edited used to lose that work.
+        if screen == .editor { adoptEditorEdits() }
+        let before = project
+        editorModel.project = project
+        editorModel.beginBatch()
+
         project.format = definition.style.format
         project.updatedAt = .now
 
@@ -256,9 +263,13 @@ extension AppModel {
         }
 
         editorModel.project = project
+        editorModel.endBatch(startingFrom: before)
         scheduleSave()
         await refreshLibrary()
         studio.finishRun()
+        if before.segments != project.segments {
+            show(notice: String(localized: "workflow.undoable"))
+        }
     }
 
     private func perform(_ kind: WorkflowStepKind, in definition: WorkflowDefinition) async -> StudioStepState {
