@@ -63,6 +63,9 @@ public final class StudioModel {
         guard status.camera == .authorized else { return }
         cameraPosition = position
         camera.start(camera: position)
+        // The project decides what gets shot. Recording 1080p30 into a 4K60 project and finding
+        // out at export is the kind of mistake that costs a reshoot rather than a render.
+        camera.apply(project.format)
     }
 
     public func stopCamera() {

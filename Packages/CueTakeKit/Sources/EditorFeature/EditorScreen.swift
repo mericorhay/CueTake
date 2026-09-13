@@ -11,6 +11,8 @@ public struct EditorScreen: View {
     private let onExport: () -> Void
     private let onCaptions: () -> Void
     private let onRetake: (Segment.ID) -> Void
+    /// Asks the layer that owns the file system to bring a piece of audio in.
+    private let onAddAudio: () -> Void
     /// Asks the layer that knows where media lives to get playback ready.
     private let onPrepare: () async -> Void
 
@@ -20,7 +22,8 @@ public struct EditorScreen: View {
         onBack: @escaping () -> Void,
         onExport: @escaping () -> Void,
         onCaptions: @escaping () -> Void,
-        onRetake: @escaping (Segment.ID) -> Void
+        onRetake: @escaping (Segment.ID) -> Void,
+        onAddAudio: @escaping () -> Void = {}
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -28,6 +31,7 @@ public struct EditorScreen: View {
         self.onExport = onExport
         self.onCaptions = onCaptions
         self.onRetake = onRetake
+        self.onAddAudio = onAddAudio
     }
 
     public var body: some View {
@@ -39,7 +43,9 @@ public struct EditorScreen: View {
 
             Spacer(minLength: 0)
 
-            if let id = model.inspectedSegment,
+            if let clip = model.selectedAudioClip {
+                audioPanel(clip)
+            } else if let id = model.inspectedSegment,
                let index = model.project.segments.firstIndex(where: { $0.id == id }) {
                 inspector(at: index)
             } else {
@@ -161,6 +167,28 @@ public struct EditorScreen: View {
             HStack {
                 DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
                 Spacer(minLength: 0)
+                Button(action: onAddAudio) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text("editor.audio.add", bundle: .module)
+                            .dsFont(.sans, .medium, 11)
+                    }
+                    .foregroundStyle(DS.Palette.ink(0.7))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .fill(DS.Palette.hairline(0.07))
+                    )
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(DS.Palette.hairline(0.1), lineWidth: 1)
+                    }
+                }
+                .buttonStyle(.dsPress(radius: 13))
+                .padding(.trailing, 7)
+
                 Button(action: onCaptions) {
                     Text("editor.captions", bundle: .module)
                         .dsFont(.sans, .medium, 11)
@@ -322,6 +350,65 @@ public struct EditorScreen: View {
                 .buttonStyle(.dsPress)
             }
             .padding(.top, 14)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 30)
+        .frame(maxWidth: .infinity)
+        .background {
+            UnevenRoundedRectangle(
+                topLeadingRadius: DS.Radius.hero,
+                topTrailingRadius: DS.Radius.hero,
+                style: .continuous
+            )
+            .fill(.ultraThinMaterial)
+            .overlay(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: DS.Radius.hero,
+                    topTrailingRadius: DS.Radius.hero,
+                    style: .continuous
+                )
+                .fill(DS.Palette.glassSheet(0.94))
+            )
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(DS.Palette.hairline(0.1))
+                .frame(height: 1)
+        }
+        .dsEnter(.rise(duration: 0.38))
+    }
+
+    /// The audio panel.
+    ///
+    /// Same chrome as the segment inspector on purpose: it is the same place on the screen doing
+    /// the same job for a different selection, and giving it its own look would make it read as a
+    /// different mode rather than a different object.
+    private func audioPanel(_ clip: AudioClip) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Capsule()
+                .fill(DS.Palette.hairline(0.2))
+                .frame(width: 36, height: 4)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 14)
+
+            AudioInspector(model: model, clip: clip)
+
+            Button {
+                withAnimation(DS.Motion.snap) { model.selectedAudio = nil }
+            } label: {
+                Text("editor.done", bundle: .module)
+                    .dsFont(.sans, .semibold, 14)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(DS.Palette.ink)
+                    )
+            }
+            .buttonStyle(.dsPress(radius: 16))
+            .padding(.top, 16)
         }
         .padding(.horizontal, 20)
         .padding(.top, 14)

@@ -24,6 +24,13 @@ public final class EditorModel {
     public private(set) var isPlaying = false
     public var inspectedSegment: Segment.ID?
     public var inspectorTab: InspectorTab = .script
+    /// The audio clip being worked on. Separate from `inspectedSegment` because they are two
+    /// different selections on two different lanes, and collapsing them into one is how an editor
+    /// ends up showing music controls for a piece of footage.
+    public var selectedAudio: AudioClip.ID?
+    /// Drawn peaks, per clip. Computed once per file and kept, because reading a three minute song
+    /// to draw it again on every layout pass is how a timeline starts to stutter.
+    public private(set) var waveforms: [AudioClip.ID: [Float]] = [:]
 
     /// How wide one second is drawn. This is what makes the timeline an editing surface rather
     /// than a diagram: laid out proportionally, a 0.2s trim on a 30s video is two pixels wide and
@@ -31,6 +38,11 @@ public final class EditorModel {
     public var pointsPerSecond: Double = TimelineScale.fit
     /// True while the playhead is being dragged, so playback does not fight the finger.
     public var isScrubbing = false
+
+    /// The last tool that fired, so the timeline can play its answer. Carries a counter rather
+    /// than only a kind, because using the same tool twice in a row has to read as two edits.
+    public private(set) var lastTool: ToolPulse?
+    private var pulseCount = 0
 
     private var task: Task<Void, Never>?
 
@@ -64,6 +76,10 @@ public final class EditorModel {
 
         teardownPlayer()
         let item = AVPlayerItem(asset: assembled.composition)
+        // Levels, fades and ducking in the preview too. An editor whose preview plays the music at
+        // full volume and whose export ducks it is not previewing anything.
+        item.audioMix = assembled.audioMix
+        item.audioTimePitchAlgorithm = .spectral
         // Without this the preview plays raw source frames while the export applies the framing,
         // which is the worst kind of editor: one that shows you something it will not deliver.
         item.videoComposition = assembled.videoComposition
@@ -362,6 +378,16 @@ public final class EditorModel {
         inspectedSegment = merged.id
     }
 
+    /// Announces an edit at the playhead. Called by the tools, watched by the timeline.
+    public func pulse(_ kind: ToolKind) {
+        pulseCount += 1
+        lastTool = ToolPulse(
+            id: pulseCount,
+            kind: kind,
+            position: timelineDuration > 0 ? playhead / timelineDuration : 0
+        )
+    }
+
     public func move(segmentAt index: Int, to destination: Int) {
         guard project.segments.indices.contains(index),
               destination >= 0, destination < project.segments.count,
@@ -370,5 +396,138 @@ public final class EditorModel {
         let segment = project.segments.remove(at: index)
         project.segments.insert(segment, at: destination)
         project.updatedAt = .now
+    }
+}
+
+
+// MARK: - Audio
+
+extension EditorModel {
+    /// Clips in the order they start, which is the order the lane draws them.
+    public var audioClips: [AudioClip] {
+        project.audio.sorted { $0.start.seconds < $1.start.seconds }
+    }
+
+    public var selectedAudioClip: AudioClip? {
+        selectedAudio.flatMap { id in project.audio.first { $0.id == id } }
+    }
+
+    public func addAudio(_ clip: AudioClip) {
+        project.audio.append(clip)
+        project.updatedAt = .now
+        selectedAudio = clip.id
+        inspectedSegment = nil
+    }
+
+    /// Every audio edit goes through here so there is exactly one place that stamps `updatedAt`
+    /// and one place that decides what a legal value is.
+    public func updateAudio(_ id: AudioClip.ID, _ change: (inout AudioClip) -> Void) {
+        guard let index = project.audio.firstIndex(where: { $0.id == id }) else { return }
+        change(&project.audio[index])
+        // Clamped here rather than trusted from the interface: a slider is one caller, and the
+        // next one will be a keyboard, a gesture, or an AI asked to make the music quieter.
+        project.audio[index].gain = min(max(project.audio[index].gain, 0), 2)
+        project.audio[index].speed = min(max(project.audio[index].speed, 0.5), 2)
+        if project.audio[index].start.seconds < 0 {
+            project.audio[index].start = .zero
+        }
+        project.updatedAt = .now
+    }
+
+    public func removeAudio(_ id: AudioClip.ID) {
+        project.audio.removeAll { $0.id == id }
+        waveforms[id] = nil
+        if selectedAudio == id { selectedAudio = nil }
+        project.updatedAt = .now
+    }
+
+    public func duplicateAudio(_ id: AudioClip.ID) {
+        guard let clip = project.audio.first(where: { $0.id == id }) else { return }
+        var copy = clip.copyWithNewIdentity()
+        copy.start = MediaTime(seconds: clip.timelineRange.end.seconds)
+        project.audio.append(copy)
+        project.updatedAt = .now
+        selectedAudio = copy.id
+    }
+
+    /// Splits an audio clip under the playhead, the same way footage splits: two ranges into one
+    /// file, nothing copied.
+    public func splitAudioAtPlayhead(_ id: AudioClip.ID) {
+        guard let clip = project.audio.first(where: { $0.id == id }) else { return }
+        let offset = playhead - clip.start.seconds
+        guard offset > 0.15, clip.timelineDuration.seconds - offset > 0.15 else { return }
+
+        let sourceOffset = offset * clip.speed
+
+        var left = clip
+        left.sourceRange = MediaTimeRange(
+            start: clip.sourceRange.start,
+            duration: MediaTime(seconds: sourceOffset)
+        )
+        left.fadeOut = MediaTime(seconds: 0)
+
+        var right = clip.copyWithNewIdentity()
+        right.start = MediaTime(seconds: playhead)
+        right.sourceRange = MediaTimeRange(
+            start: clip.sourceRange.start + MediaTime(seconds: sourceOffset),
+            duration: clip.sourceRange.duration - MediaTime(seconds: sourceOffset)
+        )
+        right.fadeIn = MediaTime(seconds: 0)
+
+        if let index = project.audio.firstIndex(where: { $0.id == id }) {
+            project.audio[index] = left
+        }
+        project.audio.append(right)
+        project.updatedAt = .now
+        selectedAudio = right.id
+    }
+
+    /// The clip under the playhead, if any. What the split tool acts on when the audio lane has
+    /// the selection.
+    public var audioAtPlayhead: AudioClip? {
+        project.audio.first { $0.timelineRange.contains(MediaTime(seconds: playhead)) }
+    }
+
+    /// Reads the peaks for anything that does not have them yet.
+    ///
+    /// Incremental on purpose: importing a second song should not re-read the first.
+    public func loadWaveforms(mediaDirectory: URL) async {
+        let sampler = WaveformSampler()
+        for clip in project.audio where waveforms[clip.id] == nil {
+            let url = mediaDirectory.appending(
+                path: (clip.relativePath as NSString).lastPathComponent,
+                directoryHint: .notDirectory
+            )
+            let peaks = await sampler.peaks(of: url)
+            guard !peaks.isEmpty else { continue }
+            waveforms[clip.id] = peaks
+        }
+    }
+
+    /// How many rows the audio lane needs.
+    ///
+    /// Lives here rather than in the view because two views need the same answer — the lane draws
+    /// the rows and the playhead has to be tall enough to cross them — and two independent
+    /// calculations of the same number always drift apart eventually.
+    public var audioRowCount: Int {
+        guard !project.audio.isEmpty else { return 0 }
+        var ends: [Double] = []
+        for clip in audioClips {
+            let start = clip.start.seconds
+            if let row = ends.firstIndex(where: { $0 <= start + 0.01 }) {
+                ends[row] = clip.timelineRange.end.seconds
+            } else {
+                ends.append(clip.timelineRange.end.seconds)
+            }
+        }
+        return ends.count
+    }
+
+    /// How long the timeline is once the audio is taken into account.
+    ///
+    /// Music that runs past the last clip is a real thing people do — an outro over black — and a
+    /// timeline that refuses to draw it makes the tail impossible to trim.
+    public var timelineDuration: Double {
+        max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0)
     }
 }

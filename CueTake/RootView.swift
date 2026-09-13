@@ -4,6 +4,7 @@ import EditorFeature
 import LibraryFeature
 import OnboardingFeature
 import PhotosUI
+import UniformTypeIdentifiers
 import ScriptFeature
 import SettingsFeature
 import StudioFeature
@@ -57,6 +58,17 @@ struct RootView: View {
             maxSelectionCount: 30,
             matching: .videos
         )
+        // Files rather than the photo picker: music does not live in the photo library. Copying
+        // happens in the importer, so the security-scoped loan this hands back only has to survive
+        // the copy.
+        .fileImporter(
+            isPresented: $model.isPickingAudio,
+            allowedContentTypes: [.audio, .mp3, .mpeg4Audio, .wav, .aiff],
+            allowsMultipleSelection: true
+        ) { result in
+            guard case .success(let urls) = result, !urls.isEmpty else { return }
+            Task { await model.importAudio(urls) }
+        }
         .onChange(of: pickedFootage) { _, items in
             guard !items.isEmpty else { return }
             let picked = items
@@ -141,8 +153,10 @@ struct RootView: View {
                 onBack: { model.go(to: .home) },
                 onExport: { model.go(to: .export) },
                 onCaptions: { model.go(to: .captions) },
-                onRetake: { model.startRetake(of: $0) }
+                onRetake: { model.startRetake(of: $0) },
+                onAddAudio: { model.isPickingAudio = true }
             )
+            .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
 
         case .retake:
             if let retakeModel = model.retakeModel {
@@ -167,6 +181,7 @@ struct RootView: View {
         case .export:
             ExportScreen(
                 model: model.exportModel,
+                format: $model.project.format,
                 onRender: { Task { await model.exportProject() } },
                 onBack: { model.openEditor() },
                 onDone: { model.finishExport() }

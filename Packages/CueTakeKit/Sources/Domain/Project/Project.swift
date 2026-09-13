@@ -18,6 +18,9 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     /// Physical media files. Takes point into these.
     public var recordings: [Recording]
     public var captionStyle: CaptionStyle
+    /// Music, voiceover and effects laid over the video. Separate from `segments` because they are
+    /// pinned to moments rather than derived from order (see `AudioClip`).
+    public var audio: [AudioClip]
     public var createdAt: Date
     public var updatedAt: Date
     public var metadata: [String: String]
@@ -30,6 +33,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         segments: [Segment] = [],
         recordings: [Recording] = [],
         captionStyle: CaptionStyle = .standard,
+        audio: [AudioClip] = [],
         createdAt: Date = .now,
         metadata: [String: String] = [:]
     ) {
@@ -41,12 +45,39 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         self.segments = segments
         self.recordings = recordings
         self.captionStyle = captionStyle
+        self.audio = audio
         self.createdAt = createdAt
         self.updatedAt = createdAt
         self.metadata = metadata
     }
 
+    /// Hand-written so documents saved before audio existed still open.
+    ///
+    /// The synthesised decoder treats every stored property as required, which means the day a
+    /// field is added is the day every project already on disk stops loading. `schemaVersion` is
+    /// here to make migrations explicit; this is the cheap half of that promise — a missing field
+    /// decodes as its default rather than as a failure.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        format = try container.decode(VideoFormat.self, forKey: .format)
+        localeIdentifier = try container.decode(String.self, forKey: .localeIdentifier)
+        segments = try container.decodeIfPresent([Segment].self, forKey: .segments) ?? []
+        recordings = try container.decodeIfPresent([Recording].self, forKey: .recordings) ?? []
+        captionStyle = try container.decodeIfPresent(CaptionStyle.self, forKey: .captionStyle) ?? .standard
+        audio = try container.decodeIfPresent([AudioClip].self, forKey: .audio) ?? []
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+        metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
+    }
+
     public var locale: Locale { Locale(identifier: localeIdentifier) }
+
+    public func audioClip(id: AudioClip.ID) -> AudioClip? {
+        audio.first { $0.id == id }
+    }
 
     public func segment(id: Segment.ID) -> Segment? {
         segments.first { $0.id == id }
@@ -90,6 +121,40 @@ extension Project {
         guard segments[index].selectedTakeID != takeID else { return }
         segments[index].selectedTakeID = takeID
         segments[index].captions.removeAll()
+        updatedAt = .now
+    }
+}
+
+
+extension Project {
+    /// Where the voice is, in finished-video time.
+    ///
+    /// Ducking needs to know when someone is speaking, and this is the honest answer the document
+    /// can give without listening to anything: a segment with a take is a person talking. Derived
+    /// on demand rather than stored, like every other timeline fact here.
+    public var spokenRanges: [MediaTimeRange] {
+        var ranges: [MediaTimeRange] = []
+        var cursor = 0.0
+        for segment in segments {
+            let length = segment.barWeight
+            if segment.selectedTake != nil {
+                ranges.append(
+                    MediaTimeRange(start: MediaTime(seconds: cursor), duration: MediaTime(seconds: length))
+                )
+            }
+            cursor += length
+        }
+        return ranges
+    }
+
+    public mutating func updateAudio(id: AudioClip.ID, _ change: (inout AudioClip) -> Void) {
+        guard let index = audio.firstIndex(where: { $0.id == id }) else { return }
+        change(&audio[index])
+        updatedAt = .now
+    }
+
+    public mutating func removeAudio(id: AudioClip.ID) {
+        audio.removeAll { $0.id == id }
         updatedAt = .now
     }
 }

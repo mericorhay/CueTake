@@ -24,6 +24,12 @@ public struct VideoComposer: Sendable {
         /// Travels with the composition everywhere. The export needs it, and so does the preview,
         /// or the editor shows something the exported file will not match.
         public var videoComposition: AVMutableVideoComposition
+        /// Levels, fades and ducking. Nil when the project has no audio clips, in which case the
+        /// voice plays at the level it was recorded at, which is right.
+        public var audioMix: AVMutableAudioMix?
+        /// Carried so the writer can choose a codec and a bitrate that match what was asked for
+        /// instead of guessing from the pixels it happens to see.
+        public var format: VideoFormat
     }
 
     /// Assembles the project's selected takes, in segment order.
@@ -100,6 +106,13 @@ public struct VideoComposer: Sendable {
 
         guard !instructions.isEmpty else { throw ComposeError.nothingToCompose }
 
+        let audioMix = await mix(
+            project: project,
+            mediaDirectory: mediaDirectory,
+            into: composition,
+            voiceTrack: audioTrack
+        )
+
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = renderSize
         videoComposition.frameDuration = CMTime(
@@ -108,7 +121,89 @@ public struct VideoComposer: Sendable {
         )
         videoComposition.instructions = instructions
 
-        return Assembled(composition: composition, videoComposition: videoComposition)
+        return Assembled(
+            composition: composition,
+            videoComposition: videoComposition,
+            audioMix: audioMix,
+            format: project.format
+        )
+    }
+
+    // MARK: - Audio
+
+    /// Lays the music, voiceovers and effects into the composition and builds the mix.
+    ///
+    /// One composition track per clip, rather than one shared track: two clips that overlap in
+    /// time cannot live on the same track, and the moment someone puts a sting over a bed of music
+    /// a single track silently drops one of them. A track per clip is also what makes per-clip
+    /// levels possible at all — `AVAudioMix` addresses tracks, not ranges.
+    private func mix(
+        project: Project,
+        mediaDirectory: URL,
+        into composition: AVMutableComposition,
+        voiceTrack: AVMutableCompositionTrack
+    ) async -> AVMutableAudioMix? {
+        guard !project.audio.isEmpty else { return nil }
+
+        let renderer = AudioEffectRenderer()
+        let spoken = project.spokenRanges
+        var parameters: [AVMutableAudioMixInputParameters] = []
+
+        for clip in project.audio {
+            guard let track = composition.addMutableTrack(
+                withMediaType: .audio,
+                preferredTrackID: kCMPersistentTrackID_Invalid
+            ) else { continue }
+
+            let url = await renderer.source(for: clip, in: mediaDirectory)
+            let asset = AVURLAsset(url: url)
+            guard let source = try? await asset.loadTracks(withMediaType: .audio).first,
+                  let assetDuration = try? await asset.load(.duration)
+            else { continue }
+
+            let start = CMTime(seconds: clip.sourceRange.start.seconds, preferredTimescale: 600)
+            guard start < assetDuration else { continue }
+            let wanted = CMTime(seconds: clip.sourceRange.duration.seconds, preferredTimescale: 600)
+            let range = CMTimeRange(start: start, duration: min(wanted, assetDuration - start))
+            guard range.duration.seconds > 0.01 else { continue }
+
+            let at = CMTime(seconds: clip.start.seconds, preferredTimescale: 600)
+            guard (try? track.insertTimeRange(range, of: source, at: at)) != nil else { continue }
+
+            // Speed. Scaling the inserted range rather than resampling the file: the source is
+            // untouched, the change is one number, and it can be undone by typing 1. Pitch is
+            // preserved at the writer, which is the difference between a faster voice and a
+            // cartoon one.
+            if abs(clip.speed - 1) > 0.01 {
+                let scaled = CMTime(seconds: clip.timelineDuration.seconds, preferredTimescale: 600)
+                track.scaleTimeRange(CMTimeRange(start: at, duration: range.duration), toDuration: scaled)
+            }
+
+            let input = AVMutableAudioMixInputParameters(track: track)
+            for ramp in AudioEnvelope.ramps(for: clip, spoken: spoken) {
+                input.setVolumeRamp(
+                    fromStartVolume: Float(ramp.from),
+                    toEndVolume: Float(ramp.to),
+                    timeRange: CMTimeRange(
+                        start: CMTime(seconds: clip.start.seconds + ramp.start, preferredTimescale: 600),
+                        duration: CMTime(seconds: ramp.duration, preferredTimescale: 600)
+                    )
+                )
+            }
+            parameters.append(input)
+        }
+
+        guard !parameters.isEmpty else { return nil }
+
+        // The voice is named explicitly at full volume. Without an entry of its own it inherits
+        // whatever the mix decides, and a track nobody described is a track that can surprise you.
+        let voice = AVMutableAudioMixInputParameters(track: voiceTrack)
+        voice.setVolume(1, at: .zero)
+        parameters.append(voice)
+
+        let audioMix = AVMutableAudioMix()
+        audioMix.inputParameters = parameters
+        return audioMix
     }
 
     /// Places one clip inside the render frame.
@@ -156,13 +251,22 @@ public struct VideoComposer: Sendable {
         // A passthrough preset ignores the video composition and hands back the source frames,
         // sideways and unscaled. The render size lives in the composition, so the preset only has
         // to be one that re-encodes.
-        guard let session = AVAssetExportSession(
-            asset: assembled.composition,
-            presetName: AVAssetExportPresetHighestQuality
-        ) else {
+        // Above 1080p the codec is not a preference. H.264 has no level that carries 8K, and at
+        // 4K it costs roughly twice the file for the same picture.
+        let preset = assembled.format.resolution.prefersHEVC
+            ? AVAssetExportPresetHEVCHighestQuality
+            : AVAssetExportPresetHighestQuality
+
+        guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset)
+            ?? AVAssetExportSession(asset: assembled.composition, presetName: AVAssetExportPresetHighestQuality)
+        else {
             throw ComposeError.exportFailed("no export session")
         }
         session.videoComposition = assembled.videoComposition
+        session.audioMix = assembled.audioMix
+        // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
+        // leaves a sped-up voice sounding like the same person.
+        session.audioTimePitchAlgorithm = .spectral
 
         // `AVAssetExportSession` is not Sendable, so the polling task cannot hold it. Reading one
         // atomic float from another thread is safe in a way the type system has no way to express,

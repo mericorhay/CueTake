@@ -25,6 +25,8 @@ public final class RetakeModel {
     public var choice: Choice = .new
 
     public let segment: Segment
+    /// What the rest of the project was shot at, so a retake matches it.
+    public var format: VideoFormat = .vertical1080
     private var task: Task<Void, Never>?
 
     public let camera = CameraSession()
@@ -39,6 +41,7 @@ public final class RetakeModel {
         cameraAuthorization = status.camera
         guard status.camera == .authorized else { return }
         camera.start(camera: position)
+        camera.apply(format)
     }
 
     public func stopCamera() {

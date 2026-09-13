@@ -244,6 +244,43 @@ final class AppModel {
     func prepareEditorPlayback() async {
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
         await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
+        // After playback, not before: the waveforms are for looking at and the player is for
+        // working with, and reading three minutes of song should never be what delays a play.
+        await editorModel.loadWaveforms(mediaDirectory: mediaDirectory)
+    }
+
+    // MARK: - Audio
+
+    /// Drives the audio file picker.
+    var isPickingAudio = false
+
+    /// Brings music, a voiceover or an effect into the open project.
+    ///
+    /// Dropped at the playhead rather than at zero: someone adding a sound is almost always adding
+    /// it *here*, at the moment they are looking at, and a clip that lands at the start of the
+    /// video every time is a clip that has to be dragged back every time.
+    func importAudio(_ urls: [URL]) async {
+        guard !urls.isEmpty else { return }
+        busy = String(localized: "busy.importing.audio")
+        defer { busy = nil }
+
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
+        let importer = MediaImporter()
+        let at = MediaTime(seconds: editorModel.playhead)
+
+        for url in urls {
+            guard let imported = try? await importer.importAudio(
+                from: url,
+                startingAt: at,
+                into: mediaDirectory
+            ) else { continue }
+            editorModel.addAudio(imported.clip)
+        }
+
+        project = editorModel.project
+        scheduleSave()
+        // The mix changed, so what the preview plays is now wrong until it is rebuilt.
+        await prepareEditorPlayback()
     }
 
     // MARK: - Export
@@ -543,9 +580,23 @@ final class AppModel {
         go(to: .editor)
     }
 
+    /// Takes the editor's edits back.
+    ///
+    /// The editor owns its own copy of the project while it is open — that is what lets it hold a
+    /// playhead and a selection across navigation — and a copy that is never read back is a copy
+    /// that loses work. Everything the editor does, cuts and audio alike, arrives here and from
+    /// here goes to disk and to the exporter.
+    func adoptEditorEdits() {
+        guard project != editorModel.project else { return }
+        project = editorModel.project
+    }
+
     func startRetake(of segmentID: Segment.ID) {
         guard let segment = project.segment(id: segmentID) else { return }
         retakeModel = RetakeModel(segment: segment)
+        // Matched to the rest of the project, or the retake comes back a different shape from the
+        // shot it is replacing.
+        retakeModel?.format = project.format
         go(to: .retake)
     }
 

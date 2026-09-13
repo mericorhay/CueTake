@@ -1,4 +1,5 @@
 import DesignSystem
+import Domain
 import Observation
 import SwiftUI
 
@@ -67,6 +68,10 @@ public final class ExportModel {
 
 public struct ExportScreen: View {
     @Bindable private var model: ExportModel
+    /// Bound to the project, not to a copy: the format chosen here is what the project *is*, and
+    /// an export screen that quietly renders at something other than what the editor previewed
+    /// is the oldest lie in video software.
+    @Binding private var format: VideoFormat
     private let captionStyleName: String
     private let onRender: () -> Void
     private let onBack: () -> Void
@@ -74,12 +79,14 @@ public struct ExportScreen: View {
 
     public init(
         model: ExportModel,
+        format: Binding<VideoFormat>,
         captionStyleName: String = "pop",
         onRender: @escaping () -> Void,
         onBack: @escaping () -> Void,
         onDone: @escaping () -> Void
     ) {
         self.model = model
+        self._format = format
         self.captionStyleName = captionStyleName
         self.onRender = onRender
         self.onBack = onBack
@@ -103,6 +110,11 @@ public struct ExportScreen: View {
     public var body: some View {
         VStack(spacing: 0) {
             header
+
+            if model.isIdle {
+                formatPicker
+                    .padding(.top, 16)
+            }
 
             VStack(spacing: 0) {
                 ForEach(Array(stages.enumerated()), id: \.offset) { index, stage in
@@ -173,6 +185,90 @@ public struct ExportScreen: View {
             Spacer(minLength: 0)
             Color.clear.frame(width: 34, height: 34)
         }
+    }
+
+    // MARK: - Format
+
+    /// Resolution and frame rate, before the render rather than buried in settings.
+    ///
+    /// This is the last moment anybody can change it and the first moment most people think about
+    /// it. Combinations no phone can write are not offered — see `isPhysicallyPlausible` — because
+    /// an option that fails at the end of a four minute render is worse than no option.
+    private var formatPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                DSKicker(String(localized: "export.format", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                Spacer(minLength: 0)
+                Text(Self.sizeEstimate(for: format))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .contentTransition(.numericText())
+            }
+
+            HStack(spacing: 6) {
+                ForEach(VideoFormat.Resolution.allCases, id: \.self) { resolution in
+                    chip(resolution.label, isOn: format.resolution == resolution) {
+                        format.resolution = resolution
+                        // Dropping to something the pair can actually be. Choosing 8K and keeping
+                        // 120fps would leave the screen showing a format that does not exist.
+                        if !format.isPhysicallyPlausible { format.frameRate = 30 }
+                    }
+                }
+            }
+
+            HStack(spacing: 6) {
+                ForEach(VideoFormat.frameRateChoices, id: \.self) { rate in
+                    let candidate = VideoFormat(
+                        aspectRatio: format.aspectRatio,
+                        resolution: format.resolution,
+                        frameRate: rate
+                    )
+                    chip(
+                        "\(rate)",
+                        isOn: format.frameRate == rate,
+                        enabled: candidate.isPhysicallyPlausible
+                    ) {
+                        format.frameRate = rate
+                    }
+                }
+            }
+        }
+        .animation(DS.Motion.snap, value: format)
+    }
+
+    private func chip(
+        _ label: String,
+        isOn: Bool,
+        enabled: Bool = true,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(label)
+                .dsFont(.mono, .medium, 12)
+                .foregroundStyle(
+                    enabled
+                        ? (isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.6))
+                        : DS.Palette.ink(0.2)
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07))
+                )
+                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.dsPress(radius: 12))
+        .disabled(!enabled)
+    }
+
+    /// Roughly how big the file will be, per minute.
+    ///
+    /// Per minute rather than in total because the total is a number nobody can check, and the
+    /// point of showing it is to make 8K120 feel like what it is before it fills a phone.
+    static func sizeEstimate(for format: VideoFormat) -> String {
+        let megabytesPerMinute = Double(format.suggestedBitRate) * 60 / 8 / 1_000_000
+        return String(format: "~%.0f MB/min", megabytesPerMinute)
     }
 
     private func stageCard(_ stage: Stage, at index: Int) -> some View {

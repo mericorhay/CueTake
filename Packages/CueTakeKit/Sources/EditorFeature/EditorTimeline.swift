@@ -20,7 +20,17 @@ struct EditorTimeline: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var scale: Double { model.pointsPerSecond }
-    private var contentWidth: CGFloat { CGFloat(model.duration * scale) }
+    /// The audio can run past the last clip — an outro over black is a real thing — so the surface
+    /// is as long as the longest of the two, not as long as the footage.
+    private var contentWidth: CGFloat { CGFloat(model.timelineDuration * scale) }
+
+    private var audioHeight: CGFloat {
+        let rows = model.audioRowCount
+        guard rows > 0 else { return 0 }
+        return CGFloat(rows) * AudioLane.rowHeight
+            + CGFloat(rows - 1) * AudioLane.rowSpacing
+            + 7
+    }
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -28,9 +38,20 @@ struct EditorTimeline: View {
                 VStack(alignment: .leading, spacing: 7) {
                     ruler
                     clipRow
+                    if model.audioRowCount > 0 {
+                        AudioLane(model: model, scale: scale)
+                    }
                 }
 
                 playhead
+
+                // The tool's own answer, drawn over the surface it acted on. Keyed by the pulse so
+                // using the same tool twice in a row plays twice rather than once.
+                if let pulse = model.lastTool {
+                    ToolFlourish(pulse: pulse)
+                        .id(pulse.id)
+                        .frame(width: max(contentWidth, 1), height: 96 + audioHeight)
+                }
             }
             .frame(width: max(contentWidth, 1), alignment: .topLeading)
             .padding(.vertical, 6)
@@ -42,7 +63,7 @@ struct EditorTimeline: View {
         }
         .scrollIndicators(.hidden)
         .scrollDisabled(model.isScrubbing || trim != nil || lift != nil)
-        .frame(height: 108)
+        .frame(height: 108 + audioHeight)
         .sensoryFeedback(.selection, trigger: snapCount)
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.pointsPerSecond)
     }
@@ -51,7 +72,7 @@ struct EditorTimeline: View {
 
     private var ruler: some View {
         let interval = TimelineScale.tickInterval(pointsPerSecond: scale)
-        let count = Int(model.duration / interval) + 1
+        let count = Int(model.timelineDuration / interval) + 1
 
         return ZStack(alignment: .topLeading) {
             ForEach(0..<max(count, 1), id: \.self) { index in
@@ -153,7 +174,7 @@ struct EditorTimeline: View {
         let x = CGFloat(model.playhead * scale)
         return Rectangle()
             .fill(DS.Palette.ink)
-            .frame(width: 2, height: 96)
+            .frame(width: 2, height: 96 + audioHeight)
             .overlay(alignment: .top) {
                 Capsule()
                     .fill(DS.Palette.ink)

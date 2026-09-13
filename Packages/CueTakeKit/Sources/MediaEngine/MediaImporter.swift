@@ -19,6 +19,7 @@ public struct MediaImporter: Sendable {
     public enum ImportError: Error, Hashable, Sendable {
         case unreadable(URL)
         case notVideo(URL)
+        case notAudio(URL)
     }
 
     /// One imported clip: the file in place, plus what was learned by reading it.
@@ -98,13 +99,82 @@ public struct MediaImporter: Sendable {
             else if height > width { .portrait9x16 }
             else { .landscape16x9 }
 
+        // Thresholds a little under the nominal edge, because footage is not always exactly the
+        // number on the box: 3840, 4096 and 4056 are all 4K as far as anybody cares.
         let longEdge = max(width, height)
-        let resolution: VideoFormat.Resolution = longEdge >= 2000 ? .uhd4K : .hd1080
+        let resolution: VideoFormat.Resolution =
+            if longEdge >= 7000 { .uhd8K }
+            else if longEdge >= 2000 { .uhd4K }
+            else { .hd1080 }
 
         return VideoFormat(
             aspectRatio: ratio,
             resolution: resolution,
             frameRate: frameRate > 0 ? Int(frameRate.rounded()) : 30
+        )
+    }
+}
+
+
+extension MediaImporter {
+    /// One imported sound: the file in place, and a clip ready to drop on the timeline.
+    public struct ImportedAudio: Hashable, Sendable {
+        public var clip: AudioClip
+    }
+
+    /// Brings a piece of music, a voiceover or an effect into the project.
+    ///
+    /// The same promise as footage: copied, not referenced. A track picked out of Files is a loan
+    /// that ends when the picker's scope does, and a project whose music disappears a week later
+    /// is worse than one that never had any.
+    public func importAudio(
+        from source: URL,
+        role: AudioClip.Role = .music,
+        startingAt start: MediaTime = .zero,
+        into mediaDirectory: URL
+    ) async throws -> ImportedAudio {
+        try fileManager.createDirectory(at: mediaDirectory, withIntermediateDirectories: true)
+
+        let id = UUID()
+        let fileExtension = source.pathExtension.isEmpty ? "m4a" : source.pathExtension
+        let fileName = "\(id.uuidString).\(fileExtension)"
+        let destination = mediaDirectory.appending(path: fileName, directoryHint: .notDirectory)
+
+        let scoped = source.startAccessingSecurityScopedResource()
+        defer { if scoped { source.stopAccessingSecurityScopedResource() } }
+
+        do {
+            if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
+                try fileManager.removeItem(at: destination)
+            }
+            try fileManager.copyItem(at: source, to: destination)
+        } catch {
+            throw ImportError.unreadable(source)
+        }
+
+        let asset = AVURLAsset(url: destination)
+        guard let duration = try? await asset.load(.duration),
+              duration.seconds > 0.05,
+              ((try? await asset.loadTracks(withMediaType: .audio))?.first) != nil
+        else {
+            try? fileManager.removeItem(at: destination)
+            throw ImportError.notAudio(source)
+        }
+
+        return ImportedAudio(
+            clip: AudioClip(
+                id: id,
+                name: source.deletingPathExtension().lastPathComponent,
+                relativePath: "media/\(fileName)",
+                role: role,
+                start: start,
+                sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: duration.seconds)),
+                // Music arrives loud. Laid in at unity it buries the voice, and the first thing
+                // every user does is reach for the level — so it lands where they would have put
+                // it, roughly −8 dB, and ducking does the rest.
+                gain: role == .music ? 0.4 : 1,
+                ducksUnderVoice: role == .music
+            )
         )
     }
 }

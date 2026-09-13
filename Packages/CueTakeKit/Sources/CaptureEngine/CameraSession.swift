@@ -189,6 +189,84 @@ public final class CameraSession: @unchecked Sendable {
         session.commitConfiguration()
     }
 
+    // MARK: - Capture format
+
+    /// Asks the sensor for a specific resolution and frame rate.
+    ///
+    /// `sessionPreset` cannot express this. A preset is a rough size and nothing at all about
+    /// frames per second, so anything above 30 — and 4K or 8K at any rate — has to be chosen from
+    /// the device's own format list. This is the difference between an app that records what the
+    /// project asked for and one that records whatever the preset felt like.
+    ///
+    /// Silent when the format does not exist rather than failing: a phone that cannot shoot 8K
+    /// should still record, at the best thing it has.
+    public func apply(_ format: VideoFormat) {
+        queue.async { [self] in
+            guard let device = videoDevice,
+                  let best = Self.bestFormat(on: device, for: format)
+            else { return }
+
+            do {
+                try device.lockForConfiguration()
+                device.activeFormat = best
+                // Both ends pinned. Leaving the maximum open lets the camera drop frames in low
+                // light, which is sensible for a photo app and ruinous for footage that has to
+                // line up with a timeline.
+                let duration = CMTime(value: 1, timescale: CMTimeScale(format.frameRate))
+                device.activeVideoMinFrameDuration = duration
+                device.activeVideoMaxFrameDuration = duration
+                device.unlockForConfiguration()
+            } catch {
+                // The camera is in use by something else. The session keeps whatever it had.
+            }
+        }
+    }
+
+    /// Which resolutions and frame rates this device can actually deliver.
+    ///
+    /// Used to build the format control, so it offers 120fps only on hardware that has it instead
+    /// of offering it everywhere and failing quietly on the phones that do not.
+    public func availableFormats(for camera: CameraPosition) -> [(resolution: VideoFormat.Resolution, frameRates: [Int])] {
+        let position: AVCaptureDevice.Position = camera == .front ? .front : .back
+        guard let device = videoDevice ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position)
+        else { return [] }
+
+        return VideoFormat.Resolution.allCases.compactMap { resolution in
+            let rates = VideoFormat.frameRateChoices.filter { rate in
+                Self.bestFormat(
+                    on: device,
+                    for: VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: rate)
+                ) != nil
+            }
+            return rates.isEmpty ? nil : (resolution, rates)
+        }
+    }
+
+    /// The narrowest format that satisfies the request.
+    ///
+    /// Narrowest rather than largest: a format bigger than what was asked for costs battery, heat
+    /// and a thermal throttle three minutes into a take, and none of it reaches the export, which
+    /// scales to the project's render size anyway.
+    static func bestFormat(on device: AVCaptureDevice, for wanted: VideoFormat) -> AVCaptureDevice.Format? {
+        let targetShortEdge = wanted.resolution.shortEdge
+        let fps = Double(wanted.frameRate)
+
+        return device.formats
+            .filter { format in
+                let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+                let shortEdge = Int(min(dimensions.width, dimensions.height))
+                guard shortEdge >= targetShortEdge else { return false }
+                return format.videoSupportedFrameRateRanges.contains {
+                    $0.maxFrameRate + 0.01 >= fps && $0.minFrameRate - 0.01 <= fps
+                }
+            }
+            .min { left, right in
+                let a = CMVideoFormatDescriptionGetDimensions(left.formatDescription)
+                let b = CMVideoFormatDescriptionGetDimensions(right.formatDescription)
+                return Int(a.width) * Int(a.height) < Int(b.width) * Int(b.height)
+            }
+    }
+
     private static func input(for camera: CameraPosition) -> AVCaptureDeviceInput? {
         let position: AVCaptureDevice.Position = camera == .front ? .front : .back
         // The virtual multi-camera device where there is one: it switches between the ultra-wide,

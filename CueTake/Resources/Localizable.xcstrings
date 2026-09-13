@@ -18,6 +18,23 @@
         }
       }
     },
+    "busy.importing.audio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bringing the sound in…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses içeri alınıyor…"
+          }
+        }
+      }
+    },
     "busy.importing.progress %lld %lld": {
       "extractionState": "manual",
       "localizations": {
