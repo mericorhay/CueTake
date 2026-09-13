@@ -993,6 +993,74 @@
         }
       }
     },
+    "script.add": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a part"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bölüm ekle"
+          }
+        }
+      }
+    },
+    "script.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
+    "script.done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitti"
+          }
+        }
+      }
+    },
+    "script.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to write this part"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu kısmı yazmak için dokun"
+          }
+        }
+      }
+    },
     "script.kicker %lld": {
       "comment": "Header stamp; the argument is the script's word count.",
       "extractionState": "manual",
@@ -1029,6 +1097,40 @@
         }
       }
     },
+    "script.moveDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aşağı taşı"
+          }
+        }
+      }
+    },
+    "script.moveUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yukarı taşı"
+          }
+        }
+      }
+    },
     "script.natural.prefix": {
       "extractionState": "manual",
       "localizations": {
@@ -1046,6 +1148,40 @@
         }
       }
     },
+    "script.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What you say here…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burada ne söyleyeceksin…"
+          }
+        }
+      }
+    },
+    "script.rewrite.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't rewrite that part. Try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu kısım yeniden yazılamadı. Tekrar dene."
+          }
+        }
+      }
+    },
     "script.rewrite.prefix": {
       "extractionState": "manual",
       "localizations": {
@@ -1059,6 +1195,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cidden,"
+          }
+        }
+      }
+    },
+    "script.rewrite.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rewriting needs Apple Intelligence turned on in Settings. You can still edit the text by hand."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden yazmak için Ayarlar'da Apple Intelligence açık olmalı. Metni yine de elle düzenleyebilirsin."
           }
         }
       }
@@ -1093,6 +1246,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stüdyoya geç"
+          }
+        }
+      }
+    },
+    "script.undo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri al"
           }
         }
       }
