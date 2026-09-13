@@ -118,7 +118,7 @@ public struct StudioScreen: View {
             }
         } else {
             HStack(alignment: .top, spacing: 10) {
-                DSCircleButton("←", style: .glass, action: onBack)
+                DSBackButton(style: .glass, action: onBack)
 
                 Spacer(minLength: 0)
 

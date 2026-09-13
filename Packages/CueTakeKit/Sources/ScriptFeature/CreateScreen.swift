@@ -83,7 +83,7 @@ public struct CreateScreen: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DSCircleButton("←", action: onBack)
+            DSBackButton(action: onBack)
 
             DSHeadline(String(localized: "create.title", bundle: .module), size: 36, lineHeight: 0.98)
                 .padding(.top, 22)

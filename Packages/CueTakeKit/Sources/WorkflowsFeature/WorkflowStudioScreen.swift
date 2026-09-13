@@ -90,7 +90,7 @@ public struct WorkflowStudioScreen: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            DSCircleButton("←", size: 34, fontSize: 15, action: onBack)
+            DSBackButton(size: 34, fontSize: 15, action: onBack)
 
             VStack(alignment: .leading, spacing: 1) {
                 TextField(

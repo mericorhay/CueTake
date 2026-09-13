@@ -26,3 +26,6 @@ Gemfile.lock
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/test_output/
+
+# Assistant endpoint, written by CI from repository secrets
+CueTake/Resources/AssistantEndpoint.json

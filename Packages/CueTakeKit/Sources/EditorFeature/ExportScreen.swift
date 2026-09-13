@@ -179,7 +179,7 @@ public struct ExportScreen: View {
 
     private var header: some View {
         HStack {
-            DSCircleButton("←", size: 34, fontSize: 15, action: onBack)
+            DSBackButton(size: 34, fontSize: 15, action: onBack)
             Spacer(minLength: 0)
             DSKicker(String(localized: "export.kicker", bundle: .module))
             Spacer(minLength: 0)

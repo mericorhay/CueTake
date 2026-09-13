@@ -21,6 +21,8 @@ struct AppDependencies {
     /// session and the studio still works.
     var workflowStore: WorkflowStore?
     var workflowAuthor: FoundationModelsWorkflowAuthor
+    var assistantStore: AssistantStore?
+    var assistantClient: AssistantClient
 
     /// Falls back to memory if Application Support cannot be opened. Losing projects is bad;
     /// refusing to launch over it is worse, and the fallback keeps the session usable.
@@ -43,6 +45,8 @@ struct AppDependencies {
         ai: AICapabilityRouter(providers: [FoundationModelsScriptWriter(), RemoteAIProvider()]),
         workflowRunner: WorkflowRunner(handlers: []),
         workflowStore: try? WorkflowStore.inApplicationSupport(),
-        workflowAuthor: FoundationModelsWorkflowAuthor()
+        workflowAuthor: FoundationModelsWorkflowAuthor(),
+        assistantStore: try? AssistantStore.inApplicationSupport(),
+        assistantClient: AssistantClient.bundled()
     )
 }

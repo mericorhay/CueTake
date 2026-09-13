@@ -161,7 +161,7 @@ public struct EditorScreen: View {
 
     private var topBar: some View {
         HStack {
-            DSCircleButton("←", size: 34, fontSize: 15, action: onBack)
+            DSBackButton(size: 34, fontSize: 15, action: onBack)
 
             Text(model.project.title)
                 .dsFont(.sans, .semibold, 13)

@@ -152,7 +152,7 @@ public struct RetakeScreen: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
-                    DSCircleButton("←", size: 34, fontSize: 15, style: .glass, action: onBack)
+                    DSBackButton(size: 34, fontSize: 15, style: .glass, action: onBack)
                     DSKicker(
                         String(localized: "retake.kicker \(model.segment.role.displayLabel)", bundle: .module),
                         color: DS.Palette.ink(0.55)

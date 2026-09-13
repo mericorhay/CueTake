@@ -14,7 +14,7 @@ let modules: [String] = [
     "Domain",
     "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine",
     "DesignSystem", "Teleprompter",
-    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature",
+    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature",
 ]
 
 func engine(_ name: String, _ dependencies: [Target.Dependency] = ["Domain"]) -> Target {
@@ -57,6 +57,7 @@ let package = Package(
         uiModule("WorkflowsFeature", ["Domain", "DesignSystem", "WorkflowEngine"]),
         // MediaEngine for the format converter, which is the one piece of Settings that does
         // real work to a file.
+        uiModule("AssistantFeature", ["Domain", "DesignSystem"]),
         uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),

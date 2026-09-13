@@ -37,7 +37,7 @@ public struct BlueprintScreen: View {
 
     private var header: some View {
         HStack {
-            DSCircleButton("←", action: onBack)
+            DSBackButton(action: onBack)
             Spacer(minLength: 0)
             DSKicker(String(localized: "blueprint.kicker \(project.estimatedTotalLabel)", bundle: .module))
             Spacer(minLength: 0)

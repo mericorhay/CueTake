@@ -1,4 +1,5 @@
 import AIServices
+import AssistantFeature
 import AVFoundation
 import Domain
 import EditorFeature
@@ -153,6 +154,14 @@ final class AppModel {
     /// Set when clips are being picked from inside a workflow, so the import comes back to it.
     var importReturnsToWorkflow = false
     var workflowSaveTask: Task<Void, Never>?
+
+    // MARK: - Assistant & journey state (behaviour in AppModel+Assistant)
+
+    let assistant = AssistantModel(isConnected: AppDependencies.live.assistantClient.isConfigured)
+    var isAssistantOpen = false
+    /// The journey map: where the user is, what is next, and the way to ask.
+    var isJourneyOpen = false
+    var isAssistantWired = false
 
     /// Turns picked clips into segments, in the order they were chosen.
     ///

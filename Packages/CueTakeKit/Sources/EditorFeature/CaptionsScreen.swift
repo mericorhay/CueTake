@@ -143,7 +143,7 @@ public struct CaptionsScreen: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            DSCircleButton("←", size: 34, fontSize: 15, style: .glass, action: onBack)
+            DSBackButton(size: 34, fontSize: 15, style: .glass, action: onBack)
             DSKicker(String(localized: "captions.kicker", bundle: .module), color: DS.Palette.ink(0.55))
             Spacer(minLength: 0)
             Button(action: onExport) {

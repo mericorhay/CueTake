@@ -93,6 +93,21 @@ jobs:
           echo "IOS_CERT_PATH=$RUNNER_TEMP/dist_legacy.p12" >> "$GITHUB_ENV"
           echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
 
+      # The assistant endpoint is written into the bundle from secrets and never committed.
+      # Without both secrets the file is simply not written, and the app shows the assistant
+      # as not connected instead of failing the build.
+      - name: Assistant endpoint
+        env:
+          CUETAKE_ASSISTANT_URL: ${{ secrets.CUETAKE_ASSISTANT_URL }}
+          CUETAKE_ASSISTANT_TOKEN: ${{ secrets.CUETAKE_ASSISTANT_TOKEN }}
+        run: |
+          if [ -n "$CUETAKE_ASSISTANT_URL" ] && [ -n "$CUETAKE_ASSISTANT_TOKEN" ]; then
+            python3 -c 'import json,os; json.dump({"url": os.environ["CUETAKE_ASSISTANT_URL"], "appToken": os.environ["CUETAKE_ASSISTANT_TOKEN"]}, open("CueTake/Resources/AssistantEndpoint.json","w"))'
+            echo "Assistant endpoint written."
+          else
+            echo "::warning::CUETAKE_ASSISTANT_URL / CUETAKE_ASSISTANT_TOKEN not set; the assistant will show as not connected."
+          fi
+
       - name: Build and upload to TestFlight
         env:
           FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: "180"

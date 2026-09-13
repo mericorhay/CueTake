@@ -1,3 +1,4 @@
+import AssistantFeature
 import DesignSystem
 import Domain
 import EditorFeature
@@ -29,6 +30,9 @@ struct RootView: View {
             // `.container` is deliberate: the keyboard's inset must still push content up.
             screen
                 .id(model.screen)
+                // Every flow screen's back button reads this and shows the stage it belongs to,
+                // with the journey map one tap away. Root screens have the tab bar instead.
+                .environment(\.dsJourney, model.screen.isRoot || model.screen == .onboarding ? nil : model.journeyContext)
                 .ignoresSafeArea(.container)
                 // Each screen plays the design's own `scin` entrance on arrival, so only the
                 // exit is described here: without it the outgoing screen is cut rather than
@@ -79,8 +83,23 @@ struct RootView: View {
             pickedFootage = []
             Task { await model.importFootage(picked) }
         }
+        .sheet(isPresented: $model.isJourneyOpen) {
+            JourneyMapSheet(model: model)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(34)
+        }
+        .sheet(isPresented: $model.isAssistantOpen) {
+            AssistantScreen(model: model.assistant) { model.isAssistantOpen = false }
+                .presentationDetents([.large])
+                .presentationCornerRadius(34)
+                .presentationBackground(DS.Palette.screen)
+        }
         .preferredColorScheme(.dark)
-        .task { await model.restore() }
+        .task {
+            await model.restore()
+            model.wireAssistant()
+        }
         .onChange(of: model.project) { model.scheduleSave() }
     }
 
@@ -230,17 +249,24 @@ struct RootView: View {
         }
     }
 
+    /// The tabs, and the assistant beside them at the same height — part of the navigation, not a
+    /// chat bubble floating over it. The tab bar's own trailing inset is the gap between the two.
     private var tabBar: some View {
-        DSTabBar(
-            items: [
-                .init(id: Screen.home, title: String(localized: "tab.home")),
-                .init(id: Screen.projects, title: String(localized: "tab.projects")),
-                .init(id: Screen.workflows, title: String(localized: "tab.workflows")),
-                .init(id: Screen.settings, title: String(localized: "tab.settings")),
-            ],
-            selection: model.screen
-        ) { tab in
-            model.go(to: tab)
+        HStack(spacing: 0) {
+            DSTabBar(
+                items: [
+                    .init(id: Screen.home, title: String(localized: "tab.home")),
+                    .init(id: Screen.projects, title: String(localized: "tab.projects")),
+                    .init(id: Screen.workflows, title: String(localized: "tab.workflows")),
+                    .init(id: Screen.settings, title: String(localized: "tab.settings")),
+                ],
+                selection: model.screen
+            ) { tab in
+                model.go(to: tab)
+            }
+
+            AssistantLauncherButton { model.openAssistant() }
+                .padding(.trailing, 14)
         }
     }
 }

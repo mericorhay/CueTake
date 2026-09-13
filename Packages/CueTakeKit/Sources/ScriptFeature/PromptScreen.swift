@@ -66,7 +66,7 @@ public struct PromptScreen: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                DSCircleButton("←", action: onBack)
+                DSBackButton(action: onBack)
                 Spacer(minLength: 0)
                 DSKicker(String(localized: "prompt.kicker", bundle: .module))
             }
