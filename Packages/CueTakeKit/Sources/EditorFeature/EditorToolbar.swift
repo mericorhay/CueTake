@@ -168,7 +168,7 @@ struct EditorToolbar: View {
             glyph.symbolEffect(.bounce.up, value: count)
         case .delete:
             glyph.symbolEffect(.wiggle, value: count)
-        case .mute, .speed:
+        case .mute, .speed, .undo, .redo:
             glyph.symbolEffect(.pulse, value: count)
         }
     }

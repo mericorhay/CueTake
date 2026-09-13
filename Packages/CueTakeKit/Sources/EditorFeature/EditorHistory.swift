@@ -115,7 +115,9 @@ extension EditorModel {
         if let selected = selectedAudio, !restored.audio.contains(where: { $0.id == selected }) {
             selectedAudio = nil
         }
-        playhead = min(playhead, duration)
+        // Through `seek` rather than the property: the player has to be told too, or the picture
+        // stays where the undone edit left it.
         pause()
+        seek(to: min(playhead, duration))
     }
 }
