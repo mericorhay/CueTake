@@ -446,7 +446,13 @@ public struct CaptionsScreen: View {
 
             if showsTuning {
                 ScrollView {
-                    CaptionTuningPanel(look: $look, onCommit: report)
+                    VStack(spacing: 10) {
+                        CaptionTuningPanel(look: $look, onCommit: report)
+                        CaptionWindowControl(
+                            window: $project.captionWindow,
+                            duration: project.segments.reduce(0) { $0 + $1.barWeight }
+                        )
+                    }
                 }
                 .frame(maxHeight: 300)
                 .scrollIndicators(.hidden)
@@ -1066,5 +1072,98 @@ struct CaptionTuningPanel: View {
 
     private static func close(_ a: RGBAColor, _ b: RGBAColor) -> Bool {
         abs(a.red - b.red) < 0.02 && abs(a.green - b.green) < 0.02 && abs(a.blue - b.blue) < 0.02
+    }
+}
+
+/// When captions are on screen: the whole video, or only between two moments.
+///
+/// "From 29 seconds on", "only the first half" — a whole-video setting, not a per-caption one, so
+/// nobody deletes captions one by one to get a quiet stretch.
+struct CaptionWindowControl: View {
+    @Binding var window: MediaTimeRange?
+    let duration: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                DSKicker(String(localized: "captions.window", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                Spacer(minLength: 0)
+                HStack(spacing: 4) {
+                    choice("captions.window.all", isOn: window == nil) {
+                        window = nil
+                    }
+                    choice("captions.window.between", isOn: window != nil) {
+                        if window == nil {
+                            window = MediaTimeRange(start: .zero, duration: MediaTime(seconds: max(0.5, duration)))
+                        }
+                    }
+                }
+            }
+
+            if let current = window {
+                HStack(spacing: 8) {
+                    stepper("captions.window.from", value: current.start.seconds) { delta in
+                        let end = current.end.seconds
+                        let start = min(max(0, current.start.seconds + delta), end - 0.5)
+                        window = MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: end - start))
+                    }
+                    stepper("captions.window.to", value: current.end.seconds) { delta in
+                        let end = min(max(current.start.seconds + 0.5, current.end.seconds + delta), max(duration, current.start.seconds + 0.5))
+                        window = MediaTimeRange(start: current.start, duration: MediaTime(seconds: end - current.start.seconds))
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .padding(14)
+        .dsGlass(
+            tint: DS.Palette.glassSheet(0.9),
+            in: RoundedRectangle(cornerRadius: 20, style: .continuous),
+            border: DS.Palette.hairline(0.1)
+        )
+        .animation(DS.Motion.settle, value: window == nil)
+    }
+
+    private func choice(_ key: String.LocalizationValue, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(String(localized: key, bundle: .module))
+                .dsFont(.sans, .medium, 11)
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 20))
+    }
+
+    private func stepper(_ key: String.LocalizationValue, value: Double, onStep: @escaping (Double) -> Void) -> some View {
+        HStack(spacing: 0) {
+            button("minus") { onStep(-0.5) }
+            VStack(spacing: 1) {
+                Text(String(localized: key, bundle: .module))
+                    .dsFont(.mono, .medium, 8)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+                Text(verbatim: MediaTime(seconds: value).preciseTimecode)
+                    .dsFont(.mono, .medium, 13)
+                    .foregroundStyle(DS.Palette.ink)
+                    .contentTransition(.numericText(value: value))
+            }
+            .frame(maxWidth: .infinity)
+            button("plus") { onStep(0.5) }
+        }
+        .padding(4)
+        .background(Capsule().fill(DS.Palette.hairline(0.06)))
+    }
+
+    private func button(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(DS.Palette.ink)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(DS.Palette.hairline(0.08)))
+        }
+        .buttonRepeatBehavior(.enabled)
+        .buttonStyle(.dsPressIcon)
     }
 }

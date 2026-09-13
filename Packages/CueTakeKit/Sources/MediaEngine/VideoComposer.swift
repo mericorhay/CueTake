@@ -36,6 +36,9 @@ public struct VideoComposer: Sendable {
         public var captions: [PlacedCue]
         public var captionStyle: CaptionStyle
         public var localeIdentifier: String
+        /// Pictures and text over the video, burned in with the captions.
+        public var overlays: [Overlay] = []
+        public var mediaDirectory: URL?
     }
 
     /// Assembles the project's selected takes, in segment order.
@@ -215,7 +218,9 @@ public struct VideoComposer: Sendable {
             format: project.format,
             captions: project.captionCues,
             captionStyle: project.captionStyle,
-            localeIdentifier: project.localeIdentifier
+            localeIdentifier: project.localeIdentifier,
+            overlays: project.overlays,
+            mediaDirectory: mediaDirectory
         )
     }
 
@@ -363,11 +368,16 @@ public struct VideoComposer: Sendable {
         }
         // Captions go on here, at the last moment, because the same video composition is handed
         // to the preview player and the animation tool would mean nothing to it.
+        let renderSize = assembled.videoComposition.renderSize
+        let overlayLayers = assembled.mediaDirectory.map {
+            OverlayRenderer.layers(for: assembled.overlays, renderSize: renderSize, mediaDirectory: $0)
+        } ?? []
         assembled.videoComposition.animationTool = CaptionRenderer.tool(
             cues: assembled.captions,
             style: assembled.captionStyle,
             locale: Locale(identifier: assembled.localeIdentifier),
-            renderSize: assembled.videoComposition.renderSize
+            renderSize: renderSize,
+            underlays: overlayLayers
         )
         session.videoComposition = assembled.videoComposition
         session.audioMix = assembled.audioMix

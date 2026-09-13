@@ -16,9 +16,10 @@ struct ToolDock: View {
     let onMore: () -> Void
     /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
     var aiRequest: ((EditDocument, String) async throws -> EditPlan)? = nil
+    var onAddImage: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, captions, audio, duplicate, delete, more
+        case ai, split, trim, speed, text, image, captions, audio, duplicate, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -109,7 +110,7 @@ struct ToolDock: View {
         case .split: model.segmentAtPlayhead != nil
         case .trim, .speed, .duplicate: index != nil
         case .delete: index != nil && model.project.segments.count > 1
-        case .captions, .audio, .more, .ai: true
+        case .captions, .audio, .more, .ai, .text, .image: true
         }
     }
 
@@ -160,6 +161,7 @@ struct ToolDock: View {
         case .duplicate: glyph.symbolEffect(.bounce.up, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
+        case .text, .image: glyph.symbolEffect(.bounce.up, value: count)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
     }
@@ -167,6 +169,8 @@ struct ToolDock: View {
     private func symbol(_ item: Item) -> String {
         switch item {
         case .ai: "sparkles"
+        case .text: "textformat"
+        case .image: "photo.badge.plus"
         case .split: "scissors"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
@@ -181,6 +185,8 @@ struct ToolDock: View {
     private func title(_ item: Item) -> String {
         switch item {
         case .ai: String(localized: "editor.dock.ai", bundle: .module)
+        case .text: String(localized: "editor.dock.text", bundle: .module)
+        case .image: String(localized: "editor.dock.image", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
@@ -210,6 +216,8 @@ struct ToolDock: View {
             guard let index else { return }
             model.pulse(.delete)
             withAnimation(settle) { model.deleteSegment(at: index) }
+        case .text: withAnimation(settle) { model.addTextOverlay() }
+        case .image: onAddImage()
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()

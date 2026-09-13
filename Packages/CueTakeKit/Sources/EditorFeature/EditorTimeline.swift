@@ -23,12 +23,14 @@ struct EditorTimeline: View {
     /// is as long as the longest of the two, not as long as the footage.
     private var contentWidth: CGFloat { CGFloat(model.timelineDuration * scale) }
 
+    /// Everything under and over the clips that grows the timeline: audio rows and overlay rows.
     private var audioHeight: CGFloat {
         let rows = model.audioRowCount
-        guard rows > 0 else { return 0 }
-        return CGFloat(rows) * AudioLane.rowHeight
-            + CGFloat(rows - 1) * AudioLane.rowSpacing
-            + 7
+        let audio = rows > 0
+            ? CGFloat(rows) * AudioLane.rowHeight + CGFloat(rows - 1) * AudioLane.rowSpacing + 7
+            : 0
+        let overlays = model.project.overlays.isEmpty ? 0 : OverlayLane.height(for: model.project.overlays) + 7
+        return audio + overlays
     }
 
     /// Where the scroll view is, and whether a finger is moving it.
@@ -98,6 +100,9 @@ struct EditorTimeline: View {
                             jump(to: Double(tap.location.x) / scale)
                         }
                     )
+                if !model.project.overlays.isEmpty {
+                    OverlayLane(model: model, scale: scale)
+                }
                 clipRow
                 if model.audioRowCount > 0 {
                     AudioLane(model: model, scale: scale)

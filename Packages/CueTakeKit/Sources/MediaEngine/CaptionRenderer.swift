@@ -21,9 +21,10 @@ enum CaptionRenderer {
         cues: [PlacedCue],
         style: CaptionStyle,
         locale: Locale,
-        renderSize: CGSize
+        renderSize: CGSize,
+        underlays: [CALayer] = []
     ) -> AVVideoCompositionCoreAnimationTool? {
-        guard !cues.isEmpty, renderSize.width > 0, renderSize.height > 0 else { return nil }
+        guard !cues.isEmpty || !underlays.isEmpty, renderSize.width > 0, renderSize.height > 0 else { return nil }
 
         let frame = CGRect(origin: .zero, size: renderSize)
 
@@ -34,6 +35,8 @@ enum CaptionRenderer {
         let video = CALayer()
         video.frame = frame
         parent.addSublayer(video)
+        // Pictures and text sit over the video and under the captions.
+        for layer in underlays { parent.addSublayer(layer) }
 
         let fontSize = max(12, renderSize.height * style.relativeFontSize)
         // Wide enough to read, narrow enough to break into the two or three word lines short-form
@@ -187,7 +190,7 @@ enum CaptionRenderer {
 
     /// The size a string needs at a given width, from Core Text's own line breaking — the same
     /// breaking the text layer will use, so the box and the words agree.
-    private static func measure(_ string: NSAttributedString, maxWidth: CGFloat) -> CGSize {
+    static func measure(_ string: NSAttributedString, maxWidth: CGFloat) -> CGSize {
         let framesetter = CTFramesetterCreateWithAttributedString(string as CFAttributedString)
         let size = CTFramesetterSuggestFrameSizeWithConstraints(
             framesetter,
@@ -223,7 +226,7 @@ enum CaptionRenderer {
         return result
     }
 
-    private static func cgColor(_ color: RGBAColor) -> CGColor {
+    static func cgColor(_ color: RGBAColor) -> CGColor {
         CGColor(
             colorSpace: CGColorSpaceCreateDeviceRGB(),
             components: [

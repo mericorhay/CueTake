@@ -1,5 +1,6 @@
 import AVKit
 import DesignSystem
+import PhotosUI
 import Domain
 import SwiftUI
 
@@ -54,6 +55,8 @@ public struct EditorScreen: View {
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
+    @State private var pickingImage = false
+    @State private var pickedImage: PhotosPickerItem?
     /// Set while the phone is on its side: the picture takes the height of the screen.
     @State private var landscapePreviewHeight: CGFloat?
     @State private var showsChanges = false
@@ -77,12 +80,14 @@ public struct EditorScreen: View {
     /// by luck.
     private var previewHeight: CGFloat {
         if let landscapePreviewHeight { return landscapePreviewHeight }
+        // An overlay being placed gets the big picture: it is placed by looking at the frame.
+        if model.selectedOverlay != nil { return 390 }
         if previewExpanded { return 430 }
         return isPanelOpen || dockPanel != nil ? 150 : 212
     }
 
     private var isPanelOpen: Bool {
-        model.inspectedSegment != nil || model.selectedAudio != nil
+        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
     }
 
     public var body: some View {
@@ -138,6 +143,10 @@ public struct EditorScreen: View {
         .overlay(alignment: .bottom) {
             if let clip = model.selectedAudioClip {
                 audioPanel(clip)
+            } else if let overlay = model.selectedOverlayValue {
+                OverlayInspector(model: model, overlay: overlay) {
+                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+                }
             } else if let id = model.inspectedSegment,
                       let index = model.project.segments.firstIndex(where: { $0.id == id }) {
                 inspector(at: index)
@@ -191,6 +200,18 @@ public struct EditorScreen: View {
         .onChange(of: model.project.voiceEffects) {
             Task { await onPrepare() }
         }
+        .photosPicker(isPresented: $pickingImage, selection: $pickedImage, matching: .images)
+        .onChange(of: pickedImage) { _, item in
+            guard let item else { return }
+            pickedImage = nil
+            Task {
+                guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+                withAnimation(DS.Motion.bloom) { _ = model.addImageOverlay(from: data) }
+            }
+        }
+        // Undo can bring back an overlay whose picture is not in memory.
+        .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
+        .animation(DS.Motion.settle, value: model.selectedOverlay)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }
@@ -335,6 +356,8 @@ public struct EditorScreen: View {
                 .transition(CaptionOverlay.transition(for: model.project.captionStyle))
             }
         }
+        // Pictures and text, over the captions, moved with the fingers.
+        .overlay { OverlayCanvas(model: model) }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .overlay(alignment: .topTrailing) {
             // Discoverable rather than a secret tap. The whole picture is the target, but nobody
@@ -431,6 +454,7 @@ public struct EditorScreen: View {
                     onAddAudio: onAddAudio,
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
+                    onAddImage: { pickingImage = true },
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)

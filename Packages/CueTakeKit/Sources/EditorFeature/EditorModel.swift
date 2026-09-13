@@ -4,6 +4,7 @@ import Domain
 import MediaEngine
 import Observation
 import SwiftUI
+import UIKit
 
 /// Editor state: the playhead and which segment is being inspected.
 ///
@@ -29,6 +30,12 @@ public final class EditorModel {
     /// different selections on two different lanes, and collapsing them into one is how an editor
     /// ends up showing music controls for a piece of footage.
     public var selectedAudio: AudioClip.ID?
+    /// The picture or text being edited over the preview.
+    public var selectedOverlay: Overlay.ID?
+    /// Decoded overlay pictures, by overlay. Filled when playback is prepared and when one is added.
+    public internal(set) var overlayImages: [Overlay.ID: UIImage] = [:]
+    /// Where this project's files live, once playback has been prepared.
+    public internal(set) var mediaDirectory: URL?
     /// Drawn peaks, per clip. Computed once per file and kept, because reading a three minute song
     /// to draw it again on every layout pass is how a timeline starts to stutter.
     public private(set) var waveforms: [AudioClip.ID: [Float]] = [:]
@@ -73,6 +80,8 @@ public final class EditorModel {
     /// the source files rather than copying them — which is what lets a trim or a reorder be
     /// reflected in playback immediately instead of after a render.
     public func loadPlayback(mediaDirectory: URL) async {
+        self.mediaDirectory = mediaDirectory
+        loadOverlayImages()
         guard project.segments.contains(where: { $0.selectedTake != nil }) else {
             teardownPlayer()
             return

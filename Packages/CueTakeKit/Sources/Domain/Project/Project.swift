@@ -23,6 +23,10 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     public var audio: [AudioClip]
     /// Repair for the voice inside the footage: every clip's own sound, not added audio.
     public var voiceEffects: AudioEffects
+    /// Pictures and text over the video, bottom to top.
+    public var overlays: [Overlay]
+    /// When captions are shown, on the finished video. Nil shows them throughout.
+    public var captionWindow: MediaTimeRange?
     public var createdAt: Date
     public var updatedAt: Date
     public var metadata: [String: String]
@@ -49,6 +53,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         self.captionStyle = captionStyle
         self.audio = audio
         self.voiceEffects = AudioEffects()
+        self.overlays = []
+        self.captionWindow = nil
         self.createdAt = createdAt
         self.updatedAt = createdAt
         self.metadata = metadata
@@ -72,6 +78,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         captionStyle = try container.decodeIfPresent(CaptionStyle.self, forKey: .captionStyle) ?? .standard
         audio = try container.decodeIfPresent([AudioClip].self, forKey: .audio) ?? []
         voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? AudioEffects()
+        overlays = (try? container.decodeIfPresent([Overlay].self, forKey: .overlays)) ?? []
+        captionWindow = try? container.decodeIfPresent(MediaTimeRange.self, forKey: .captionWindow)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]

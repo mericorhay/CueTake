@@ -749,6 +749,91 @@
         }
       }
     },
+    "captions.window": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CAPTIONS SHOW"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ALTYAZILAR GÖRÜNÜR"
+          }
+        }
+      }
+    },
+    "captions.window.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Throughout"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baştan sona"
+          }
+        }
+      }
+    },
+    "captions.window.between": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only between"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sadece arasında"
+          }
+        }
+      }
+    },
+    "captions.window.from": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FROM"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BAŞLANGIÇ"
+          }
+        }
+      }
+    },
+    "captions.window.to": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TO"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BİTİŞ"
+          }
+        }
+      }
+    },
     "editor.ai.applied %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1701,6 +1786,57 @@
         }
       }
     },
+    "editor.change.overlayAdd": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay added"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman eklendi"
+          }
+        }
+      }
+    },
+    "editor.change.overlayAdjust": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay adjusted"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman ayarlandı"
+          }
+        }
+      }
+    },
+    "editor.change.overlayRemove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay deleted"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman silindi"
+          }
+        }
+      }
+    },
     "editor.change.playback": {
       "extractionState": "manual",
       "localizations": {
@@ -2024,6 +2160,23 @@
         }
       }
     },
+    "editor.dock.image": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resim"
+          }
+        }
+      }
+    },
     "editor.dock.more": {
       "extractionState": "manual",
       "localizations": {
@@ -2071,6 +2224,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hız"
+          }
+        }
+      }
+    },
+    "editor.dock.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazı"
           }
         }
       }
@@ -2311,6 +2481,380 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld KELİME · %2$lld SN"
+          }
+        }
+      }
+    },
+    "editor.overlay.anim.fade": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fade"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Belir"
+          }
+        }
+      }
+    },
+    "editor.overlay.anim.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yok"
+          }
+        }
+      }
+    },
+    "editor.overlay.anim.pop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pop"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zıpla"
+          }
+        }
+      }
+    },
+    "editor.overlay.anim.slide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slide"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kay"
+          }
+        }
+      }
+    },
+    "editor.overlay.color": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk"
+          }
+        }
+      }
+    },
+    "editor.overlay.defaultText": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazın"
+          }
+        }
+      }
+    },
+    "editor.overlay.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
+    "editor.overlay.duplicate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çoğalt"
+          }
+        }
+      }
+    },
+    "editor.overlay.end": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TO"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BİTİŞ"
+          }
+        }
+      }
+    },
+    "editor.overlay.endHere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End here"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burada bitir"
+          }
+        }
+      }
+    },
+    "editor.overlay.front": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bring to front"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öne getir"
+          }
+        }
+      }
+    },
+    "editor.overlay.gestureHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag · pinch · twist"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürükle · sıkıştır · çevir"
+          }
+        }
+      }
+    },
+    "editor.overlay.image": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resim"
+          }
+        }
+      }
+    },
+    "editor.overlay.look": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIZE, OPACITY, TURN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BOYUT, SAYDAMLIK, ÇEVİR"
+          }
+        }
+      }
+    },
+    "editor.overlay.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type something"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir şey yaz"
+          }
+        }
+      }
+    },
+    "editor.overlay.plate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan"
+          }
+        }
+      }
+    },
+    "editor.overlay.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FROM"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BAŞLANGIÇ"
+          }
+        }
+      }
+    },
+    "editor.overlay.startHere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start here"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burada başla"
+          }
+        }
+      }
+    },
+    "editor.overlay.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazı"
+          }
+        }
+      }
+    },
+    "editor.overlay.untilEnd": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To the end"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonuna kadar"
+          }
+        }
+      }
+    },
+    "editor.overlay.when": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ON SCREEN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EKRANDA"
+          }
+        }
+      }
+    },
+    "editor.overlay.words": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORDS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YAZI"
           }
         }
       }

@@ -325,7 +325,17 @@ extension Project {
             }
             cursor += length
         }
-        return cues
+        // Only inside the window the user chose, cut to its edges.
+        guard let window = captionWindow else { return cues }
+        return cues.compactMap { cue in
+            let start = max(cue.range.start.seconds, window.start.seconds)
+            let end = min(cue.range.end.seconds, window.end.seconds)
+            guard end - start > 0.05 else { return nil }
+            var clipped = cue
+            clipped.range = MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: end - start))
+            clipped.words = cue.words.filter { $0.range.start.seconds >= start - 0.01 && $0.range.start.seconds < end }
+            return clipped
+        }
     }
 
     /// The cue on screen at a given moment, if any.
