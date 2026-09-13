@@ -284,6 +284,19 @@ public struct EditorScreen: View {
             }
         }
         .frame(height: previewHeight)
+        // Captions, over the picture, where they will be in the finished file. The export burns
+        // them in with a layer tool the preview player cannot run, so the preview draws its own
+        // from the same numbers — see `CaptionOverlay`.
+        .overlay {
+            if let cue = model.project.caption(at: model.playhead) {
+                CaptionOverlay(
+                    cue: cue,
+                    style: model.project.captionStyle,
+                    locale: model.project.locale
+                )
+                .id(cue.id)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .overlay(alignment: .topTrailing) {
             // Discoverable rather than a secret tap. The whole picture is the target, but nobody

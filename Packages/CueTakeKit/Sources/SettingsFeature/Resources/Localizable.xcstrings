@@ -1,6 +1,176 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "converter.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That file could not be converted."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu dosya dönüştürülemedi."
+          }
+        }
+      }
+    },
+    "converter.jpegNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worth knowing: .jpg and .jpeg are the same format. This only renames it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilmekte fayda var: .jpg ile .jpeg aynı format. Bu sadece adını değiştiriyor."
+          }
+        }
+      }
+    },
+    "converter.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the file something else will not accept. It all happens on the phone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başka bir yerin kabul etmediği dosya için. Hepsi telefonda oluyor."
+          }
+        }
+      }
+    },
+    "converter.pick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a file"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir dosya seç"
+          }
+        }
+      }
+    },
+    "converter.pick.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo, video or audio"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraf, video ya da ses"
+          }
+        }
+      }
+    },
+    "converter.run": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dönüştür"
+          }
+        }
+      }
+    },
+    "converter.share": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save or share"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydet ya da paylaş"
+          }
+        }
+      }
+    },
+    "converter.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONVERT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DÖNÜŞTÜR"
+          }
+        }
+      }
+    },
+    "converter.to": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TO"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ŞUNA"
+          }
+        }
+      }
+    },
+    "converter.working": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Converting…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dönüştürülüyor…"
+          }
+        }
+      }
+    },
     "settings.ai": {
       "extractionState": "manual",
       "localizations": {
@@ -184,6 +354,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pop"
+          }
+        }
+      }
+    },
+    "settings.converter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert a file"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya dönüştür"
+          }
+        }
+      }
+    },
+    "settings.converter.value": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JPG, PNG, MP4, MOV…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JPG, PNG, MP4, MOV…"
           }
         }
       }

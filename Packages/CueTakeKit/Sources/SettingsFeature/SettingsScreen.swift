@@ -10,6 +10,8 @@ public struct SettingsScreen: View {
         self.model = model
     }
 
+    @State private var showsConverter = false
+
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -41,6 +43,16 @@ public struct SettingsScreen: View {
                         model.update(\.exportDestination, to: $0)
                     }
 
+                    Button {
+                        showsConverter = true
+                    } label: {
+                        row(
+                            String(localized: "settings.converter", bundle: .module),
+                            value: String(localized: "settings.converter.value", bundle: .module)
+                        )
+                    }
+                    .buttonStyle(.dsPress)
+
                     staticRow("settings.subscription", String(localized: "settings.subscription.value", bundle: .module))
                     staticRow("settings.version", Self.version, isLast: true)
                 }
@@ -53,6 +65,11 @@ public struct SettingsScreen: View {
         .scrollIndicators(.hidden)
         .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
+        .sheet(isPresented: $showsConverter) {
+            ConverterSheet(onClose: { showsConverter = false })
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .dsEnter(.screen())
     }
 

@@ -122,3 +122,65 @@ public struct RGBAColor: Hashable, Sendable, Codable {
     public static let white = RGBAColor(red: 1, green: 1, blue: 1)
     public static let black = RGBAColor(red: 0, green: 0, blue: 0)
 }
+
+/// A cue placed in finished-video time.
+///
+/// Derived, never stored, like every other absolute time in this app. Cues live on their segment
+/// with times relative to it; the moment a clip ahead of them is trimmed, split or slowed, their
+/// place in the video changes and nothing about the cue itself does.
+public struct PlacedCue: Identifiable, Hashable, Sendable {
+    public let id: UUID
+    public var text: String
+    public var range: MediaTimeRange
+
+    public init(id: UUID, text: String, range: MediaTimeRange) {
+        self.id = id
+        self.text = text
+        self.range = range
+    }
+}
+
+extension Project {
+    /// Every cue in the project, in the order and at the times they will appear in the export.
+    ///
+    /// Laid out against `barWeight` — the same number the timeline, the composer and the editor
+    /// all use — so what the preview draws, what the export burns in and what the timeline shows
+    /// cannot drift apart. A caption system that computes its own idea of where a clip starts is
+    /// a caption system that will one day be a frame out and no one will know why.
+    public var captionCues: [PlacedCue] {
+        var cues: [PlacedCue] = []
+        var cursor = 0.0
+
+        for segment in segments {
+            let length = segment.barWeight
+            // Speed and freeze change how long a clip lasts, so the cues inside it have to move
+            // with it: a cue at three seconds into a half-speed clip is at six.
+            let stretch = segment.sourceSeconds > 0.01 ? length / segment.sourceSeconds : 1
+
+            for cue in segment.captions {
+                let start = cursor + cue.range.start.seconds * stretch
+                let duration = max(0.2, cue.range.duration.seconds * stretch)
+                guard start < cursor + length + 0.01 else { continue }
+                cues.append(
+                    PlacedCue(
+                        id: cue.id,
+                        text: cue.text,
+                        range: MediaTimeRange(
+                            start: MediaTime(seconds: start),
+                            // Never past the end of its own clip: a cue outstaying its footage is
+                            // how a caption ends up over the next person's face.
+                            duration: MediaTime(seconds: min(duration, cursor + length - start))
+                        )
+                    )
+                )
+            }
+            cursor += length
+        }
+        return cues
+    }
+
+    /// The cue on screen at a given moment, if any.
+    public func caption(at seconds: Double) -> PlacedCue? {
+        captionCues.first { $0.range.contains(MediaTime(seconds: seconds)) }
+    }
+}

@@ -63,7 +63,11 @@ struct RootView: View {
         // the copy.
         .fileImporter(
             isPresented: $model.isPickingAudio,
-            allowedContentTypes: [.audio, .mp3, .mpeg4Audio, .wav, .aiff],
+            // Anything, not a list of audio types. People keep sound in files the system does not
+            // label as audio — a voice memo exported by another app, a track inside a video, a
+            // download with the wrong extension — and the importer already refuses what has no
+            // audio track in it. Guessing from the type was rejecting files that work.
+            allowedContentTypes: [.audio, .movie, .item],
             allowsMultipleSelection: true
         ) { result in
             guard case .success(let urls) = result, !urls.isEmpty else { return }
@@ -179,7 +183,8 @@ struct RootView: View {
                 style: model.settingsModel.settings.captionPreset,
                 onStyleChange: { model.applyCaptionStyle(presetID: $0, position: $1) },
                 onBack: { model.openEditor() },
-                onExport: { model.go(to: .export) }
+                onExport: { model.go(to: .export) },
+                onTranscribe: { Task { await model.transcribeNewTakes() } }
             )
 
         case .export:

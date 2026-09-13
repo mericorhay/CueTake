@@ -30,6 +30,12 @@ public struct VideoComposer: Sendable {
         /// Carried so the writer can choose a codec and a bitrate that match what was asked for
         /// instead of guessing from the pixels it happens to see.
         public var format: VideoFormat
+        /// The cues, already placed in finished-video time, and how they should look. Burned in at
+        /// write time rather than here: Core Animation's layer tool is an export facility and the
+        /// preview player ignores it, so the editor draws its own.
+        public var captions: [PlacedCue]
+        public var captionStyle: CaptionStyle
+        public var localeIdentifier: String
     }
 
     /// Assembles the project's selected takes, in segment order.
@@ -177,7 +183,10 @@ public struct VideoComposer: Sendable {
             composition: composition,
             videoComposition: videoComposition,
             audioMix: audioMix,
-            format: project.format
+            format: project.format,
+            captions: project.captionCues,
+            captionStyle: project.captionStyle,
+            localeIdentifier: project.localeIdentifier
         )
     }
 
@@ -314,6 +323,14 @@ public struct VideoComposer: Sendable {
         else {
             throw ComposeError.exportFailed("no export session")
         }
+        // Captions go on here, at the last moment, because the same video composition is handed
+        // to the preview player and the animation tool would mean nothing to it.
+        assembled.videoComposition.animationTool = CaptionRenderer.tool(
+            cues: assembled.captions,
+            style: assembled.captionStyle,
+            locale: Locale(identifier: assembled.localeIdentifier),
+            renderSize: assembled.videoComposition.renderSize
+        )
         session.videoComposition = assembled.videoComposition
         session.audioMix = assembled.audioMix
         // Spectral: the frequency-domain stretch. It is the expensive one and the only one that

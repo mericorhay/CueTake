@@ -23,6 +23,8 @@ public struct CaptionsScreen: View {
     private let onStyleChange: (String, CaptionPosition) -> Void
     private let onBack: () -> Void
     private let onExport: () -> Void
+    /// Runs speech transcription, which is where cues come from.
+    private let onTranscribe: () -> Void
 
     @State private var cueIndex = 0
     @State private var style: Style = .pop
@@ -35,12 +37,14 @@ public struct CaptionsScreen: View {
         style: CaptionPreference = .pop,
         onStyleChange: @escaping (String, CaptionPosition) -> Void = { _, _ in },
         onBack: @escaping () -> Void,
-        onExport: @escaping () -> Void
+        onExport: @escaping () -> Void,
+        onTranscribe: @escaping () -> Void = {}
     ) {
         self.project = project
         self.onStyleChange = onStyleChange
         self.onBack = onBack
         self.onExport = onExport
+        self.onTranscribe = onTranscribe
         _style = State(initialValue: Style(style))
     }
 
@@ -63,6 +67,57 @@ public struct CaptionsScreen: View {
 
     private var visibleCues: [String] { Array(cues.prefix(9)) }
 
+    /// True when the project has footage but nothing has listened to it yet.
+    ///
+    /// This is the state the screen used to show as a blank rectangle, which reads as "captions
+    /// are broken" rather than "there is nothing to caption yet". The difference between those two
+    /// is a sentence and a button.
+    private var needsTranscription: Bool {
+        project.segments.allSatisfy(\.captions.isEmpty)
+            && project.segments.contains { $0.selectedTake != nil }
+    }
+
+    /// Shown over the preview when there is nothing to preview.
+    private var transcribePrompt: some View {
+        VStack(spacing: 14) {
+            Text("captions.empty.title", bundle: .module)
+                .dsFont(.archivo, .bold, 20)
+                .foregroundStyle(DS.Palette.ink)
+                .multilineTextAlignment(.center)
+
+            Text("captions.empty.note", bundle: .module)
+                .dsFont(.sans, .regular, 13, lineHeight: 1.45)
+                .foregroundStyle(DS.Palette.ink(0.5))
+                .multilineTextAlignment(.center)
+
+            Button {
+                onTranscribe()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "waveform.and.person.filled")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("captions.empty.action", bundle: .module)
+                        .dsFont(.sans, .semibold, 15)
+                }
+                .foregroundStyle(DS.Palette.inkInverse)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 15)
+                .background(
+                    Capsule().fill(DS.Palette.accent)
+                )
+            }
+            .buttonStyle(.dsPress(radius: 30))
+        }
+        .padding(26)
+        .frame(maxWidth: 320)
+        .dsGlass(
+            tint: DS.Palette.glassSheet(0.93),
+            in: RoundedRectangle(cornerRadius: DS.Radius.sheet, style: .continuous),
+            border: DS.Palette.hairline(0.12)
+        )
+        .dsEnter(.rise(duration: 0.4))
+    }
+
     public var body: some View {
         ZStack {
             CaptionsBackdrop()
@@ -73,6 +128,9 @@ public struct CaptionsScreen: View {
                 captionPreview
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.horizontal, 24)
+                    .overlay {
+                        if needsTranscription { transcribePrompt }
+                    }
 
                 controls
             }

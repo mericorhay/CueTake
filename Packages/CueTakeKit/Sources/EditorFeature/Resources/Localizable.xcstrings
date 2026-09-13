@@ -1,6 +1,57 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "captions.empty.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to the footage"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görüntüyü dinle"
+          }
+        }
+      }
+    },
+    "captions.empty.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions come from what is actually said in your footage. It runs on the phone — nothing is uploaded — and once it is done every word has a time on it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar görüntünde gerçekten söylenenden çıkıyor. Telefonda çalışıyor — hiçbir şey yüklenmiyor — ve bittiğinde her kelimenin bir zamanı oluyor."
+          }
+        }
+      }
+    },
+    "captions.empty.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing has been listened to yet"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz hiçbir şey dinlenmedi"
+          }
+        }
+      }
+    },
     "captions.export": {
       "extractionState": "manual",
       "localizations": {
