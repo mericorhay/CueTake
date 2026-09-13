@@ -2,8 +2,10 @@ import AIServices
 import AssistantFeature
 import DesignSystem
 import Domain
+import EditorFeature
 import Foundation
 import Persistence
+import WorkflowsFeature
 
 /// The assistant's connections to the rest of the app, and the journey that keeps the user
 /// oriented from the first import to the finished video.
