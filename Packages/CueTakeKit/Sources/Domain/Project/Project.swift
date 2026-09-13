@@ -21,6 +21,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     /// Music, voiceover and effects laid over the video. Separate from `segments` because they are
     /// pinned to moments rather than derived from order (see `AudioClip`).
     public var audio: [AudioClip]
+    /// Repair for the voice inside the footage: every clip's own sound, not added audio.
+    public var voiceEffects: AudioEffects
     public var createdAt: Date
     public var updatedAt: Date
     public var metadata: [String: String]
@@ -46,6 +48,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         self.recordings = recordings
         self.captionStyle = captionStyle
         self.audio = audio
+        self.voiceEffects = AudioEffects()
         self.createdAt = createdAt
         self.updatedAt = createdAt
         self.metadata = metadata
@@ -68,6 +71,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         recordings = try container.decodeIfPresent([Recording].self, forKey: .recordings) ?? []
         captionStyle = try container.decodeIfPresent(CaptionStyle.self, forKey: .captionStyle) ?? .standard
         audio = try container.decodeIfPresent([AudioClip].self, forKey: .audio) ?? []
+        voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? AudioEffects()
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]

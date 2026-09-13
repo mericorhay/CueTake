@@ -56,6 +56,9 @@ public struct VideoComposer: Sendable {
         else { throw ComposeError.nothingToCompose }
 
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
+        // Cleaned voice per recording, looked up once: several segments usually share one file.
+        let cleaner = VoiceCleaner()
+        var cleanedVoice: [Recording.ID: AVAssetTrack] = [:]
         let renderSize = CGSize(
             width: CGFloat(project.format.renderSize.width),
             height: CGFloat(project.format.renderSize.height)
@@ -128,7 +131,18 @@ public struct VideoComposer: Sendable {
             // frame is asked for silence — a held picture playing a second of sound under it is
             // the one thing a freeze must never do.
             var hasAudio = false
-            if playback.freeze == nil,
+            if playback.freeze == nil, !playback.isReversed, project.voiceEffects.isActive {
+                if cleanedVoice[recording.id] == nil,
+                   let url = await cleaner.cleanedAudio(for: recording, effects: project.voiceEffects, in: mediaDirectory),
+                   let track = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first {
+                    cleanedVoice[recording.id] = track
+                }
+                // Same timeline as the recording, so the take's own range addresses it directly.
+                if let cleaned = cleanedVoice[recording.id] {
+                    hasAudio = (try? audioTrack.insertTimeRange(range, of: cleaned, at: cursor)) != nil
+                }
+            }
+            if !hasAudio, playback.freeze == nil,
                let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first {
                 hasAudio = (try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)) != nil
             }

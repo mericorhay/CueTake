@@ -154,6 +154,10 @@ public struct EditorScreen: View {
         .onChange(of: model.project.segments.map(\.playback)) {
             Task { await onPrepare() }
         }
+        // The voice repair changes the sound itself, so the preview is rebuilt for it too.
+        .onChange(of: model.project.voiceEffects) {
+            Task { await onPrepare() }
+        }
         .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())

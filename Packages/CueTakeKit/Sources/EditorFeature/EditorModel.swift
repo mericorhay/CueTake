@@ -441,6 +441,24 @@ public final class EditorModel {
 // MARK: - Audio
 
 extension EditorModel {
+    /// Switches voice repair for the whole video.
+    public func setVoiceEffects(_ effects: AudioEffects) {
+        guard effects != project.voiceEffects else { return }
+        record("editor.change.voice", symbol: "person.wave.2")
+        project.voiceEffects = effects
+        project.updatedAt = .now
+    }
+
+    public var isVoiceCleaned: Bool { project.voiceEffects.isActive }
+
+    public func toggleVoiceCleanup() {
+        setVoiceEffects(
+            isVoiceCleaned
+                ? AudioEffects()
+                : AudioEffects(noiseReduction: true, voiceEnhance: true, deRumble: true)
+        )
+    }
+
     /// Clips in the order they start, which is the order the lane draws them.
     public var audioClips: [AudioClip] {
         project.audio.sorted { $0.start.seconds < $1.start.seconds }

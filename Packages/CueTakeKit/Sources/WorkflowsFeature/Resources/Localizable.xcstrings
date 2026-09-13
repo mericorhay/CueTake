@@ -1265,13 +1265,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Noise, rumble and a clearer voice on added audio"
+            "value": "Noise, rumble and a clearer voice, in every clip"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eklenen seste gürültü, uğultu ve netlik"
+            "value": "Tüm kliplerde gürültü, uğultu ve netlik"
           }
         }
       }

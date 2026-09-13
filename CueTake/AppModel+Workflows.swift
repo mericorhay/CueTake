@@ -217,15 +217,16 @@ extension AppModel {
             return changed > 0 ? .done : .skipped(String(localized: "workflow.skip.noSection"))
 
         case .cleanAudio(let options):
-            // Honest about the limit: the repair filters run on added audio today. The voice track
-            // inside the footage is not processed yet, and marking this done would say it was.
-            guard !project.audio.isEmpty else { return .skipped(String(localized: "workflow.skip.noAudio")) }
+            let effects = AudioEffects(
+                noiseReduction: options.denoise,
+                voiceEnhance: options.enhanceVoice,
+                deRumble: options.removeRumble
+            )
+            // The voice in the footage first — that is what almost always needs it — and any added
+            // audio with it.
+            project.voiceEffects = effects
             for index in project.audio.indices {
-                project.audio[index].effects = AudioEffects(
-                    noiseReduction: options.denoise,
-                    voiceEnhance: options.enhanceVoice,
-                    deRumble: options.removeRumble
-                )
+                project.audio[index].effects = effects
             }
             return .done
 

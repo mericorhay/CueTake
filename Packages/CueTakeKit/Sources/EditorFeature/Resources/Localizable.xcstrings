@@ -749,6 +749,23 @@
         }
       }
     },
+    "editor.change.voice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice cleanup"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses temizleme"
+          }
+        }
+      }
+    },
     "editor.changes.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -2057,6 +2074,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saniye saniye süre"
+          }
+        }
+      }
+    },
+    "editor.tools.voice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean up voice"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşma sesini temizle"
+          }
+        }
+      }
+    },
+    "editor.tools.voice.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiss, hum and rumble, in every clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm kliplerde tıslama ve uğultu"
+          }
+        }
+      }
+    },
+    "editor.tools.voice.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice cleanup on"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses temizleme açık"
           }
         }
       }

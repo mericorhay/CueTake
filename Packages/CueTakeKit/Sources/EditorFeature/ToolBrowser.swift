@@ -297,6 +297,15 @@ struct ToolBrowser: View {
                 ) { onAddAudio() },
 
                 Item(
+                    id: "voice",
+                    symbol: "person.wave.2",
+                    title: model.isVoiceCleaned ? "editor.tools.voice.off" : "editor.tools.voice",
+                    note: "editor.tools.voice.note",
+                    enabled: model.project.segments.contains { $0.selectedTake != nil },
+                    tint: DS.Palette.lime
+                ) { model.toggleVoiceCleanup() },
+
+                Item(
                     id: "duck",
                     symbol: "waveform.badge.mic",
                     title: "editor.audio.duck",

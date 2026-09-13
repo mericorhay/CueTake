@@ -69,6 +69,23 @@
         }
       }
     },
+    "busy.cleaningVoice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cleaning up the voice…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşma sesi temizleniyor…"
+          }
+        }
+      }
+    },
     "busy.importing": {
       "extractionState": "manual",
       "localizations": {

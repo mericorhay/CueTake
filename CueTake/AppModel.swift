@@ -327,9 +327,15 @@ final class AppModel {
         // clip is measured in seconds rather than milliseconds. Said out loud, because a preview
         // that goes quiet for ten seconds is indistinguishable from a broken one.
         let reversing = editorModel.project.segments.contains { $0.playback.isReversed }
+        let cleaning = VoiceCleaner().needsWork(
+            for: editorModel.project.recordings,
+            effects: editorModel.project.voiceEffects,
+            in: mediaDirectory
+        )
         if reversing { busy = String(localized: "busy.reversing") }
+        if cleaning { busy = String(localized: "busy.cleaningVoice") }
         await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
-        if reversing { busy = nil }
+        if reversing || cleaning { busy = nil }
         // After playback, not before: the waveforms are for looking at and the player is for
         // working with, and reading three minutes of song should never be what delays a play.
         await editorModel.loadWaveforms(mediaDirectory: mediaDirectory)
