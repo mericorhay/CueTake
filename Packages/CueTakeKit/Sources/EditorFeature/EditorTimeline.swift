@@ -84,6 +84,14 @@ struct EditorTimeline: View {
         .onChange(of: model.playhead) { follow() }
         .onChange(of: model.pointsPerSecond) { follow() }
         .overlay { centreLine }
+        .overlay {
+            if model.aiSession?.phase == .thinking {
+                AIReadingBeam()
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: model.aiSession?.phase == .thinking)
         .frame(height: 116 + audioHeight)
         .sensoryFeedback(.selection, trigger: snapCount)
     }
@@ -115,6 +123,13 @@ struct EditorTimeline: View {
                 ToolFlourish(pulse: pulse)
                     .id(pulse.id)
                     .frame(width: max(contentWidth, 1), height: 96 + audioHeight)
+            }
+
+            // The stretch the AI is working on right now.
+            if let mark = model.aiScan {
+                AIScanBand(mark: mark, scale: scale, height: 92 + audioHeight)
+                    .id(mark.id)
+                    .padding(.top, 2)
             }
         }
         .frame(width: max(contentWidth, 1), alignment: .topLeading)
@@ -151,7 +166,15 @@ struct EditorTimeline: View {
     /// scrolling, in which case the finger is in charge.
     private func follow() {
         guard !userScrolling else { return }
-        position.scrollTo(x: CGFloat(model.playhead * scale))
+        // While the AI works the timeline travels to each change rather than jumping to it, so the
+        // eye can follow where it went.
+        if model.isAIDriving, !reduceMotion {
+            withAnimation(.smooth(duration: 0.45)) {
+                position.scrollTo(x: CGFloat(model.playhead * scale))
+            }
+        } else {
+            position.scrollTo(x: CGFloat(model.playhead * scale))
+        }
     }
 
     private func jump(to seconds: Double) {
@@ -292,7 +315,19 @@ struct EditorTimeline: View {
                 .stroke(DS.Palette.ink(isSelected ? 0.9 : 0), lineWidth: 2)
         }
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .opacity(isActive || isSelected ? 1 : 0.62)
+        .overlay(alignment: .topTrailing) {
+            if model.isAITouched(.clip(segment.id)) {
+                AISparkle(size: 8)
+                    .padding(5)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .opacity(isActive || isSelected || model.glowToken(.clip(segment.id)) > 0 && model.isAIDriving ? 1 : 0.62)
+        .aiGlow(
+            model.glowToken(.clip(segment.id)),
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous),
+            touched: model.isAITouched(.clip(segment.id))
+        )
         .scaleEffect(isLifted && !reduceMotion ? 1.04 : 1)
         .shadow(color: .black.opacity(isLifted ? 0.55 : 0), radius: 18, y: 10)
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)

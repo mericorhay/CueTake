@@ -62,6 +62,19 @@ public final class EditorModel {
     /// True while an AI plan is being carried out, so its many tool calls make one undo step.
     @ObservationIgnored var isApplyingPlan = false
 
+    /// The AI at work: reading, then changing things one at a time. Nil when it is not. See `AIDirector`.
+    public internal(set) var aiSession: AISession?
+    /// Everything the AI has changed in this editing session, newest first, each part reversible.
+    public internal(set) var aiChanges: [AIChangeSet] = []
+    /// Bumped per target each time the AI touches it; views light up when their number moves.
+    public internal(set) var aiGlow: [AITarget: Int] = [:]
+    /// Bumped on every AI step, for the picture's own flash.
+    public internal(set) var aiBeat = 0
+    /// The stretch of the timeline the current AI step is working on.
+    public internal(set) var aiScan: AIScanMark?
+    @ObservationIgnored var aiTask: Task<Void, Never>?
+    @ObservationIgnored var aiRequester: AIRequester?
+
     private var task: Task<Void, Never>?
 
     /// The real playback. Nil until the project's media has been composed — a project that has

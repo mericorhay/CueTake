@@ -84,6 +84,11 @@ struct OverlayLane: View {
                     .allowsHitTesting(false)
             }
         }
+        .aiGlow(
+            model.glowToken(.overlay(overlay.id)),
+            in: RoundedRectangle(cornerRadius: 7, style: .continuous),
+            touched: model.isAITouched(.overlay(overlay.id))
+        )
         .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         .onTapGesture {
             withAnimation(DS.Motion.snap) {

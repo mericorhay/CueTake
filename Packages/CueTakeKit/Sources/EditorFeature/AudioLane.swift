@@ -111,6 +111,11 @@ struct AudioLane: View {
             if isSelected { trimHandle(for: clip) }
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .aiGlow(
+            model.glowToken(.audio(clip.id)),
+            in: RoundedRectangle(cornerRadius: 8, style: .continuous),
+            touched: model.isAITouched(.audio(clip.id))
+        )
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onTapGesture {

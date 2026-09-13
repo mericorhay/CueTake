@@ -11,7 +11,7 @@ import Foundation
 /// Numbers are seconds, rounded to hundredths: precise enough to cut inside a word, short enough
 /// that a two minute video fits comfortably in a large model's context.
 public struct EditDocument: Codable, Sendable, Equatable {
-    public static let schema = "cuetake.edit-document/1"
+    public static let schema = "cuetake.edit-document/2"
 
     public var schema: String
     public var project: ProjectInfo
@@ -19,6 +19,12 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var audio: [Audio]
     public var captionStyle: Style
     public var voiceCleanup: Voice
+    /// Text and pictures over the video.
+    public var overlays: [OverlayItem]
+    /// Captions show only between these moments of the finished video; nil means throughout.
+    public var captionWindow: Window?
+    /// What an overlay can use.
+    public var overlayOptions: OverlayOptions
     /// The finished video sampled every `project.beatStep` seconds.
     public var beats: [Beat]
 
@@ -72,6 +78,9 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var text: String
         public var start: Double
         public var end: Double
+        /// Where the caption shows on the finished video.
+        public var videoStart: Double
+        public var videoEnd: Double
         public var edited: Bool
     }
 
@@ -93,6 +102,52 @@ public struct EditDocument: Codable, Sendable, Equatable {
         /// 0 top … 1 bottom.
         public var position: Double
         public var available: [String]
+        /// Text height as a fraction of the frame height (0.018 … 0.075).
+        public var size: Double
+        /// Words on screen at once (1 … 8).
+        public var maxWords: Int
+        /// natural, uppercase or lowercase.
+        public var textCase: String
+        public var textColor: String
+        /// The word being said lights up in this colour; nil when words are not lit.
+        public var highlightColor: String?
+        /// The plate behind the text; nil for outlined text.
+        public var backgroundColor: String?
+        public var font: String?
+    }
+
+    public struct Window: Codable, Sendable, Equatable {
+        public var from: Double
+        public var to: Double
+    }
+
+    public struct OverlayItem: Codable, Sendable, Equatable {
+        public var id: String
+        /// text or image.
+        public var kind: String
+        public var text: String?
+        public var start: Double
+        public var duration: Double
+        public var end: Double
+        /// Centre of the overlay, 0…1 from the left and from the top.
+        public var x: Double
+        public var y: Double
+        /// 1 is the default size (0.1 … 4).
+        public var scale: Double
+        /// Degrees, clockwise.
+        public var rotation: Double
+        public var opacity: Double
+        public var flipX: Bool
+        public var flipY: Bool
+        public var color: String?
+        public var background: String?
+        public var font: String?
+        public var animation: String
+    }
+
+    public struct OverlayOptions: Codable, Sendable, Equatable {
+        public var fonts: [String]
+        public var animations: [String]
     }
 
     public struct Voice: Codable, Sendable, Equatable {
@@ -111,6 +166,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var caption: String?
         /// Whether music or another sound clip is playing.
         public var music: Bool
+        /// Overlays on screen, by id. Nil when there are none.
+        public var overlays: [String]?
     }
 }
 
@@ -119,9 +176,11 @@ extension EditDocument {
     ///   word and coarse enough to keep a three minute video under a few thousand entries.
     public init(project: Project, beatStep: Double = 0.25) {
         func round2(_ value: Double) -> Double { (value * 100).rounded() / 100 }
+        func round3(_ value: Double) -> Double { (value * 1000).rounded() / 1000 }
 
         var clips: [Clip] = []
         var cursor = 0.0
+        let captionFrames = Dictionary(project.captionCues.map { ($0.id, $0.range) }, uniquingKeysWith: { a, _ in a })
         for (index, segment) in project.segments.enumerated() {
             let take = segment.selectedTake
             let words = take?.transcript?.words ?? []
@@ -155,6 +214,8 @@ extension EditDocument {
                             text: $0.text,
                             start: round2($0.range.start.seconds),
                             end: round2($0.range.end.seconds),
+                            videoStart: round2(captionFrames[$0.id]?.start.seconds ?? -1),
+                            videoEnd: round2(captionFrames[$0.id]?.end.seconds ?? -1),
                             edited: $0.isUserEdited
                         )
                     }
@@ -182,6 +243,7 @@ extension EditDocument {
             let word = segment.selectedTake?.transcript?.words.first {
                 $0.range.start.seconds <= local && local < $0.range.end.seconds
             }
+            let visibleOverlays = project.overlays.filter { $0.isVisible(at: t) }.map(\.id.uuidString)
             let music = project.audio.contains {
                 !$0.isMuted && $0.start.seconds <= t && t < $0.start.seconds + $0.timelineDuration.seconds
             }
@@ -191,7 +253,8 @@ extension EditDocument {
                     clip: clipIndex,
                     word: word?.text,
                     caption: cues.first { $0.range.contains(MediaTime(seconds: t)) }?.text,
-                    music: music
+                    music: music,
+                    overlays: visibleOverlays.isEmpty ? nil : visibleOverlays
                 )
             )
             t += step
@@ -226,14 +289,63 @@ extension EditDocument {
             captionStyle: Style(
                 preset: project.captionStyle.presetID,
                 position: round2(project.captionStyle.position.y),
-                available: CaptionStyle.presetIDs
+                available: CaptionStyle.presetIDs,
+                size: round3(project.captionStyle.relativeFontSize),
+                maxWords: project.captionStyle.maxWordsPerCue,
+                textCase: project.captionStyle.textCase.rawValue,
+                textColor: project.captionStyle.textColor.hex,
+                highlightColor: project.captionStyle.highlightColor?.hex,
+                backgroundColor: project.captionStyle.backgroundColor?.hex,
+                font: project.captionStyle.fontName
             ),
             voiceCleanup: Voice(
                 noiseReduction: project.voiceEffects.noiseReduction,
                 voiceEnhance: project.voiceEffects.voiceEnhance,
                 deRumble: project.voiceEffects.deRumble
             ),
+            overlays: project.overlays.map { Self.item(for: $0) },
+            captionWindow: project.captionWindow.map {
+                Window(from: round2($0.start.seconds), to: round2($0.end.seconds))
+            },
+            overlayOptions: OverlayOptions(
+                fonts: OverlayText.fonts,
+                animations: OverlayAnimation.allCases.map(\.rawValue)
+            ),
             beats: beats
+        )
+    }
+
+    private static func item(for overlay: Overlay) -> OverlayItem {
+        func round2(_ value: Double) -> Double { (value * 100).rounded() / 100 }
+        func round3(_ value: Double) -> Double { (value * 1000).rounded() / 1000 }
+        var text: String?
+        var color: String?
+        var background: String?
+        var font: String?
+        if case .text(let content) = overlay.content {
+            text = content.text
+            color = content.color.hex
+            background = content.background?.hex
+            font = content.fontName
+        }
+        return OverlayItem(
+            id: overlay.id.uuidString,
+            kind: overlay.isText ? "text" : "image",
+            text: text,
+            start: round2(overlay.start.seconds),
+            duration: round2(overlay.duration.seconds),
+            end: round2(overlay.start.seconds + overlay.duration.seconds),
+            x: round3(overlay.transform.x),
+            y: round3(overlay.transform.y),
+            scale: round3(overlay.transform.scale),
+            rotation: round2(overlay.transform.rotation),
+            opacity: round2(overlay.transform.opacity),
+            flipX: overlay.transform.flipX,
+            flipY: overlay.transform.flipY,
+            color: color,
+            background: background,
+            font: font,
+            animation: overlay.animation.rawValue
         )
     }
 

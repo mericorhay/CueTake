@@ -66,6 +66,7 @@ struct OverlayCanvas: View {
             .scaleEffect(x: t.flipX ? -1 : 1, y: t.flipY ? -1 : 1)
             .rotationEffect(.degrees(t.rotation))
             .opacity(t.opacity * (visible ? 1 : 0.35))
+            .aiGlow(model.glowToken(.overlay(overlay.id)), in: RoundedRectangle(cornerRadius: 6, style: .continuous), inset: 6)
             .overlay {
                 if selected {
                     RoundedRectangle(cornerRadius: 4)

@@ -15,8 +15,9 @@ struct ToolDock: View {
     let onAddAudio: () -> Void
     let onMore: () -> Void
     /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
-    var aiRequest: ((EditDocument, String) async throws -> EditPlan)? = nil
+    var aiRequest: AIRequester? = nil
     var onAddImage: () -> Void = {}
+    var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
         case ai, split, trim, speed, text, image, captions, audio, duplicate, delete, more
@@ -117,7 +118,8 @@ struct ToolDock: View {
     private func chip(_ item: Item) -> some View {
         let enabled = isEnabled(item)
         let destructive = item == .delete
-        let accent = item == .captions || item == .ai
+        let accent = item == .captions
+        let ai = item == .ai
 
         return Button {
             fired[item, default: 0] += 1
@@ -130,20 +132,25 @@ struct ToolDock: View {
                     .lineLimit(1)
             }
             .foregroundStyle(
-                !enabled ? DS.Palette.ink(0.22)
-                    : destructive ? DS.Palette.accent
-                    : accent ? DS.Palette.lime
-                    : DS.Palette.ink(0.88)
+                ai ? AnyShapeStyle(AIPalette.linear)
+                    : !enabled ? AnyShapeStyle(DS.Palette.ink(0.22))
+                    : destructive ? AnyShapeStyle(DS.Palette.accent)
+                    : accent ? AnyShapeStyle(DS.Palette.lime)
+                    : AnyShapeStyle(DS.Palette.ink(0.88))
             )
             .frame(width: 64, height: 58)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(accent ? DS.Palette.lime(0.1) : DS.Palette.hairline(enabled ? 0.07 : 0.03))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(accent ? DS.Palette.lime(0.3) : DS.Palette.hairline(0.08), lineWidth: 1)
-            )
+            .overlay {
+                if ai {
+                    AIRing(shape: RoundedRectangle(cornerRadius: 16, style: .continuous), active: model.isAIDriving)
+                } else {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(accent ? DS.Palette.lime(0.3) : DS.Palette.hairline(0.08), lineWidth: 1)
+                }
+            }
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.dsPress(radius: 16))
@@ -256,7 +263,15 @@ struct ToolDock: View {
 
             Group {
                 if item == .ai, let aiRequest {
-                    AIEditPanel(model: model, request: aiRequest)
+                    AIEditPanel(
+                        model: model,
+                        request: aiRequest,
+                        onStart: { open = nil },
+                        onShowChanges: {
+                            open = nil
+                            onShowAIChanges()
+                        }
+                    )
                 } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)

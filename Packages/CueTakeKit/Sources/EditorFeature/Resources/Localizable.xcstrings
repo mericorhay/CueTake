@@ -885,6 +885,23 @@
         }
       }
     },
+    "editor.ai.drives": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The AI edits live in the studio. Watch every change land — and take any of it back."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI stüdyoda canlı düzenler. Her değişikliği yerinde gör, istediğini geri al."
+          }
+        }
+      }
+    },
     "editor.ai.failed %@": {
       "extractionState": "manual",
       "localizations": {
@@ -898,6 +915,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan alınamadı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.history": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI changes"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI değişiklikleri"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.done %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld changes made"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld değişiklik yapıldı"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.reading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The AI is reading your video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI videonu okuyor"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.review": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İncele"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.step %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change %1$lld of %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değişiklik %1$lld / %2$lld"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.stop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durdur"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.undo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo all"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hepsini geri al"
           }
         }
       }
@@ -919,6 +1055,40 @@
         }
       }
     },
+    "editor.ai.op.addText %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text added: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazı eklendi: “%@”"
+          }
+        }
+      }
+    },
+    "editor.ai.op.audio %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound adjusted: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses ayarlandı: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.caption %@": {
       "extractionState": "manual",
       "localizations": {
@@ -932,6 +1102,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazı: “%@”"
+          }
+        }
+      }
+    },
+    "editor.ai.op.captionMerge %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions joined: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar birleşti: “%@”"
+          }
+        }
+      }
+    },
+    "editor.ai.op.captionRemove %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption removed: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı silindi: “%@”"
+          }
+        }
+      }
+    },
+    "editor.ai.op.captionSplit %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption split: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı bölündü: “%@”"
+          }
+        }
+      }
+    },
+    "editor.ai.op.captionTiming %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption timing: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı zamanı: “%@”"
           }
         }
       }
@@ -970,6 +1208,40 @@
         }
       }
     },
+    "editor.ai.op.duplicate %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %@ duplicated"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@ çoğaltıldı"
+          }
+        }
+      }
+    },
+    "editor.ai.op.footage %@ %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@: %2$lld cuts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@: %2$lld kesim"
+          }
+        }
+      }
+    },
     "editor.ai.op.freeze %@": {
       "extractionState": "manual",
       "localizations": {
@@ -983,6 +1255,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %@: kareyi dondur"
+          }
+        }
+      }
+    },
+    "editor.ai.op.look": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption look tuned"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı görünümü ayarlandı"
           }
         }
       }
@@ -1017,6 +1306,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %1$@: %2$@ sn üstü boşlukları kısalt"
+          }
+        }
+      }
+    },
+    "editor.ai.op.removeAudio %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound removed: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses kaldırıldı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.removeOverlay %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay removed: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman silindi: %@"
           }
         }
       }
@@ -1072,6 +1395,23 @@
         }
       }
     },
+    "editor.ai.op.split %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@: split at %2$@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@: %2$@. sn'de bölündü"
+          }
+        }
+      }
+    },
     "editor.ai.op.style %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1089,6 +1429,40 @@
         }
       }
     },
+    "editor.ai.op.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlık: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.trim %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %@ trimmed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@ kırpıldı"
+          }
+        }
+      }
+    },
     "editor.ai.op.unknown %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1102,6 +1476,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Desteklenmiyor: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.updateOverlay %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overlay adjusted: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katman ayarlandı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.voice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice repair adjusted"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses temizleme ayarlandı"
           }
         }
       }
@@ -1140,6 +1548,40 @@
         }
       }
     },
+    "editor.ai.op.window %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions only %1$@–%2$@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar sadece %1$@–%2$@ sn"
+          }
+        }
+      }
+    },
+    "editor.ai.op.windowAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions throughout"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar baştan sona"
+          }
+        }
+      }
+    },
     "editor.ai.op.words %@ %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1163,13 +1605,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "What should change? e.g. cut the ums and pauses"
+            "value": "What should change? e.g. cut the ums, add a title at 0:05"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ne değişsin? örn. eee'leri ve boşlukları kes"
+            "value": "Ne değişsin? örn. eee'leri kes, 0:05'e başlık ekle"
           }
         }
       }
@@ -1276,6 +1718,23 @@
         }
       }
     },
+    "editor.ai.suggest.look": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bigger captions, yellow highlight"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazıları büyüt, vurguyu sarı yap"
+          }
+        }
+      }
+    },
     "editor.ai.suggest.tighten": {
       "extractionState": "manual",
       "localizations": {
@@ -1289,6 +1748,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Boşlukları ve dolgu kelimeleri kes"
+          }
+        }
+      }
+    },
+    "editor.ai.suggest.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a title for the first 3 seconds"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İlk 3 saniyeye bir başlık ekle"
           }
         }
       }
@@ -1323,6 +1799,159 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri al"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.count %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld in place"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld değişiklik duruyor"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing yet. Ask the AI for an edit and every change it makes lands here, each one reversible."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz yok. AI'dan bir düzenleme iste; yaptığı her değişiklik burada, tek tek geri alınabilir şekilde durur."
+          }
+        }
+      }
+    },
+    "editor.aiChanges.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a change to see it in the video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoda görmek için bir değişikliğe dokun"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.reapply": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply this change again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu değişikliği geri getir"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.reapplyAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden uygula"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.revert": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo this change"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu değişikliği geri al"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.revertAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo all"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tümünü geri al"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.reverted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undone"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri alındı"
+          }
+        }
+      }
+    },
+    "editor.aiChanges.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI CHANGES"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI DEĞİŞİKLİKLERİ"
           }
         }
       }
@@ -1629,6 +2258,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yapay zekâ düzenlemesi"
+          }
+        }
+      }
+    },
+    "editor.change.aiReapply": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI change applied again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI değişikliği yeniden uygulandı"
+          }
+        }
+      }
+    },
+    "editor.change.aiRevert": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI change undone"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI değişikliği geri alındı"
           }
         }
       }

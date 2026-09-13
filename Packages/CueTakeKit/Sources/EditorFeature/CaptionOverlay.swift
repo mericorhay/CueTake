@@ -16,6 +16,8 @@ struct CaptionOverlay: View {
     let locale: Locale
     /// The playhead, for lighting words as they are said.
     let time: Double
+    /// Moves when the AI changes these captions or their look.
+    var glowToken: Int = 0
 
     var body: some View {
         GeometryReader { proxy in
@@ -37,6 +39,7 @@ struct CaptionOverlay: View {
                             .fill(Self.color(background))
                     }
                 }
+                .aiGlow(glowToken, in: RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous), inset: 4)
                 .frame(maxWidth: proxy.size.width * 0.86)
                 .position(
                     x: proxy.size.width * style.position.x,

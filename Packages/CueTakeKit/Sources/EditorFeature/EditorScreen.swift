@@ -35,7 +35,7 @@ public struct EditorScreen: View {
         isSaving: Bool = false,
         onSave: @escaping () -> Void = {},
         onTranscribe: @escaping () -> Void = {},
-        onAIEdit: ((EditDocument, String) async throws -> EditPlan)? = nil
+        onAIEdit: AIRequester? = nil
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -51,7 +51,7 @@ public struct EditorScreen: View {
         self.onAIEdit = onAIEdit
     }
 
-    private let onAIEdit: ((EditDocument, String) async throws -> EditPlan)?
+    private let onAIEdit: AIRequester?
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
@@ -60,6 +60,7 @@ public struct EditorScreen: View {
     /// Set while the phone is on its side: the picture takes the height of the screen.
     @State private var landscapePreviewHeight: CGFloat?
     @State private var showsChanges = false
+    @State private var showsAIChanges = false
     @State private var previewExpanded = false
     @State private var showsTranscript = false
 
@@ -154,6 +155,23 @@ public struct EditorScreen: View {
         }
         .animation(DS.Motion.settle, value: isPanelOpen)
         .animation(DS.Motion.settle, value: dockPanel)
+        // The AI has the studio: light around the screen, its voice at the top.
+        .overlay {
+            AIAuroraBorder(active: model.isAIDriving, fast: model.aiSession?.phase == .applying)
+        }
+        .overlay(alignment: .top) {
+            AIDirectorHUD(model: model) {
+                model.dismissAISession()
+                showsAIChanges = true
+            }
+            .padding(.top, landscapePreviewHeight == nil ? 50 : 8)
+        }
+        .sheet(isPresented: $showsAIChanges) {
+            AIChangesSheet(model: model) { showsAIChanges = false }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sensoryFeedback(.impact(weight: .light, intensity: 0.7), trigger: model.aiBeat)
         .sheet(isPresented: $showsTools) {
             ToolBrowser(
                 model: model,
@@ -249,8 +267,8 @@ public struct EditorScreen: View {
     /// on a screen where everything else is about changing something.
     private var statusStrip: some View {
         HStack(spacing: 7) {
-            historyButton("arrow.uturn.backward", enabled: model.canUndo) { model.undo() }
-            historyButton("arrow.uturn.forward", enabled: model.canRedo) { model.redo() }
+            historyButton("arrow.uturn.backward", enabled: model.canUndo && !model.isAIDriving) { model.undo() }
+            historyButton("arrow.uturn.forward", enabled: model.canRedo && !model.isAIDriving) { model.redo() }
 
             Button {
                 showsChanges = true
@@ -289,6 +307,28 @@ public struct EditorScreen: View {
                 .dsPulseIfSaving(isSaving)
                 .padding(.trailing, 2)
 
+            if !model.aiChanges.isEmpty {
+                Button {
+                    showsAIChanges = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(AIPalette.linear)
+                        Text(verbatim: "\(model.aiChanges.reduce(0) { $0 + $1.activeCount })")
+                            .dsFont(.mono, .medium, 10)
+                            .foregroundStyle(DS.Palette.ink(0.8))
+                            .contentTransition(.numericText())
+                    }
+                    .padding(.horizontal, 9)
+                    .frame(height: 30)
+                    .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(DS.Palette.hairline(0.08)))
+                    .overlay { AIRing(shape: RoundedRectangle(cornerRadius: 11, style: .continuous), active: model.isAIDriving) }
+                }
+                .buttonStyle(.dsPressIcon)
+                .transition(.scale.combined(with: .opacity))
+            }
+
             Button {
                 showsTools = true
             } label: {
@@ -305,6 +345,7 @@ public struct EditorScreen: View {
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 8)
+        .animation(DS.Motion.bloom, value: model.aiChanges.isEmpty)
     }
 
     private func historyButton(
@@ -350,7 +391,8 @@ public struct EditorScreen: View {
                     cue: cue,
                     style: model.project.captionStyle,
                     locale: model.project.locale,
-                    time: model.playhead
+                    time: model.playhead,
+                    glowToken: model.captionGlowToken
                 )
                 .id(cue.id)
                 .transition(CaptionOverlay.transition(for: model.project.captionStyle))
@@ -358,7 +400,14 @@ public struct EditorScreen: View {
         }
         // Pictures and text, over the captions, moved with the fingers.
         .overlay { OverlayCanvas(model: model) }
+        .overlay {
+            if model.aiSession?.phase == .thinking {
+                AIShimmer().transition(.opacity)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+        .aiGlow(model.aiBeat, in: RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+        .allowsHitTesting(!model.isAIDriving)
         .overlay(alignment: .topTrailing) {
             // Discoverable rather than a secret tap. The whole picture is the target, but nobody
             // taps a video expecting it to grow unless something says it will.
@@ -455,6 +504,7 @@ public struct EditorScreen: View {
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
                     onAddImage: { pickingImage = true },
+                    onShowAIChanges: { showsAIChanges = true },
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)
@@ -474,6 +524,9 @@ public struct EditorScreen: View {
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
+        .allowsHitTesting(!model.isAIDriving)
+        .opacity(model.aiSession?.phase == .thinking ? 0.85 : 1)
+        .animation(.easeInOut(duration: 0.4), value: model.isAIDriving)
     }
 
     private var captionStrip: some View {
@@ -500,6 +553,11 @@ public struct EditorScreen: View {
                             RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous)
                                 .stroke(DS.Palette.hairline(0.07), lineWidth: 1)
                         }
+                        .aiGlow(
+                            model.glowToken(.captions(segment.id)) + model.glowToken(.captionStyle),
+                            in: RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous),
+                            touched: model.isAITouched(.captions(segment.id))
+                        )
                 }
             }
         }

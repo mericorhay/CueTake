@@ -82,7 +82,7 @@ extension EditorModel {
         future.append(
             EditSnapshot(project: project, entry: snapshot.entry, coalescingKey: nil)
         )
-        apply(snapshot.project)
+        adopt(snapshot.project)
         pulse(.undo)
     }
 
@@ -91,7 +91,7 @@ extension EditorModel {
         past.append(
             EditSnapshot(project: snapshot.project, entry: snapshot.entry, coalescingKey: nil)
         )
-        apply(snapshot.project)
+        adopt(snapshot.project)
         pulse(.redo)
     }
 
@@ -105,17 +105,20 @@ extension EditorModel {
         // The revert is itself undoable: it is the largest edit in the app, and the one most
         // likely to be pressed by accident.
         record("editor.change.revert", symbol: "arrow.counterclockwise")
-        apply(original)
+        adopt(original)
     }
 
     /// Puts a project back and repairs whatever pointed into the old one.
-    private func apply(_ restored: Project) {
+    func adopt(_ restored: Project) {
         project = restored
         if let inspected = inspectedSegment, !restored.segments.contains(where: { $0.id == inspected }) {
             inspectedSegment = nil
         }
         if let selected = selectedAudio, !restored.audio.contains(where: { $0.id == selected }) {
             selectedAudio = nil
+        }
+        if let selected = selectedOverlay, !restored.overlays.contains(where: { $0.id == selected }) {
+            selectedOverlay = nil
         }
         // Through `seek` rather than the property: the player has to be told too, or the picture
         // stays where the undone edit left it.
