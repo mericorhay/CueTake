@@ -288,9 +288,29 @@ final class AppModel {
 
     /// Applies the caption choice to the project, so it survives leaving the screen.
     func applyCaptionStyle(presetID: String, position: CaptionPosition) {
-        project.captionStyle.presetID = presetID
-        project.captionStyle.position = position
+        // The preset is the whole look now, not a label: face, size, colours, plate and how many
+        // words sit on screen at once. Position is the user's own choice and is kept.
+        let previous = project.captionStyle
+        project.captionStyle = CaptionStyle.preset(presetID, position: position)
+
+        // A different number of words per cue means different cues. Regrouped from the
+        // transcript — but never over a segment where the user has typed their own captions,
+        // which would silently throw their edits away.
+        if previous.maxWordsPerCue != project.captionStyle.maxWordsPerCue {
+            for index in project.segments.indices {
+                guard let transcript = project.segments[index].selectedTake?.transcript,
+                      !transcript.words.isEmpty,
+                      !project.segments[index].captions.contains(where: \.isUserEdited)
+                else { continue }
+                project.segments[index].captions = CaptionBuilder.cues(
+                    from: transcript,
+                    maxWordsPerCue: project.captionStyle.maxWordsPerCue
+                )
+            }
+        }
+
         project.updatedAt = .now
+        editorModel.project = project
         scheduleSave()
     }
 

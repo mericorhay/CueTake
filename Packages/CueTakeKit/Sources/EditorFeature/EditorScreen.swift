@@ -292,9 +292,11 @@ public struct EditorScreen: View {
                 CaptionOverlay(
                     cue: cue,
                     style: model.project.captionStyle,
-                    locale: model.project.locale
+                    locale: model.project.locale,
+                    time: model.playhead
                 )
                 .id(cue.id)
+                .transition(CaptionOverlay.transition(for: model.project.captionStyle))
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))

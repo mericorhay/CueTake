@@ -66,15 +66,8 @@ public struct CaptionStyle: Hashable, Sendable, Codable {
         self.position = position
     }
 
-    public static let standard = CaptionStyle(
-        presetID: "standard",
-        relativeFontSize: 0.035,
-        textCase: .natural,
-        textColor: .white,
-        highlightColor: RGBAColor(red: 1, green: 0.84, blue: 0.2),
-        maxWordsPerCue: 4,
-        position: .lowerThird
-    )
+    /// What a new project starts with: the Pop look, the one the captions screen opens on.
+    public static var standard: CaptionStyle { .preset("pop") }
 }
 
 public enum CaptionTextCase: String, Hashable, Sendable, Codable {
@@ -132,11 +125,85 @@ public struct PlacedCue: Identifiable, Hashable, Sendable {
     public let id: UUID
     public var text: String
     public var range: MediaTimeRange
+    /// The cue's words with the times they were said, in finished-video time. Empty when the cue
+    /// did not come from a transcript — typed by hand, or built from a script — in which case
+    /// nothing is highlighted rather than highlighted at invented times.
+    public var words: [PlacedWord]
 
-    public init(id: UUID, text: String, range: MediaTimeRange) {
+    public init(id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = []) {
         self.id = id
         self.text = text
         self.range = range
+        self.words = words
+    }
+
+    /// The index of the word being said at `seconds`, or of the last word already said. Nil
+    /// before the first word starts.
+    public func wordIndex(at seconds: Double) -> Int? {
+        words.lastIndex { $0.range.start.seconds <= seconds }
+    }
+}
+
+public struct PlacedWord: Hashable, Sendable {
+    public var text: String
+    public var range: MediaTimeRange
+
+    public init(text: String, range: MediaTimeRange) {
+        self.text = text
+        self.range = range
+    }
+}
+
+extension CaptionStyle {
+    /// The three looks the app offers, as complete styles.
+    ///
+    /// They used to be names only: choosing Karaoke stored the word "karaoke" and every caption
+    /// was drawn exactly as before. A preset is now the whole decision — face, size, case, colour,
+    /// plate, how many words at once — so what the captions screen shows is what the preview draws
+    /// and what the export burns in.
+    public static func preset(_ id: String, position: CaptionPosition = .lowerThird) -> CaptionStyle {
+        switch id {
+        case "clean":
+            // Quiet: medium weight on a dark plate, more words at once, reads like subtitles.
+            CaptionStyle(
+                presetID: "clean",
+                fontName: "InstrumentSans-Medium",
+                relativeFontSize: 0.03,
+                textCase: .natural,
+                textColor: .white,
+                backgroundColor: RGBAColor(red: 0.04, green: 0.04, blue: 0.05, alpha: 0.62),
+                maxWordsPerCue: 6,
+                position: position
+            )
+        case "karaoke":
+            // Words light up as they are said. Fewer at once, so the eye can follow the fill.
+            CaptionStyle(
+                presetID: "karaoke",
+                fontName: "Archivo-Bold",
+                relativeFontSize: 0.038,
+                textCase: .natural,
+                textColor: .white,
+                highlightColor: RGBAColor(red: 0xE8 / 255, green: 1, blue: 0x4F / 255),
+                maxWordsPerCue: 4,
+                position: position
+            )
+        default:
+            // Loud: extra-bold, outlined, three words at a time — the look short video is known for.
+            CaptionStyle(
+                presetID: "pop",
+                fontName: "Archivo-ExtraBold",
+                relativeFontSize: 0.042,
+                textCase: .natural,
+                textColor: .white,
+                maxWordsPerCue: 3,
+                position: position
+            )
+        }
+    }
+
+    /// Whether words are lit one after another as they are said.
+    public var highlightsWords: Bool {
+        presetID == "karaoke" && highlightColor != nil
     }
 }
 
@@ -157,10 +224,30 @@ extension Project {
             // with it: a cue at three seconds into a half-speed clip is at six.
             let stretch = segment.sourceSeconds > 0.01 ? length / segment.sourceSeconds : 1
 
+            let spoken = segment.selectedTake?.transcript?.words ?? []
+
             for cue in segment.captions {
                 let start = cursor + cue.range.start.seconds * stretch
                 let duration = max(0.2, cue.range.duration.seconds * stretch)
                 guard start < cursor + length + 0.01 else { continue }
+
+                // The words inside this cue's time, from the transcript. A cue the user retyped
+                // no longer matches what was said word for word, so it is shown without them.
+                let words: [PlacedWord] = cue.isUserEdited ? [] : spoken
+                    .filter {
+                        $0.range.start.seconds >= cue.range.start.seconds - 0.02
+                            && $0.range.start.seconds < cue.range.end.seconds - 0.01
+                    }
+                    .map { word in
+                        PlacedWord(
+                            text: word.text,
+                            range: MediaTimeRange(
+                                start: MediaTime(seconds: cursor + word.range.start.seconds * stretch),
+                                duration: MediaTime(seconds: max(0.05, word.range.duration.seconds * stretch))
+                            )
+                        )
+                    }
+
                 cues.append(
                     PlacedCue(
                         id: cue.id,
@@ -170,7 +257,8 @@ extension Project {
                             // Never past the end of its own clip: a cue outstaying its footage is
                             // how a caption ends up over the next person's face.
                             duration: MediaTime(seconds: min(duration, cursor + length - start))
-                        )
+                        ),
+                        words: words
                     )
                 )
             }
