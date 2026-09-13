@@ -188,6 +188,8 @@ final class AppModel {
             title: String(localized: "project.untitled \(Date.now.formatted(date: .abbreviated, time: .shortened))"),
             localeIdentifier: Locale.current.identifier
         )
+        // Your look, not the default one, if you have one.
+        settingsModel.settings.applyStyle(to: &fresh)
         try? await store.save(fresh)
 
         guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else { return }
@@ -318,6 +320,13 @@ final class AppModel {
         project.updatedAt = .now
         editorModel.project = project
         scheduleSave()
+
+        // Remembered for the next project. The Settings default and the last choice are the same
+        // thing now: whatever you picked most recently is what you get.
+        if let preference = CaptionPreference(rawValue: presetID) {
+            settingsModel.update(\.captionPreset, to: preference)
+        }
+        settingsModel.update(\.captionPosition, to: position)
     }
 
     /// The editor asks for playback; only this layer knows where the project's media lives.
@@ -578,6 +587,7 @@ final class AppModel {
             // Framed for where it is going: a YouTube script is a landscape project from the start.
             var fresh = Project(title: draft.title, format: promptModel.platform.defaultFormat, localeIdentifier: locale)
             fresh.segments = draft.segments.map(Segment.init(draft:))
+            settingsModel.settings.applyStyle(to: &fresh)
 
             promptModel.advance(to: 4)
             try? await dependencies.projectStore.save(fresh)
@@ -803,6 +813,9 @@ final class AppModel {
     /// here goes to disk and to the exporter.
     func adoptEditorEdits() {
         guard project != editorModel.project else { return }
+        if project.voiceEffects != editorModel.project.voiceEffects {
+            settingsModel.update(\.voiceEffects, to: editorModel.project.voiceEffects)
+        }
         project = editorModel.project
     }
 

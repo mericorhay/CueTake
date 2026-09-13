@@ -35,6 +35,10 @@ public struct SettingsScreen: View {
                         model.update(\.captionPreset, to: $0)
                     }
 
+                    picker("settings.rememberStyle", [true, false], model.settings.remembersStyle, \.rememberLabel) {
+                        model.update(\.remembersStyle, to: $0)
+                    }
+
                     picker("settings.ai", AIProcessing.allCases, model.settings.aiProcessing, \.label) {
                         model.update(\.aiProcessing, to: $0)
                     }
@@ -223,5 +227,14 @@ extension ExportDestination {
         case .photoLibrary: String(localized: "settings.export.photos", bundle: .module)
         case .files: String(localized: "settings.export.files", bundle: .module)
         }
+    }
+}
+
+extension Bool {
+    /// "On" or "Off" for the remember-my-style row.
+    fileprivate var rememberLabel: String {
+        self
+            ? String(localized: "settings.rememberStyle.on", bundle: .module)
+            : String(localized: "settings.rememberStyle.off", bundle: .module)
     }
 }

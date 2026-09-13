@@ -28,7 +28,9 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 
 - [x] Caption styles: Pop / Clean / Karaoke only store an id; preview and export draw them all the
       same. Karaoke word highlight is not implemented although word timings exist.
-- [ ] Teleprompter does not follow speech: Studio and Retake still advance on a 130–135 ms timer.
+- [x] Teleprompter does not follow speech: Studio and Retake still advance on a 130–135 ms timer.
+      Now follows the voice live (on-device), paces itself when it cannot hear, never auto-stops.
+      Needs an on-device check: that the movie file keeps its sound with the audio tap attached.
 - [x] Prompt screen options (length, tone, format) are static.
 - [x] Clean audio applies to added audio only, not the footage's own voice.
 - [x] Reversed clips are silent.
@@ -41,7 +43,14 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
       in the studio or run on the open project. Still to do: acting on the timeline directly.
       Previously: Assistant can talk but not act. "Edit like you talk" / AI timeline agent: let it run editor
       tools and write workflows (tool use through the proxy).
-- [ ] Remember My Style.
+- [x] Remember My Style (caption look and position, voice cleanup; Settings toggle).
+
+## Fixed in the 2026-09-13 evening pass
+
+- [x] Split, merge, pause trimming, word cuts and take switches deleted a clip's captions.
+- [x] Stop in the studio moved on before the file was closed (take could go missing).
+- [x] Captions screen could not edit anything; now a full captions studio.
+- [x] Script screen was read-only and its rewrite chips were string tricks.
 
 ## Hygiene
 

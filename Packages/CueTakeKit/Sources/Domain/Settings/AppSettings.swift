@@ -19,6 +19,13 @@ public struct AppSettings: Hashable, Sendable, Codable {
     public var aiProcessing: AIProcessing
     /// Where a finished video is written.
     public var exportDestination: ExportDestination
+    /// Whether new projects start with the look of the last one: caption style and position, and
+    /// voice cleanup. On by default — a creator's second video almost always looks like their first.
+    public var remembersStyle: Bool
+    /// Where captions sat last time. Nil until someone has placed them.
+    public var captionPosition: CaptionPosition?
+    /// The voice cleanup used last time.
+    public var voiceEffects: AudioEffects
     /// Whether the intro has been seen. Not a preference, but a second store and a second file
     /// for one Bool is worse than the small impurity of keeping it here.
     public var hasCompletedOnboarding: Bool
@@ -29,8 +36,14 @@ public struct AppSettings: Hashable, Sendable, Codable {
         captionPreset: CaptionPreference = .pop,
         aiProcessing: AIProcessing = .onDeviceOnly,
         exportDestination: ExportDestination = .photoLibrary,
+        remembersStyle: Bool = true,
+        captionPosition: CaptionPosition? = nil,
+        voiceEffects: AudioEffects = AudioEffects(),
         hasCompletedOnboarding: Bool = false
     ) {
+        self.remembersStyle = remembersStyle
+        self.captionPosition = captionPosition
+        self.voiceEffects = voiceEffects
         self.defaultCamera = defaultCamera
         self.captureResolution = captureResolution
         self.captionPreset = captionPreset
@@ -50,6 +63,9 @@ public struct AppSettings: Hashable, Sendable, Codable {
         aiProcessing = try container.decodeIfPresent(AIProcessing.self, forKey: .aiProcessing) ?? fallback.aiProcessing
         exportDestination = try container.decodeIfPresent(ExportDestination.self, forKey: .exportDestination) ?? fallback.exportDestination
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? fallback.hasCompletedOnboarding
+        remembersStyle = try container.decodeIfPresent(Bool.self, forKey: .remembersStyle) ?? fallback.remembersStyle
+        captionPosition = try container.decodeIfPresent(CaptionPosition.self, forKey: .captionPosition)
+        voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? fallback.voiceEffects
     }
 }
 
@@ -74,4 +90,19 @@ extension CameraPosition: CaseIterable {
 
 extension ExportDestination: CaseIterable {
     public static var allCases: [ExportDestination] { [.photoLibrary, .files] }
+}
+
+extension AppSettings {
+    /// The look a new project starts with.
+    public var startingCaptionStyle: CaptionStyle {
+        let preset = captionPreset == .off ? "pop" : captionPreset.rawValue
+        return CaptionStyle.preset(preset, position: remembersStyle ? (captionPosition ?? .lowerThird) : .lowerThird)
+    }
+
+    /// Gives a new project the remembered look. Does nothing when remembering is off.
+    public func applyStyle(to project: inout Project) {
+        guard remembersStyle else { return }
+        project.captionStyle = startingCaptionStyle
+        project.voiceEffects = voiceEffects
+    }
 }
