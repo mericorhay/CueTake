@@ -107,6 +107,15 @@ struct RootView: View {
         .onChange(of: model.project) { model.scheduleSave() }
     }
 
+    /// The AI edit tool's line to the model, or nil in a build without the assistant.
+    private var aiEdit: ((EditDocument, String) async throws -> EditPlan)? {
+        guard model.dependencies.assistantClient.isConfigured else { return nil }
+        let model = model
+        return { document, instruction in
+            try await model.requestEditPlan(document, instruction)
+        }
+    }
+
     @ViewBuilder
     private var screen: some View {
         switch model.screen {
@@ -186,9 +195,7 @@ struct RootView: View {
                 isSaving: model.isSaving,
                 onSave: { model.saveNow() },
                 onTranscribe: { Task { await model.transcribeNewTakes() } },
-                onAIEdit: model.dependencies.assistantClient.isConfigured
-                    ? { document, instruction in try await model.requestEditPlan(document, instruction) }
-                    : nil
+                onAIEdit: aiEdit
             )
             .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
 
