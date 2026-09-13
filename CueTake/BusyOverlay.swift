@@ -17,7 +17,21 @@ struct BusyOverlay: View {
     @State private var line = Int.random(in: 0..<Self.lineCount)
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private static let lineCount = 20
+    /// Written out, one literal per line, rather than built from the index.
+    ///
+    /// `String.LocalizationValue("busy.line.\(index)")` looks like it asks for "busy.line.3" and
+    /// does not: interpolating into a localization value makes the number an *argument*, so the
+    /// key becomes "busy.line.%lld", which is in no table, and the fallback is the key itself with
+    /// the number filled in. That is exactly what was on screen. A key has to be a literal to be
+    /// a key.
+    private static let lines: [LocalizedStringResource] = [
+        "busy.line.0", "busy.line.1", "busy.line.2", "busy.line.3", "busy.line.4",
+        "busy.line.5", "busy.line.6", "busy.line.7", "busy.line.8", "busy.line.9",
+        "busy.line.10", "busy.line.11", "busy.line.12", "busy.line.13", "busy.line.14",
+        "busy.line.15", "busy.line.16", "busy.line.17", "busy.line.18", "busy.line.19",
+    ]
+
+    private static var lineCount: Int { lines.count }
     /// Slow enough to finish reading, quick enough to feel alive.
     private let beat = Timer.publish(every: 1.1, on: .main, in: .common).autoconnect()
 
@@ -31,7 +45,7 @@ struct BusyOverlay: View {
                     .tint(DS.Palette.accent)
 
                 VStack(spacing: 7) {
-                    Text(Self.text(at: line))
+                    Text(Self.lines[min(line, Self.lineCount - 1)])
                         .dsFont(.sans, .semibold, 16)
                         .foregroundStyle(DS.Palette.ink)
                         .multilineTextAlignment(.center)
@@ -70,9 +84,5 @@ struct BusyOverlay: View {
                 line = (line + 1) % Self.lineCount
             }
         }
-    }
-
-    private static func text(at index: Int) -> String {
-        String(localized: String.LocalizationValue("busy.line.\(index)"))
     }
 }
