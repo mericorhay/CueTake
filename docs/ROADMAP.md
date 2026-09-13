@@ -2,6 +2,10 @@
 
 Written 2026-09-13, after build 19. Ordered by importance. Tick things off here as they land.
 
+> **Pending upload:** everything after build 22 (assistant workflow cards, reversed clips with
+> sound, new tests) is on `main` but not on TestFlight — Apple's daily upload limit was reached on
+> 2026-09-13 (error 90382). Rerun the TestFlight workflow after 24 hours.
+
 ## Before selling
 
 - [ ] Connect the assistant: deploy `backend/assistant`, set `CUETAKE_ASSISTANT_URL` and
