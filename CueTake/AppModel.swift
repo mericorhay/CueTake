@@ -352,10 +352,42 @@ final class AppModel {
         saveTask?.cancel()
         let project = project
         let store = dependencies.projectStore
+        isSaving = true
         saveTask = Task {
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
             try? await store.save(project)
+            isSaving = false
+            savedAt = .now
+        }
+    }
+
+    /// True while a write is pending or in flight.
+    private(set) var isSaving = false
+    /// When the project last reached disk, or nil if it has not since the app opened.
+    private(set) var savedAt: Date?
+
+    /// What the editor says about the file on disk.
+    ///
+    /// The app saves by itself and should: nobody should lose an edit to a button they did not
+    /// press. But an app that never mentions saving leaves people wondering whether it did, and
+    /// wondering is worse than a button — so it says so, in a sentence, where it can be checked.
+    var saveLabel: String {
+        if isSaving { return String(localized: "save.saving") }
+        guard let savedAt else { return String(localized: "save.never") }
+        return String(localized: "save.saved \(savedAt.formatted(date: .omitted, time: .shortened))")
+    }
+
+    /// Writes now instead of in four hundred milliseconds. What the save button does.
+    func saveNow() {
+        saveTask?.cancel()
+        let project = project
+        let store = dependencies.projectStore
+        isSaving = true
+        saveTask = Task {
+            try? await store.save(project)
+            isSaving = false
+            savedAt = .now
         }
     }
 

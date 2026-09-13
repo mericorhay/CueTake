@@ -13,6 +13,10 @@ public struct EditorScreen: View {
     private let onRetake: (Segment.ID) -> Void
     /// Asks the layer that owns the file system to bring a piece of audio in.
     private let onAddAudio: () -> Void
+    /// What the app layer says about the file on disk, and how to make it write now.
+    private let saveLabel: String
+    private let isSaving: Bool
+    private let onSave: () -> Void
     /// Asks the layer that knows where media lives to get playback ready.
     private let onPrepare: () async -> Void
 
@@ -23,7 +27,10 @@ public struct EditorScreen: View {
         onExport: @escaping () -> Void,
         onCaptions: @escaping () -> Void,
         onRetake: @escaping (Segment.ID) -> Void,
-        onAddAudio: @escaping () -> Void = {}
+        onAddAudio: @escaping () -> Void = {},
+        saveLabel: String = "",
+        isSaving: Bool = false,
+        onSave: @escaping () -> Void = {}
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -32,11 +39,18 @@ public struct EditorScreen: View {
         self.onCaptions = onCaptions
         self.onRetake = onRetake
         self.onAddAudio = onAddAudio
+        self.saveLabel = saveLabel
+        self.isSaving = isSaving
+        self.onSave = onSave
     }
+
+    @State private var showsTools = false
+    @State private var showsChanges = false
 
     public var body: some View {
         VStack(spacing: 0) {
             topBar
+            statusStrip
             preview
             transport
             timelineBlock
@@ -58,6 +72,28 @@ public struct EditorScreen: View {
             }
         }
         .padding(.top, 58)
+        .sheet(isPresented: $showsTools) {
+            ToolBrowser(
+                model: model,
+                onAddAudio: onAddAudio,
+                onCaptions: onCaptions,
+                onExport: onExport,
+                onClose: { showsTools = false }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showsChanges) {
+            ChangesSheet(
+                model: model,
+                saveLabel: saveLabel,
+                isSaving: isSaving,
+                onSave: onSave,
+                onClose: { showsChanges = false }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
         .task { await onPrepare() }
         // Speed, freeze and reverse change what the composition *is*, not just how it is drawn,
         // so the preview has to be rebuilt. Watched here rather than pushed from each control:
@@ -94,6 +130,91 @@ public struct EditorScreen: View {
         }
         .padding(.horizontal, 18)
         .padding(.bottom, 10)
+    }
+
+    /// Undo, redo, what has changed, and whether it is saved.
+    ///
+    /// A strip of its own rather than icons crowded into the title bar. These four say one thing
+    /// together — *your work is safe and reversible* — and that is a sentence worth its own line
+    /// on a screen where everything else is about changing something.
+    private var statusStrip: some View {
+        HStack(spacing: 7) {
+            historyButton("arrow.uturn.backward", enabled: model.canUndo) { model.undo() }
+            historyButton("arrow.uturn.forward", enabled: model.canRedo) { model.redo() }
+
+            Button {
+                showsChanges = true
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: model.canUndo ? "clock.arrow.circlepath" : "checkmark")
+                        .font(.system(size: 10, weight: .semibold))
+                        .contentTransition(.symbolEffect(.replace))
+
+                    Text(
+                        model.lastChange?.label
+                            ?? String(localized: "editor.changes.none", bundle: .module)
+                    )
+                    .dsFont(.sans, .medium, 11)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                }
+                .foregroundStyle(DS.Palette.ink(0.6))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    Capsule().fill(DS.Palette.hairline(0.06))
+                )
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.dsPress(radius: 20))
+            // The pill changes text as edits land, so it animates rather than snapping.
+            .animation(DS.Motion.snap, value: model.changes.count)
+
+            // Saving is a dot, not a sentence. It is only worth a sentence when someone goes
+            // looking, and there is a whole panel for that a tap away.
+            Circle()
+                .fill(isSaving ? DS.Palette.ink(0.3) : DS.Palette.lime)
+                .frame(width: 6, height: 6)
+                .dsPulseIfSaving(isSaving)
+                .padding(.trailing, 2)
+
+            Button {
+                showsTools = true
+            } label: {
+                Image(systemName: "square.grid.2x2")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.75))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                            .fill(DS.Palette.hairline(0.08))
+                    )
+            }
+            .buttonStyle(.dsPressIcon)
+        }
+        .padding(.horizontal, 18)
+        .padding(.bottom, 8)
+    }
+
+    private func historyButton(
+        _ symbol: String,
+        enabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(enabled ? DS.Palette.ink(0.8) : DS.Palette.ink(0.2))
+                .frame(width: 30, height: 30)
+                .background(
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(DS.Palette.hairline(enabled ? 0.08 : 0.03))
+                )
+        }
+        .buttonStyle(.dsPressIcon)
+        .disabled(!enabled)
+        .animation(DS.Motion.snap, value: enabled)
     }
 
     /// The composition preview. AVPlayer lands here; until then it is the camera-dark plate.
@@ -474,5 +595,28 @@ extension EditorModel.InspectorTab {
         case .take: String(localized: "editor.tab.take", bundle: .module)
         case .style: String(localized: "editor.tab.style", bundle: .module)
         }
+    }
+}
+
+/// The save dot breathes while a write is in flight, and holds still when there is nothing to say.
+///
+/// Applied conditionally rather than with a zero-amplitude animation: an animation that is always
+/// running costs a redraw a frame forever, on a screen that is already drawing a video.
+private struct PulseWhileSaving: ViewModifier {
+    let isSaving: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isSaving {
+            content.dsPulse(duration: 1)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    fileprivate func dsPulseIfSaving(_ isSaving: Bool) -> some View {
+        modifier(PulseWhileSaving(isSaving: isSaving))
     }
 }

@@ -154,7 +154,10 @@ struct RootView: View {
                 onExport: { model.go(to: .export) },
                 onCaptions: { model.go(to: .captions) },
                 onRetake: { model.startRetake(of: $0) },
-                onAddAudio: { model.isPickingAudio = true }
+                onAddAudio: { model.isPickingAudio = true },
+                saveLabel: model.saveLabel,
+                isSaving: model.isSaving,
+                onSave: { model.saveNow() }
             )
             .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
 

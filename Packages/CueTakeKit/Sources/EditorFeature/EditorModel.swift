@@ -44,6 +44,11 @@ public final class EditorModel {
     public private(set) var lastTool: ToolPulse?
     private var pulseCount = 0
 
+    /// Undo, as snapshots. See `EditorHistory`.
+    var past: [EditSnapshot] = []
+    var future: [EditSnapshot] = []
+    var editCount = 0
+
     private var task: Task<Void, Never>?
 
     /// The real playback. Nil until the project's media has been composed — a project that has
@@ -231,6 +236,7 @@ public final class EditorModel {
         // A frozen segment has no footage to trim: dragging its edge changes how long the frame is
         // held. Same gesture, and it edits the thing the clip's length actually comes from.
         if playback.freeze != nil {
+            record("editor.change.freezeLength", symbol: "snowflake", coalescing: "trim-\(index)")
             project.segments[index].playback.freeze = MediaTime(seconds: wanted)
             project.updatedAt = .now
             return
@@ -248,6 +254,7 @@ public final class EditorModel {
             guard clamped > 0.1 else { return }
         }
 
+        record("editor.change.trim", symbol: "arrow.left.and.right", coalescing: "trim-\(index)")
         if let takeID = project.segments[index].selectedTakeID,
            let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }) {
             let take = project.segments[index].takes[takeIndex]
@@ -334,6 +341,7 @@ public final class EditorModel {
         left.captions = []
         right.captions = []
 
+        record("editor.change.split", symbol: "scissors")
         project.segments[index] = left
         project.segments.insert(right, at: index + 1)
         project.updatedAt = .now
@@ -344,6 +352,7 @@ public final class EditorModel {
     /// derived — there is no ripple to perform, only one less thing to lay out.
     public func deleteSegment(at index: Int) {
         guard project.segments.indices.contains(index), project.segments.count > 1 else { return }
+        record("editor.change.delete", symbol: "trash")
         let removed = project.segments.remove(at: index)
         if inspectedSegment == removed.id { inspectedSegment = nil }
         project.updatedAt = .now
@@ -352,6 +361,7 @@ public final class EditorModel {
 
     public func duplicateSegment(at index: Int) {
         guard project.segments.indices.contains(index) else { return }
+        record("editor.change.duplicate", symbol: "plus.square.on.square")
         var copy = project.segments[index].copyWithNewIdentity()
         // Takes keep pointing at the same recording: a duplicate is another window onto the same
         // footage, not another copy of it.
@@ -380,6 +390,7 @@ public final class EditorModel {
               let right = project.segments[index + 1].selectedTake
         else { return }
 
+        record("editor.change.merge", symbol: "arrow.trianglehead.merge")
         var merged = project.segments[index]
         var take = left
         take.sourceRange = MediaTimeRange(
@@ -415,6 +426,7 @@ public final class EditorModel {
               destination >= 0, destination < project.segments.count,
               index != destination
         else { return }
+        record("editor.change.move", symbol: "arrow.left.arrow.right")
         let segment = project.segments.remove(at: index)
         project.segments.insert(segment, at: destination)
         project.updatedAt = .now
@@ -435,6 +447,7 @@ extension EditorModel {
     }
 
     public func addAudio(_ clip: AudioClip) {
+        record("editor.change.audioAdd", symbol: "music.note")
         project.audio.append(clip)
         project.updatedAt = .now
         selectedAudio = clip.id
@@ -445,6 +458,7 @@ extension EditorModel {
     /// and one place that decides what a legal value is.
     public func updateAudio(_ id: AudioClip.ID, _ change: (inout AudioClip) -> Void) {
         guard let index = project.audio.firstIndex(where: { $0.id == id }) else { return }
+        record("editor.change.audioAdjust", symbol: "slider.horizontal.3", coalescing: "audio-\(id)")
         change(&project.audio[index])
         // Clamped here rather than trusted from the interface: a slider is one caller, and the
         // next one will be a keyboard, a gesture, or an AI asked to make the music quieter.
@@ -457,6 +471,7 @@ extension EditorModel {
     }
 
     public func removeAudio(_ id: AudioClip.ID) {
+        record("editor.change.audioRemove", symbol: "trash")
         project.audio.removeAll { $0.id == id }
         waveforms[id] = nil
         if selectedAudio == id { selectedAudio = nil }
@@ -465,6 +480,7 @@ extension EditorModel {
 
     public func duplicateAudio(_ id: AudioClip.ID) {
         guard let clip = project.audio.first(where: { $0.id == id }) else { return }
+        record("editor.change.duplicate", symbol: "plus.square.on.square")
         var copy = clip.copyWithNewIdentity()
         copy.start = MediaTime(seconds: clip.timelineRange.end.seconds)
         project.audio.append(copy)
@@ -481,6 +497,7 @@ extension EditorModel {
 
         let sourceOffset = offset * clip.speed
 
+        record("editor.change.split", symbol: "scissors")
         var left = clip
         left.sourceRange = MediaTimeRange(
             start: clip.sourceRange.start,
@@ -563,12 +580,15 @@ extension EditorModel {
     /// is, and the app-level save sees every edit the same way.
     public func updateSegment(at index: Int, _ change: (inout Segment) -> Void) {
         guard project.segments.indices.contains(index) else { return }
+        // Coalesced by segment: typing in the script field is one edit, not one per keystroke.
+        record("editor.change.segment", symbol: "pencil", coalescing: "segment-\(index)")
         change(&project.segments[index])
         project.updatedAt = .now
     }
 
     public func updatePlayback(at index: Int, _ change: (inout ClipPlayback) -> Void) {
         guard project.segments.indices.contains(index) else { return }
+        record("editor.change.playback", symbol: "gauge.with.dots.needle.67percent")
         change(&project.segments[index].playback)
         let speed = project.segments[index].playback.speed
         project.segments[index].playback.speed = min(max(speed, 0.25), 4)
@@ -585,6 +605,7 @@ extension EditorModel {
     /// video saying one thing and the words on screen saying another.
     public func selectTake(_ id: Take.ID, at index: Int) {
         guard project.segments.indices.contains(index) else { return }
+        record("editor.change.take", symbol: "film.stack")
         try? project.selectTake(id, inSegment: project.segments[index].id)
     }
 
@@ -592,6 +613,7 @@ extension EditorModel {
         guard project.segments.indices.contains(index),
               let cue = project.segments[index].captions.firstIndex(where: { $0.id == id })
         else { return }
+        record("editor.change.caption", symbol: "text.bubble", coalescing: "caption-\(id)")
         change(&project.segments[index].captions[cue])
         // Marked by hand, so a later transcription knows not to overwrite it.
         project.segments[index].captions[cue].isUserEdited = true

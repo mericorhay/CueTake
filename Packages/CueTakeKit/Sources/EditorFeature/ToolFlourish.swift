@@ -9,6 +9,8 @@ public enum ToolKind: String, Sendable, Equatable {
     case delete
     case mute
     case speed
+    case undo
+    case redo
 }
 
 /// One tool firing, so the timeline can answer it.
@@ -48,6 +50,7 @@ struct ToolFlourish: View {
         case .duplicate: 0.5
         case .delete: 0.44
         case .mute, .speed: 0.36
+        case .undo, .redo: 0.52
         }
     }
 
@@ -65,6 +68,8 @@ struct ToolFlourish: View {
                 case .delete: delete(x: x, height: height)
                 case .mute: level(x: x, height: height, symbol: "speaker.slash.fill")
                 case .speed: level(x: x, height: height, symbol: "gauge.with.dots.needle.67percent")
+                case .undo: wash(width: width, height: height, reversed: true)
+                case .redo: wash(width: width, height: height, reversed: false)
                 }
             }
             .frame(width: width, height: height, alignment: .topLeading)
@@ -164,6 +169,33 @@ struct ToolFlourish: View {
                         y: height * 0.35 + fall
                     )
             }
+        }
+    }
+
+    // MARK: - Undo
+
+    /// Undo washes across the whole surface rather than marking a spot, because undo does not
+    /// happen at a place — it happens to everything. Right to left, against the direction time
+    /// runs, which is the only thing about it that has to be legible at a glance.
+    private func wash(width: CGFloat, height: CGFloat, reversed: Bool) -> some View {
+        let travel = CGFloat(phase) * (width + 120)
+
+        return ZStack(alignment: .topLeading) {
+            LinearGradient(
+                colors: [DS.Palette.lime.opacity(0), DS.Palette.lime.opacity(0.22), DS.Palette.lime.opacity(0)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(width: 120, height: height)
+            .offset(x: reversed ? width - travel : travel - 120)
+
+            Image(systemName: reversed ? "arrow.uturn.backward" : "arrow.uturn.forward")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(DS.Palette.lime.opacity(1 - phase))
+                .offset(
+                    x: (reversed ? width - travel : travel - 120) + 52,
+                    y: height / 2 - 8
+                )
         }
     }
 

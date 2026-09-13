@@ -45,6 +45,15 @@ struct EditorTimeline: View {
 
                 playhead
 
+                // Under the finger, where the finger is covering the answer.
+                if model.isScrubbing {
+                    ScrubLens(model: model, scale: scale)
+                        .offset(x: CGFloat(model.playhead * scale) - ScrubLens.diameter / 2, y: -34)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                        .zIndex(2)
+                }
+
                 // The tool's own answer, drawn over the surface it acted on. Keyed by the pulse so
                 // using the same tool twice in a row plays twice rather than once.
                 if let pulse = model.lastTool {
