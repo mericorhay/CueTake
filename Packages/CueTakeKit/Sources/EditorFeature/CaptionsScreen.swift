@@ -15,6 +15,11 @@ public struct CaptionsScreen: View {
         case pop = "Pop"
         case clean = "Clean"
         case karaoke = "Karaoke"
+        case bold = "Bold"
+        case boxed = "Boxed"
+        case minimal = "Minimal"
+        case neon = "Neon"
+        case story = "Story"
 
         var presetID: String { rawValue.lowercased() }
     }
@@ -373,10 +378,20 @@ public struct CaptionsScreen: View {
 
     private var looks: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                ForEach(Style.allCases, id: \.self) { option in
-                    lookCard(option)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(Style.allCases, id: \.self) { option in
+                            lookCard(option)
+                                .frame(width: 80)
+                                .id(option)
+                        }
+                    }
+                    .padding(.vertical, 2)
                 }
+                .scrollIndicators(.hidden)
+                .scrollClipDisabled()
+                .onAppear { proxy.scrollTo(style, anchor: .center) }
             }
 
             HStack(spacing: 8) {
@@ -470,6 +485,33 @@ public struct CaptionsScreen: View {
         case .karaoke:
             (Text(verbatim: "la ").foregroundStyle(DS.Palette.lime) + Text(verbatim: "la").foregroundStyle(.white))
                 .font(font)
+        case .bold:
+            (Text(verbatim: "BIG ").foregroundStyle(Color(red: 1, green: 0.84, blue: 0.04)) + Text(verbatim: "YES").foregroundStyle(.white))
+                .font(font)
+                .shadow(color: .black, radius: 0.5, x: 1, y: 1)
+        case .boxed:
+            Text(verbatim: "Aa")
+                .font(font)
+                .foregroundStyle(.black)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.white))
+        case .minimal:
+            Text(verbatim: "hey")
+                .font(font)
+                .foregroundStyle(.white.opacity(0.9))
+        case .neon:
+            Text(verbatim: "GLOW")
+                .font(font)
+                .foregroundStyle(DS.Palette.lime)
+                .shadow(color: DS.Palette.lime.opacity(0.7), radius: 6)
+        case .story:
+            Text(verbatim: "Hi!")
+                .font(font)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(RoundedRectangle(cornerRadius: 6).fill(DS.Palette.accent))
         }
     }
 
@@ -739,6 +781,11 @@ extension CaptionsScreen.Style {
         case .pop: String(localized: "captions.style.pop", bundle: .module)
         case .clean: String(localized: "captions.style.clean", bundle: .module)
         case .karaoke: String(localized: "captions.style.karaoke", bundle: .module)
+        case .bold: String(localized: "captions.style.bold", bundle: .module)
+        case .boxed: String(localized: "captions.style.boxed", bundle: .module)
+        case .minimal: String(localized: "captions.style.minimal", bundle: .module)
+        case .neon: String(localized: "captions.style.neon", bundle: .module)
+        case .story: String(localized: "captions.style.story", bundle: .module)
         }
     }
 }

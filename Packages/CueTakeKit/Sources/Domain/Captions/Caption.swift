@@ -161,8 +161,69 @@ extension CaptionStyle {
     /// was drawn exactly as before. A preset is now the whole decision — face, size, case, colour,
     /// plate, how many words at once — so what the captions screen shows is what the preview draws
     /// and what the export burns in.
+    /// Every look, in the order the captions screen offers them.
+    public static let presetIDs = ["pop", "clean", "karaoke", "bold", "boxed", "minimal", "neon", "story"]
+
     public static func preset(_ id: String, position: CaptionPosition = .lowerThird) -> CaptionStyle {
         switch id {
+        case "bold":
+            // Two huge words at a time in capitals, the one being said turning yellow.
+            CaptionStyle(
+                presetID: "bold",
+                fontName: "Archivo-ExtraBold",
+                relativeFontSize: 0.05,
+                textCase: .uppercase,
+                textColor: .white,
+                highlightColor: RGBAColor(red: 1, green: 0.84, blue: 0.04),
+                maxWordsPerCue: 2,
+                position: position
+            )
+        case "boxed":
+            // Black on a white card: readable over anything, looks like a sticker.
+            CaptionStyle(
+                presetID: "boxed",
+                fontName: "Archivo-Bold",
+                relativeFontSize: 0.034,
+                textCase: .natural,
+                textColor: .black,
+                backgroundColor: RGBAColor(red: 1, green: 1, blue: 1, alpha: 0.96),
+                maxWordsPerCue: 4,
+                position: position
+            )
+        case "minimal":
+            // Small, lower case, many words: subtitles that stay out of the way.
+            CaptionStyle(
+                presetID: "minimal",
+                fontName: "InstrumentSans-Regular",
+                relativeFontSize: 0.027,
+                textCase: .lowercase,
+                textColor: .white,
+                maxWordsPerCue: 7,
+                position: position
+            )
+        case "neon":
+            // The brand lime, outlined, three words at a time.
+            CaptionStyle(
+                presetID: "neon",
+                fontName: "Archivo-Bold",
+                relativeFontSize: 0.04,
+                textCase: .uppercase,
+                textColor: RGBAColor(red: 0xE8 / 255, green: 1, blue: 0x4F / 255),
+                maxWordsPerCue: 3,
+                position: position
+            )
+        case "story":
+            // White on the coral plate, like a story sticker.
+            CaptionStyle(
+                presetID: "story",
+                fontName: "Archivo-Bold",
+                relativeFontSize: 0.036,
+                textCase: .natural,
+                textColor: .white,
+                backgroundColor: RGBAColor(red: 1, green: 0x5A / 255, blue: 0x4F / 255, alpha: 0.95),
+                maxWordsPerCue: 3,
+                position: position
+            )
         case "clean":
             // Quiet: medium weight on a dark plate, more words at once, reads like subtitles.
             CaptionStyle(
@@ -203,7 +264,7 @@ extension CaptionStyle {
 
     /// Whether words are lit one after another as they are said.
     public var highlightsWords: Bool {
-        presetID == "karaoke" && highlightColor != nil
+        highlightColor != nil
     }
 }
 

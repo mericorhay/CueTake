@@ -78,8 +78,21 @@ extension Project {
 
 extension MediaTime {
     /// "m:ss", as the design formats every duration.
+    ///
+    /// Counted down, not rounded: a playhead half a second in is at 0:00, the way every clock and
+    /// player counts. Rounding showed 0:01 there, and the clock ran a second ahead of the picture.
     public var timecode: String {
-        let total = Int(seconds.rounded())
+        let total = Int(max(0, seconds + 0.001).rounded(.down))
         return "\(total / 60):" + String(format: "%02d", total % 60)
+    }
+}
+
+extension MediaTime {
+    /// "m:ss.t", for a playhead that has to be placed rather than read at a glance.
+    public var preciseTimecode: String {
+        let clamped = max(0, seconds + 0.0001)
+        let whole = Int(clamped.rounded(.down))
+        let tenth = Int(((clamped - Double(whole)) * 10).rounded(.down))
+        return "\(whole / 60):" + String(format: "%02d.%d", whole % 60, tenth)
     }
 }

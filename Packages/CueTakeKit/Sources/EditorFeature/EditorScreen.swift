@@ -49,6 +49,9 @@ public struct EditorScreen: View {
     }
 
     @State private var showsTools = false
+    @State private var dockPanel: ToolDock.Item?
+    /// Set while the phone is on its side: the picture takes the height of the screen.
+    @State private var landscapePreviewHeight: CGFloat?
     @State private var showsChanges = false
     @State private var previewExpanded = false
     @State private var showsTranscript = false
@@ -69,8 +72,9 @@ public struct EditorScreen: View {
     /// picture above a panel that can be four hundred points tall is a layout that can only work
     /// by luck.
     private var previewHeight: CGFloat {
+        if let landscapePreviewHeight { return landscapePreviewHeight }
         if previewExpanded { return 430 }
-        return isPanelOpen ? 128 : 212
+        return isPanelOpen || dockPanel != nil ? 150 : 212
     }
 
     private var isPanelOpen: Bool {
@@ -78,24 +82,48 @@ public struct EditorScreen: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            topBar
-            statusStrip
-            preview
-            transport
-            timelineBlock
+        GeometryReader { proxy in
+            if proxy.size.width > proxy.size.height {
+                // Landscape gets its own arrangement: the picture on the left at the height of the
+                // screen, the tools and the timeline beside it. A portrait column centred in a wide
+                // window wasted half the phone and hid the rest below the fold.
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(spacing: 0) {
+                        topBar
+                        preview
+                        transport
+                    }
+                    .frame(width: min(proxy.size.width * 0.46, 560))
 
-            Spacer(minLength: 0)
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            statusStrip
+                            timelineBlock
+                        }
+                        .padding(.bottom, 30)
+                    }
+                    .scrollIndicators(.hidden)
+                }
+                .padding(.top, 14)
+                .padding(.horizontal, 44)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                .onAppear { landscapePreviewHeight = max(160, proxy.size.height - 150) }
+                .onChange(of: proxy.size) { _, size in landscapePreviewHeight = max(160, size.height - 150) }
+            } else {
+                VStack(spacing: 0) {
+                    topBar
+                    statusStrip
+                    preview
+                    transport
+                    timelineBlock
 
-            Text("editor.hint", bundle: .module)
-                .dsFont(.sans, .regular, 12)
-                .foregroundStyle(DS.Palette.ink(0.32))
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 18)
-                .padding(.bottom, 30)
-                .opacity(isPanelOpen ? 0 : 1)
+                    Spacer(minLength: 0)
+                }
+                .padding(.top, 58)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                .onAppear { landscapePreviewHeight = nil }
+            }
         }
-        .padding(.top, 58)
         // The panels sit *over* the column rather than in it.
         //
         // In the column they were one more thing competing for a fixed 874 points, and the loser
@@ -112,6 +140,7 @@ public struct EditorScreen: View {
             }
         }
         .animation(DS.Motion.settle, value: isPanelOpen)
+        .animation(DS.Motion.settle, value: dockPanel)
         .sheet(isPresented: $showsTools) {
             ToolBrowser(
                 model: model,
@@ -158,7 +187,6 @@ public struct EditorScreen: View {
         .onChange(of: model.project.voiceEffects) {
             Task { await onPrepare() }
         }
-        .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }
@@ -390,62 +418,34 @@ public struct EditorScreen: View {
 
     private var timelineBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
-                Spacer(minLength: 0)
-                Button(action: onAddAudio) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "music.note")
-                            .font(.system(size: 9, weight: .semibold))
-                        Text("editor.audio.add", bundle: .module)
-                            .dsFont(.sans, .medium, 11)
-                    }
-                    .foregroundStyle(DS.Palette.ink(0.7))
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .fill(DS.Palette.hairline(0.07))
-                    )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 13, style: .continuous)
-                            .stroke(DS.Palette.hairline(0.1), lineWidth: 1)
-                    }
-                }
-                .buttonStyle(.dsPress(radius: 13))
-                .padding(.trailing, 7)
-
-                Button(action: onCaptions) {
-                    Text("editor.captions", bundle: .module)
-                        .dsFont(.sans, .medium, 11)
-                        .foregroundStyle(DS.Palette.lime)
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .fill(DS.Palette.lime(0.1))
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .stroke(DS.Palette.lime(0.3), lineWidth: 1)
-                        }
-                }
-                .buttonStyle(.dsPress)
+            // The tools first, straight under the picture. Below the timeline they ran off the
+            // bottom of the phone.
+            if model.selectedAudioClip == nil {
+                ToolDock(
+                    model: model,
+                    onCaptions: onCaptions,
+                    onAddAudio: onAddAudio,
+                    onMore: { showsTools = true },
+                    open: $dockPanel
+                )
+                .padding(.bottom, 10)
+            } else {
+                EditorToolbar(model: model)
+                    .padding(.horizontal, -18)
+                    .padding(.bottom, 10)
             }
-            .padding(.bottom, 9)
+
+            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                .padding(.bottom, 6)
 
             EditorTimeline(model: model)
 
             captionStrip
                 .padding(.top, 7)
-
-            EditorToolbar(model: model)
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
     }
-
-
 
     private var captionStrip: some View {
         GeometryReader { proxy in

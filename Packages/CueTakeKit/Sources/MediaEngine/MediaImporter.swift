@@ -51,7 +51,13 @@ public struct MediaImporter: Sendable {
             if fileManager.fileExists(atPath: destination.path(percentEncoded: false)) {
                 try fileManager.removeItem(at: destination)
             }
-            try fileManager.copyItem(at: source, to: destination)
+            // A file in our own temporary folder is a copy nobody else needs; moving it is instant,
+            // where copying a few hundred megabytes of 4K is not.
+            if source.path(percentEncoded: false).hasPrefix(fileManager.temporaryDirectory.path(percentEncoded: false)) {
+                try fileManager.moveItem(at: source, to: destination)
+            } else {
+                try fileManager.copyItem(at: source, to: destination)
+            }
         } catch {
             throw ImportError.unreadable(source)
         }

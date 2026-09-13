@@ -45,6 +45,7 @@ INFOPLIST_KEY_UIUserInterfaceStyle = Dark
 // Portrait everywhere except the studio, which the design also runs in
 // landscape; the recording screens opt in at runtime.
 INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
 
 // Permission copy is localised in Resources/InfoPlist.xcstrings; these are the
 // English source strings the catalog keys off.

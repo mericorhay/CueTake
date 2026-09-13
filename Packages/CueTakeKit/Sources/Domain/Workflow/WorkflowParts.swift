@@ -59,7 +59,7 @@ public struct WorkflowSection: Identifiable, Hashable, Sendable, Codable {
 /// How the finished video looks, chosen apart from its structure.
 public struct WorkflowStyle: Hashable, Sendable, Codable {
     public var captions: Bool
-    /// `pop`, `clean` or `karaoke`.
+    /// One of `CaptionStyle.presetIDs`.
     public var captionPreset: String
     /// `top`, `middle` or `bottom`.
     public var captionPosition: String
@@ -288,7 +288,7 @@ extension WorkflowDefinition {
       "name": "short name",
       "summary": "one sentence",
       "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5, "clip": 1 } ],
-      "style": { "captions": true, "captionPreset": "pop|clean|karaoke", "captionPosition": "top|middle|bottom",
+      "style": { "captions": true, "captionPreset": "pop|clean|karaoke|bold|boxed|minimal|neon|story", "captionPosition": "top|middle|bottom",
                  "aspect": "portrait9x16|landscape16x9|square1x1", "resolution": "hd1080|uhd4K|uhd8K", "frameRate": 24|30|60|120 },
       "steps": [ { "kind": { "type": "<type>", "parameters": { } } } ]
     }
@@ -302,7 +302,7 @@ extension WorkflowDefinition {
     - cleanAudio: { "denoise": true, "enhanceVoice": true, "removeRumble": true }
     - musicBed: { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } level existing music.
     - generateCaptions: build captions from the transcript.
-    - applyCaptionStyle: { "presetID": "pop|clean|karaoke" }
+    - applyCaptionStyle: { "presetID": "pop|clean|karaoke|bold|boxed|minimal|neon|story" }
     - export: write the finished video.
     Only use these types. Answer with the JSON object only.
     """

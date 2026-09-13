@@ -121,7 +121,7 @@ public final class EditorModel {
     public var playheadFraction: Double { playhead / duration }
 
     public var playheadLabel: String {
-        MediaTime(seconds: playhead).timecode
+        MediaTime(seconds: playhead).preciseTimecode
     }
 
     public var durationLabel: String {

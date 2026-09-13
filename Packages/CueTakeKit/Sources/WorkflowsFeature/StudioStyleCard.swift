@@ -29,11 +29,16 @@ struct StudioStyleCard: View {
             }
 
             if style.captions {
-                HStack(spacing: 8) {
-                    ForEach(["pop", "clean", "karaoke"], id: \.self) { preset in
-                        presetTile(preset)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 8) {
+                        ForEach(CaptionStyle.presetIDs, id: \.self) { preset in
+                            presetTile(preset)
+                                .frame(width: 84)
+                        }
                     }
                 }
+                .scrollIndicators(.hidden)
+                .scrollClipDisabled()
                 .transition(.opacity.combined(with: .move(edge: .top)))
 
                 row("studio.style.position", options: ["top", "middle", "bottom"], selected: style.captionPosition) {

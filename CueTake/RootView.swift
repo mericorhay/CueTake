@@ -53,6 +53,9 @@ struct RootView: View {
             }
         }
         .animation(DS.Motion.settle, value: model.busy)
+        .overlay(alignment: .top) {
+            StatusToasts(activity: model.activity, notice: model.notice)
+        }
         .animation(DS.Easing.ease(0.22), value: model.screen)
         // Bound here rather than inside CreateScreen: the picker outlives that screen's identity,
         // and the import writes to the project, which is this layer's business.

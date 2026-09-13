@@ -107,7 +107,7 @@ struct StudioStepEditor: View {
             case .applyCaptionStyle(let preset):
                 chips(
                     "studio.param.preset",
-                    options: ["pop", "clean", "karaoke"],
+                    options: CaptionStyle.presetIDs,
                     selected: preset,
                     label: { $0.capitalized }
                 ) { value in

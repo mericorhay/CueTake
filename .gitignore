@@ -29,3 +29,6 @@ fastlane/test_output/
 
 # Assistant endpoint, written by CI from repository secrets
 CueTake/Resources/AssistantEndpoint.json
+
+# Wrangler local cache
+.wrangler/

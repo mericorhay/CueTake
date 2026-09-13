@@ -74,6 +74,11 @@ public enum CaptionPreference: String, Hashable, Sendable, Codable, CaseIterable
     case pop
     case clean
     case karaoke
+    case bold
+    case boxed
+    case minimal
+    case neon
+    case story
 
     public var isEnabled: Bool { self != .off }
 }

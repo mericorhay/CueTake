@@ -111,7 +111,10 @@ async function askAnthropic(env, messages) {
       messages,
     }),
   });
-  if (!upstream.ok) return { error: true, status: upstream.status };
+  if (!upstream.ok) {
+    console.log("anthropic error", upstream.status, await upstream.text());
+    return { error: true, status: upstream.status };
+  }
 
   const result = await upstream.json();
   const reply = (result.content || [])
@@ -124,20 +127,31 @@ async function askAnthropic(env, messages) {
 // Groq's OpenAI-compatible chat endpoint. gpt-oss-120b is the strongest reasoning model it serves
 // and writes Turkish well; the system prompt goes in as the first message.
 async function askGroq(env, messages) {
-  const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${env.GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: env.GROQ_MODEL || GROQ_MODEL,
-      max_completion_tokens: 6000,
-      reasoning_effort: "medium",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-    }),
-  });
-  if (!upstream.ok) return { error: true, status: upstream.status };
+  const call = (extra) =>
+    fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: env.GROQ_MODEL || GROQ_MODEL,
+        max_completion_tokens: 6000,
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        ...extra,
+      }),
+    });
+
+  let upstream = await call({ reasoning_effort: "medium" });
+  // A model that does not take a reasoning setting answers 400; ask again without it.
+  if (upstream.status === 400) {
+    console.log("groq 400 with reasoning_effort:", await upstream.text());
+    upstream = await call({});
+  }
+  if (!upstream.ok) {
+    console.log("groq error", upstream.status, await upstream.text());
+    return { error: true, status: upstream.status };
+  }
 
   const result = await upstream.json();
   const choice = (result.choices || [])[0] || {};
@@ -148,6 +162,7 @@ export default {
   async fetch(request, env) {
     if (request.method !== "POST") return json({ error: "method" }, 405);
     if (!env.APP_TOKEN || request.headers.get("x-cuetake-app") !== env.APP_TOKEN) {
+      console.log("unauthorized: app token missing or different from APP_TOKEN");
       return json({ error: "unauthorized" }, 401);
     }
 

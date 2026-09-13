@@ -48,6 +48,14 @@ extension AppModel {
             case .notConfigured: String(localized: "assistant.failure.notConfigured")
             case .offline: String(localized: "assistant.failure.offline")
             case .declined: String(localized: "assistant.failure.declined")
+            // Said precisely, because "something went wrong" cannot be acted on and each of these
+            // has a different fix: a key that does not match, too many messages, the model failing.
+            case .rejected(let status) where status == 401:
+                String(localized: "assistant.failure.unauthorized")
+            case .rejected(let status) where status == 429:
+                String(localized: "assistant.failure.busy")
+            case .rejected(let status):
+                String(localized: "assistant.failure.server \(status)")
             default: String(localized: "assistant.failure.generic")
             }
         }

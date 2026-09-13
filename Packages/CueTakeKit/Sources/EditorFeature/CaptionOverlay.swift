@@ -81,7 +81,7 @@ struct CaptionOverlay: View {
 
     /// How each style arrives. Pop pops, the others fade — the entrance is part of the look.
     static func transition(for style: CaptionStyle) -> AnyTransition {
-        style.presetID == "pop"
+        style.presetID == "pop" || style.presetID == "bold" || style.presetID == "story"
             ? .scale(scale: 0.82).combined(with: .opacity)
             : .opacity
     }

@@ -37,6 +37,13 @@ struct EditorTimeline: View {
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 7) {
                     ruler
+                        // Scrubbing lives on the ruler. It used to cover the whole surface, and a
+                        // drag anywhere moved the playhead — so the timeline could never be
+                        // scrolled sideways, which on anything longer than the screen is the one
+                        // thing a timeline has to do.
+                        .frame(width: max(contentWidth, 1), height: 26, alignment: .topLeading)
+                        .contentShape(Rectangle())
+                        .gesture(scrubGesture)
                     clipRow
                     if model.audioRowCount > 0 {
                         AudioLane(model: model, scale: scale)
@@ -64,15 +71,11 @@ struct EditorTimeline: View {
             }
             .frame(width: max(contentWidth, 1), alignment: .topLeading)
             .padding(.vertical, 6)
-            // Scrubbing on the ruler rather than only on the playhead: reaching for a 2pt line is
-            // a target-acquisition task, and the whole strip is the target people actually aim at.
-            .contentShape(Rectangle())
-            .gesture(scrubGesture)
             .simultaneousGesture(zoomGesture)
         }
         .scrollIndicators(.hidden)
         .scrollDisabled(model.isScrubbing || trim != nil || lift != nil)
-        .frame(height: 108 + audioHeight)
+        .frame(height: 116 + audioHeight)
         .sensoryFeedback(.selection, trigger: snapCount)
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.pointsPerSecond)
     }
@@ -231,7 +234,7 @@ struct EditorTimeline: View {
         let x = CGFloat(model.playhead * scale)
         return Rectangle()
             .fill(DS.Palette.ink)
-            .frame(width: 2, height: 96 + audioHeight)
+            .frame(width: 2, height: 104 + audioHeight)
             .overlay(alignment: .top) {
                 Capsule()
                     .fill(DS.Palette.ink)
@@ -255,14 +258,15 @@ struct EditorTimeline: View {
     // MARK: - Gestures
 
     private var scrubGesture: some Gesture {
-        DragGesture(minimumDistance: 2)
+        // From where the finger is, not from where the playhead was: touching a second on the
+        // ruler means that second.
+        DragGesture(minimumDistance: 0)
             .onChanged { gesture in
                 if scrubOrigin == nil {
                     scrubOrigin = model.playhead
                     model.beginScrub()
                 }
-                let raw = (scrubOrigin ?? 0) + Double(gesture.translation.width) / scale
-                seek(to: raw)
+                seek(to: Double(gesture.location.x) / scale)
             }
             .onEnded { _ in
                 scrubOrigin = nil

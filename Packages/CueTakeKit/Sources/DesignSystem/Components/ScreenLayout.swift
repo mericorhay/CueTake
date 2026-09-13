@@ -37,7 +37,9 @@ public struct DSScreenLayout: ViewModifier {
     public func body(content: Content) -> some View {
         GeometryReader { proxy in
             let isLandscape = proxy.size.width > proxy.size.height
-            let column = min(proxy.size.width, DS.Layout.column)
+            // Wider than the portrait design in landscape, so a rotated phone is used rather than
+            // shown a phone-shaped strip in the middle of it. The notch side keeps its margin.
+            let column = isLandscape ? min(proxy.size.width - 88, 760) : min(proxy.size.width, DS.Layout.column)
 
             if !isLandscape {
                 content.frame(width: proxy.size.width, height: proxy.size.height)

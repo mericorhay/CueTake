@@ -208,6 +208,11 @@ extension CaptionPreference {
         case .pop: String(localized: "settings.captions.pop", bundle: .module)
         case .clean: String(localized: "settings.captions.clean", bundle: .module)
         case .karaoke: String(localized: "settings.captions.karaoke", bundle: .module)
+        case .bold: String(localized: "settings.captions.bold", bundle: .module)
+        case .boxed: String(localized: "settings.captions.boxed", bundle: .module)
+        case .minimal: String(localized: "settings.captions.minimal", bundle: .module)
+        case .neon: String(localized: "settings.captions.neon", bundle: .module)
+        case .story: String(localized: "settings.captions.story", bundle: .module)
         }
     }
 }

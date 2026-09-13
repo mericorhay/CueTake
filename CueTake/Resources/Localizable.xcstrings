@@ -1,6 +1,40 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "activity.listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening to your clips…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klipler dinleniyor…"
+          }
+        }
+      }
+    },
+    "assistant.failure.busy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many messages at once. Wait a minute and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aynı anda çok fazla mesaj. Bir dakika bekleyip tekrar dene."
+          }
+        }
+      }
+    },
     "assistant.failure.declined": {
       "extractionState": "manual",
       "localizations": {
@@ -65,6 +99,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bağlantı yok. İnternetini kontrol edip tekrar dene."
+          }
+        }
+      }
+    },
+    "assistant.failure.server %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The AI provider didn't answer (error %lld). Try again in a moment."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapay zekâ sağlayıcısı cevap vermedi (hata %lld). Birazdan tekrar dene."
+          }
+        }
+      }
+    },
+    "assistant.failure.unauthorized": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The assistant server didn't recognise this app (the app token doesn't match)."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asistan sunucusu bu uygulamayı tanımadı (uygulama anahtarı eşleşmiyor)."
           }
         }
       }
@@ -1035,6 +1103,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kaydediliyor…"
+          }
+        }
+      }
+    },
+    "speech.done %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld captions written from your clips."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kliplerinden %lld altyazı yazıldı."
+          }
+        }
+      }
+    },
+    "speech.failed.language": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This phone can't recognise speech in your language yet. Check Settings › General › Language & Region."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu telefon henüz dilinde konuşma tanıyamıyor. Ayarlar › Genel › Dil ve Bölge'yi kontrol et."
+          }
+        }
+      }
+    },
+    "speech.failed.noAudio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These clips have no sound to listen to."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu kliplerde dinlenecek ses yok."
+          }
+        }
+      }
+    },
+    "speech.failed.nothingHeard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No speech was heard in these clips. If the language model is still downloading, try again in a minute."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu kliplerde konuşma duyulmadı. Dil modeli hâlâ iniyorsa bir dakika sonra tekrar dene."
+          }
+        }
+      }
+    },
+    "speech.nothingNew": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every clip has already been listened to."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bütün klipler zaten dinlendi."
+          }
+        }
+      }
+    },
+    "speech.restored": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions restored from what was said."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazılar söylenenlerden geri getirildi."
           }
         }
       }

@@ -3,21 +3,89 @@ import Domain
 import Foundation
 import Speech
 
-/// File transcription on Apple's on-device `SpeechAnalyzer`.
+/// Which of Apple's on-device recognisers is listening.
 ///
-/// This is the one place where the app's promise about speed is actually kept: no upload, no
-/// queue, no per-minute quota, and it works on a plane. It is also the input everything else has
-/// been waiting for — captions, script alignment and silence trimming are all the same transcript
-/// read three different ways.
-///
-/// Live microphone tracking is the other half and is not here yet. Transcribing a finished file is
-/// the half that can be verified: a wrong word in a caption is visible, whereas a prompter that
-/// drifts is hard to tell from a reader who paused.
+/// `SpeechTranscriber` is the newer, better model, but it covers a short list of languages —
+/// Turkish is not on it. `DictationTranscriber` is the keyboard's dictation model and covers far
+/// more. Asking only for the first is why "listen to the footage" heard nothing and the prompter
+/// never followed anyone speaking Turkish: the locale was refused before a word was read.
+enum Recognizer: Sendable {
+    case speech(SpeechTranscriber)
+    case dictation(DictationTranscriber)
+
+    var module: any SpeechModule {
+        switch self {
+        case .speech(let transcriber): transcriber
+        case .dictation(let transcriber): transcriber
+        }
+    }
+
+    /// Results as text and finality, whichever recogniser produced them.
+    func results() -> AsyncThrowingStream<(text: AttributedString, isFinal: Bool), any Error> {
+        AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    switch self {
+                    case .speech(let transcriber):
+                        for try await result in transcriber.results {
+                            continuation.yield((result.text, result.isFinal))
+                        }
+                    case .dictation(let transcriber):
+                        for try await result in transcriber.results {
+                            continuation.yield((result.text, result.isFinal))
+                        }
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// The best recogniser for a language, with its model downloaded.
+    ///
+    /// - Parameter live: volatile results for following a speaker; final results with word
+    ///   timings for a file.
+    static func make(localeIdentifier: String, live: Bool) async throws -> Recognizer {
+        let requested = Locale(identifier: localeIdentifier)
+        let recognizer: Recognizer
+        if let locale = await SpeechTranscriber.supportedLocale(equivalentTo: requested) {
+            recognizer = .speech(
+                SpeechTranscriber(
+                    locale: locale,
+                    transcriptionOptions: [],
+                    reportingOptions: live ? [.volatileResults] : [],
+                    attributeOptions: live ? [] : [.audioTimeRange]
+                )
+            )
+        } else if let locale = await DictationTranscriber.supportedLocale(equivalentTo: requested) {
+            recognizer = .dictation(
+                DictationTranscriber(locale: locale, preset: live ? .progressiveLongDictation : .timeIndexedLongDictation)
+            )
+        } else {
+            throw SpeechError.localeNotSupported(localeIdentifier)
+        }
+
+        // The model for a language arrives the first time it is needed. Without it the analyzer
+        // hears nothing and the transcript comes back empty, which reads as "no one spoke".
+        if let request = try await AssetInventory.assetInstallationRequest(supporting: [recognizer.module]) {
+            try await request.downloadAndInstall()
+        }
+        return recognizer
+    }
+}
+
+/// Transcription on Apple's on-device `SpeechAnalyzer`: files for captions and editing by text,
+/// the microphone for following the script. No upload, no quota, works on a plane.
 public struct SystemSpeechTranscriber: SpeechTranscribing {
     public init() {}
 
     public func supportedLocaleIdentifiers() async -> [String] {
-        await SpeechTranscriber.supportedLocales.map(\.identifier)
+        let speech = await SpeechTranscriber.supportedLocales.map(\.identifier)
+        let dictation = await DictationTranscriber.supportedLocales.map(\.identifier)
+        return Array(Set(speech + dictation)).sorted()
     }
 
     /// Live transcription of the microphone while recording, for following the script.
@@ -33,31 +101,17 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         AsyncThrowingStream { continuation in
             let work = Task {
                 do {
-                    let requested = Locale(identifier: localeIdentifier)
-                    guard let locale = await SpeechTranscriber.supportedLocale(equivalentTo: requested) else {
-                        throw SpeechError.localeNotSupported(localeIdentifier)
-                    }
-                    let transcriber = SpeechTranscriber(
-                        locale: locale,
-                        transcriptionOptions: [],
-                        reportingOptions: [.volatileResults],
-                        attributeOptions: []
-                    )
-                    // The model for a language is downloaded the first time it is needed. Until it
-                    // is here nothing can be heard, and the prompter scrolls by itself meanwhile.
-                    if let request = try await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
-                        try await request.downloadAndInstall()
-                    }
-                    guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber]) else {
+                    let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: true)
+                    guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [recognizer.module]) else {
                         throw SpeechError.localeNotSupported(localeIdentifier)
                     }
 
-                    let analyzer = SpeechAnalyzer(modules: [transcriber])
+                    let analyzer = SpeechAnalyzer(modules: [recognizer.module])
                     let (inputs, feed) = AsyncStream<AnalyzerInput>.makeStream()
                     try await analyzer.start(inputSequence: inputs)
 
                     let reader = Task {
-                        for try await result in transcriber.results {
+                        for try await result in recognizer.results() {
                             let words = ScriptText.words(in: String(result.text.characters)).map {
                                 TimedWord(text: String($0), range: MediaTimeRange(start: .zero, duration: .zero))
                             }
@@ -85,35 +139,21 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
     }
 
     public func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
-        let locale = Locale(identifier: localeIdentifier)
-        let transcriber = SpeechTranscriber(
-            locale: locale,
-            transcriptionOptions: [],
-            // Final results only: a file is not being read as it arrives, and volatile guesses
-            // would just be thrown away.
-            reportingOptions: [],
-            // The whole feature is in this line. With time ranges attached to each run, the
-            // transcript stops being a paragraph about the take and becomes an index into it —
-            // which is what makes editing by text possible at all.
-            attributeOptions: [.audioTimeRange]
-        )
+        // A video is read through its sound. `AVAudioFile` opens audio files; handed a .mov it
+        // can fail outright, which is the other half of why listening to footage heard nothing.
+        let audioURL = try await Self.audioFile(for: url)
+        let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: false)
 
-        // The language model arrives on first use. Without it the analyzer hears nothing and the
-        // transcript comes back empty, which reads as "no one spoke".
-        if let request = try? await AssetInventory.assetInstallationRequest(supporting: [transcriber]) {
-            try? await request.downloadAndInstall()
-        }
-
-        let analyzer = SpeechAnalyzer(modules: [transcriber])
-        let file = try AVAudioFile(forReading: url)
+        let analyzer = SpeechAnalyzer(modules: [recognizer.module])
+        let file = try AVAudioFile(forReading: audioURL)
 
         // Collect on a task of its own: results arrive while the analyzer is still reading, and
         // waiting for the read to finish before listening would miss them.
         let collector = Task {
             var text = ""
             var words: [TimedWord] = []
-            for try await result in transcriber.results where result.isFinal {
-                text += String(result.text.characters)
+            for try await result in recognizer.results() where result.isFinal {
+                text += String(result.text.characters) + " "
                 words += Self.words(in: result.text)
             }
             return (text, words)
@@ -135,6 +175,33 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
             // the code that consumes timings does not have to know which kind it got.
             words: timed.isEmpty ? Self.timedWords(in: text, over: duration) : timed
         )
+    }
+
+    /// The sound of a file as an audio file: itself when it already is one, otherwise its audio
+    /// track copied out once to an m4a beside it.
+    static func audioFile(for url: URL) async throws -> URL {
+        let audioExtensions: Set<String> = ["m4a", "wav", "caf", "aif", "aiff", "mp3", "aac"]
+        if audioExtensions.contains(url.pathExtension.lowercased()) { return url }
+
+        let destination = url.deletingLastPathComponent().appending(
+            path: url.deletingPathExtension().lastPathComponent + "-speech.m4a",
+            directoryHint: .notDirectory
+        )
+        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+            return destination
+        }
+
+        let asset = AVURLAsset(url: url)
+        guard (try? await asset.loadTracks(withMediaType: .audio).first) != nil,
+              let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A)
+        else { throw SpeechError.noAudio }
+        do {
+            try await session.export(to: destination, as: .m4a)
+        } catch {
+            try? FileManager.default.removeItem(at: destination)
+            throw SpeechError.noAudio
+        }
+        return destination
     }
 
     /// Pulls the per-word timings out of a result.

@@ -30,6 +30,8 @@ public enum SpeechError: Error, Hashable, Sendable {
     case notAuthorized
     case localeNotSupported(String)
     case notImplemented
+    /// The file has no sound to listen to.
+    case noAudio
 }
 
 public protocol SpeechTranscribing: Sendable {

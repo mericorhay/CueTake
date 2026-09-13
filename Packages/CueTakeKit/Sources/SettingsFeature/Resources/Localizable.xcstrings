@@ -290,6 +290,40 @@
         }
       }
     },
+    "settings.captions.bold": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bold"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalın"
+          }
+        }
+      }
+    },
+    "settings.captions.boxed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boxed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kutulu"
+          }
+        }
+      }
+    },
     "settings.captions.clean": {
       "extractionState": "manual",
       "localizations": {
@@ -324,6 +358,40 @@
         }
       }
     },
+    "settings.captions.minimal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimal"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sade"
+          }
+        }
+      }
+    },
+    "settings.captions.neon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon"
+          }
+        }
+      }
+    },
     "settings.captions.off": {
       "extractionState": "manual",
       "localizations": {
@@ -354,6 +422,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pop"
+          }
+        }
+      }
+    },
+    "settings.captions.story": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Story"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hikâye"
           }
         }
       }

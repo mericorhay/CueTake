@@ -150,6 +150,11 @@ final class AppModel {
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
+    /// Work going on in the background that does not stop anyone — listening to new clips.
+    var activity: String?
+    /// A short message that fades by itself: how listening went, what was restored.
+    var notice: String?
+    var noticeTask: Task<Void, Never>?
 
     // MARK: - Workflow state (behaviour in AppModel+Workflows)
 
@@ -193,15 +198,37 @@ final class AppModel {
         try? await store.save(fresh)
 
         guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else { return }
-        let importer = MediaImporter()
 
-        for (index, item) in items.enumerated() {
-            busy = String(localized: "busy.importing.progress \(index + 1) \(items.count)")
-            guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
-                  let clip = try? await importer.importClip(from: movie.url, into: mediaDirectory)
-            else { continue }
+        // Three at a time rather than one after another. Most of an import is waiting on Photos
+        // to hand over a file — often from iCloud — and those waits do not need to queue.
+        busy = String(localized: "busy.importing.progress \(0) \(items.count)")
+        var loaded: [Int: MediaImporter.ImportedClip] = [:]
+        await withTaskGroup(of: (Int, MediaImporter.ImportedClip?).self) { group in
+            var next = 0
+            func enqueue() {
+                guard next < items.count else { return }
+                let index = next
+                let item = items[index]
+                next += 1
+                group.addTask {
+                    guard let movie = try? await item.loadTransferable(type: ImportedMovie.self) else { return (index, nil) }
+                    let clip = try? await MediaImporter().importClip(from: movie.url, into: mediaDirectory)
+                    try? FileManager.default.removeItem(at: movie.url)
+                    return (index, clip)
+                }
+            }
+            for _ in 0..<3 { enqueue() }
+            var done = 0
+            for await (index, clip) in group {
+                done += 1
+                busy = String(localized: "busy.importing.progress \(done) \(items.count)")
+                if let clip { loaded[index] = clip }
+                enqueue()
+            }
+        }
 
-            try? FileManager.default.removeItem(at: movie.url)
+        for index in items.indices {
+            guard let clip = loaded[index] else { continue }
 
             if fresh.recordings.isEmpty {
                 // Otherwise every import would be forced into the default vertical frame, which is
@@ -244,7 +271,8 @@ final class AppModel {
         }
 
         go(to: .editor)
-        await transcribeNewTakes()
+        busy = nil
+        await transcribeNewTakes(quietly: true)
     }
 
     /// Opens a project from the library. The one the user tapped, which is not always the one
@@ -717,66 +745,97 @@ final class AppModel {
 
     /// Transcribes every take that has no transcript yet, and writes the captions that follow.
     ///
-    /// Runs after footage arrives rather than on demand: by the time the user opens the captions
-    /// screen they expect words to be there, and a spinner at that moment reads as the app not
-    /// having bothered until asked.
-    func transcribeNewTakes() async {
+    /// - Parameter quietly: listen in the background, with a small status instead of the blocking
+    ///   overlay. What an import uses: the clips are already on the timeline and can be worked with
+    ///   while the words arrive — making someone wait a minute to see footage they just picked was
+    ///   most of why importing felt slow.
+    ///
+    /// Always says how it went. Listening used to fail in silence — an unsupported language, a file
+    /// without sound — and the button looked broken.
+    func transcribeNewTakes(quietly: Bool = false) async {
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
-        busy = String(localized: "busy.transcribing")
-        defer { busy = nil }
+        takeEditorEditsIfEditing()
+
+        let maxWords = project.captionStyle.maxWordsPerCue
+        var repaired = false
+        var pending: [Recording.ID] = []
+        for index in project.segments.indices {
+            guard let take = project.segments[index].selectedTake else { continue }
+            if take.transcript != nil {
+                // Already heard, but without captions — earlier builds cleared them on every cut.
+                if project.segments[index].captions.isEmpty {
+                    project.segments[index].refreshCaptions(maxWordsPerCue: maxWords)
+                    repaired = repaired || !project.segments[index].captions.isEmpty
+                }
+            } else if !pending.contains(take.recordingID) {
+                pending.append(take.recordingID)
+            }
+        }
+        if repaired {
+            project.updatedAt = .now
+            editorModel.project = project
+            scheduleSave()
+        }
+        guard !pending.isEmpty else {
+            if !quietly {
+                show(notice: repaired
+                    ? String(localized: "speech.restored")
+                    : String(localized: "speech.nothingNew"))
+            }
+            return
+        }
+
+        if quietly {
+            activity = String(localized: "activity.listening")
+        } else {
+            busy = String(localized: "busy.transcribing")
+        }
+        defer {
+            activity = nil
+            busy = nil
+        }
+
+        // One listen per file. A studio recording is one file behind every segment.
         let speech = dependencies.speech
         let locale = project.localeIdentifier
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
-
-        // One listen per file. A studio recording is one file behind every segment, and it used to
-        // be transcribed again for each of them — five segments, five full passes over the same take.
         var heard: [Recording.ID: Transcript] = [:]
+        var failure: (any Error)?
+        for recordingID in pending {
+            guard let recording = recordings[recordingID] else { continue }
+            let url = mediaDirectory.appending(
+                path: (recording.relativePath as NSString).lastPathComponent,
+                directoryHint: .notDirectory
+            )
+            do {
+                let transcript = try await speech.transcribeFile(at: url, localeIdentifier: locale)
+                if !transcript.words.isEmpty { heard[recordingID] = transcript }
+            } catch {
+                failure = error
+            }
+        }
 
+        // Applied to the project as it is now, not as it was when listening began: the user may
+        // have cut, trimmed or reordered in the meantime, and those edits must survive.
+        takeEditorEditsIfEditing()
+        var captioned = 0
         for index in project.segments.indices {
             guard let takeID = project.segments[index].selectedTakeID,
-                  let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID })
+                  let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == takeID }),
+                  project.segments[index].takes[takeIndex].transcript == nil,
+                  let transcript = heard[project.segments[index].takes[takeIndex].recordingID]
             else { continue }
 
-            if project.segments[index].takes[takeIndex].transcript != nil {
-                // Already heard, but without captions — earlier builds cleared them on every cut.
-                // Asking to transcribe is how the user says "where did my captions go", so they are
-                // read back from the words that are still there.
-                if project.segments[index].captions.isEmpty {
-                    project.segments[index].refreshCaptions(maxWordsPerCue: project.captionStyle.maxWordsPerCue)
-                }
-                continue
-            }
-
-            guard let recording = recordings[project.segments[index].takes[takeIndex].recordingID] else { continue }
-
-            let transcript: Transcript
-            if let cached = heard[recording.id] {
-                transcript = cached
-            } else {
-                let url = mediaDirectory.appending(
-                    path: (recording.relativePath as NSString).lastPathComponent,
-                    directoryHint: .notDirectory
-                )
-                guard let fresh = try? await speech.transcribeFile(at: url, localeIdentifier: locale) else { continue }
-                heard[recording.id] = fresh
-                transcript = fresh
-            }
-
             // The transcriber reads the whole file; a take is a window into it. Word times are
-            // stored relative to the take, so a take that starts thirty seconds in — anything
-            // that has been split — would otherwise carry timings pointing at somebody else's
-            // sentence.
+            // stored relative to the take.
             let take = project.segments[index].takes[takeIndex]
             let aligned = Transcript(
                 localeIdentifier: transcript.localeIdentifier,
                 words: Self.words(of: transcript, within: take.sourceRange)
             )
-
             project.segments[index].takes[takeIndex].transcript = aligned
-            project.segments[index].refreshCaptions(
-                maxWordsPerCue: project.captionStyle.maxWordsPerCue,
-                carrying: project.segments[index].captions
-            )
+            project.segments[index].refreshCaptions(maxWordsPerCue: maxWords, carrying: project.segments[index].captions)
+            captioned += project.segments[index].captions.count
             // The script is what the prompter shows; for imported footage there was none, so what
             // was actually said becomes it.
             if project.segments[index].script.isEmpty {
@@ -785,11 +844,38 @@ final class AppModel {
         }
 
         project.updatedAt = .now
-        // The editor is holding its own copy and is very likely the screen that asked for this.
-        // Without this line the transcript lands in the project and the panel that requested it
-        // goes on saying there is nothing to read.
         editorModel.project = project
         scheduleSave()
+
+        if captioned > 0 {
+            show(notice: String(localized: "speech.done \(captioned)"))
+        } else {
+            switch failure as? SpeechError {
+            case .localeNotSupported:
+                show(notice: String(localized: "speech.failed.language"))
+            case .noAudio:
+                show(notice: String(localized: "speech.failed.noAudio"))
+            default:
+                show(notice: String(localized: "speech.failed.nothingHeard"))
+            }
+        }
+    }
+
+    /// The editor's copy wins only while the editor is the screen being used. The captions screen
+    /// edits the project directly, and taking the editor's older copy then would undo its edits.
+    private func takeEditorEditsIfEditing() {
+        if screen == .editor { adoptEditorEdits() }
+    }
+
+    /// A line that appears at the top and goes away by itself.
+    func show(notice text: String) {
+        notice = text
+        noticeTask?.cancel()
+        noticeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(3.5))
+            guard !Task.isCancelled else { return }
+            self?.notice = nil
+        }
     }
 
     func openStudio() {
