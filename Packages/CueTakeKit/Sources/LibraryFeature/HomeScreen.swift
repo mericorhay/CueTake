@@ -143,10 +143,10 @@ public struct HomeScreen: View {
 
             Spacer(minLength: 0)
 
-            Circle()
-                .fill(DS.gradient(140, [DS.Palette.accentWarm, DS.Palette.accent]))
-                .frame(width: 38, height: 38)
-                .padding(.top, 22)
+            // The mark where the placeholder circle was: the one spot on the home screen that says
+            // whose app this is, top right, where a profile picture would otherwise sit.
+            DSBrandMark(height: 30)
+                .padding(.top, 24)
         }
         .padding(.horizontal, 22)
     }

@@ -9,7 +9,7 @@ Written 2026-09-13, after build 19. Ordered by importance. Tick things off here 
 - [ ] Payments: StoreKit 2, paywall, free-tier limits. Settings' "Subscription" row is static text.
 - [ ] Privacy policy URL and App Store privacy labels (the assistant sends messages and project
       context to our server). Likely also why external TestFlight review said "missing information".
-- [ ] App icon (placeholder today). Gemini prompt given 2026-09-13.
+- [x] App icon and in-app mark from the Gemini artwork (build 21). A vector version would still be nicer for print and the App Store page.
 - [ ] First launch: new users are dropped into `Project.sample`. Replace with an empty state that
       says "import your footage".
 - [ ] On-device test pass: Liquid Glass, animations, 8K export, reverse memory, filler-word cutting.

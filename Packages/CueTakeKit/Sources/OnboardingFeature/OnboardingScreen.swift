@@ -112,15 +112,7 @@ public struct OnboardingScreen: View {
     }
 
     private var brand: some View {
-        HStack(spacing: 9) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(DS.Palette.accent)
-                .frame(width: 11, height: 11)
-
-            Text("CUETAKE")
-                .dsFont(.sans, .semibold, 13, letterSpacing: 0.22)
-                .foregroundStyle(DS.Palette.ink)
-        }
+        DSBrandLockup(size: 17)
     }
 
     private struct StackCard {
