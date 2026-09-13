@@ -3,12 +3,13 @@ import Domain
 import Foundation
 import Speech
 
-/// Which of Apple's on-device recognisers is listening.
+/// Which of Apple's on-device recognisers is listening, newest first.
 ///
-/// `SpeechTranscriber` is the newer, better model, but it covers a short list of languages —
-/// Turkish is not on it. `DictationTranscriber` is the keyboard's dictation model and covers far
-/// more. Asking only for the first is why "listen to the footage" heard nothing and the prompter
-/// never followed anyone speaking Turkish: the locale was refused before a word was read.
+/// 1. `SpeechTranscriber` — Apple's newest model, the best results, a short list of languages.
+/// 2. `DictationTranscriber` — the same new analyzer with the dictation model, for the languages
+///    the first does not cover (Turkish among them).
+/// 3. `LegacySpeech` (`SFSpeechRecognizer`) — the older API, kept beside them as the safety net:
+///    used whenever the new ones refuse a language, fail, or hear nothing.
 enum Recognizer: Sendable {
     case speech(SpeechTranscriber)
     case dictation(DictationTranscriber)
@@ -18,6 +19,11 @@ enum Recognizer: Sendable {
         case .speech(let transcriber): transcriber
         case .dictation(let transcriber): transcriber
         }
+    }
+
+    var isDictation: Bool {
+        if case .dictation = self { return true }
+        return false
     }
 
     /// Results as text and finality, whichever recogniser produced them.
@@ -44,7 +50,7 @@ enum Recognizer: Sendable {
         }
     }
 
-    /// The best recogniser for a language, with its model downloaded.
+    /// The newest recogniser that has this language, with its model downloaded.
     ///
     /// - Parameter live: volatile results for following a speaker; final results with word
     ///   timings for a file.
@@ -77,58 +83,95 @@ enum Recognizer: Sendable {
     }
 }
 
-/// Transcription on Apple's on-device `SpeechAnalyzer`: files for captions and editing by text,
-/// the microphone for following the script. No upload, no quota, works on a plane.
+/// Transcription on Apple's on-device recognisers: files for captions and editing by text, the
+/// microphone for following the script. No upload, no quota, works on a plane.
 public struct SystemSpeechTranscriber: SpeechTranscribing {
     public init() {}
 
     public func supportedLocaleIdentifiers() async -> [String] {
         let speech = await SpeechTranscriber.supportedLocales.map(\.identifier)
         let dictation = await DictationTranscriber.supportedLocales.map(\.identifier)
-        return Array(Set(speech + dictation)).sorted()
+        let legacy = SFSpeechRecognizer.supportedLocales().map(\.identifier)
+        return Array(Set(speech + dictation + legacy)).sorted()
     }
 
     /// Live transcription of the microphone while recording, for following the script.
     ///
-    /// Volatile results on: they arrive within a fraction of a second and are replaced as the
-    /// recogniser firms up, which is exactly what a prompter needs — an early guess at the word
-    /// being said now beats a certain answer about the word said a second ago. Words carry no
-    /// timings here; the file is transcribed properly once the take ends.
+    /// Volatile results on: an early guess at the word being said now beats a certain answer
+    /// about the word said a second ago. If the new analyzer cannot start, or has heard nothing
+    /// after several seconds of sound, the same microphone is handed to the older recogniser
+    /// without the take noticing.
     public func transcribe(
         _ audio: AsyncStream<SpeechAudioFrame>,
         localeIdentifier: String
     ) -> AsyncThrowingStream<TranscriptUpdate, any Error> {
         AsyncThrowingStream { continuation in
             let work = Task {
+                let recognizer: Recognizer
+                let format: AVAudioFormat
                 do {
-                    let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: true)
-                    guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [recognizer.module]) else {
+                    recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: true)
+                    guard let best = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [recognizer.module]) else {
                         throw SpeechError.localeNotSupported(localeIdentifier)
                     }
+                    format = best
+                } catch {
+                    do {
+                        try await LegacySpeech.follow(audio, localeIdentifier: localeIdentifier, into: continuation)
+                        continuation.finish()
+                    } catch {
+                        continuation.finish(throwing: error)
+                    }
+                    return
+                }
 
+                do {
                     let analyzer = SpeechAnalyzer(modules: [recognizer.module])
                     let (inputs, feed) = AsyncStream<AnalyzerInput>.makeStream()
                     try await analyzer.start(inputSequence: inputs)
 
+                    let heardSomething = Flag()
                     let reader = Task {
                         for try await result in recognizer.results() {
                             let words = ScriptText.words(in: String(result.text.characters)).map {
                                 TimedWord(text: String($0), range: MediaTimeRange(start: .zero, duration: .zero))
                             }
+                            if !words.isEmpty { heardSomething.set() }
                             continuation.yield(TranscriptUpdate(words: words, isFinal: result.isFinal))
                         }
                     }
 
                     let converter = PCMConverter(target: format)
+                    let started = Date.now
+                    var fallback: LegacySpeech.LiveSession?
+
                     for await frame in audio {
                         if Task.isCancelled { break }
+                        if let fallback {
+                            fallback.append(frame.buffer)
+                            continue
+                        }
                         if let converted = converter.convert(frame.buffer) {
                             feed.yield(AnalyzerInput(buffer: converted))
                         }
+                        // Eight seconds of sound and not one word: hand over to the older
+                        // recogniser for the rest of the take.
+                        if !heardSomething.isSet, Date.now.timeIntervalSince(started) > 8 {
+                            fallback = try? await LegacySpeech.LiveSession(localeIdentifier: localeIdentifier, into: continuation)
+                            if fallback != nil {
+                                feed.finish()
+                                reader.cancel()
+                            }
+                        }
                     }
-                    feed.finish()
-                    try await analyzer.finalizeAndFinishThroughEndOfInput()
-                    try await reader.value
+
+                    if let fallback {
+                        fallback.finish()
+                    } else {
+                        feed.finish()
+                        try await analyzer.finalizeAndFinishThroughEndOfInput()
+                        try await reader.value
+                    }
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
@@ -138,12 +181,32 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         }
     }
 
+    /// Every word of a file, newest recogniser first, the older one if the new ones refuse the
+    /// language, fail, or come back with nothing.
     public func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
         // A video is read through its sound. `AVAudioFile` opens audio files; handed a .mov it
-        // can fail outright, which is the other half of why listening to footage heard nothing.
+        // can fail outright, which is half of why listening to footage used to hear nothing.
         let audioURL = try await Self.audioFile(for: url)
-        let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: false)
 
+        var modernError: (any Error)?
+        do {
+            let transcript = try await Self.analyzerTranscript(of: audioURL, localeIdentifier: localeIdentifier)
+            if !transcript.words.isEmpty { return transcript }
+        } catch {
+            modernError = error
+        }
+
+        do {
+            return try await LegacySpeech.transcribeFile(at: audioURL, localeIdentifier: localeIdentifier)
+        } catch {
+            // The more useful of the two failures: a language the new model does not have is
+            // explained better by the older recogniser's answer.
+            throw modernError is SpeechError ? error : (modernError ?? error)
+        }
+    }
+
+    private static func analyzerTranscript(of audioURL: URL, localeIdentifier: String) async throws -> Transcript {
+        let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: false)
         let analyzer = SpeechAnalyzer(modules: [recognizer.module])
         let file = try AVAudioFile(forReading: audioURL)
 
@@ -167,13 +230,12 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
 
         let (text, timed) = try await collector.value
         let duration = Double(file.length) / file.fileFormat.sampleRate
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return Transcript(
             localeIdentifier: localeIdentifier,
-            // The proportional spread stays as the fallback, not as the answer. A locale whose
-            // model does not report ranges still gets captions in roughly the right places, and
-            // the code that consumes timings does not have to know which kind it got.
-            words: timed.isEmpty ? Self.timedWords(in: text, over: duration) : timed
+            // The proportional spread stays as the fallback for a model that reports no ranges.
+            words: timed.isEmpty ? Self.timedWords(in: trimmed, over: duration) : timed
         )
     }
 
@@ -308,4 +370,145 @@ final class PCMConverter {
         guard status != .error, failure == nil, output.frameLength > 0 else { return nil }
         return output
     }
+}
+
+/// Speech recognition on `SFSpeechRecognizer`, for the languages the new analyzer does not have.
+///
+/// Older API, and the one with the long language list: Turkish included, on device on current
+/// phones. The new `SpeechTranscriber` refuses those languages outright, and the dictation module
+/// meant to cover them came back empty in testing — so for any language the new model does not
+/// support, this is the path, and it is a path that is known to work.
+enum LegacySpeech {
+    static func authorize() async -> Bool {
+        switch SFSpeechRecognizer.authorizationStatus() {
+        case .authorized:
+            return true
+        case .notDetermined:
+            return await withCheckedContinuation { continuation in
+                SFSpeechRecognizer.requestAuthorization { status in
+                    continuation.resume(returning: status == .authorized)
+                }
+            }
+        default:
+            return false
+        }
+    }
+
+    static func recognizer(for localeIdentifier: String) async throws -> SFSpeechRecognizer {
+        guard await authorize() else { throw SpeechError.notAuthorized }
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: localeIdentifier)),
+              recognizer.isAvailable
+        else { throw SpeechError.localeNotSupported(localeIdentifier) }
+        return recognizer
+    }
+
+    /// Every word of an audio file, with when it was said.
+    static func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
+        let recognizer = try await recognizer(for: localeIdentifier)
+        let request = SFSpeechURLRecognitionRequest(url: url)
+        request.shouldReportPartialResults = false
+        request.addsPunctuation = true
+        // On device where the phone can: no length limit, no network, nothing leaves the phone.
+        if recognizer.supportsOnDeviceRecognition {
+            request.requiresOnDeviceRecognition = true
+        }
+
+        let lock = NSLock()
+        nonisolated(unsafe) var finished = false
+        nonisolated(unsafe) var task: SFSpeechRecognitionTask?
+
+        let words: [TimedWord] = try await withCheckedThrowingContinuation { continuation in
+            task = recognizer.recognitionTask(with: request) { result, error in
+                let words: [TimedWord]? = result.flatMap { result in
+                    guard result.isFinal else { return nil }
+                    return result.bestTranscription.segments.map { segment in
+                        TimedWord(
+                            text: segment.substring,
+                            range: MediaTimeRange(
+                                start: MediaTime(seconds: segment.timestamp),
+                                duration: MediaTime(seconds: max(0.05, segment.duration))
+                            ),
+                            confidence: Double(segment.confidence)
+                        )
+                    }
+                }
+                guard error != nil || words != nil else { return }
+                let first = lock.withLock {
+                    defer { finished = true }
+                    return !finished
+                }
+                guard first else { return }
+                if let words {
+                    continuation.resume(returning: words)
+                } else if let error {
+                    // "No speech detected" is an answer, not a failure.
+                    let code = (error as NSError).code
+                    if code == 1110 || code == 203 {
+                        continuation.resume(returning: [])
+                    } else {
+                        continuation.resume(throwing: error)
+                    }
+                }
+            }
+        }
+        withExtendedLifetime(task) {}
+        return Transcript(localeIdentifier: localeIdentifier, words: words)
+    }
+
+    /// The microphone, live, for following the script.
+    static func follow(
+        _ audio: AsyncStream<SpeechAudioFrame>,
+        localeIdentifier: String,
+        into continuation: AsyncThrowingStream<TranscriptUpdate, any Error>.Continuation
+    ) async throws {
+        let session = try await LiveSession(localeIdentifier: localeIdentifier, into: continuation)
+        for await frame in audio {
+            if Task.isCancelled { break }
+            session.append(frame.buffer)
+        }
+        session.finish()
+    }
+
+    /// One live recognition, fed buffer by buffer.
+    final class LiveSession: @unchecked Sendable {
+        private let request = SFSpeechAudioBufferRecognitionRequest()
+        private var task: SFSpeechRecognitionTask?
+
+        init(
+            localeIdentifier: String,
+            into continuation: AsyncThrowingStream<TranscriptUpdate, any Error>.Continuation
+        ) async throws {
+            let recognizer = try await LegacySpeech.recognizer(for: localeIdentifier)
+            request.shouldReportPartialResults = true
+            if recognizer.supportsOnDeviceRecognition {
+                request.requiresOnDeviceRecognition = true
+            }
+            task = recognizer.recognitionTask(with: request) { result, _ in
+                guard let result else { return }
+                // Partial results are the whole utterance so far; the follower only needs the end.
+                let words = ScriptText.words(in: result.bestTranscription.formattedString)
+                    .suffix(12)
+                    .map { TimedWord(text: String($0), range: MediaTimeRange(start: .zero, duration: .zero)) }
+                continuation.yield(TranscriptUpdate(words: Array(words), isFinal: result.isFinal))
+            }
+        }
+
+        func append(_ buffer: AVAudioPCMBuffer) {
+            request.append(buffer)
+        }
+
+        func finish() {
+            request.endAudio()
+            task?.finish()
+        }
+    }
+}
+
+/// Set once, read from anywhere.
+final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    func set() { lock.withLock { value = true } }
+    var isSet: Bool { lock.withLock { value } }
 }

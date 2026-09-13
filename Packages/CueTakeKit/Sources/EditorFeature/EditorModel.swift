@@ -627,7 +627,7 @@ extension EditorModel {
                 of: url,
                 from: take.sourceRange.start.seconds,
                 duration: seconds,
-                count: min(6, max(1, Int(seconds / 2)))
+                count: min(20, max(3, Int(seconds)))
             )
             guard !frames.isEmpty else { continue }
             withAnimation(.easeOut(duration: 0.3)) {

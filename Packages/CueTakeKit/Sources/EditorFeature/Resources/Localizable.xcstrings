@@ -2826,6 +2826,23 @@
         }
       }
     },
+    "export.fileReady": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your video is ready. Share it or save it wherever you like."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videon hazır. Paylaş ya da istediğin yere kaydet."
+          }
+        }
+      }
+    },
     "export.format": {
       "extractionState": "manual",
       "localizations": {
@@ -2860,6 +2877,40 @@
         }
       }
     },
+    "export.openPhotos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Photos"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraflar'ı aç"
+          }
+        }
+      }
+    },
+    "export.photosRefused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not saved to Photos: CueTake isn't allowed to add to your library. Use Share or save, or allow it in Settings › CueTake › Photos."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraflar'a kaydedilmedi: CueTake'in arşive ekleme izni yok. Paylaş ya da kaydet'i kullan veya Ayarlar › CueTake › Fotoğraflar'dan izin ver."
+          }
+        }
+      }
+    },
     "export.ready": {
       "extractionState": "manual",
       "localizations": {
@@ -2890,6 +2941,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Videoyu render et"
+          }
+        }
+      }
+    },
+    "export.savedToPhotos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to your Photos library."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraflar arşivine kaydedildi."
+          }
+        }
+      }
+    },
+    "export.share": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share or save"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paylaş ya da kaydet"
           }
         }
       }

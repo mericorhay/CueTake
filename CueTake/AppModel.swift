@@ -444,10 +444,11 @@ final class AppModel {
             }
             exportModel.advance(to: 3)
 
+            var destination: ExportModel.Destination = .fileOnly
             if settingsModel.settings.exportDestination == .photoLibrary {
-                try await Self.saveToPhotoLibrary(url)
+                destination = try await Self.saveToPhotoLibrary(url) ? .photos : .photosRefused
             }
-            exportModel.succeed(url: url)
+            exportModel.succeed(url: url, destination: destination)
         } catch {
             exportModel.fail(String(localized: "export.failed.generic"))
         }
@@ -461,12 +462,15 @@ final class AppModel {
     /// belong to the main actor — and PhotoKit runs the change block on its own queue. Swift 6
     /// checks that at runtime and traps, which is why the export got all the way to the end,
     /// wrote the file, and then took the app down at the moment it saved to Photos.
-    nonisolated private static func saveToPhotoLibrary(_ url: URL) async throws {
+    /// Returns whether the video reached Photos. A refused permission used to return quietly, and
+    /// the export screen then said "ready" about a video that had gone nowhere.
+    nonisolated private static func saveToPhotoLibrary(_ url: URL) async throws -> Bool {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { return }
+        guard status == .authorized || status == .limited else { return false }
         try await PHPhotoLibrary.shared().performChanges { @Sendable in
             PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
         }
+        return true
     }
 
     // MARK: - Persistence
@@ -855,8 +859,15 @@ final class AppModel {
                 show(notice: String(localized: "speech.failed.language"))
             case .noAudio:
                 show(notice: String(localized: "speech.failed.noAudio"))
+            case .notAuthorized:
+                show(notice: String(localized: "speech.failed.permission"))
             default:
-                show(notice: String(localized: "speech.failed.nothingHeard"))
+                if let failure {
+                    // The system's own words, so a failure nobody anticipated can still be reported.
+                    show(notice: String(localized: "speech.failed.error \(failure.localizedDescription)"))
+                } else {
+                    show(notice: String(localized: "speech.failed.nothingHeard"))
+                }
             }
         }
     }

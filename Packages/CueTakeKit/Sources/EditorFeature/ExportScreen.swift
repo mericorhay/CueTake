@@ -16,6 +16,14 @@ public final class ExportModel {
     public private(set) var outputURL: URL?
     /// Set when the export could not finish. Shown instead of pretending it did.
     public private(set) var failure: String?
+    /// Where the finished video went, said on the finished screen.
+    public enum Destination: Sendable, Equatable {
+        case photos
+        /// Photos access was refused; the file is still here to share or save.
+        case photosRefused
+        case fileOnly
+    }
+    public private(set) var destination: Destination?
 
     public init() {}
 
@@ -43,8 +51,9 @@ public final class ExportModel {
         stage = next
     }
 
-    public func succeed(url: URL) {
+    public func succeed(url: URL, destination: Destination = .fileOnly) {
         outputURL = url
+        self.destination = destination
         progress = nil
         stage = 4
     }
@@ -60,6 +69,7 @@ public final class ExportModel {
 
     public func reset() {
         stage = 0
+        destination = nil
         outputURL = nil
         failure = nil
         progress = nil
@@ -331,27 +341,66 @@ public struct ExportScreen: View {
                 .foregroundStyle(DS.Palette.ink(0.45))
                 .padding(.bottom, 18)
 
-            HStack(spacing: 9) {
-                ForEach(["Reels", "TikTok", "Shorts", "Files"], id: \.self) { target in
-                    Text(target)
-                        .dsFont(.sans, .semibold, 12)
-                        .foregroundStyle(DS.Palette.ink(0.75))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .dsCard(radius: 15, border: DS.Palette.hairline(0.08))
+            // Where it went, in a sentence. The screen used to say "ready" and show four tiles that
+            // did nothing, so a video saved to Photos and a video saved nowhere looked the same.
+            destinationLine
+                .padding(.bottom, 14)
+
+            if let url = model.outputURL {
+                // The system share sheet: Instagram, TikTok, YouTube, Files, AirDrop, Save Video —
+                // whatever this phone has, without the app pretending to know.
+                ShareLink(item: url) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("export.share", bundle: .module)
+                            .dsFont(.sans, .semibold, 16)
+                    }
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(DS.Palette.accent))
                 }
+                .buttonStyle(.dsPress(radius: DS.Radius.card))
+                .shadow(color: DS.Palette.accent(0.34), radius: 20, y: 14)
             }
 
-            DSPrimaryButton(
-                String(localized: "export.done", bundle: .module),
-                verticalPadding: 17,
-                fontSize: 16,
-                glow: false,
-                action: onDone
-            )
-            .padding(.top, 12)
+            HStack(spacing: 9) {
+                if model.destination == .photos, let photos = URL(string: "photos-redirect://") {
+                    Link(destination: photos) {
+                        Text("export.openPhotos", bundle: .module)
+                            .dsFont(.sans, .semibold, 14)
+                            .foregroundStyle(DS.Palette.ink)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .dsGlass(tint: DS.Palette.glass(0.6), in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
+                    }
+                }
+                DSSecondaryButton(String(localized: "export.done", bundle: .module), verticalPadding: 15, fontSize: 14, action: onDone)
+            }
+            .padding(.top, 10)
         }
         .dsEnter(.rise(duration: 0.45))
+    }
+}
+
+extension ExportScreen {
+    @ViewBuilder
+    fileprivate var destinationLine: some View {
+        let (symbol, key, color): (String, LocalizedStringKey, Color) = switch model.destination {
+        case .photos: ("checkmark.circle.fill", "export.savedToPhotos", DS.Palette.lime)
+        case .photosRefused: ("exclamationmark.triangle.fill", "export.photosRefused", DS.Palette.accent)
+        default: ("doc.fill", "export.fileReady", DS.Palette.ink(0.7))
+        }
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(color)
+                .symbolEffect(.bounce, value: model.destination)
+            Text(key, bundle: .module)
+                .dsFont(.sans, .medium, 13, lineHeight: 1.4)
+                .foregroundStyle(DS.Palette.ink(0.75))
+        }
     }
 }
 

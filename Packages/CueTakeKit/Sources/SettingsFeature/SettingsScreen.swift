@@ -11,6 +11,7 @@ public struct SettingsScreen: View {
     }
 
     @State private var showsConverter = false
+    @State private var showsAPIKey = false
 
     public var body: some View {
         ScrollView {
@@ -57,6 +58,16 @@ public struct SettingsScreen: View {
                     }
                     .buttonStyle(.dsPress)
 
+                    Button {
+                        showsAPIKey = true
+                    } label: {
+                        row(
+                            String(localized: "settings.apiKey", bundle: .module),
+                            value: String(localized: APIKeySheet.store.read() == nil ? "settings.apiKey.none" : "settings.apiKey.set", bundle: .module)
+                        )
+                    }
+                    .buttonStyle(.dsPress)
+
                     staticRow("settings.subscription", String(localized: "settings.subscription.value", bundle: .module))
                     staticRow("settings.version", Self.version, isLast: true)
                 }
@@ -69,6 +80,11 @@ public struct SettingsScreen: View {
         .scrollIndicators(.hidden)
         .dsScreenLayout(scrolls: true)
         .background(DS.Palette.screen)
+        .sheet(isPresented: $showsAPIKey) {
+            APIKeySheet(onClose: { showsAPIKey = false })
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showsConverter) {
             ConverterSheet(onClose: { showsConverter = false })
                 .presentationDetents([.medium, .large])

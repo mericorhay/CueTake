@@ -10,7 +10,6 @@ import SwiftUI
 struct EditorTimeline: View {
     @Bindable var model: EditorModel
 
-    @State private var scrubOrigin: Double?
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
     @State private var lift: (index: Int, offset: Double)?
@@ -32,52 +31,140 @@ struct EditorTimeline: View {
             + 7
     }
 
+    /// Where the scroll view is, and whether a finger is moving it.
+    @State private var position = ScrollPosition(edge: .leading)
+    @State private var viewport: CGFloat = 0
+    @State private var userScrolling = false
+
+    /// The playhead stands still in the middle and the timeline moves under it, the way every
+    /// phone editor people already know works.
+    ///
+    /// The old arrangement had a playhead that travelled across a timeline you had to scrub by
+    /// grabbing the ruler, and a pinch that always zoomed from the first second — so on a project of
+    /// eight clips, zooming in meant losing the clip you were looking at. Now scrolling *is*
+    /// scrubbing, the picture follows the timeline as it moves, and a pinch zooms around the moment
+    /// under the playhead, which is the moment being worked on.
     var body: some View {
         ScrollView(.horizontal) {
-            ZStack(alignment: .topLeading) {
-                VStack(alignment: .leading, spacing: 7) {
-                    ruler
-                        // Scrubbing lives on the ruler. It used to cover the whole surface, and a
-                        // drag anywhere moved the playhead — so the timeline could never be
-                        // scrolled sideways, which on anything longer than the screen is the one
-                        // thing a timeline has to do.
-                        .frame(width: max(contentWidth, 1), height: 26, alignment: .topLeading)
-                        .contentShape(Rectangle())
-                        .gesture(scrubGesture)
-                    clipRow
-                    if model.audioRowCount > 0 {
-                        AudioLane(model: model, scale: scale)
-                    }
-                }
-
-                playhead
-
-                // Under the finger, where the finger is covering the answer.
-                if model.isScrubbing {
-                    ScrubLens(model: model)
-                        .offset(x: CGFloat(model.playhead * scale) - ScrubLens.width / 2, y: -30)
-                        .allowsHitTesting(false)
-                        .transition(.opacity)
-                        .zIndex(2)
-                }
-
-                // The tool's own answer, drawn over the surface it acted on. Keyed by the pulse so
-                // using the same tool twice in a row plays twice rather than once.
-                if let pulse = model.lastTool {
-                    ToolFlourish(pulse: pulse)
-                        .id(pulse.id)
-                        .frame(width: max(contentWidth, 1), height: 96 + audioHeight)
-                }
+            HStack(spacing: 0) {
+                Color.clear.frame(width: viewport / 2)
+                surface
+                Color.clear.frame(width: viewport / 2)
             }
-            .frame(width: max(contentWidth, 1), alignment: .topLeading)
-            .padding(.vertical, 6)
-            .simultaneousGesture(zoomGesture)
         }
         .scrollIndicators(.hidden)
-        .scrollDisabled(model.isScrubbing || trim != nil || lift != nil)
+        .scrollPosition($position)
+        .scrollDisabled(trim != nil || lift != nil)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            viewport = width
+            follow()
+        }
+        .onScrollPhaseChange { _, phase in
+            let moving = phase == .interacting || phase == .decelerating || phase == .tracking
+            if moving, !userScrolling {
+                userScrolling = true
+                model.beginScrub()
+            } else if !moving, userScrolling {
+                userScrolling = false
+                settleOnSnap()
+                model.endScrub()
+            }
+        }
+        .onScrollGeometryChange(for: CGFloat.self) { geometry in
+            geometry.contentOffset.x
+        } action: { _, offset in
+            guard userScrolling else { return }
+            model.seek(to: Double(offset) / scale)
+        }
+        // Playing, seeking from a button, or zooming: the timeline comes to the playhead.
+        .onChange(of: model.playhead) { follow() }
+        .onChange(of: model.pointsPerSecond) { follow() }
+        .overlay { centreLine }
         .frame(height: 116 + audioHeight)
         .sensoryFeedback(.selection, trigger: snapCount)
-        .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.pointsPerSecond)
+    }
+
+    private var surface: some View {
+        ZStack(alignment: .topLeading) {
+            VStack(alignment: .leading, spacing: 7) {
+                ruler
+                    .frame(width: max(contentWidth, 1), height: 26, alignment: .topLeading)
+                    .contentShape(Rectangle())
+                    // A tap on a second of the ruler goes to that second.
+                    .gesture(
+                        SpatialTapGesture().onEnded { tap in
+                            jump(to: Double(tap.location.x) / scale)
+                        }
+                    )
+                clipRow
+                if model.audioRowCount > 0 {
+                    AudioLane(model: model, scale: scale)
+                }
+            }
+
+            // The tool's own answer, drawn over the surface it acted on. Keyed by the pulse so
+            // using the same tool twice in a row plays twice rather than once.
+            if let pulse = model.lastTool {
+                ToolFlourish(pulse: pulse)
+                    .id(pulse.id)
+                    .frame(width: max(contentWidth, 1), height: 96 + audioHeight)
+            }
+        }
+        .frame(width: max(contentWidth, 1), alignment: .topLeading)
+        .padding(.vertical, 6)
+        .simultaneousGesture(zoomGesture)
+    }
+
+    /// Fixed in the middle of the timeline.
+    private var centreLine: some View {
+        ZStack(alignment: .top) {
+            Rectangle()
+                .fill(DS.Palette.ink)
+                .frame(width: 2)
+                .padding(.top, 4)
+                .shadow(color: .black.opacity(0.6), radius: 5)
+
+            Capsule()
+                .fill(DS.Palette.ink)
+                .frame(width: model.isScrubbing ? 16 : 11, height: 11)
+
+            // Under the finger, where the finger is covering the answer.
+            if model.isScrubbing {
+                ScrubLens(model: model)
+                    .offset(y: -34)
+                    .transition(.opacity)
+            }
+        }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .allowsHitTesting(false)
+        .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: model.isScrubbing)
+    }
+
+    /// Scrolls so the playhead's moment is under the centre line — unless a finger is doing the
+    /// scrolling, in which case the finger is in charge.
+    private func follow() {
+        guard !userScrolling else { return }
+        position.scrollTo(x: CGFloat(model.playhead * scale))
+    }
+
+    private func jump(to seconds: Double) {
+        model.seek(to: seconds)
+        withAnimation(DS.Motion.settle) {
+            position.scrollTo(x: CGFloat(model.playhead * scale))
+        }
+    }
+
+    /// When the timeline comes to rest near a cut, it settles on the cut. A cut that lands one frame
+    /// off a boundary is a cut that has to be done again.
+    private func settleOnSnap() {
+        let tolerance = TimelineScale.snapTolerance(pointsPerSecond: scale)
+        guard let target = model.snapTarget(for: model.playhead, tolerance: tolerance),
+              abs(target - model.playhead) > 0.001
+        else { return }
+        snapCount += 1
+        jump(to: target)
     }
 
     // MARK: - Ruler
@@ -135,12 +222,16 @@ struct EditorTimeline: View {
                 // The shot itself, as a strip of frames. The role colour stays as a cap along the
                 // top, so the timeline still reads as hook / intro / point at a glance.
                 GeometryReader { proxy in
+                    // One tile per 40 points, each showing the frame nearest its place in the
+                    // clip, so zooming in shows more of the shot instead of stretching six frames.
+                    let tiles = max(1, Int(proxy.size.width / 40))
                     HStack(spacing: 0) {
-                        ForEach(Array(frames.enumerated()), id: \.offset) { _, frame in
+                        ForEach(0..<tiles, id: \.self) { tile in
+                            let frame = frames[min(frames.count - 1, tile * frames.count / tiles)]
                             Image(decorative: frame, scale: 1)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: proxy.size.width / CGFloat(frames.count), height: proxy.size.height)
+                                .frame(width: proxy.size.width / CGFloat(tiles), height: proxy.size.height)
                                 .clipped()
                         }
                     }
@@ -203,12 +294,20 @@ struct EditorTimeline: View {
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .onTapGesture {
+            if lift != nil {
+                withAnimation(DS.Motion.settle) { lift = nil }
+                return
+            }
             withAnimation(DS.Motion.snap) {
                 model.inspectedSegment = segment.id
                 model.inspectorTab = .script
             }
         }
-        .gesture(reorderGesture(at: index))
+        .onLongPressGesture(minimumDuration: 0.35) {
+            withAnimation(DS.Motion.bloom) { lift = (index, 0) }
+            snapCount += 1
+        }
+        .gesture(reorderDrag(at: index), including: isLifted ? .all : .subviews)
     }
 
     /// Only the trailing edge trims.
@@ -228,63 +327,7 @@ struct EditorTimeline: View {
             .gesture(trimGesture(at: index))
     }
 
-    // MARK: - Playhead
-
-    private var playhead: some View {
-        let x = CGFloat(model.playhead * scale)
-        return Rectangle()
-            .fill(DS.Palette.ink)
-            .frame(width: 2, height: 104 + audioHeight)
-            .overlay(alignment: .top) {
-                Capsule()
-                    .fill(DS.Palette.ink)
-                    .frame(width: model.isScrubbing ? 16 : 11, height: 11)
-                    .overlay {
-                        Text(model.playheadLabel)
-                            .dsFont(.mono, .medium, 9)
-                            .foregroundStyle(DS.Palette.ink)
-                            .fixedSize()
-                            .offset(y: -14)
-                            .opacity(model.isScrubbing ? 1 : 0)
-                    }
-                    .offset(y: -4)
-            }
-            .shadow(color: .black.opacity(0.6), radius: 5)
-            .offset(x: x - 1)
-            .allowsHitTesting(false)
-            .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: model.isScrubbing)
-    }
-
     // MARK: - Gestures
-
-    private var scrubGesture: some Gesture {
-        // From where the finger is, not from where the playhead was: touching a second on the
-        // ruler means that second.
-        DragGesture(minimumDistance: 0)
-            .onChanged { gesture in
-                if scrubOrigin == nil {
-                    scrubOrigin = model.playhead
-                    model.beginScrub()
-                }
-                seek(to: Double(gesture.location.x) / scale)
-            }
-            .onEnded { _ in
-                scrubOrigin = nil
-                model.endScrub()
-            }
-    }
-
-    /// Snapping is the reason this is an editing surface and not a slider: a cut that lands one
-    /// frame off a boundary is a cut that has to be done again.
-    private func seek(to raw: Double) {
-        let tolerance = TimelineScale.snapTolerance(pointsPerSecond: scale)
-        if let target = model.snapTarget(for: raw, tolerance: tolerance) {
-            if abs(model.playhead - target) > 0.001 { snapCount += 1 }
-            model.seek(to: target)
-        } else {
-            model.seek(to: raw)
-        }
-    }
 
     private var zoomGesture: some Gesture {
         MagnifyGesture(minimumScaleDelta: 0.01)
@@ -306,23 +349,20 @@ struct EditorTimeline: View {
             .onEnded { _ in trim = nil }
     }
 
-    /// Long press to pick a clip up, then drag it past its neighbours.
+    /// Long press picks a clip up; dragging it then moves it past its neighbours.
     ///
-    /// Long press rather than a plain drag because a plain drag is already the scrub, and a
-    /// timeline where brushing a clip rearranges the video is a timeline nobody trusts.
-    private func reorderGesture(at index: Int) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.35)
-            .onEnded { _ in
-                lift = (index, 0)
-                snapCount += 1
-            }
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .onChanged { value in
-                guard case .second(_, let drag?) = value, lift != nil else { return }
+    /// Two steps rather than one gesture. A long press chained into a drag, attached to every clip,
+    /// claimed each touch on the clips before the scroll view could see it — which is why the ruler
+    /// scrolled and the clips did not. The drag is only attached to a clip that has been lifted, so
+    /// every other touch on the timeline belongs to scrolling.
+    private func reorderDrag(at index: Int) -> some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { drag in
+                guard lift?.index == index else { return }
                 lift = (index, Double(drag.translation.width))
             }
             .onEnded { _ in
-                guard let lift else { return }
+                guard let lift, lift.index == index else { return }
                 let destination = destinationIndex(from: lift.index, offset: lift.offset)
                 if destination != lift.index {
                     withAnimation(DS.Motion.settle) {
@@ -330,7 +370,7 @@ struct EditorTimeline: View {
                     }
                     snapCount += 1
                 }
-                self.lift = nil
+                withAnimation(DS.Motion.settle) { self.lift = nil }
             }
     }
 

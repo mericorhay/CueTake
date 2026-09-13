@@ -1124,6 +1124,23 @@
         }
       }
     },
+    "speech.failed.error %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't listen to the clips: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klipler dinlenemedi: %@"
+          }
+        }
+      }
+    },
     "speech.failed.language": {
       "extractionState": "manual",
       "localizations": {
@@ -1164,13 +1181,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No speech was heard in these clips. If the language model is still downloading, try again in a minute."
+            "value": "No speech was heard in these clips."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bu kliplerde konuşma duyulmadı. Dil modeli hâlâ iniyorsa bir dakika sonra tekrar dene."
+            "value": "Bu kliplerde konuşma duyulmadı."
+          }
+        }
+      }
+    },
+    "speech.failed.permission": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition is turned off for CueTake. Turn it on in Settings › CueTake."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CueTake için konuşma tanıma kapalı. Ayarlar › CueTake'ten aç."
           }
         }
       }
