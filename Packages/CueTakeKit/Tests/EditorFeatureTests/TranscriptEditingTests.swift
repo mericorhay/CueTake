@@ -198,3 +198,52 @@ struct EditPlanTests {
         #expect(!model.canUndo)
     }
 }
+
+@MainActor
+struct OverlayEditingTests {
+    private func model() -> EditorModel {
+        let segment = Segment(role: .hook, script: "hello", estimatedDuration: MediaTime(seconds: 60))
+        return EditorModel(project: Project(title: "t", localeIdentifier: "en", segments: [segment]))
+    }
+
+    @Test func textOverlayStartsAtThePlayheadAndIsSelected() {
+        let model = model()
+        model.seek(to: 29)
+        model.addTextOverlay("Title")
+        let overlay = model.project.overlays.first
+        #expect(overlay != nil)
+        #expect(abs((overlay?.start.seconds ?? 0) - 29) < 0.001)
+        #expect(model.selectedOverlay == overlay?.id)
+        #expect(model.overlaysVisible(at: 30).count == 1)
+        #expect(model.overlaysVisible(at: 40).isEmpty)
+    }
+
+    @Test func endAtPlayheadAndLimits() {
+        let model = model()
+        model.seek(to: 10)
+        model.addTextOverlay("T")
+        let id = model.project.overlays[0].id
+        model.seek(to: 30)
+        model.endOverlayAtPlayhead(id)
+        #expect(abs(model.project.overlays[0].duration.seconds - 20) < 0.001)
+
+        model.updateOverlay(id) {
+            $0.transform.scale = 100
+            $0.transform.opacity = 0
+            $0.duration = MediaTime(seconds: 0)
+        }
+        #expect(model.project.overlays[0].transform.scale == OverlayTransform.scaleRange.upperBound)
+        #expect(model.project.overlays[0].transform.opacity > 0)
+        #expect(model.project.overlays[0].duration.seconds >= Overlay.shortest)
+    }
+
+    @Test func removingIsUndoable() {
+        let model = model()
+        model.addTextOverlay("T")
+        let id = model.project.overlays[0].id
+        model.removeOverlay(id)
+        #expect(model.project.overlays.isEmpty)
+        model.undo()
+        #expect(model.project.overlays.count == 1)
+    }
+}

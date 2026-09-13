@@ -81,8 +81,7 @@ struct OverlayLane: View {
                     .frame(width: 4, height: 14)
                     .padding(.trailing, 4)
                     .frame(width: 26, height: Self.rowHeight, alignment: .trailing)
-                    .contentShape(Rectangle())
-                    .gesture(endDrag(overlay))
+                    .allowsHitTesting(false)
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -91,28 +90,30 @@ struct OverlayLane: View {
                 model.select(overlay: selected ? nil : overlay.id)
             }
         }
-        .gesture(moveDrag(overlay), including: selected ? .all : .subviews)
+        // Ahead of the timeline's own scrolling while selected: a drag on the chosen overlay means
+        // "move this", and losing it to a scroll would move the whole timeline instead.
+        .highPriorityGesture(moveDrag(overlay), including: selected ? .all : .subviews)
     }
 
+    /// One drag for both jobs: from the last 26 points of the bar it sets the end, from anywhere
+    /// else it moves the whole overlay. Two gestures could not both win against the scroll view.
     private func moveDrag(_ overlay: Overlay) -> some Gesture {
         DragGesture(minimumDistance: 3)
             .onChanged { value in
-                let start = origin?.id == overlay.id ? origin!.start : overlay.start.seconds
-                if origin?.id != overlay.id { origin = (overlay.id, overlay.start.seconds, overlay.duration.seconds) }
-                model.updateOverlay(overlay.id, coalescing: "overlay-move") {
-                    $0.start = MediaTime(seconds: max(0, start + Double(value.translation.width) / scale))
+                if origin?.id != overlay.id {
+                    origin = (overlay.id, overlay.start.seconds, overlay.duration.seconds)
                 }
-            }
-            .onEnded { _ in origin = nil }
-    }
-
-    private func endDrag(_ overlay: Overlay) -> some Gesture {
-        DragGesture(minimumDistance: 1)
-            .onChanged { value in
-                let duration = origin?.id == overlay.id ? origin!.duration : overlay.duration.seconds
-                if origin?.id != overlay.id { origin = (overlay.id, overlay.start.seconds, overlay.duration.seconds) }
-                model.updateOverlay(overlay.id, coalescing: "overlay-end") {
-                    $0.duration = MediaTime(seconds: duration + Double(value.translation.width) / scale)
+                guard let origin else { return }
+                let width = max(CGFloat(origin.duration * scale) - 2, 16)
+                let delta = Double(value.translation.width) / scale
+                if value.startLocation.x > width - 26 {
+                    model.updateOverlay(overlay.id, coalescing: "overlay-end") {
+                        $0.duration = MediaTime(seconds: origin.duration + delta)
+                    }
+                } else {
+                    model.updateOverlay(overlay.id, coalescing: "overlay-move") {
+                        $0.start = MediaTime(seconds: max(0, origin.start + delta))
+                    }
                 }
             }
             .onEnded { _ in origin = nil }

@@ -94,3 +94,40 @@ struct WorkflowLenientDecodingTests {
         #expect(workflow.steps.first?.kind.typeName == "analyzeSpeech")
     }
 }
+
+struct CaptionWindowTests {
+    @Test func captionsOnlyShowInsideTheWindow() {
+        let take = Take(
+            recordingID: UUID(),
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
+            status: .ready
+        )
+        let segment = Segment(
+            role: .hook,
+            script: "",
+            takes: [take],
+            selectedTakeID: take.id,
+            captions: [
+                CaptionCue(text: "early", range: MediaTimeRange(start: MediaTime(seconds: 1), duration: MediaTime(seconds: 1))),
+                CaptionCue(text: "edge", range: MediaTimeRange(start: MediaTime(seconds: 4.5), duration: MediaTime(seconds: 1))),
+                CaptionCue(text: "late", range: MediaTimeRange(start: MediaTime(seconds: 8), duration: MediaTime(seconds: 1))),
+            ]
+        )
+        var project = Project(title: "t", localeIdentifier: "en", segments: [segment])
+        project.captionWindow = MediaTimeRange(start: MediaTime(seconds: 5), duration: MediaTime(seconds: 10))
+        let cues = project.captionCues
+        #expect(cues.map(\.text) == ["edge", "late"])
+        #expect(abs(cues[0].range.start.seconds - 5) < 0.001)
+    }
+
+    @Test func oldProjectsOpenWithoutOverlays() throws {
+        let project = Project(title: "t", localeIdentifier: "en")
+        var object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(project)) as! [String: Any]
+        object.removeValue(forKey: "overlays")
+        object.removeValue(forKey: "captionWindow")
+        let data = try JSONSerialization.data(withJSONObject: object)
+        let decoded = try JSONDecoder().decode(Project.self, from: data)
+        #expect(decoded.overlays.isEmpty)
+        #expect(decoded.captionWindow == nil)
+    }
+}
