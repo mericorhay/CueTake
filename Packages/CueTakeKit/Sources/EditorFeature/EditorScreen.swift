@@ -17,6 +17,8 @@ public struct EditorScreen: View {
     private let saveLabel: String
     private let isSaving: Bool
     private let onSave: () -> Void
+    /// Runs speech transcription for takes that have none.
+    private let onTranscribe: () -> Void
     /// Asks the layer that knows where media lives to get playback ready.
     private let onPrepare: () async -> Void
 
@@ -30,7 +32,8 @@ public struct EditorScreen: View {
         onAddAudio: @escaping () -> Void = {},
         saveLabel: String = "",
         isSaving: Bool = false,
-        onSave: @escaping () -> Void = {}
+        onSave: @escaping () -> Void = {},
+        onTranscribe: @escaping () -> Void = {}
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -42,11 +45,21 @@ public struct EditorScreen: View {
         self.saveLabel = saveLabel
         self.isSaving = isSaving
         self.onSave = onSave
+        self.onTranscribe = onTranscribe
     }
 
     @State private var showsTools = false
     @State private var showsChanges = false
     @State private var previewExpanded = false
+    @State private var showsTranscript = false
+
+    /// Whatever the tools should act on: the inspected clip, or the one under the playhead.
+    private var workingIndex: Int? {
+        if let inspected = model.inspectedSegment {
+            return model.project.segments.firstIndex { $0.id == inspected }
+        }
+        return model.segmentAtPlayhead?.index
+    }
 
     /// The preview gives up its height to whichever panel is open, and takes it all back when the
     /// user asks for a proper look.
@@ -105,10 +118,23 @@ public struct EditorScreen: View {
                 onAddAudio: onAddAudio,
                 onCaptions: onCaptions,
                 onExport: onExport,
+                onTranscriptEdit: { showsTranscript = true },
                 onClose: { showsTools = false }
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showsTranscript) {
+            if let index = workingIndex {
+                TranscriptPanel(
+                    model: model,
+                    index: index,
+                    onTranscribe: onTranscribe,
+                    onClose: { showsTranscript = false }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
         }
         .sheet(isPresented: $showsChanges) {
             ChangesSheet(

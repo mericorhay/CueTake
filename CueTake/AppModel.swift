@@ -232,6 +232,32 @@ final class AppModel {
         retakeModel = nil
     }
 
+    /// The words of a whole recording, narrowed to one take and rebased on its start.
+    ///
+    /// A take is a window into a file; the transcript covers the file. Without this a take that
+    /// begins thirty seconds in — anything produced by a split — carries word times pointing at
+    /// somebody else's sentence, and editing by transcript would cut the wrong footage with
+    /// complete confidence.
+    private static func words(of transcript: Transcript, within range: MediaTimeRange) -> [TimedWord] {
+        let start = range.start.seconds
+        let end = range.end.seconds
+        // A whole-file take is the common case and needs no work.
+        guard start > 0.01 else {
+            return transcript.words.filter { $0.range.start.seconds < end + 0.01 }
+        }
+        return transcript.words.compactMap { word in
+            guard word.range.start.seconds >= start - 0.01, word.range.end.seconds <= end + 0.01 else {
+                return nil
+            }
+            var shifted = word
+            shifted.range = MediaTimeRange(
+                start: MediaTime(seconds: word.range.start.seconds - start),
+                duration: word.range.duration
+            )
+            return shifted
+        }
+    }
+
     /// Applies the caption choice to the project, so it survives leaving the screen.
     func applyCaptionStyle(presetID: String, position: CaptionPosition) {
         project.captionStyle.presetID = presetID
@@ -590,19 +616,33 @@ final class AppModel {
             )
             guard let transcript = try? await speech.transcribeFile(at: url, localeIdentifier: locale) else { continue }
 
-            project.segments[index].takes[takeIndex].transcript = transcript
+            // The transcriber reads the whole file; a take is a window into it. Word times are
+            // stored relative to the take, so a take that starts thirty seconds in — anything
+            // that has been split — would otherwise carry timings pointing at somebody else's
+            // sentence.
+            let take = project.segments[index].takes[takeIndex]
+            let aligned = Transcript(
+                localeIdentifier: transcript.localeIdentifier,
+                words: Self.words(of: transcript, within: take.sourceRange)
+            )
+
+            project.segments[index].takes[takeIndex].transcript = aligned
             project.segments[index].captions = CaptionBuilder.cues(
-                from: transcript,
+                from: aligned,
                 maxWordsPerCue: project.captionStyle.maxWordsPerCue
             )
             // The script is what the prompter shows; for imported footage there was none, so what
             // was actually said becomes it.
             if project.segments[index].script.isEmpty {
-                project.segments[index].script = transcript.text
+                project.segments[index].script = aligned.text
             }
         }
 
         project.updatedAt = .now
+        // The editor is holding its own copy and is very likely the screen that asked for this.
+        // Without this line the transcript lands in the project and the panel that requested it
+        // goes on saying there is nothing to read.
+        editorModel.project = project
         scheduleSave()
     }
 

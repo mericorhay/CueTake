@@ -47,8 +47,8 @@ struct EditorTimeline: View {
 
                 // Under the finger, where the finger is covering the answer.
                 if model.isScrubbing {
-                    ScrubLens(model: model, scale: scale)
-                        .offset(x: CGFloat(model.playhead * scale) - ScrubLens.diameter / 2, y: -34)
+                    ScrubLens(model: model)
+                        .offset(x: CGFloat(model.playhead * scale) - ScrubLens.width / 2, y: -30)
                         .allowsHitTesting(false)
                         .transition(.opacity)
                         .zIndex(2)

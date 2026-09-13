@@ -35,7 +35,10 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
             // Final results only: a file is not being read as it arrives, and volatile guesses
             // would just be thrown away.
             reportingOptions: [],
-            attributeOptions: []
+            // The whole feature is in this line. With time ranges attached to each run, the
+            // transcript stops being a paragraph about the take and becomes an index into it —
+            // which is what makes editing by text possible at all.
+            attributeOptions: [.audioTimeRange]
         )
 
         let analyzer = SpeechAnalyzer(modules: [transcriber])
@@ -45,10 +48,12 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         // waiting for the read to finish before listening would miss them.
         let collector = Task {
             var text = ""
+            var words: [TimedWord] = []
             for try await result in transcriber.results where result.isFinal {
                 text += String(result.text.characters)
+                words += Self.words(in: result.text)
             }
-            return text
+            return (text, words)
         }
 
         if let last = try await analyzer.analyzeSequence(from: file) {
@@ -57,13 +62,55 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
             try await analyzer.finalizeAndFinishThroughEndOfInput()
         }
 
-        let text = try await collector.value
+        let (text, timed) = try await collector.value
         let duration = Double(file.length) / file.fileFormat.sampleRate
 
         return Transcript(
             localeIdentifier: localeIdentifier,
-            words: Self.timedWords(in: text, over: duration)
+            // The proportional spread stays as the fallback, not as the answer. A locale whose
+            // model does not report ranges still gets captions in roughly the right places, and
+            // the code that consumes timings does not have to know which kind it got.
+            words: timed.isEmpty ? Self.timedWords(in: text, over: duration) : timed
         )
+    }
+
+    /// Pulls the per-word timings out of a result.
+    ///
+    /// The analyzer attaches an audio time range to each *run*, and a run is usually a word but is
+    /// sometimes a short phrase. Where it is a phrase the words inside it are spread across the
+    /// run in proportion to their length — over a run of a few hundred milliseconds that error is
+    /// smaller than the gap between two spoken words, which is the only precision anything here
+    /// actually needs.
+    static func words(in attributed: AttributedString) -> [TimedWord] {
+        var result: [TimedWord] = []
+
+        for run in attributed.runs {
+            guard let range = run.audioTimeRange else { continue }
+            let piece = String(attributed[run.range].characters)
+            let words = ScriptText.words(in: piece).map(String.init)
+            guard !words.isEmpty else { continue }
+
+            let start = range.start.seconds
+            let length = max(range.duration.seconds, 0.01)
+            let total = Double(words.reduce(0) { $0 + max(1, $1.count) })
+            var cursor = start
+
+            for word in words {
+                let share = Double(max(1, word.count)) / total * length
+                result.append(
+                    TimedWord(
+                        text: word,
+                        range: MediaTimeRange(
+                            start: MediaTime(seconds: cursor),
+                            duration: MediaTime(seconds: share)
+                        )
+                    )
+                )
+                cursor += share
+            }
+        }
+
+        return result
     }
 
     /// Spreads the words across the clip in proportion to their length.

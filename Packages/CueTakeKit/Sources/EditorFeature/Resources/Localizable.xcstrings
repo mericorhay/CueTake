@@ -664,6 +664,23 @@
         }
       }
     },
+    "editor.change.transcript": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut by transcript"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşmadan kesildi"
+          }
+        }
+      }
+    },
     "editor.change.trim": {
       "extractionState": "manual",
       "localizations": {
@@ -1942,6 +1959,40 @@
         }
       }
     },
+    "editor.tools.transcript": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit by transcript"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşmadan kurgu"
+          }
+        }
+      }
+    },
+    "editor.tools.transcript.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete words, delete footage"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kelimeyi sil, görüntü gitsin"
+          }
+        }
+      }
+    },
     "editor.tools.trim.note": {
       "extractionState": "manual",
       "localizations": {
@@ -1972,6 +2023,142 @@
           "stringUnit": {
             "state": "translated",
             "value": "Metin"
+          }
+        }
+      }
+    },
+    "editor.transcript.count %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words, each with a time on it"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld kelime, her birinin zamanı var"
+          }
+        }
+      }
+    },
+    "editor.transcript.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete selection"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seçimi sil"
+          }
+        }
+      }
+    },
+    "editor.transcript.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This take has not been listened to yet. Transcription runs on the phone — no upload, no wait in a queue — and once it is done you can cut this clip by deleting words."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu çekim henüz dinlenmedi. Transkripsiyon telefonda çalışıyor — yükleme yok, sıra beklemek yok — ve bittiğinde bu klibi kelime silerek kesebilirsin."
+          }
+        }
+      }
+    },
+    "editor.transcript.noPauses": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No long pauses"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzun duraklama yok"
+          }
+        }
+      }
+    },
+    "editor.transcript.run": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen to this take"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu çekimi dinle"
+          }
+        }
+      }
+    },
+    "editor.transcript.selectHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap two words"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İki kelimeye dokun"
+          }
+        }
+      }
+    },
+    "editor.transcript.tighten %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trim %lld pauses"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld duraklamayı kırp"
+          }
+        }
+      }
+    },
+    "editor.transcript.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT YOU SAID"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NE SÖYLEDİN"
           }
         }
       }

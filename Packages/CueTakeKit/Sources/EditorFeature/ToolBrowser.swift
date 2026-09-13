@@ -18,6 +18,7 @@ struct ToolBrowser: View {
     let onAddAudio: () -> Void
     let onCaptions: () -> Void
     let onExport: () -> Void
+    let onTranscriptEdit: () -> Void
     let onClose: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -359,6 +360,15 @@ struct ToolBrowser: View {
                     enabled: index != nil,
                     tint: DS.Palette.lime
                 ) { open(.script) },
+
+                Item(
+                    id: "transcript",
+                    symbol: "waveform.and.person.filled",
+                    title: "editor.tools.transcript",
+                    note: "editor.tools.transcript.note",
+                    enabled: index != nil,
+                    tint: DS.Palette.accent
+                ) { onTranscriptEdit() },
 
                 Item(
                     id: "cues",

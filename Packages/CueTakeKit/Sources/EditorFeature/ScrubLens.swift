@@ -2,66 +2,59 @@ import DesignSystem
 import Domain
 import SwiftUI
 
-/// A bubble of glass over the timeline, under the finger.
+/// A bump of glass under the finger while scrubbing, with the exact time in it.
 ///
-/// The problem it solves is physical: the finger covers the thing it is aiming at. Every precise
-/// gesture on a touchscreen has this, and the answer has always been the same one — move the
-/// information out from under the hand and magnify it. The lens sits above the strip, shows the
-/// same ruler at two and a bit times the scale, and puts the exact time where it can actually be
-/// read.
+/// It used to magnify the ruler, and magnifying was the mistake: a lens over a strip that is
+/// already drawn at the scale the user chose gives them a second, disagreeing view of the same
+/// thing, and the eye has to reconcile them. What the finger is actually covering is not detail —
+/// it is the *number*. So the glass carries the number and nothing else, to two decimal places,
+/// which is finer than anyone can drag and exactly what they want to read.
 ///
-/// Real material rather than a painted panel: it picks up the clip colours passing underneath it,
-/// which is what makes it read as glass sitting on the timeline instead of a tooltip floating over
-/// one. It swells into place — a lens that simply appears is a label; one that grows is an object.
+/// Still glass, still swelling into place. A label that appears is a tooltip; something that
+/// swells is a thing sitting on the surface, and this one sits on the timeline it belongs to.
 struct ScrubLens: View {
     @Bindable var model: EditorModel
-    /// Points per second on the timeline below. The lens draws at a multiple of this.
-    let scale: Double
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var grown = false
 
-    static let diameter: CGFloat = 92
-    /// Enough to separate two frames at a normal zoom, not so much that the clip under the finger
-    /// loses its context.
-    static let magnification: Double = 2.4
+    static let width: CGFloat = 96
+    static let height: CGFloat = 46
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(.ultraThinMaterial)
+        VStack(spacing: 1) {
+            Text(Self.preciseLabel(model.playhead))
+                .dsFont(.mono, .semibold, 17)
+                .foregroundStyle(DS.Palette.ink)
+                .contentTransition(.numericText())
+                .monospacedDigit()
 
-            Canvas(opaque: false) { context, size in
-                draw(in: context, size: size)
-            }
-            .clipShape(Circle())
-
-            // The highlight along the top edge is what makes it look thick rather than printed.
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [DS.Palette.ink(0.35), DS.Palette.hairline(0.1)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    lineWidth: 1
-                )
-
-            VStack(spacing: 2) {
-                Text(model.playheadLabel)
-                    .dsFont(.mono, .medium, 13)
-                    .foregroundStyle(DS.Palette.ink)
-                    .contentTransition(.numericText())
-
-                Text(Self.frameLabel(for: model))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.45))
-            }
-            .offset(y: -24)
+            Text(Self.frameLabel(for: model))
+                .dsFont(.mono, .medium, 9)
+                .foregroundStyle(DS.Palette.ink(0.42))
         }
-        .frame(width: Self.diameter, height: Self.diameter)
-        .shadow(color: .black.opacity(0.45), radius: 16, y: 6)
-        .scaleEffect(grown ? 1 : 0.55)
+        .frame(width: Self.width, height: Self.height)
+        .background {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    // A highlight down the top edge and a shadow under it: without both it reads
+                    // as a painted rectangle rather than something raised off the surface.
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [DS.Palette.ink(0.32), DS.Palette.hairline(0.08)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1
+                        )
+                }
+        }
+        .shadow(color: .black.opacity(0.4), radius: 14, y: 5)
+        // Grows out of the timeline rather than in from nowhere: the anchor is the bottom edge,
+        // which is where the finger is.
+        .scaleEffect(grown ? 1 : 0.7, anchor: .bottom)
         .opacity(grown ? 1 : 0)
         .onAppear {
             guard !reduceMotion else {
@@ -72,66 +65,18 @@ struct ScrubLens: View {
         }
     }
 
-    /// The magnified strip: clip colours, ticks, and the line the playhead is actually on.
-    private func draw(in context: GraphicsContext, size: CGSize) {
-        let middle = size.height / 2
-        let centre = size.width / 2
-        let pointsPerSecond = scale * Self.magnification
-        let focus = model.playhead
-
-        func x(_ seconds: Double) -> CGFloat {
-            centre + CGFloat((seconds - focus) * pointsPerSecond)
+    /// Seconds to two decimals, which is finer than a finger can drag and is the point: the number
+    /// is there to be *read*, not to be hit.
+    static func preciseLabel(_ seconds: Double) -> String {
+        if seconds >= 60 {
+            let minutes = Int(seconds) / 60
+            return String(format: "%d:%05.2f", minutes, seconds - Double(minutes * 60))
         }
-
-        // Clips, as a band. Colour is how a clip is recognised on the timeline, so the lens has to
-        // carry it or the magnified view is of somewhere else.
-        var start = 0.0
-        for segment in model.project.segments {
-            let end = start + segment.barWeight
-            let rect = CGRect(x: x(start), y: middle - 13, width: max(x(end) - x(start) - 1, 1), height: 26)
-            if rect.maxX > 0, rect.minX < size.width {
-                context.fill(
-                    Path(roundedRect: rect, cornerRadius: 3),
-                    with: .color(DS.Palette.segment(at: segment.role.paletteIndex).opacity(0.85))
-                )
-            }
-            start = end
-        }
-
-        // Ticks at the magnified interval, so they thin out as the timeline is zoomed in rather
-        // than crowding into a solid bar.
-        let interval = TimelineScale.tickInterval(pointsPerSecond: pointsPerSecond)
-        let first = focus - Double(size.width / 2) / pointsPerSecond
-        var tick = (first / interval).rounded(.down) * interval
-        let last = focus + Double(size.width / 2) / pointsPerSecond
-        while tick <= last {
-            if tick >= 0 {
-                let position = x(tick)
-                context.stroke(
-                    Path { path in
-                        path.move(to: CGPoint(x: position, y: middle + 16))
-                        path.addLine(to: CGPoint(x: position, y: middle + 22))
-                    },
-                    with: .color(DS.Palette.ink(0.3)),
-                    lineWidth: 1
-                )
-            }
-            tick += interval
-        }
-
-        // The playhead itself, dead centre, because that is the promise the lens is making.
-        context.stroke(
-            Path { path in
-                path.move(to: CGPoint(x: centre, y: middle - 24))
-                path.addLine(to: CGPoint(x: centre, y: middle + 24))
-            },
-            with: .color(DS.Palette.ink),
-            lineWidth: 1.5
-        )
+        return String(format: "%.2f s", seconds)
     }
 
-    /// The frame number inside the current second. The reason anyone is holding a finger this
-    /// still is that they are looking for one particular frame.
+    /// The frame inside the current second. The reason anyone holds a finger this still is that
+    /// they are looking for one particular frame.
     static func frameLabel(for model: EditorModel) -> String {
         let rate = max(1, model.project.format.frameRate)
         let frame = Int((model.playhead - model.playhead.rounded(.down)) * Double(rate))

@@ -157,7 +157,8 @@ struct RootView: View {
                 onAddAudio: { model.isPickingAudio = true },
                 saveLabel: model.saveLabel,
                 isSaving: model.isSaving,
-                onSave: { model.saveNow() }
+                onSave: { model.saveNow() },
+                onTranscribe: { Task { await model.transcribeNewTakes() } }
             )
             .onChange(of: model.editorModel.project) { model.adoptEditorEdits() }
 
