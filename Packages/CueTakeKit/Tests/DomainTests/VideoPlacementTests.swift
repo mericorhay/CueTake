@@ -23,6 +23,7 @@ struct VideoPlacementTests {
     @Test func trackingDoesNotAnimateTheLayerRectangle() {
         var layer = VideoLayer(
             recordingID: UUID(),
+            title: "Tracked",
             sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
             placement: VideoPlacement(x: 0.1, y: 0.2, width: 0.4, height: 0.3, fillsFrame: true)
         )
@@ -41,6 +42,7 @@ struct VideoPlacementTests {
     @Test func build54TrackingMigratesAwayFromPlacementAnimation() {
         var layer = VideoLayer(
             recordingID: UUID(),
+            title: "Legacy",
             sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
             placement: VideoPlacement(x: 0.1, y: 0.2, width: 0.4, height: 0.3, fillsFrame: true, focusX: 0.2, focusY: 0.5)
         )
