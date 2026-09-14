@@ -13,6 +13,10 @@ struct CaptionLane: View {
     let scale: Double
     let onSeek: (Double) -> Void
     let onEdit: (CaptionCue.ID) -> Void
+    /// The caption open for editing: its bar gets handles and is retimed right here.
+    var editing: CaptionCue.ID? = nil
+
+    private static let space = "captionLane"
 
     static let height: CGFloat = 26
 
@@ -44,14 +48,31 @@ struct CaptionLane: View {
                     }
                     .scaleEffect(isOn && !reduceMotion ? 1.04 : 1, anchor: .bottom)
                     .shadow(color: DS.Palette.lime.opacity(isOn ? 0.35 : 0), radius: 6)
-                    .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .onTapGesture { onSeek(cue.range.start.seconds + 0.01) }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .stroke(DS.Palette.ink, lineWidth: editing == cue.id ? 2 : 0)
+                    }
                     .onLongPressGesture(minimumDuration: 0.35) { onEdit(cue.id) }
+                    .timelineBarEditing(
+                        model: model,
+                        isSelected: editing == cue.id,
+                        start: cue.range.start.seconds,
+                        end: cue.range.end.seconds,
+                        scale: scale,
+                        space: Self.space,
+                        edits: TimelineBarEdits(
+                            move: { start in model.retimeCaption(cue.id, start: start, end: start + cue.range.duration.seconds) },
+                            trimStart: { start in model.retimeCaption(cue.id, start: min(start, cue.range.end.seconds - 0.15), end: cue.range.end.seconds) },
+                            trimEnd: { end in model.retimeCaption(cue.id, start: cue.range.start.seconds, end: max(end, cue.range.start.seconds + 0.15)) }
+                        ),
+                        onTap: { onSeek(cue.range.start.seconds + 0.01) }
+                    )
                     .offset(x: CGFloat(cue.range.start.seconds * scale))
-                    .zIndex(isOn ? 1 : 0)
+                    .zIndex(isOn || editing == cue.id ? 1 : 0)
             }
         }
         .frame(height: Self.height, alignment: .topLeading)
+        .coordinateSpace(.named(Self.space))
         .animation(reduceMotion ? nil : DS.Motion.snap, value: active)
         .aiGlow(
             model.glowToken(.captionStyle) + model.glowToken(.captionWindow),

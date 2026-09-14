@@ -80,22 +80,7 @@ struct OverlayInspector: View {
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
             DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
-            HStack(spacing: 8) {
-                timeStepper("editor.overlay.start", value: overlay.start.seconds) { delta in
-                    model.updateOverlay(overlay.id, coalescing: "overlay-start") {
-                        let newStart = max(0, $0.start.seconds + delta)
-                        let shift = newStart - $0.start.seconds
-                        $0.start = MediaTime(seconds: newStart)
-                        // The end stays put: moving the start trims or extends the front.
-                        $0.duration = MediaTime(seconds: max(Overlay.shortest, $0.duration.seconds - shift))
-                    }
-                }
-                timeStepper("editor.overlay.end", value: end) { delta in
-                    model.updateOverlay(overlay.id, coalescing: "overlay-end") {
-                        $0.duration = MediaTime(seconds: $0.duration.seconds + delta)
-                    }
-                }
-            }
+            TimingReadout(start: overlay.start.seconds, end: end)
             HStack(spacing: 8) {
                 smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {
                     model.startOverlayAtPlayhead(overlay.id)

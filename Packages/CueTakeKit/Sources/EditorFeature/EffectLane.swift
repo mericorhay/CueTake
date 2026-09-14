@@ -21,7 +21,6 @@ struct EffectLane: View {
     static let tint = Color(red: 0.4, green: 0.86, blue: 0.76)
     static let playbackTint = DS.Palette.accentWarm
 
-    @State private var origin: (id: TimelineEffect.ID, start: Double, end: Double)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: Layout
@@ -120,68 +119,40 @@ struct EffectLane: View {
         }
         .foregroundStyle(DS.Palette.inkInverse)
         .padding(.horizontal, selected ? 12 : 7)
+        .frame(width: width, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Self.tint.opacity(selected ? 1 : 0.72)))
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0)
         }
-        .overlay {
-            if selected {
-                HStack {
-                    handle
-                    Spacer(minLength: 0)
-                    handle
-                }
-                .padding(.horizontal, 3)
-                .allowsHitTesting(false)
-            }
-        }
         .aiGlow(model.glowToken(.effect(effect.id)), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-        .onTapGesture {
-            withAnimation(DS.Motion.snap) {
-                model.select(effect: selected ? nil : effect.id)
+        .timelineBarEditing(
+            model: model,
+            isSelected: selected,
+            start: effect.start.seconds,
+            end: effect.end,
+            scale: scale,
+            space: Self.space,
+            edits: TimelineBarEdits(
+                move: { start in
+                    model.updateEffect(effect.id, coalescing: "effect-move") { $0.start = MediaTime(seconds: start) }
+                },
+                trimStart: { start in model.setEffectEdge(effect.id, start: start, coalescing: "effect-start") },
+                trimEnd: { end in model.setEffectEdge(effect.id, end: end, coalescing: "effect-end") }
+            ),
+            onTap: {
+                withAnimation(DS.Motion.snap) {
+                    model.select(effect: selected ? nil : effect.id)
+                }
             }
-        }
-        .highPriorityGesture(drag(effect, width: width), including: selected ? .all : .subviews)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-    }
-
-    private var handle: some View {
-        Capsule()
-            .fill(DS.Palette.inkInverse)
-            .frame(width: 3, height: 13)
     }
 
     private func isRendering(_ effect: TimelineEffect) -> Bool {
         guard let settings = effect.background else { return false }
         return model.isRenderingBackground(settings)
-    }
-
-    /// From either end's last 22 points it moves that end; from anywhere else it moves the whole
-    /// effect. One gesture, because two could not both win against the timeline's scrolling.
-    private func drag(_ effect: TimelineEffect, width: CGFloat) -> some Gesture {
-        // Measured in the lane, which stays put, not in the bar, which moves under the finger.
-        DragGesture(minimumDistance: 3, coordinateSpace: .named(Self.space))
-            .onChanged { value in
-                if origin?.id != effect.id {
-                    origin = (effect.id, effect.start.seconds, effect.end)
-                }
-                guard let origin else { return }
-                let delta = Double(value.translation.width) / scale
-                let touch = value.startLocation.x - CGFloat(origin.start * scale)
-                if touch < 22 {
-                    model.setEffectEdge(effect.id, start: origin.start + delta, coalescing: "effect-start")
-                } else if touch > width - 22 {
-                    model.setEffectEdge(effect.id, end: origin.end + delta, coalescing: "effect-end")
-                } else {
-                    model.updateEffect(effect.id, coalescing: "effect-move") {
-                        $0.start = MediaTime(seconds: max(0, origin.start + delta))
-                    }
-                }
-            }
-            .onEnded { _ in origin = nil }
     }
 
     // MARK: Playback

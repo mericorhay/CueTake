@@ -4968,6 +4968,23 @@
         }
       }
     },
+    "editor.timing.dragHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the bar on the timeline to move it, pull its ends to set when it starts and stops."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zaman çizelgesinde çubuğu sürükleyerek taşı, uçlarını çekerek başlangıç ve bitişini ayarla."
+          }
+        }
+      }
+    },
     "editor.timing.duration": {
       "extractionState": "manual",
       "localizations": {
@@ -5032,6 +5049,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "TUTMA"
+          }
+        }
+      }
+    },
+    "editor.timing.length": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LENGTH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÜRE"
           }
         }
       }
@@ -5903,6 +5937,40 @@
         }
       }
     },
+    "editor.video.fullscreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full screen"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam ekran"
+          }
+        }
+      }
+    },
+    "editor.video.goToIt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to this video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu videoya git"
+          }
+        }
+      }
+    },
     "editor.video.hide": {
       "extractionState": "manual",
       "localizations": {
@@ -6073,6 +6141,23 @@
         }
       }
     },
+    "editor.video.mirror": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mirror"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aynala"
+          }
+        }
+      }
+    },
     "editor.video.moveHere": {
       "extractionState": "manual",
       "localizations": {
@@ -6188,6 +6273,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Opaklık"
+          }
+        }
+      }
+    },
+    "editor.video.part": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which part plays"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videonun hangi kısmı"
+          }
+        }
+      }
+    },
+    "editor.video.placeOnPicture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "drag and pinch it on the picture"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "görüntüde sürükle ve iki parmakla büyüt"
           }
         }
       }

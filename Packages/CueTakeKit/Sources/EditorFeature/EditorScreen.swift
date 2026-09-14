@@ -89,11 +89,10 @@ public struct EditorScreen: View {
     private var previewHeight: CGFloat {
         if let landscapePreviewHeight { return landscapePreviewHeight }
         // An overlay or a caption being placed gets the big picture: both are placed by looking.
-        if model.selectedOverlay != nil || editingCaption != nil { return 390 }
-        // A video layer is judged by looking at where it sits in the frame.
-        if model.selectedVideoLayer != nil { return 250 }
-        // A background being tuned is judged by looking at it, but its panel is tall.
-        if model.selectedEffect != nil { return 250 }
+        // Something open: the picture, the timeline and the panel all have to fit on one screen.
+        // Placing a text, a caption or a video is judged by looking, so those keep more of it.
+        if model.selectedOverlay != nil || editingCaption != nil || model.selectedVideoLayer != nil { return 250 }
+        if model.selectedEffect != nil { return 220 }
         if previewExpanded { return 430 }
         return isPanelOpen || dockPanel != nil ? 150 : 212
     }
@@ -121,6 +120,8 @@ public struct EditorScreen: View {
                         VStack(spacing: 0) {
                             statusStrip
                             timelineBlock
+                            selectionPanel
+                                .padding(.top, 10)
                         }
                         .padding(.bottom, 30)
                     }
@@ -137,59 +138,25 @@ public struct EditorScreen: View {
                     statusStrip
                     preview
                     transport
-                    ScrollView {
-                        timelineBlock
-                            .padding(.bottom, 28)
+                    if hasSelectionPanel {
+                        // Something is selected: its panel goes under the timeline, never over
+                        // it, so every change can be watched against the timeline and fine-tuned
+                        // on it while the panel is open.
+                        selectedTimeline
+                        selectionPanel
+                            .frame(maxHeight: .infinity, alignment: .top)
+                    } else {
+                        ScrollView {
+                            timelineBlock
+                                .padding(.bottom, 28)
+                        }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .scrollIndicators(.visible)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .scrollIndicators(.visible)
                 }
                 .padding(.top, 58)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
                 .onAppear { landscapePreviewHeight = nil }
-            }
-        }
-        // The panels sit *over* the column rather than in it.
-        //
-        // In the column they were one more thing competing for a fixed 874 points, and the loser
-        // was whatever came last — which is why the reverse and freeze buttons were under the
-        // bottom edge of the phone. A panel that covers the timeline while it is open is the
-        // normal behaviour of a sheet, and it is the only version of this that cannot run out of
-        // room.
-        .overlay(alignment: .bottom) {
-            // One sheet at a time, each sized to what it holds and anchored to the bottom edge.
-            // Wrapping them in a screen-high GeometryReader and ScrollView put the sheets at the
-            // top of the screen and left transparent space under them, over the picture.
-            if let captionID = editingCaption {
-                CaptionQuickPanel(
-                    model: model,
-                    captionID: captionID,
-                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
-                    onOpenAll: {
-                        editingCaption = nil
-                        onCaptions()
-                    },
-                    onSwitch: { editingCaption = $0 }
-                )
-            } else if model.selectedVideoLayerValue != nil {
-                VideoLayerPanel(
-                    model: model,
-                    onOpenPlacementEditor: { showsVideoPlacementEditor = true },
-                    onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
-                )
-            } else if let clip = model.selectedAudioClip {
-                audioPanel(clip)
-            } else if let effect = model.selectedEffectValue {
-                EffectInspector(model: model, effect: effect) {
-                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
-                }
-            } else if let overlay = model.selectedOverlayValue {
-                OverlayInspector(model: model, overlay: overlay) {
-                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
-                }
-            } else if let id = model.inspectedSegment,
-                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
-                inspector(at: index)
             }
         }
         .animation(DS.Motion.settle, value: isPanelOpen)
@@ -531,6 +498,12 @@ public struct EditorScreen: View {
         }
         // Pictures and text, over the captions, moved with the fingers.
         .overlay { OverlayCanvas(model: model) }
+        // An added video being worked on is placed right here, beside its timeline.
+        .overlay {
+            if model.selectedVideoLayer != nil {
+                VideoLayerCanvas(model: model)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .aiGlow(model.aiBeat, in: RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .allowsHitTesting(!model.isAIDriving)
@@ -651,6 +624,74 @@ public struct EditorScreen: View {
         .padding(.bottom, 6)
     }
 
+    // MARK: - Selection
+
+    /// Whether something on the timeline is open in a panel.
+    private var hasSelectionPanel: Bool {
+        editingCaption != nil || model.selectedVideoLayerValue != nil || model.selectedAudioClip != nil
+            || model.selectedEffectValue != nil || model.selectedOverlayValue != nil
+            || model.inspectedSegment.map { id in model.project.segments.contains { $0.id == id } } == true
+    }
+
+    /// The timeline alone, as it sits above an open panel: never scrolled away, and only as tall
+    /// as it needs to be up to a limit, past which its own lanes scroll.
+    private var selectedTimeline: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if model.selectedAudioClip != nil {
+                EditorToolbar(model: model)
+                    .padding(.horizontal, -18)
+                    .padding(.bottom, 6)
+            }
+            ScrollView(.vertical) {
+                timeline
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(height: min(EditorTimeline.height(for: model), 250))
+        }
+        .padding(.horizontal, 18)
+        .padding(.top, 6)
+        .allowsHitTesting(!model.isAIDriving)
+    }
+
+    /// The open item's own controls: one at a time.
+    @ViewBuilder
+    private var selectionPanel: some View {
+        if let captionID = editingCaption {
+            ScrollView {
+                CaptionQuickPanel(
+                    model: model,
+                    captionID: captionID,
+                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
+                    onOpenAll: {
+                        editingCaption = nil
+                        onCaptions()
+                    },
+                    onSwitch: { editingCaption = $0 }
+                )
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        } else if model.selectedVideoLayerValue != nil {
+            VideoLayerPanel(
+                model: model,
+                onOpenPlacementEditor: { showsVideoPlacementEditor = true },
+                onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
+            )
+        } else if let clip = model.selectedAudioClip {
+            audioPanel(clip)
+        } else if let effect = model.selectedEffectValue {
+            EffectInspector(model: model, effect: effect) {
+                withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+            }
+        } else if let overlay = model.selectedOverlayValue {
+            OverlayInspector(model: model, overlay: overlay) {
+                withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+            }
+        } else if let id = model.inspectedSegment,
+                  let index = model.project.segments.firstIndex(where: { $0.id == id }) {
+            inspector(at: index)
+        }
+    }
+
     // MARK: - Timeline
 
     private var timelineBlock: some View {
@@ -679,37 +720,43 @@ public struct EditorScreen: View {
             DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
                 .padding(.bottom, 6)
 
-            EditorTimeline(
-                model: model,
-                onEditCaption: { id in
-                    model.pause()
-                    withAnimation(DS.Motion.settle) {
-                        model.inspectedSegment = nil
-                        model.selectedAudio = nil
-                        model.select(overlay: nil)
-                        model.select(effect: nil)
-                        dockPanel = nil
-                        editingCaption = id
-                    }
-                },
-                onOpenPlayback: { id in
-                    guard let index = model.project.segments.firstIndex(where: { $0.id == id }) else { return }
-                    model.pause()
-                    withAnimation(DS.Motion.settle) {
-                        editingCaption = nil
-                        model.select(effect: nil)
-                        model.select(overlay: nil)
-                        model.selectedAudio = nil
-                        model.inspectedSegment = nil
-                        model.seek(to: model.start(at: index) + 0.01)
-                        dockPanel = .speed
-                    }
-                }
-            )
+            timeline
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .allowsHitTesting(!model.isAIDriving)
+    }
+
+    /// The timeline, the same view above the tools and above an open panel.
+    private var timeline: some View {
+        EditorTimeline(
+            model: model,
+            onEditCaption: { id in
+                model.pause()
+                withAnimation(DS.Motion.settle) {
+                    model.inspectedSegment = nil
+                    model.selectedAudio = nil
+                    model.select(overlay: nil)
+                    model.select(effect: nil)
+                    dockPanel = nil
+                    editingCaption = id
+                }
+            },
+            onOpenPlayback: { id in
+                guard let index = model.project.segments.firstIndex(where: { $0.id == id }) else { return }
+                model.pause()
+                withAnimation(DS.Motion.settle) {
+                    editingCaption = nil
+                    model.select(effect: nil)
+                    model.select(overlay: nil)
+                    model.selectedAudio = nil
+                    model.inspectedSegment = nil
+                    model.seek(to: model.start(at: index) + 0.01)
+                    dockPanel = .speed
+                }
+            },
+            editingCaption: editingCaption
+        )
     }
 
     // MARK: - Inspector

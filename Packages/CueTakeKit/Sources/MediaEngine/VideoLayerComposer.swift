@@ -39,13 +39,18 @@ extension VideoComposer {
     func addVideoLayers(project: Project, directory: URL, composition: AVMutableComposition, base: [AVMutableVideoCompositionInstruction], render: CGSize) async throws -> (instructions: [AVMutableVideoCompositionInstruction], audio: [AVMutableAudioMixInputParameters]) {
         var tracks: [LayerTrack] = []
         var audio: [AVMutableAudioMixInputParameters] = []
+        // Added videos play over the main video and end with it; with no main video they set the length.
+        let videoEnd = base.last?.timeRange.end.seconds
         for original in project.videoLayers {
             guard let recording = project.recording(id: original.recordingID) else { throw ComposeError.missingMedia(original.recordingID) }
             let asset = AVURLAsset(url: directory.appending(path: (recording.relativePath as NSString).lastPathComponent))
             guard let source = try await asset.loadTracks(withMediaType: .video).first else { throw ComposeError.noVideoTrack(recording.id) }
             let duration = try await asset.load(.duration)
             let start = CMTime(seconds: max(0, original.sourceRange.start.seconds), preferredTimescale: 600)
-            let length = min(CMTime(seconds: original.duration, preferredTimescale: 600), duration - start)
+            var length = min(CMTime(seconds: original.duration, preferredTimescale: 600), duration - start)
+            if let videoEnd {
+                length = min(length, CMTime(seconds: max(0, videoEnd - max(0, original.start.seconds)), preferredTimescale: 600))
+            }
             guard length.seconds > 0.001, original.start.seconds.isFinite else { continue }
             let at = CMTime(seconds: max(0, original.start.seconds), preferredTimescale: 600)
             let range = CMTimeRange(start: start, duration: length)
@@ -72,12 +77,13 @@ extension VideoComposer {
         }
 
         let lastBase = base.last?.timeRange.end.seconds ?? 0
-        let end = max(lastBase, project.videoLayers.map(\.end).max() ?? 0, composition.duration.seconds)
+        let layersEnd = tracks.map(\.layer.end).max() ?? 0
+        let end = max(lastBase, videoEnd == nil ? layersEnd : 0, composition.duration.seconds)
         guard end > 0 else { throw ComposeError.nothingToCompose }
         var boundaries = [0.0, end]
         for item in base { boundaries += [item.timeRange.start.seconds, item.timeRange.end.seconds] }
         for item in tracks {
-            boundaries += [item.layer.start.seconds, item.layer.end]
+            boundaries += [item.layer.start.seconds, min(item.layer.end, end)]
             boundaries += item.layer.orderedKeyframes.map { item.layer.start.seconds + $0.time }
         }
         // Quantise once. Adjacent instructions share the same tick and cannot overlap by rounding.

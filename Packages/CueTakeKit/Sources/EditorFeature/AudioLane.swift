@@ -15,14 +15,8 @@ struct AudioLane: View {
     @Bindable var model: EditorModel
     let scale: Double
 
-    @State private var drag: DragState?
-    @State private var trim: DragState?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private struct DragState: Equatable {
-        var id: AudioClip.ID
-        var origin: Double
-    }
+    private static let space = "audioLane"
 
     static let rowHeight: CGFloat = 32
     static let rowSpacing: CGFloat = 4
@@ -69,6 +63,7 @@ struct AudioLane: View {
             }
         }
         .frame(height: height, alignment: .topLeading)
+        .coordinateSpace(.named(Self.space))
         .animation(reduceMotion ? nil : DS.Motion.settle, value: model.project.audio.count)
     }
 
@@ -107,23 +102,31 @@ struct AudioLane: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(DS.Palette.ink(isSelected ? 0.9 : 0.08), lineWidth: isSelected ? 2 : 1)
         }
-        .overlay(alignment: .trailing) {
-            if isSelected { trimHandle(for: clip) }
-        }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .aiGlow(
             model.glowToken(.audio(clip.id)),
             in: RoundedRectangle(cornerRadius: 8, style: .continuous)
         )
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .onTapGesture {
-            withAnimation(DS.Motion.snap) {
-                model.selectedAudio = isSelected ? nil : clip.id
-                model.inspectedSegment = nil
+        .timelineBarEditing(
+            model: model,
+            isSelected: isSelected,
+            start: clip.start.seconds,
+            end: clip.timelineRange.end.seconds,
+            scale: scale,
+            space: Self.space,
+            edits: TimelineBarEdits(
+                move: { start in model.moveAudio(clip.id, to: start) },
+                trimStart: { start in model.setAudioStartEdge(clip.id, to: start) },
+                trimEnd: { end in model.setAudioEnd(clip.id, to: end) }
+            ),
+            onTap: {
+                withAnimation(DS.Motion.snap) {
+                    model.selectedAudio = isSelected ? nil : clip.id
+                    model.inspectedSegment = nil
+                }
             }
-        }
-        .gesture(moveGesture(for: clip))
+        )
     }
 
     /// Peaks, drawn as bars.
@@ -161,59 +164,6 @@ struct AudioLane: View {
                 context.fill(Path(roundedRect: rect, cornerRadius: 1), with: .color(colour))
             }
         }
-    }
-
-    private func trimHandle(for clip: AudioClip) -> some View {
-        let isActive = trim?.id == clip.id
-        return RoundedRectangle(cornerRadius: 3, style: .continuous)
-            .fill(DS.Palette.ink)
-            .frame(width: isActive ? 5 : 3, height: 16)
-            .padding(.trailing, 3)
-            .frame(width: 26, height: Self.rowHeight, alignment: .trailing)
-            .contentShape(Rectangle())
-            .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isActive)
-            .gesture(trimGesture(for: clip))
-    }
-
-    // MARK: - Gestures
-
-    /// Dragging moves the clip in time, and snaps to the same boundaries the playhead does.
-    ///
-    /// Applied straight to the model rather than held as a local offset: what is being judged is
-    /// where the music lands against a cut, and that can only be judged against the cut itself.
-    private func moveGesture(for clip: AudioClip) -> some Gesture {
-        DragGesture(minimumDistance: 3)
-            .onChanged { gesture in
-                let origin = drag?.origin ?? clip.start.seconds
-                if drag == nil {
-                    drag = DragState(id: clip.id, origin: origin)
-                    model.selectedAudio = clip.id
-                }
-                let raw = origin + Double(gesture.translation.width) / scale
-                let tolerance = TimelineScale.snapTolerance(pointsPerSecond: scale)
-                let target = model.snapTarget(for: raw, tolerance: tolerance) ?? raw
-                model.updateAudio(clip.id) { $0.start = MediaTime(seconds: max(0, target)) }
-            }
-            .onEnded { _ in drag = nil }
-    }
-
-    private func trimGesture(for clip: AudioClip) -> some Gesture {
-        DragGesture(minimumDistance: 1)
-            .onChanged { gesture in
-                let origin = trim?.origin ?? clip.sourceRange.duration.seconds
-                if trim == nil { trim = DragState(id: clip.id, origin: origin) }
-                // Times the speed, because the handle is dragged in timeline seconds and the range
-                // it edits is in source seconds. At half speed a centimetre of finger is two
-                // seconds of song.
-                let wanted = origin + Double(gesture.translation.width) / scale * clip.speed
-                model.updateAudio(clip.id) { edited in
-                    edited.sourceRange = MediaTimeRange(
-                        start: edited.sourceRange.start,
-                        duration: MediaTime(seconds: max(0.2, wanted))
-                    )
-                }
-            }
-            .onEnded { _ in trim = nil }
     }
 
     // MARK: - Looks

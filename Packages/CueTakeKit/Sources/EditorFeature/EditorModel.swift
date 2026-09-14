@@ -46,6 +46,8 @@ public final class EditorModel {
     /// Frames for the timeline, per take. Keyed by take rather than segment: a split makes new
     /// segments over the same take range, and a take is what the frames were read from.
     public private(set) var thumbnails: [Take.ID: [CGImage]] = [:]
+    /// Frames across the whole of an added video's file, for its trim strip. By recording.
+    public internal(set) var recordingFrames: [Recording.ID: [CGImage]] = [:]
 
     /// How wide one second is drawn. This is what makes the timeline an editing surface rather
     /// than a diagram: laid out proportionally, a 0.2s trim on a 30s video is two pixels wide and
@@ -53,6 +55,9 @@ public final class EditorModel {
     public var pointsPerSecond: Double = TimelineScale.fit
     /// True while the playhead is being dragged, so playback does not fight the finger.
     public var isScrubbing = false
+    /// True while an edge or a bar is being dragged on the timeline. The picture follows the edge,
+    /// but the timeline must not scroll to the playhead under the finger.
+    public var isAdjustingTimeline = false
 
     /// The last tool that fired, so the timeline can play its answer. Carries a counter rather
     /// than only a kind, because using the same tool twice in a row has to read as two edits.
@@ -804,7 +809,9 @@ extension EditorModel {
     /// Music that runs past the last clip is a real thing people do — an outro over black — and a
     /// timeline that refuses to draw it makes the tail impossible to trim.
     public var timelineDuration: Double {
-        max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0, project.videoLayers.map(\.end).max() ?? 0)
+        // Added videos are not counted: they play over the video and end with it, the way every
+        // editor's overlay tracks do. A layer drawn past the end was a bar with nothing behind it.
+        max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0)
     }
 
     public var selectedVideoLayerValue: VideoLayer? {
@@ -838,8 +845,12 @@ extension EditorModel {
         if let recording = project.recording(id: project.videoLayers[index].recordingID) {
             length = min(length, max(0.2, recording.duration.seconds - project.videoLayers[index].sourceRange.start.seconds))
         }
+        // Inside the video: it starts before the end and stops by it.
+        let videoEnd = duration
+        let start = min(max(0, project.videoLayers[index].start.seconds), max(0, videoEnd - 0.2))
+        length = min(length, max(0.2, videoEnd - start))
         project.videoLayers[index].sourceRange.duration = MediaTime(seconds: length)
-        project.videoLayers[index].start = MediaTime(seconds: max(0, project.videoLayers[index].start.seconds))
+        project.videoLayers[index].start = MediaTime(seconds: start)
         project.videoLayers[index].placement = project.videoLayers[index].placement.bounded
         project.videoLayers[index].volume = min(max(project.videoLayers[index].volume, 0), 1)
         project.updatedAt = .now

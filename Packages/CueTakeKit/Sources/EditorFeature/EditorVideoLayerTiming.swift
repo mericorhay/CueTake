@@ -1,5 +1,7 @@
 import Domain
 import Foundation
+import MediaEngine
+import SwiftUI
 
 /// When an added video plays: where it starts on the finished video, where it stops, which part of
 /// its own file it shows, and cutting it in two.
@@ -105,5 +107,46 @@ extension EditorModel {
         project.videoLayers.insert(right, at: index + 1)
         project.updatedAt = .now
         select(videoLayer: right.id)
+    }
+
+    /// Reads frames across a whole recording once, for trimming an added video by its pictures.
+    func loadRecordingFrames(_ recordingID: Recording.ID) async {
+        guard recordingFrames[recordingID] == nil,
+              let mediaDirectory,
+              let recording = project.recording(id: recordingID)
+        else { return }
+        let url = mediaDirectory.appending(
+            path: (recording.relativePath as NSString).lastPathComponent,
+            directoryHint: .notDirectory
+        )
+        let frames = await ThumbnailSampler().frames(
+            of: url,
+            from: 0,
+            duration: recording.duration.seconds,
+            count: min(16, max(4, Int(recording.duration.seconds / 2)))
+        )
+        guard !frames.isEmpty else { return }
+        withAnimation(.easeOut(duration: 0.25)) {
+            recordingFrames[recordingID] = frames
+        }
+    }
+
+    /// Which stretch of its file an added video plays, chosen on its trim strip.
+    ///
+    /// The start handle trims the front and the video keeps its end on the timeline; the end
+    /// handle trims the back; sliding the window keeps the video where it is on the timeline and
+    /// plays another part of the file.
+    public func trimVideoLayer(_ id: VideoLayer.ID, sourceStart: Double? = nil, sourceEnd: Double? = nil, slideTo: Double? = nil) {
+        guard let layer = project.videoLayers.first(where: { $0.id == id }) else { return }
+        if let slideTo {
+            setVideoLayerSourceStart(id, to: slideTo)
+        }
+        if let sourceStart {
+            let shift = sourceStart - layer.sourceRange.start.seconds
+            setVideoLayerStartEdge(id, to: layer.start.seconds + shift, coalescing: "video-layer-strip-start")
+        }
+        if let sourceEnd {
+            setVideoLayerEnd(id, to: layer.start.seconds + (sourceEnd - layer.sourceRange.start.seconds), coalescing: "video-layer-strip-end")
+        }
     }
 }

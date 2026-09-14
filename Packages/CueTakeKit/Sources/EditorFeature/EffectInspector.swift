@@ -78,14 +78,7 @@ struct EffectInspector: View {
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
             DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
-            HStack(spacing: 8) {
-                timeStepper("editor.overlay.start", value: effect.start.seconds) { delta in
-                    model.setEffectEdge(effect.id, start: effect.start.seconds + delta, coalescing: "effect-start")
-                }
-                timeStepper("editor.overlay.end", value: effect.end) { delta in
-                    model.setEffectEdge(effect.id, end: effect.end + delta, coalescing: "effect-end")
-                }
-            }
+            TimingReadout(start: effect.start.seconds, end: effect.end)
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {

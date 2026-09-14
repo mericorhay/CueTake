@@ -109,7 +109,7 @@ struct VideoLayerPlacementEditor: View {
                     Slider(
                         value: Binding(
                             get: { current.width },
-                            set: { model.setVideoLayerPlacement(layer.id, VideoLayerPanel.resized(current, width: $0)) }
+                            set: { model.setVideoLayerPlacement(layer.id, current.resized(width: $0)) }
                         ),
                         in: 0.1...1
                     )
@@ -203,7 +203,7 @@ struct VideoLayerPlacementEditor: View {
                 let origin = zoomOrigin ?? layer.placement(at: model.playhead)
                 if zoomOrigin == nil { zoomOrigin = origin }
                 let factor = min(max(Double(value.magnification), 0.25), 4)
-                model.setVideoLayerPlacement(layer.id, VideoLayerPanel.resized(origin, width: origin.width * factor))
+                model.setVideoLayerPlacement(layer.id, origin.resized(width: origin.width * factor))
             }
             .onEnded { _ in zoomOrigin = nil }
     }

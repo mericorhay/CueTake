@@ -13,6 +13,8 @@ struct EditorTimeline: View {
     var onEditCaption: (CaptionCue.ID) -> Void = { _ in }
     /// Opens a clip's speed, reverse and freeze.
     var onOpenPlayback: (Segment.ID) -> Void = { _ in }
+    /// The caption open for editing, retimed on its lane.
+    var editingCaption: CaptionCue.ID? = nil
 
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
@@ -28,7 +30,13 @@ struct EditorTimeline: View {
     private var contentWidth: CGFloat { CGFloat(model.timelineDuration * scale) }
 
     /// Everything under and over the clips that grows the timeline: audio rows and overlay rows.
-    private var audioHeight: CGFloat {
+    private var audioHeight: CGFloat { Self.lanesHeight(for: model) }
+
+    /// How tall the whole timeline is drawn, for laying it out beside a panel.
+    static func height(for model: EditorModel) -> CGFloat { 116 + lanesHeight(for: model) }
+
+    static func lanesHeight(for model: EditorModel) -> CGFloat {
+        let hasCaptions = model.project.segments.contains { !$0.captions.isEmpty }
         let rows = model.audioRowCount
         let audio = rows > 0
             ? CGFloat(rows) * AudioLane.rowHeight + CGFloat(rows - 1) * AudioLane.rowSpacing + 7
@@ -67,7 +75,7 @@ struct EditorTimeline: View {
         }
         .scrollIndicators(.hidden)
         .scrollPosition($position)
-        .scrollDisabled(trim != nil || lift != nil)
+        .scrollDisabled(trim != nil || lift != nil || model.isAdjustingTimeline)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { width in
@@ -92,7 +100,15 @@ struct EditorTimeline: View {
             model.seek(to: Double(offset) / scale)
         }
         // Playing, seeking from a button, or zooming: the timeline comes to the playhead.
-        .onChange(of: model.playhead) { follow() }
+        .onChange(of: model.playhead) { if !model.isAdjustingTimeline { follow() } }
+        // Once the finger lets go, the timeline comes to where the edge was left.
+        .onChange(of: model.isAdjustingTimeline) { _, adjusting in
+            if !adjusting {
+                withAnimation(DS.Motion.settle) {
+                    position.scrollTo(x: CGFloat(model.playhead * scale))
+                }
+            }
+        }
         .onChange(of: model.pointsPerSecond) { follow() }
         .overlay { centreLine }
         .overlay {
@@ -139,7 +155,8 @@ struct EditorTimeline: View {
                                 jump(to: cue.range.start.seconds + 0.01)
                             }
                             onEditCaption(id)
-                        }
+                        },
+                        editing: editingCaption
                     )
                 }
                 if model.audioRowCount > 0 {

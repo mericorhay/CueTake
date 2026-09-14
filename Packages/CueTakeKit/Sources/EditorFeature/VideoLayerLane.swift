@@ -4,10 +4,7 @@ import SwiftUI
 
 /// Added videos on the timeline, one row each, to scale with the clips they play over.
 ///
-/// Tap a bar to open it. A selected bar moves with a drag from its middle and trims from either
-/// end — measured in the lane's own space, which stays put, rather than in the bar, which moves
-/// under the finger — and takes the touch ahead of the timeline's scrolling, the same as a text or
-/// a background does.
+/// Tap a bar to open it; a selected bar is moved and trimmed right here (see `TimelineBarEditing`).
 struct VideoLayerLane: View {
     @Bindable var model: EditorModel
     let scale: Double
@@ -16,11 +13,6 @@ struct VideoLayerLane: View {
     static let rowSpacing: CGFloat = 4
     static let tint = Color(red: 1.0, green: 0.56, blue: 0.74)
     private static let space = "videoLayerLane"
-
-    /// The layer as it was when the finger went down, and which part of it was taken.
-    @State private var origin: (layer: VideoLayer, grip: Grip)?
-
-    private enum Grip { case start, end, body }
 
     static func height(for layers: [VideoLayer]) -> CGFloat {
         guard !layers.isEmpty else { return 0 }
@@ -62,56 +54,26 @@ struct VideoLayerLane: View {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0)
         }
-        .overlay {
-            if selected {
-                HStack {
-                    handle
-                    Spacer(minLength: 0)
-                    handle
-                }
-                .padding(.horizontal, 3)
-                .allowsHitTesting(false)
-            }
-        }
         .opacity(layer.isHidden ? 0.5 : 1)
-        .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-        .onTapGesture {
-            withAnimation(DS.Motion.snap) {
-                model.select(videoLayer: selected ? nil : layer.id)
+        .timelineBarEditing(
+            model: model,
+            isSelected: selected,
+            start: layer.start.seconds,
+            end: layer.end,
+            scale: scale,
+            space: Self.space,
+            edits: TimelineBarEdits(
+                move: { start in model.moveVideoLayer(layer.id, to: start, coalescing: "video-layer-drag-move") },
+                trimStart: { start in model.setVideoLayerStartEdge(layer.id, to: start, coalescing: "video-layer-drag-start") },
+                trimEnd: { end in model.setVideoLayerEnd(layer.id, to: end, coalescing: "video-layer-drag-end") }
+            ),
+            onTap: {
+                withAnimation(DS.Motion.snap) {
+                    model.select(videoLayer: selected ? nil : layer.id)
+                }
             }
-        }
-        .highPriorityGesture(drag(layer, width: width), including: selected ? .all : .subviews)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-    }
-
-    private var handle: some View {
-        Capsule()
-            .fill(DS.Palette.inkInverse)
-            .frame(width: 3, height: 13)
-    }
-
-    private func drag(_ layer: VideoLayer, width: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: 3, coordinateSpace: .named(Self.space))
-            .onChanged { value in
-                if origin?.layer.id != layer.id {
-                    let touch = value.startLocation.x - CGFloat(layer.start.seconds * scale)
-                    let grip: Grip = touch < 22 ? .start : (touch > width - 22 ? .end : .body)
-                    origin = (layer, grip)
-                }
-                guard let origin else { return }
-                let delta = Double(value.translation.width) / scale
-                switch origin.grip {
-                case .start:
-                    model.setVideoLayerStartEdge(layer.id, to: origin.layer.start.seconds + delta, coalescing: "video-layer-drag-start")
-                case .end:
-                    model.setVideoLayerEnd(layer.id, to: origin.layer.end + delta, coalescing: "video-layer-drag-end")
-                case .body:
-                    let raw = origin.layer.start.seconds + delta
-                    let tolerance = TimelineScale.snapTolerance(pointsPerSecond: scale)
-                    model.moveVideoLayer(layer.id, to: model.snapTarget(for: raw, tolerance: tolerance) ?? raw, coalescing: "video-layer-drag-move")
-                }
-            }
-            .onEnded { _ in origin = nil }
     }
 }

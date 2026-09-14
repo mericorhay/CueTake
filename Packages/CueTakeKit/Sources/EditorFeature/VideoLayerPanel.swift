@@ -2,11 +2,12 @@ import DesignSystem
 import Domain
 import SwiftUI
 
-/// Everything about one added video: when it plays, which part of it, where it sits, how loud.
+/// An added video, open under the timeline.
 ///
-/// Time first, the same as a text, a picture or a background: exact start and end in tenths, either
-/// end put where the playhead is, a cut at the playhead. It used to offer only a position, so a
-/// video could be placed anywhere in the frame but not told when to come in or when to leave.
+/// Nothing here is set with plus and minus. When it plays is dragged on the timeline above; which
+/// part of the file plays is chosen on the strip of its pictures; where it sits in the frame is
+/// dragged and pinched on the picture itself. The panel holds the rest: layouts, size, sound, a
+/// cut, and taking it away.
 struct VideoLayerPanel: View {
     @Bindable var model: EditorModel
     let onOpenPlacementEditor: () -> Void
@@ -15,24 +16,28 @@ struct VideoLayerPanel: View {
     private var layer: VideoLayer? { model.selectedVideoLayerValue }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             header
 
             if let layer {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        timing(layer)
+                    VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            DSKicker(String(localized: "editor.video.part", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                            VideoLayerTrimStrip(model: model, layer: layer)
+                        }
+                        actions(layer)
                         placement(layer)
                         sound(layer)
-                        actions(layer)
                     }
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 10)
                 }
                 .scrollIndicators(.hidden)
             }
         }
-        .padding(16)
-        .frame(maxHeight: 380)
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .dsGlass(
             tint: DS.Palette.glassSheet(0.95),
             in: UnevenRoundedRectangle(topLeadingRadius: DS.Radius.sheet, topTrailingRadius: DS.Radius.sheet, style: .continuous),
@@ -55,7 +60,7 @@ struct VideoLayerPanel: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                 if let layer {
-                    Text(verbatim: "\(MediaTime(seconds: layer.start.seconds).preciseTimecode) – \(MediaTime(seconds: layer.end).preciseTimecode) · \(String(format: "%.1f", layer.duration)) s")
+                    Text(verbatim: "\(MediaTime(seconds: layer.start.seconds).preciseTimecode) – \(MediaTime(seconds: layer.end).preciseTimecode)")
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.5))
                         .contentTransition(.numericText())
@@ -74,43 +79,37 @@ struct VideoLayerPanel: View {
         }
     }
 
-    // MARK: - Timing
+    // MARK: - Actions
 
-    private func timing(_ layer: VideoLayer) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
-            HStack(spacing: 8) {
-                timeStepper("editor.overlay.start", value: layer.start.seconds) { delta in
-                    model.setVideoLayerStartEdge(layer.id, to: layer.start.seconds + delta)
+    private func actions(_ layer: VideoLayer) -> some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 7) {
+                chip("arrow.right.to.line", "editor.video.moveHere") {
+                    withAnimation(DS.Motion.settle) { model.moveVideoLayer(layer.id, to: model.playhead) }
                 }
-                timeStepper("editor.overlay.end", value: layer.end) { delta in
-                    model.setVideoLayerEnd(layer.id, to: layer.end + delta)
+                chip("scissors", "editor.tool.split", enabled: model.canSplitVideoLayer(layer.id)) {
+                    withAnimation(DS.Motion.settle) { model.splitVideoLayer(layer.id) }
                 }
-            }
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {
-                        model.setVideoLayerStartEdge(layer.id, to: model.playhead)
-                    }
-                    smallButton("editor.overlay.endHere", symbol: "arrow.left.to.line") {
-                        model.setVideoLayerEnd(layer.id, to: model.playhead)
-                    }
-                    smallButton("editor.video.moveHere", symbol: "arrow.left.and.right") {
-                        model.moveVideoLayer(layer.id, to: model.playhead)
-                    }
-                    smallButton("editor.tool.split", symbol: "scissors", enabled: model.canSplitVideoLayer(layer.id)) {
-                        withAnimation(DS.Motion.settle) { model.splitVideoLayer(layer.id) }
-                    }
+                chip("arrow.up.left.and.arrow.down.right", "editor.video.fullscreen", action: onOpenPlacementEditor)
+                chip(layer.isHidden ? "eye.slash.fill" : "eye.fill", "editor.video.hide", isOn: layer.isHidden) {
+                    model.updateVideoLayer(layer.id) { $0.isHidden.toggle() }
+                }
+                chip("arrow.left.and.right.righttriangle.left.righttriangle.right", "editor.video.mirror", isOn: layer.placement.isMirrored) {
+                    model.updateVideoLayer(layer.id) { $0.placement.isMirrored.toggle() }
+                }
+                chip("diamond", "editor.video.keyframe") {
+                    model.addVideoKeyframe(to: layer.id)
+                }
+                chip("trash", "editor.video.remove", destructive: true) {
+                    let id = layer.id
+                    onClose()
+                    withAnimation(DS.Motion.settle) { model.removeVideoLayer(id) }
                 }
             }
-            .scrollIndicators(.hidden)
-            .scrollClipDisabled()
-
-            // Which part of its own file plays: the same length, a different stretch of the video.
-            timeStepper("editor.video.sourceStart", value: layer.sourceRange.start.seconds) { delta in
-                model.setVideoLayerSourceStart(layer.id, to: layer.sourceRange.start.seconds + delta)
-            }
+            .padding(.vertical, 1)
         }
+        .scrollIndicators(.hidden)
+        .scrollClipDisabled()
     }
 
     // MARK: - Placement
@@ -118,69 +117,28 @@ struct VideoLayerPanel: View {
     private func placement(_ layer: VideoLayer) -> some View {
         let current = layer.placement(at: model.playhead)
         return VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "editor.video.where", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
-
-            Button(action: onOpenPlacementEditor) {
-                Label(String(localized: "editor.video.placement", bundle: .module), systemImage: "arrow.up.left.and.arrow.down.right")
-                    .dsFont(.sans, .semibold, 13)
-                    .foregroundStyle(DS.Palette.inkInverse)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Capsule().fill(DS.Palette.ink))
+            HStack(spacing: 6) {
+                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                Text("editor.video.placeOnPicture", bundle: .module)
+                    .dsFont(.sans, .regular, 10)
+                    .foregroundStyle(DS.Palette.ink(0.4))
             }
-            .buttonStyle(.dsPress(radius: 20))
-
             HStack(spacing: 7) {
                 layoutButton(.pictureInPicture, "rectangle.inset.filled")
                 layoutButton(.sideBySide, "rectangle.split.2x1")
                 layoutButton(.stacked, "rectangle.split.1x2")
                 layoutButton(.grid, "square.grid.2x2")
             }
-
             slider("editor.video.size", symbol: "square.resize", value: current.width, range: 0.1...1) { value in
-                model.setVideoLayerPlacement(layer.id, Self.resized(current, width: value))
+                model.setVideoLayerPlacement(layer.id, current.resized(width: value))
             }
             slider("editor.video.opacity", symbol: "circle.lefthalf.filled", value: current.opacity, range: 0.05...1) { value in
                 var next = current
                 next.opacity = value
                 model.setVideoLayerPlacement(layer.id, next)
             }
-
-            HStack(spacing: 7) {
-                nudgeButton("arrow.left", label: "editor.video.nudge.left", x: -0.02)
-                nudgeButton("arrow.right", label: "editor.video.nudge.right", x: 0.02)
-                nudgeButton("arrow.up", label: "editor.video.nudge.up", y: -0.02)
-                nudgeButton("arrow.down", label: "editor.video.nudge.down", y: 0.02)
-                Spacer(minLength: 0)
-                Button {
-                    model.addVideoKeyframe(to: layer.id)
-                } label: {
-                    Label(String(localized: "editor.video.keyframe", bundle: .module), systemImage: "diamond.fill")
-                        .dsFont(.sans, .semibold, 12)
-                        .foregroundStyle(DS.Palette.ink)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(Capsule().fill(DS.Palette.hairline(0.1)))
-                }
-                .buttonStyle(.dsPress(radius: 20))
-            }
         }
     }
-
-    /// The same shape at another width, around the same centre.
-    static func resized(_ placement: VideoPlacement, width: Double) -> VideoPlacement {
-        var next = placement
-        let centerX = placement.x + placement.width / 2
-        let centerY = placement.y + placement.height / 2
-        let ratio = placement.height / max(placement.width, 0.01)
-        next.width = min(max(width, 0.1), 1)
-        next.height = min(max(next.width * ratio, 0.1), 1)
-        next.x = centerX - next.width / 2
-        next.y = centerY - next.height / 2
-        return next
-    }
-
-    // MARK: - Sound and actions
 
     private func sound(_ layer: VideoLayer) -> some View {
         HStack(spacing: 10) {
@@ -190,7 +148,7 @@ struct VideoLayerPanel: View {
                 Image(systemName: layer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(layer.isMuted ? DS.Palette.inkInverse : DS.Palette.ink)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 36, height: 36)
                     .background(Circle().fill(layer.isMuted ? DS.Palette.accent : DS.Palette.hairline(0.08)))
             }
             .buttonStyle(.dsPressIcon)
@@ -212,37 +170,39 @@ struct VideoLayerPanel: View {
         }
     }
 
-    private func actions(_ layer: VideoLayer) -> some View {
-        HStack(spacing: 8) {
-            Button {
-                model.updateVideoLayer(layer.id) { $0.isHidden.toggle() }
-            } label: {
-                Label(String(localized: "editor.video.hide", bundle: .module), systemImage: layer.isHidden ? "eye.slash.fill" : "eye.fill")
-                    .dsFont(.sans, .semibold, 12)
-                    .foregroundStyle(layer.isHidden ? DS.Palette.inkInverse : DS.Palette.ink(0.85))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Capsule().fill(layer.isHidden ? DS.Palette.lime : DS.Palette.hairline(0.08)))
-            }
-            .buttonStyle(.dsPress(radius: 20))
-
-            Button(role: .destructive) {
-                let id = layer.id
-                onClose()
-                withAnimation(DS.Motion.settle) { model.removeVideoLayer(id) }
-            } label: {
-                Label(String(localized: "editor.video.remove", bundle: .module), systemImage: "trash")
-                    .dsFont(.sans, .semibold, 12)
-                    .foregroundStyle(DS.Palette.accent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Capsule().fill(DS.Palette.accent(0.12)))
-            }
-            .buttonStyle(.dsPress(radius: 20))
-        }
-    }
-
     // MARK: - Parts
+
+    private func chip(
+        _ symbol: String,
+        _ key: String.LocalizationValue,
+        isOn: Bool = false,
+        enabled: Bool = true,
+        destructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                Text(String(localized: key, bundle: .module))
+                    .dsFont(.sans, .medium, 10)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(
+                isOn ? DS.Palette.inkInverse
+                    : destructive ? DS.Palette.accent
+                    : DS.Palette.ink(enabled ? 0.88 : 0.25)
+            )
+            .frame(width: 66, height: 56)
+            .background(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(isOn ? VideoLayerLane.tint : DS.Palette.hairline(enabled ? 0.07 : 0.03))
+            )
+        }
+        .buttonStyle(.dsPress(radius: 15))
+        .disabled(!enabled)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
 
     private func layoutButton(_ layout: VideoLayout, _ symbol: String) -> some View {
         Button {
@@ -252,27 +212,11 @@ struct VideoLayerPanel: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 11)
+                .padding(.vertical, 10)
                 .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(DS.Palette.hairline(0.08)))
         }
         .buttonStyle(.dsPress(radius: 11))
         .accessibilityLabel(Text(layoutLabel(layout)))
-    }
-
-    private func nudgeButton(_ symbol: String, label: String.LocalizationValue, x: Double = 0, y: Double = 0) -> some View {
-        Button {
-            guard let layer else { return }
-            model.nudgeVideoLayer(layer.id, x: x, y: y)
-        } label: {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(DS.Palette.ink)
-                .frame(width: 38, height: 38)
-                .background(Circle().fill(DS.Palette.hairline(0.08)))
-        }
-        .buttonRepeatBehavior(.enabled)
-        .buttonStyle(.dsPressIcon)
-        .accessibilityLabel(Text(String(localized: label, bundle: .module)))
     }
 
     private func slider(
@@ -300,53 +244,6 @@ struct VideoLayerPanel: View {
         }
     }
 
-    private func timeStepper(_ key: String.LocalizationValue, value: Double, onStep: @escaping (Double) -> Void) -> some View {
-        HStack(spacing: 0) {
-            stepButton("minus") { onStep(-0.1) }
-            VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.45))
-                Text(verbatim: MediaTime(seconds: value).preciseTimecode)
-                    .dsFont(.mono, .medium, 13)
-                    .foregroundStyle(DS.Palette.ink)
-                    .contentTransition(.numericText(value: value))
-            }
-            .frame(maxWidth: .infinity)
-            stepButton("plus") { onStep(0.1) }
-        }
-        .padding(4)
-        .background(Capsule().fill(DS.Palette.hairline(0.06)))
-    }
-
-    private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(DS.Palette.ink)
-                .frame(width: 32, height: 32)
-                .background(Circle().fill(DS.Palette.hairline(0.08)))
-        }
-        .buttonRepeatBehavior(.enabled)
-        .buttonStyle(.dsPressIcon)
-    }
-
-    private func smallButton(_ key: String.LocalizationValue, symbol: String, enabled: Bool = true, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-                Text(String(localized: key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
-            }
-            .foregroundStyle(DS.Palette.ink(0.85))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Capsule().fill(DS.Palette.hairline(0.08)))
-        }
-        .buttonStyle(.dsPress(radius: 20))
-        .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.4)
-    }
-
     private func layoutLabel(_ layout: VideoLayout) -> String {
         switch layout {
         case .sideBySide: String(localized: "editor.video.layout.sideBySide", bundle: .module)
@@ -354,5 +251,20 @@ struct VideoLayerPanel: View {
         case .pictureInPicture: String(localized: "editor.video.layout.pip", bundle: .module)
         case .grid: String(localized: "editor.video.layout.grid", bundle: .module)
         }
+    }
+}
+
+extension VideoPlacement {
+    /// The same shape at another width, around the same centre.
+    func resized(width: Double) -> VideoPlacement {
+        var next = self
+        let centerX = x + self.width / 2
+        let centerY = y + height / 2
+        let ratio = height / max(self.width, 0.01)
+        next.width = min(max(width, 0.1), 1)
+        next.height = min(max(next.width * ratio, 0.1), 1)
+        next.x = centerX - next.width / 2
+        next.y = centerY - next.height / 2
+        return next
     }
 }
