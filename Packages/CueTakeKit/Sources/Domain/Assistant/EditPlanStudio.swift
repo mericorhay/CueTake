@@ -48,8 +48,8 @@ public struct FilterRequest: Hashable, Sendable {
     }
 
     /// Models write 0.4 and 40 for the same thing.
-    static func unit(_ value: Double) -> Double { abs(value) > 1 ? value / 100 : value }
-    static func signed(_ value: Double) -> Double { abs(value) > 1 ? value / 100 : value }
+    public static func unit(_ value: Double) -> Double { abs(value) > 1 ? value / 100 : value }
+    public static func signed(_ value: Double) -> Double { abs(value) > 1 ? value / 100 : value }
 }
 
 /// A sound effect on the voice over a stretch, as the model asked for it.
