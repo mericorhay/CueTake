@@ -4,14 +4,14 @@ import SwiftUI
 
 /// The AI's own colour, so a change it made never reads as one you made.
 ///
-/// One quiet violet with a lighter tint beside it. Coral is the brand and lime is selection; the AI
-/// needs to be told apart from both, not to compete with the footage.
+/// A soft, friendly blue with a lighter sky beside it. Coral is the brand and lime is selection;
+/// the AI needs to be told apart from both, not to compete with the footage.
 nonisolated enum AIPalette {
-    static let violet = Color(red: 0.58, green: 0.50, blue: 1.0)
-    static let lilac = Color(red: 0.74, green: 0.68, blue: 1.0)
+    static let blue = Color(red: 0.36, green: 0.66, blue: 1.0)
+    static let sky = Color(red: 0.62, green: 0.82, blue: 1.0)
 
     static var linear: LinearGradient {
-        LinearGradient(colors: [violet, lilac], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [blue, sky], startPoint: .leading, endPoint: .trailing)
     }
 }
 
@@ -22,7 +22,7 @@ nonisolated private struct GlowFrame {
     var bump: Double = 0
 }
 
-/// Lights a view when its token moves: a violet outline and a faint wash that come up quickly and
+/// Lights a view when its token moves: a blue outline and a faint wash that come up quickly and
 /// fade, with a small lift. Nothing is drawn at rest, and nothing blurs — this runs over live
 /// video on a timeline that may be scrolling.
 private struct AIGlowModifier<S: InsettableShape>: ViewModifier {
@@ -42,8 +42,8 @@ private struct AIGlowModifier<S: InsettableShape>: ViewModifier {
                 view
                     .overlay {
                         ZStack {
-                            shape.fill(AIPalette.violet.opacity(0.16))
-                            shape.strokeBorder(AIPalette.violet, lineWidth: 2)
+                            shape.fill(AIPalette.blue.opacity(0.16))
+                            shape.strokeBorder(AIPalette.blue, lineWidth: 2)
                         }
                         .padding(-inset)
                         .opacity(frame.intensity)
@@ -73,7 +73,7 @@ extension View {
 
 // MARK: - The whole studio, while the AI has it
 
-/// A thin violet edge around the screen while the AI works, breathing slowly.
+/// A thin blue edge around the screen while the AI works, breathing slowly.
 ///
 /// One stroke whose opacity is animated by the render server rather than redrawn by SwiftUI every
 /// frame; the earlier version redrew three blurred gradients sixty times a second over the video.
@@ -85,7 +85,7 @@ struct AIAuroraBorder: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 56, style: .continuous)
-            .strokeBorder(AIPalette.violet, lineWidth: 2.5)
+            .strokeBorder(AIPalette.blue, lineWidth: 2.5)
             .opacity(active ? (breathing ? 0.9 : 0.35) : 0)
             .ignoresSafeArea()
             .allowsHitTesting(false)
@@ -110,7 +110,7 @@ struct AIReadingBeam: View {
         GeometryReader { proxy in
             let width = max(proxy.size.width * 0.25, 60)
             LinearGradient(
-                colors: [.clear, AIPalette.violet.opacity(0.28), .clear],
+                colors: [.clear, AIPalette.blue.opacity(0.28), .clear],
                 startPoint: .leading,
                 endPoint: .trailing
             )
@@ -135,10 +135,10 @@ struct AIScanBand: View {
     var body: some View {
         let width = max(CGFloat((mark.range.upperBound - mark.range.lowerBound) * scale), 6)
         RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(AIPalette.violet.opacity(0.18))
+            .fill(AIPalette.blue.opacity(0.18))
             .overlay {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(AIPalette.violet.opacity(0.8), lineWidth: 1.5)
+                    .strokeBorder(AIPalette.blue.opacity(0.8), lineWidth: 1.5)
             }
             .frame(width: width, height: height)
             .keyframeAnimator(initialValue: ScanFrame(), repeating: false) { view, frame in
@@ -165,18 +165,18 @@ nonisolated private struct ScanFrame {
     var glow: Double = 0
 }
 
-/// A small violet sparkle, for "the AI did this".
+/// A small blue sparkle, for "the AI did this".
 struct AISparkle: View {
     var size: CGFloat = 9
 
     var body: some View {
         Image(systemName: "sparkle")
             .font(.system(size: size, weight: .bold))
-            .foregroundStyle(AIPalette.violet)
+            .foregroundStyle(AIPalette.blue)
     }
 }
 
-/// The AI's mark: a violet disc with sparkles, which shimmer while it works.
+/// The AI's mark: a blue disc with sparkles, which shimmer while it works.
 struct AIOrb: View {
     let fast: Bool
     var size: CGFloat = 36
@@ -195,14 +195,14 @@ struct AIOrb: View {
     }
 }
 
-/// A still violet outline, stronger while the AI works.
+/// A still blue outline, stronger while the AI works.
 struct AIRing<S: InsettableShape>: View {
     let shape: S
     let active: Bool
 
     var body: some View {
         shape
-            .strokeBorder(AIPalette.violet, lineWidth: 1)
+            .strokeBorder(AIPalette.blue, lineWidth: 1)
             .opacity(active ? 0.9 : 0.4)
             .allowsHitTesting(false)
     }

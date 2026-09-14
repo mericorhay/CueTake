@@ -46,6 +46,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var speed: Double?
         public var reversed: Bool?
         public var freeze: Double?
+        /// What replaces the background behind the person, when anything does.
+        public var background: String?
         public var title: String?
         /// The prompter script, only when there are no words yet.
         public var script: String?
@@ -284,6 +286,7 @@ extension EditDocument {
                     speed: abs(playback.speed - 1) > 0.001 ? playback.speed : nil,
                     reversed: playback.isReversed ? true : nil,
                     freeze: playback.freeze.map { r2($0.seconds) },
+                    background: segment.background?.rawValue,
                     title: segment.title.isEmpty ? nil : segment.title,
                     script: words.isEmpty && !segment.script.isEmpty ? String(segment.script.prefix(400)) : nil,
                     words: words.map { Word(text: $0.text, start: r2($0.range.start.seconds), end: r2($0.range.end.seconds)) },

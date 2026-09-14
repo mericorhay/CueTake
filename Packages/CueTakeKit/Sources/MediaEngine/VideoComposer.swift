@@ -82,6 +82,11 @@ public struct VideoComposer: Sendable {
             )
             var sourceStart = CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600)
             let sourceLength = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
+            // The recording itself, for the sound: a clip whose picture is a processed copy (reversed,
+            // background replaced) still speaks with the voice it was recorded with.
+            let original = AVURLAsset(url: url)
+            let originalStart = sourceStart
+            var pictureReplaced = false
 
             // A composition can scale time but it cannot run it backwards, so a reversed clip is a
             // different file — written once and cached — and so is its sound, written backwards
@@ -103,10 +108,29 @@ public struct VideoComposer: Sendable {
                 ) {
                     url = reversed
                     sourceStart = .zero
+                    pictureReplaced = true
                 } else {
                     // The picture could not be reversed, so it plays forwards; its sound must too.
                     reversedAudio = nil
                 }
+            }
+
+            // Everything behind the person replaced, from whichever picture this clip plays.
+            if let background = segment.background,
+               let processed = await BackgroundRemover().processedClip(
+                   source: url,
+                   range: CMTimeRange(start: sourceStart, duration: sourceLength),
+                   background: background,
+                   destination: BackgroundRemover.cachedURL(
+                       take: take,
+                       reversed: pictureReplaced,
+                       background: background,
+                       in: mediaDirectory
+                   )
+               ) {
+                url = processed
+                sourceStart = .zero
+                pictureReplaced = true
             }
 
             let asset = AVURLAsset(url: url)
@@ -136,6 +160,10 @@ public struct VideoComposer: Sendable {
                 range = CMTimeRange(start: sourceStart, duration: min(oneFrame, range.duration))
             }
             guard range.duration.seconds > 0.001 else { continue }
+            // Where the sound for this range is: the recording's own timeline, unless the sound too
+            // was written to a file of its own that starts at zero (reversed).
+            let soundStart = reversedAudio != nil ? CMTime.zero : (pictureReplaced ? originalStart : range.start)
+            let soundRange = CMTimeRange(start: soundStart, duration: range.duration)
 
             try videoTrack.insertTimeRange(range, of: sourceVideo, at: cursor)
             // Audio is optional on purpose: a clip with no audio track is a legitimate thing to
@@ -151,18 +179,18 @@ public struct VideoComposer: Sendable {
                 }
                 // Same timeline as the recording, so the take's own range addresses it directly.
                 if let cleaned = cleanedVoice[recording.id] {
-                    hasAudio = (try? audioTrack.insertTimeRange(range, of: cleaned, at: cursor)) != nil
+                    hasAudio = (try? audioTrack.insertTimeRange(soundRange, of: cleaned, at: cursor)) != nil
                 }
             }
             // A reversed clip's sound, written backwards to its own file. Starts at zero like the
             // reversed picture, so the same range addresses both.
             if !hasAudio, let reversedAudio,
                let track = try? await AVURLAsset(url: reversedAudio).loadTracks(withMediaType: .audio).first {
-                hasAudio = (try? audioTrack.insertTimeRange(range, of: track, at: cursor)) != nil
+                hasAudio = (try? audioTrack.insertTimeRange(soundRange, of: track, at: cursor)) != nil
             }
             if !hasAudio, playback.freeze == nil, !playback.isReversed,
-               let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first {
-                hasAudio = (try? audioTrack.insertTimeRange(range, of: sourceAudio, at: cursor)) != nil
+               let sourceAudio = try await original.loadTracks(withMediaType: .audio).first {
+                hasAudio = (try? audioTrack.insertTimeRange(soundRange, of: sourceAudio, at: cursor)) != nil
             }
 
             // Speed and freeze are the same operation to a composition: take the range that was

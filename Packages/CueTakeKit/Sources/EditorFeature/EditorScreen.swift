@@ -61,6 +61,9 @@ public struct EditorScreen: View {
     @State private var landscapePreviewHeight: CGFloat?
     @State private var showsChanges = false
     @State private var showsAIChanges = false
+    @State private var rebuild: Task<Void, Never>?
+    /// The caption being edited on the picture, if any.
+    @State private var editingCaption: CaptionCue.ID?
     @State private var previewExpanded = false
     @State private var showsTranscript = false
 
@@ -81,14 +84,14 @@ public struct EditorScreen: View {
     /// by luck.
     private var previewHeight: CGFloat {
         if let landscapePreviewHeight { return landscapePreviewHeight }
-        // An overlay being placed gets the big picture: it is placed by looking at the frame.
-        if model.selectedOverlay != nil { return 390 }
+        // An overlay or a caption being placed gets the big picture: both are placed by looking.
+        if model.selectedOverlay != nil || editingCaption != nil { return 390 }
         if previewExpanded { return 430 }
         return isPanelOpen || dockPanel != nil ? 150 : 212
     }
 
     private var isPanelOpen: Bool {
-        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
+        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil || editingCaption != nil
     }
 
     public var body: some View {
@@ -142,7 +145,17 @@ public struct EditorScreen: View {
         // normal behaviour of a sheet, and it is the only version of this that cannot run out of
         // room.
         .overlay(alignment: .bottom) {
-            if let clip = model.selectedAudioClip {
+            if let captionID = editingCaption {
+                CaptionQuickPanel(
+                    model: model,
+                    captionID: captionID,
+                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
+                    onOpenAll: {
+                        editingCaption = nil
+                        onCaptions()
+                    }
+                )
+            } else if let clip = model.selectedAudioClip {
                 audioPanel(clip)
             } else if let overlay = model.selectedOverlayValue {
                 OverlayInspector(model: model, overlay: overlay) {
@@ -211,18 +224,20 @@ public struct EditorScreen: View {
         // Speed, freeze and reverse change what the composition *is*, not just how it is drawn,
         // so the preview has to be rebuilt. Watched here rather than pushed from each control:
         // there are four of them and there will be more.
-        .onChange(of: model.project.segments.map(\.playback)) {
+        // Any change to what the preview plays rebuilds it, a moment after the last change so a
+        // run of edits is one rebuild.
+        .onChange(of: model.compositionSignature) {
             guard !model.isAIDriving else { return }
-            Task { await onPrepare() }
+            rebuild?.cancel()
+            rebuild = Task {
+                try? await Task.sleep(for: .milliseconds(250))
+                guard !Task.isCancelled else { return }
+                await onPrepare()
+            }
         }
         .onChange(of: model.isAIDriving) { _, driving in
             // Everything the AI changed, rebuilt in one go: picture, sound, frames for new clips.
             guard !driving, model.aiSession != nil else { return }
-            Task { await onPrepare() }
-        }
-        // The voice repair changes the sound itself, so the preview is rebuilt for it too.
-        .onChange(of: model.project.voiceEffects) {
-            guard !model.isAIDriving else { return }
             Task { await onPrepare() }
         }
         .photosPicker(isPresented: $pickingImage, selection: $pickedImage, matching: .images)
@@ -237,6 +252,10 @@ public struct EditorScreen: View {
         // Undo can bring back an overlay whose picture is not in memory.
         .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
         .animation(DS.Motion.settle, value: model.selectedOverlay)
+        .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil } }
+        .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil } }
+        .onChange(of: model.isPlaying) { _, playing in if playing { editingCaption = nil } }
+        .animation(DS.Motion.settle, value: editingCaption)
         .background(DS.Palette.screen)
         .dsEnter(.screen())
     }
@@ -402,7 +421,27 @@ public struct EditorScreen: View {
                     style: model.project.captionStyle,
                     locale: model.project.locale,
                     time: model.playhead,
-                    glowToken: model.captionGlowToken
+                    glowToken: model.captionGlowToken,
+                    isEditing: editingCaption == cue.id,
+                    onTap: {
+                        guard !model.isAIDriving else { return }
+                        model.pause()
+                        withAnimation(DS.Motion.settle) {
+                            model.inspectedSegment = nil
+                            model.selectedAudio = nil
+                            model.select(overlay: nil)
+                            dockPanel = nil
+                            editingCaption = editingCaption == cue.id ? nil : cue.id
+                        }
+                    },
+                    onMove: { y in
+                        model.updateCaptionStyle(coalescing: "caption-move") { style in
+                            // Settles on the usual places — top, middle, lower third, bottom — when close.
+                            let marks = [0.12, 0.5, 0.72, 0.86]
+                            let near = marks.first { abs($0 - y) < 0.025 }
+                            style.position = CaptionPosition(x: style.position.x, y: near ?? y)
+                        }
+                    }
                 )
                 .id(cue.id)
                 .transition(CaptionOverlay.transition(for: model.project.captionStyle))

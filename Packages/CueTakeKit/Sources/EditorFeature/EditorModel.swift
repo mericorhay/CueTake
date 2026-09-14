@@ -107,6 +107,7 @@ public final class EditorModel {
             return
         }
 
+        let wasPlaying = isPlaying
         teardownPlayer()
         let item = AVPlayerItem(asset: assembled.composition)
         // Levels, fades and ducking in the preview too. An editor whose preview plays the music at
@@ -128,6 +129,27 @@ public final class EditorModel {
             }
         }
         self.player = player
+        // The new player starts where the playhead is, not at zero, and keeps playing if it was.
+        playhead = min(playhead, duration)
+        player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+        if wasPlaying { player.play() }
+    }
+
+    /// Everything that changes what the preview plays: which footage, which part of it, in what
+    /// order, at what speed, with what voice. The player is rebuilt whenever this changes.
+    ///
+    /// Only speed and voice used to rebuild it. A cut, split, trim, delete or reorder left the
+    /// player on the old edit, so the picture moved to the next clip seconds before the timeline did.
+    public var compositionSignature: [String] {
+        project.segments.map { segment in
+            let take = segment.selectedTake
+            let range = take.map { "\($0.id.uuidString):\($0.sourceRange.start.seconds):\($0.sourceRange.duration.seconds)" } ?? "-"
+            let playback = segment.playback
+            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)|\(segment.background?.token ?? "-")"
+        } + [
+            "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
+            "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
+        ]
     }
 
     private func teardownPlayer() {
@@ -682,6 +704,24 @@ extension EditorModel {
         // Coalesced by segment: typing in the script field is one edit, not one per keystroke.
         record("editor.change.segment", symbol: "pencil", coalescing: "segment-\(index)")
         change(&project.segments[index])
+        project.updatedAt = .now
+    }
+
+    /// Replaces what is behind the person in one clip, or puts the footage back with nil.
+    public func setBackground(_ background: ClipBackground?, at index: Int) {
+        guard project.segments.indices.contains(index), project.segments[index].background != background else { return }
+        record("editor.change.background", symbol: "person.crop.rectangle")
+        project.segments[index].background = background
+        project.updatedAt = .now
+    }
+
+    /// The same background for every clip, as one edit.
+    public func setBackgroundForAll(_ background: ClipBackground?) {
+        guard project.segments.contains(where: { $0.background != background }) else { return }
+        record("editor.change.background", symbol: "person.crop.rectangle")
+        for index in project.segments.indices {
+            project.segments[index].background = background
+        }
         project.updatedAt = .now
     }
 

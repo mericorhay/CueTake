@@ -127,7 +127,7 @@ struct AIChangesSheet: View {
                     .padding(.vertical, 8)
                     .background {
                         if set.isFullyReverted {
-                            Capsule().fill(AIPalette.violet)
+                            Capsule().fill(AIPalette.blue)
                         } else {
                             Capsule().fill(DS.Palette.hairline(0.1))
                         }
@@ -150,7 +150,7 @@ struct AIChangesSheet: View {
         HStack(spacing: 10) {
             Image(systemName: item.symbol)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(item.reverted ? DS.Palette.ink(0.3) : AIPalette.violet)
+                .foregroundStyle(item.reverted ? DS.Palette.ink(0.3) : AIPalette.blue)
                 .frame(width: 26, height: 26)
                 .background(Circle().fill(DS.Palette.hairline(item.reverted ? 0.03 : 0.07)))
 

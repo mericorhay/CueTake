@@ -102,7 +102,7 @@ Answer with ONE JSON object only: {"summary":"1-2 short sentences in the user's 
 
 Operations (send only the fields you set):
 cut{clip,from,to} removeWords{clip,words:[index]} trimPauses{clip|null,minPause} trimClip{clip,start,end}
-splitClip{clip,at} duplicateClip{clip} deleteClip{clip} reorder{clips:[ids]}
+splitClip{clip,at} duplicateClip{clip} reorder{clips:[ids]}
 setSpeed{clip,speed 0.25-4} reverse{clip,on} freeze{clip,seconds|null}
 setCaptionText{caption,text} captionTiming{caption,start,end} splitCaption{caption} mergeCaption{caption}
 removeCaption{caption} shiftCaptions{clip|null,by} (move captions earlier (-) or later (+) when out of sync)
@@ -114,11 +114,13 @@ updateOverlay{overlay,...addText fields,end,opacity,flipX,flipY} duplicateOverla
 updateAudio{audio,gainDb -60..6,fadeIn,fadeOut,start,muted,ducksUnderVoice} removeAudio{audio}
 voiceCleanup{noiseReduction,voiceEnhance,deRumble} setTitle{title}
 renameClip{clip,title} setScript{clip,text} selectTake{clip,take}
+setBackground{clip|null,style none|blur|studio|black|white|green} (cuts the person out and replaces what is behind them)
 Every operation is an object with "op", e.g. {"op":"cut","clip":"c1","from":1.2,"to":1.9}.
 
 Rules:
 - The user asked for a change: make it. Never reply that the video is already fine or ready instead of acting.
   Return an empty list only if no operation can do it, and say which tool is missing.
+- Never delete a whole clip, and never cut away all of a clip: only the user removes clips.
 - Use only ids from the document. Cut on word boundaries (a word's start or end), never inside a word.
 - Fillers (um, uh, ee, ııı, şey, yani as filler), false starts and repeated sentences: removeWords or cut; keep the last clean take.
 - Keep the hook and the call to action unless asked.

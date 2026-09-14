@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import SwiftUI
 
@@ -18,6 +19,13 @@ struct CaptionOverlay: View {
     let time: Double
     /// Moves when the AI changes these captions or their look.
     var glowToken: Int = 0
+    /// Set in the editor: the caption can be tapped to edit and dragged up or down.
+    var isEditing: Bool = false
+    var onTap: (() -> Void)? = nil
+    /// The new height of the caption, 0 top … 1 bottom, while it is dragged.
+    var onMove: ((Double) -> Void)? = nil
+
+    @State private var dragging = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -40,13 +48,45 @@ struct CaptionOverlay: View {
                     }
                 }
                 .aiGlow(glowToken, in: RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous), inset: 4)
+                .overlay {
+                    if isEditing {
+                        RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous)
+                            .strokeBorder(DS.Palette.lime, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                            .padding(-6)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .scaleEffect(dragging ? 1.04 : 1)
+                .animation(DS.Motion.snap, value: dragging)
+                .contentShape(Rectangle().inset(by: -10))
+                .onTapGesture { onTap?() }
+                .gesture(
+                    DragGesture(minimumDistance: 4, coordinateSpace: .named("captionFrame"))
+                        .onChanged { value in
+                            dragging = true
+                            onMove?(Double(value.location.y / max(1, proxy.size.height)))
+                        }
+                        .onEnded { _ in dragging = false },
+                    including: isEditing ? .all : .none
+                )
                 .frame(maxWidth: proxy.size.width * 0.86)
                 .position(
                     x: proxy.size.width * style.position.x,
                     y: proxy.size.height * style.position.y
                 )
+                // The height the caption sits at, while it is moved.
+                .overlay(alignment: .topLeading) {
+                    if dragging {
+                        Rectangle()
+                            .fill(DS.Palette.lime.opacity(0.7))
+                            .frame(width: proxy.size.width, height: 1)
+                            .offset(y: proxy.size.height * style.position.y)
+                            .allowsHitTesting(false)
+                    }
+                }
         }
-        .allowsHitTesting(false)
+        .coordinateSpace(.named("captionFrame"))
+        .allowsHitTesting(onTap != nil)
     }
 
     /// The line itself. With karaoke the words are assembled one by one, each coloured by whether

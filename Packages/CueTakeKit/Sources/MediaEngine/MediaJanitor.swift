@@ -62,6 +62,10 @@ public enum MediaJanitor {
                 keep.insert((file as NSString).deletingPathExtension + "-speech.m4a")
             }
         }
+        for segment in project.segments {
+            guard let background = segment.background, let take = segment.selectedTake else { continue }
+            keep.insert(BackgroundRemover.cachedURL(take: take, reversed: segment.playback.isReversed, background: background, in: mediaDirectory).lastPathComponent)
+        }
         for segment in project.segments where segment.playback.isReversed {
             guard let take = segment.selectedTake else { continue }
             let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
@@ -98,6 +102,7 @@ public enum MediaJanitor {
             || file.hasSuffix("-rev-audio.m4a")
             || file.contains("-voice")
             || file.hasSuffix("-dry.m4a")
+            || file.contains("-bg-")
             || file.range(of: #"^[0-9A-F-]{36}-[nvr]{1,3}\.m4a$"#, options: .regularExpression) != nil
     }
 

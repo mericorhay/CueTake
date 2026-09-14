@@ -169,6 +169,21 @@ struct AIDirectorTests {
         #expect(model.problem(with: EditPlan(summary: "", operations: [.setTitle("x")])) == nil)
     }
 
+    @Test func theAINeverRemovesAClip() {
+        let model = model()
+        let clip = model.project.segments[0].id.uuidString
+        model.duplicateSegment(at: 0)
+        let outcome = model.apply(EditPlan(summary: "", operations: [
+            .deleteClip(clip: clip),
+            .cut(clip: clip, from: 0, to: 10),
+            .setBackground(clip: "c2", style: "blur"),
+        ]))
+        #expect(model.project.segments.count == 2)
+        #expect(model.project.segments[0].selectedTake?.sourceRange.duration.seconds == 10)
+        #expect(model.project.segments[1].background == .blur)
+        #expect(outcome.skipped.contains("deleteClip"))
+    }
+
     @Test func missingThingsAreSkippedNotGuessed() {
         let model = model()
         let plan = EditPlan(summary: "", operations: [

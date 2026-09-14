@@ -406,8 +406,10 @@ final class AppModel {
         )
         if reversing { busy = String(localized: "busy.reversing") }
         if cleaning { busy = String(localized: "busy.cleaningVoice") }
+        let removing = BackgroundRemover.needsWork(for: editorModel.project, in: mediaDirectory)
+        if removing { busy = String(localized: "busy.removingBackground") }
         await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
-        if reversing || cleaning { busy = nil }
+        if reversing || cleaning || removing { busy = nil }
         // After playback, not before: the waveforms are for looking at and the player is for
         // working with, and reading three minutes of song should never be what delays a play.
         await editorModel.loadWaveforms(mediaDirectory: mediaDirectory)

@@ -22,6 +22,8 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     /// Speed, reverse and freeze. Never baked into the take: a take is what the camera recorded,
     /// and everything here is a decision about it that has to stay undoable.
     public var playback: ClipPlayback
+    /// Everything behind the person replaced, or nil for the footage as shot.
+    public var background: ClipBackground? = nil
     public var metadata: [String: String]
 
     public init(
@@ -64,6 +66,7 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         selectedTakeID = try container.decodeIfPresent(Take.ID.self, forKey: .selectedTakeID)
         captions = try container.decodeIfPresent([CaptionCue].self, forKey: .captions) ?? []
         playback = try container.decodeIfPresent(ClipPlayback.self, forKey: .playback) ?? .normal
+        background = try? container.decodeIfPresent(ClipBackground.self, forKey: .background)
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 
@@ -147,7 +150,7 @@ extension Segment {
     /// an identity would make the timeline, the inspector and SwiftUI's own diffing disagree about
     /// which one is which, in ways that look like random state corruption.
     public func copyWithNewIdentity() -> Segment {
-        Segment(
+        var copy = Segment(
             role: role,
             title: title,
             script: script,
@@ -159,6 +162,8 @@ extension Segment {
             playback: playback,
             metadata: metadata
         )
+        copy.background = background
+        return copy
     }
 
     /// Length used wherever a segment has to be drawn to scale — the blueprint bar, the studio

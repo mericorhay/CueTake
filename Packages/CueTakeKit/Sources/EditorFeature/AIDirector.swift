@@ -176,6 +176,9 @@ extension EditorModel {
         if resolved.operations.isEmpty {
             return "[Your previous answer had no operations and changed nothing. The user wants this change: carry it out with operations. Return an empty list only if no operation can do it, and then say in summary which tool is missing.]"
         }
+        if skipped.contains("deleteClip") {
+            return "[Your previous answer changed nothing: deleting clips is not allowed. Cut parts inside clips instead (cut, removeWords, trimClip), and never remove a whole clip.]"
+        }
         return "[Your previous answer changed nothing: these operations referred to things that do not exist: \(skipped.joined(separator: ", ")). Use only ids from the document: c1… for clips, k1… for captions, o1… for overlays, a1… for audio, t1… for takes.]"
     }
 
@@ -856,6 +859,26 @@ extension EditorModel {
             }
         }
 
+        // Backgrounds
+        for op in ops {
+            guard case .setBackground(let clip, let style) = op else { continue }
+            let background = style.flatMap(ClipBackground.init(rawValue:))
+            if style != nil, background == nil { skipped.append(op.type); continue }
+            if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+            add("person.crop.rectangle", describe(op), op, locate: { m in
+                guard let clip, let i = m.index(ofClip: clip) else { return (nil, nil) }
+                return (m.start(at: i) + 0.05, m.clipRange(i))
+            }) { m in
+                if let clip {
+                    guard let i = m.index(ofClip: clip) else { return nil }
+                    m.project.segments[i].background = background
+                    return [.clip(m.project.segments[i].id)]
+                }
+                for i in m.project.segments.indices { m.project.segments[i].background = background }
+                return m.project.segments.map { .clip($0.id) }
+            }
+        }
+
         // Duplicates
         for op in ops {
             guard case .duplicateClip(let clip) = op else { continue }
@@ -948,10 +971,9 @@ extension EditorModel {
                         let segment = m.project.segments[i]
                         let total = segment.selectedTake?.sourceRange.duration.seconds ?? segment.sourceSeconds
                         let keep = Self.complement(of: local, within: total)
+                        // Cutting everything would delete the clip, which the AI may not do.
                         if keep.isEmpty {
-                            guard m.project.segments.count > 1 else { continue }
-                            m.deleteSegment(at: i)
-                            targets.append(.clip(segment.id))
+                            continue
                         } else {
                             let count = m.project.segments.count
                             m.rebuild(segmentAt: i, keeping: keep)
@@ -966,19 +988,10 @@ extension EditorModel {
             ))
         }
 
-        // Clips removed
+        // Clips are never deleted by the AI: a whole clip gone is the one change people did not
+        // expect from "make it tighter". It can cut inside clips; removing clips is the user's call.
         for op in ops {
-            guard case .deleteClip(let clip) = op else { continue }
-            guard index(ofClip: clip) != nil else { skipped.append(op.type); continue }
-            add("trash", describe(op), op, locate: { m in
-                guard let i = m.index(ofClip: clip) else { return (nil, nil) }
-                return (m.start(at: i) + 0.05, m.clipRange(i))
-            }) { m in
-                guard let i = m.index(ofClip: clip), m.project.segments.count > 1 else { return nil }
-                let id = m.project.segments[i].id
-                m.deleteSegment(at: i)
-                return [.clip(id)]
-            }
+            if case .deleteClip = op { skipped.append(op.type) }
         }
 
         // Order
@@ -1143,6 +1156,7 @@ extension EditorModel {
         case .selectTake: "film.stack"
         case .duplicateOverlay: "plus.square.on.square"
         case .shiftCaptions: "arrow.left.and.right"
+        case .setBackground: "person.crop.rectangle"
         case .unknown: "questionmark"
         }
     }
@@ -1217,6 +1231,8 @@ extension EditorModel {
             L("editor.ai.op.duplicateOverlay \(overlayName(id))")
         case .shiftCaptions(_, let by):
             L("editor.ai.op.shiftCaptions \(Self.seconds(by))")
+        case .setBackground(let clip, let style):
+            L("editor.ai.op.background \(clip.map(clipNumber) ?? "*") \(ToolDock.label(style.flatMap(ClipBackground.init(rawValue:))))")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

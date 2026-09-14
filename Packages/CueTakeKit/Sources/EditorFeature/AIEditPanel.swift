@@ -43,7 +43,7 @@ struct AIEditPanel: View {
                     .lineLimit(1...4)
                     .dsFont(.sans, .regular, 14)
                     .foregroundStyle(DS.Palette.ink)
-                    .tint(AIPalette.violet)
+                    .tint(AIPalette.blue)
                     .focused($focused)
                     .submitLabel(.send)
                     .onSubmit(send)
@@ -52,7 +52,7 @@ struct AIEditPanel: View {
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.07)))
                     .overlay {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(AIPalette.violet.opacity(focused ? 0.7 : 0), lineWidth: 1)
+                            .strokeBorder(AIPalette.blue.opacity(focused ? 0.7 : 0), lineWidth: 1)
                     }
 
                 Button(action: send) {
@@ -60,7 +60,7 @@ struct AIEditPanel: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(canSend ? Color.white : DS.Palette.ink(0.35))
                         .frame(width: 44, height: 44)
-                        .background(Circle().fill(canSend ? AIPalette.violet : DS.Palette.hairline(0.1)))
+                        .background(Circle().fill(canSend ? AIPalette.blue : DS.Palette.hairline(0.1)))
                         .animation(.easeOut(duration: 0.15), value: canSend)
                 }
                 .buttonStyle(.dsPressIcon)
@@ -103,7 +103,7 @@ struct AIEditPanel: View {
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(AIPalette.violet))
+                            .background(Capsule().fill(AIPalette.blue))
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
                             .font(.system(size: 10, weight: .bold))

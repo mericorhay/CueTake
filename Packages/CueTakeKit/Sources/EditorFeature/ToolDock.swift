@@ -20,11 +20,11 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, text, image, captions, audio, duplicate, delete, more
+        case ai, split, trim, speed, background, text, image, captions, audio, duplicate, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { self == .trim || self == .speed || self == .ai }
+        var opensPanel: Bool { self == .trim || self == .speed || self == .ai || self == .background }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -109,7 +109,7 @@ struct ToolDock: View {
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
         case .split: model.segmentAtPlayhead != nil
-        case .trim, .speed, .duplicate: index != nil
+        case .trim, .speed, .duplicate, .background: index != nil
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .more, .ai, .text, .image: true
         }
@@ -132,7 +132,7 @@ struct ToolDock: View {
                     .lineLimit(1)
             }
             .foregroundStyle(
-                ai ? AnyShapeStyle(AIPalette.violet)
+                ai ? AnyShapeStyle(AIPalette.blue)
                     : !enabled ? AnyShapeStyle(DS.Palette.ink(0.22))
                     : destructive ? AnyShapeStyle(DS.Palette.accent)
                     : accent ? AnyShapeStyle(DS.Palette.lime)
@@ -168,6 +168,7 @@ struct ToolDock: View {
         case .duplicate: glyph.symbolEffect(.bounce.up, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
+        case .background: glyph.symbolEffect(.bounce, value: count)
         case .text, .image: glyph.symbolEffect(.bounce.up, value: count)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
@@ -176,6 +177,7 @@ struct ToolDock: View {
     private func symbol(_ item: Item) -> String {
         switch item {
         case .ai: "sparkles"
+        case .background: "person.crop.rectangle"
         case .text: "textformat"
         case .image: "photo.badge.plus"
         case .split: "scissors"
@@ -192,6 +194,7 @@ struct ToolDock: View {
     private func title(_ item: Item) -> String {
         switch item {
         case .ai: String(localized: "editor.dock.ai", bundle: .module)
+        case .background: String(localized: "editor.dock.background", bundle: .module)
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
@@ -228,7 +231,7 @@ struct ToolDock: View {
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
-        case .trim, .speed, .ai: break
+        case .trim, .speed, .ai, .background: break
         }
     }
 
@@ -276,6 +279,7 @@ struct ToolDock: View {
                     switch item {
                     case .trim: trimPanel(at: index)
                     case .speed: speedPanel(at: index)
+                    case .background: backgroundPanel(at: index)
                     default: EmptyView()
                     }
                 }
@@ -403,6 +407,97 @@ struct ToolDock: View {
                     }
                 }
             }
+        }
+    }
+
+    /// What goes behind the person: one tap per look, applied to this clip or to all of them.
+    private func backgroundPanel(at index: Int) -> some View {
+        let current = model.project.segments[index].background
+        let choices: [ClipBackground?] = [nil, .blur, .studio, .black, .white, .green]
+        let everywhere = model.project.segments.count > 1
+            && model.project.segments.allSatisfy { $0.background == current }
+
+        return VStack(alignment: .leading, spacing: 10) {
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(Array(choices.enumerated()), id: \.offset) { _, choice in
+                        let isOn = current == choice
+                        Button {
+                            withAnimation(DS.Motion.snap) {
+                                if everywhere {
+                                    model.setBackgroundForAll(choice)
+                                } else {
+                                    model.setBackground(choice, at: index)
+                                }
+                            }
+                        } label: {
+                            VStack(spacing: 6) {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Self.swatch(choice))
+                                    .frame(width: 52, height: 52)
+                                    .overlay {
+                                        Image(systemName: choice == nil ? "person.fill" : "person.fill")
+                                            .font(.system(size: 20, weight: .semibold))
+                                            .foregroundStyle(choice == .white ? Color.black.opacity(0.75) : Color.white.opacity(0.9))
+                                    }
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .strokeBorder(isOn ? DS.Palette.lime : DS.Palette.hairline(0.12), lineWidth: isOn ? 2.5 : 1)
+                                    }
+                                Text(Self.label(choice))
+                                    .dsFont(.sans, .medium, 10)
+                                    .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.6))
+                            }
+                        }
+                        .buttonStyle(.dsPress(radius: 10))
+                        .animation(DS.Motion.snap, value: isOn)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+
+            HStack(spacing: 8) {
+                toggle("editor.background.all", symbol: "square.stack.3d.up", isOn: everywhere, enabled: model.project.segments.count > 1) {
+                    withAnimation(DS.Motion.snap) {
+                        if everywhere {
+                            model.setBackground(current, at: index)
+                            for other in model.project.segments.indices where other != index {
+                                model.setBackground(nil, at: other)
+                            }
+                        } else {
+                            model.setBackgroundForAll(current)
+                        }
+                    }
+                }
+            }
+
+            Text("editor.background.note", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.45))
+        }
+    }
+
+    static func swatch(_ background: ClipBackground?) -> AnyShapeStyle {
+        switch background {
+        case nil: AnyShapeStyle(LinearGradient(colors: [Color(red: 0.35, green: 0.3, blue: 0.25), Color(red: 0.2, green: 0.24, blue: 0.3)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        case .blur: AnyShapeStyle(LinearGradient(colors: [Color(red: 0.5, green: 0.45, blue: 0.4).opacity(0.8), Color(red: 0.3, green: 0.36, blue: 0.45).opacity(0.8)], startPoint: .top, endPoint: .bottom))
+        case .studio: AnyShapeStyle(RadialGradient(colors: [Color(red: 0.22, green: 0.23, blue: 0.27), Color(red: 0.03, green: 0.03, blue: 0.04)], center: .center, startRadius: 2, endRadius: 40))
+        case .black: AnyShapeStyle(Color.black)
+        case .white: AnyShapeStyle(Color.white)
+        case .green: AnyShapeStyle(Color(red: 0, green: 0.8, blue: 0.25))
+        }
+    }
+
+    static func label(_ background: ClipBackground?) -> String {
+        switch background {
+        case nil: String(localized: "editor.background.none", bundle: .module)
+        case .blur: String(localized: "editor.background.blur", bundle: .module)
+        case .studio: String(localized: "editor.background.studio", bundle: .module)
+        case .black: String(localized: "editor.background.black", bundle: .module)
+        case .white: String(localized: "editor.background.white", bundle: .module)
+        case .green: String(localized: "editor.background.green", bundle: .module)
         }
     }
 

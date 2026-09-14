@@ -562,6 +562,23 @@
         }
       }
     },
+    "busy.removingBackground": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removing the background… The first time takes a moment."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan kaldırılıyor… İlk seferde biraz sürer."
+          }
+        }
+      }
+    },
     "busy.reversing": {
       "extractionState": "manual",
       "localizations": {

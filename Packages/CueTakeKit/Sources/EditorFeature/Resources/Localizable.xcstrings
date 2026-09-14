@@ -1123,6 +1123,23 @@
         }
       }
     },
+    "editor.ai.op.background %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@: background %2$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@: arka plan %2$@"
+          }
+        }
+      }
+    },
     "editor.ai.op.caption %@": {
       "extractionState": "manual",
       "localizations": {
@@ -2296,6 +2313,142 @@
         }
       }
     },
+    "editor.background.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All clips"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm klipler"
+          }
+        }
+      }
+    },
+    "editor.background.black": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siyah"
+          }
+        }
+      }
+    },
+    "editor.background.blur": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blur"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulanık"
+          }
+        }
+      }
+    },
+    "editor.background.green": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green screen"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeşil perde"
+          }
+        }
+      }
+    },
+    "editor.background.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As shot"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orijinal"
+          }
+        }
+      }
+    },
+    "editor.background.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The person is cut out on this iPhone, frame by frame. The first time takes a little while; after that it is instant."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişi bu iPhone'da kare kare ayrılır. İlk seferde biraz sürer, sonra anında açılır."
+          }
+        }
+      }
+    },
+    "editor.background.studio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyo"
+          }
+        }
+      }
+    },
+    "editor.background.white": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "White"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beyaz"
+          }
+        }
+      }
+    },
     "editor.caption.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -2343,6 +2496,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tüm altyazıları düzenle ve stillendir"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All captions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm altyazılar"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag it on the picture to move"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşımak için görüntüde sürükle"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı metni"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.size": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIZE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BOYUT"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı"
+          }
+        }
+      }
+    },
+    "editor.captionQuick.words": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORDS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KELİME"
           }
         }
       }
@@ -2466,6 +2738,23 @@
         }
       }
     },
+    "editor.change.background": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan değişti"
+          }
+        }
+      }
+    },
     "editor.change.caption": {
       "extractionState": "manual",
       "localizations": {
@@ -2479,6 +2768,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazı düzenlendi"
+          }
+        }
+      }
+    },
+    "editor.change.captionStyle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Caption look changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı görünümü değişti"
           }
         }
       }
@@ -2938,6 +3244,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ses"
+          }
+        }
+      }
+    },
+    "editor.dock.background": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan"
           }
         }
       }
