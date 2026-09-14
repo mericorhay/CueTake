@@ -3537,6 +3537,23 @@
         }
       }
     },
+    "editor.change.smartReframe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smart reframe applied"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akıllı kadraj uygulandı"
+          }
+        }
+      }
+    },
     "editor.change.videoLayerAdjust": {
       "extractionState": "manual",
       "localizations": {
@@ -7378,6 +7395,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Boyut"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smart reframe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akıllı kadraj"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.done %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face followed with %lld smooth points"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yüz %lld yumuşak noktayla takip edildi"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not analyze this video · Tap to retry"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu video incelenemedi · Yeniden dene"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the face in frame without moving this layer"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Katmanı oynatmadan yüzü kadrajda tut"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.noFace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No face found · Choose another clip or retry"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yüz bulunamadı · Başka klip seç veya yeniden dene"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.progress %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding the face… %lld%%"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yüz bulunuyor… %lld%%"
           }
         }
       }

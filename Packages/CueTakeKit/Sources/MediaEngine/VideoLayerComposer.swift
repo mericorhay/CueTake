@@ -20,8 +20,19 @@ struct VideoFrameGeometry {
         if placement.isMirrored {
             transform = transform.concatenating(CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: width, ty: 0))
         }
+        // Keep the requested point centred as far as the source allows. Clamping by the visible
+        // half-width/height prevents an edge face from revealing black outside the source.
+        let halfVisibleX = min(0.5, target.width / factor / width / 2)
+        let halfVisibleY = min(0.5, target.height / factor / height / 2)
+        let requestedX = placement.fillsFrame ? (placement.focusX ?? 0.5) : 0.5
+        let requestedY = placement.fillsFrame ? (placement.focusY ?? 0.5) : 0.5
+        let focusX = min(max(requestedX, halfVisibleX), 1 - halfVisibleX)
+        let focusY = min(max(requestedY, halfVisibleY), 1 - halfVisibleY)
         transform = transform.concatenating(CGAffineTransform(scaleX: factor, y: factor))
-            .concatenating(CGAffineTransform(translationX: target.midX - width * factor / 2, y: target.midY - height * factor / 2))
+            .concatenating(CGAffineTransform(
+                translationX: target.midX - width * factor * focusX,
+                y: target.midY - height * factor * focusY
+            ))
         self.transform = transform
         self.crop = target.applying(transform.inverted()).intersection(source)
     }

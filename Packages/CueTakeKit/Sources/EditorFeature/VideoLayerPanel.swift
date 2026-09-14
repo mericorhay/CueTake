@@ -27,6 +27,7 @@ struct VideoLayerPanel: View {
                             VideoLayerTrimStrip(model: model, layer: layer)
                         }
                         actions(layer)
+                        smartReframe(layer)
                         placement(layer)
                         sound(layer)
                     }
@@ -95,7 +96,7 @@ struct VideoLayerPanel: View {
                     model.updateVideoLayer(layer.id) { $0.isHidden.toggle() }
                 }
                 chip("arrow.left.and.right.righttriangle.left.righttriangle.right", "editor.video.mirror", isOn: layer.placement.isMirrored) {
-                    model.updateVideoLayer(layer.id) { $0.placement.isMirrored.toggle() }
+                    model.toggleVideoLayerMirror(layer.id)
                 }
                 chip("diamond", "editor.video.keyframe") {
                     model.addVideoKeyframe(to: layer.id)
@@ -113,6 +114,102 @@ struct VideoLayerPanel: View {
     }
 
     // MARK: - Placement
+
+    private func smartReframe(_ layer: VideoLayer) -> some View {
+        let analyzing: Bool = {
+            if case .analyzing = model.subjectTracking { return true }
+            return false
+        }()
+        return Button {
+            Task { await model.smartReframeVideoLayer(layer.id) }
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(VideoLayerLane.tint.opacity(0.16))
+                    Image(systemName: "viewfinder")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(VideoLayerLane.tint)
+                        .symbolEffect(.breathe, options: .repeating, isActive: analyzing)
+                }
+                .frame(width: 42, height: 42)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("editor.video.smartReframe", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.ink)
+                    Text(trackingDetail)
+                        .dsFont(.sans, .regular, 10)
+                        .foregroundStyle(trackingDetailColor)
+                        .lineLimit(2)
+                        .contentTransition(.numericText())
+                }
+                Spacer(minLength: 8)
+                trackingAccessory
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(DS.Palette.hairline(0.06))
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(VideoLayerLane.tint.opacity(analyzing ? 0.5 : 0.16), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.dsPress(radius: 16))
+        .disabled(analyzing)
+        .animation(DS.Motion.snap, value: model.subjectTracking)
+    }
+
+    private var trackingDetail: String {
+        switch model.subjectTracking {
+        case .idle:
+            String(localized: "editor.video.smartReframe.hint", bundle: .module)
+        case .analyzing(let progress):
+            String(localized: "editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
+        case .applied(let points):
+            String(localized: "editor.video.smartReframe.done \(points)", bundle: .module)
+        case .noFace:
+            String(localized: "editor.video.smartReframe.noFace", bundle: .module)
+        case .failed:
+            String(localized: "editor.video.smartReframe.failed", bundle: .module)
+        }
+    }
+
+    private var trackingDetailColor: Color {
+        switch model.subjectTracking {
+        case .applied: VideoLayerLane.tint
+        case .noFace, .failed: DS.Palette.accentWarm
+        default: DS.Palette.ink(0.45)
+        }
+    }
+
+    @ViewBuilder
+    private var trackingAccessory: some View {
+        switch model.subjectTracking {
+        case .analyzing(let progress):
+            ProgressView(value: progress)
+                .progressViewStyle(.circular)
+                .tint(VideoLayerLane.tint)
+                .frame(width: 28, height: 28)
+        case .applied:
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 21, weight: .semibold))
+                .foregroundStyle(VideoLayerLane.tint)
+                .symbolEffect(.bounce, value: model.subjectTracking)
+        case .noFace, .failed:
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DS.Palette.accentWarm)
+                .frame(width: 28, height: 28)
+        case .idle:
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(DS.Palette.ink(0.35))
+                .frame(width: 28, height: 28)
+        }
+    }
 
     private func placement(_ layer: VideoLayer) -> some View {
         let current = layer.placement(at: model.playhead)

@@ -6,6 +6,14 @@ import Observation
 import SwiftUI
 import UIKit
 
+public enum SubjectTrackingState: Hashable, Sendable {
+    case idle
+    case analyzing(Double)
+    case applied(Int)
+    case noFace
+    case failed
+}
+
 /// Editor state: the playhead and which segment is being inspected.
 ///
 /// The timeline itself is never stored — it is derived from the project by `TimelineBuilder`,
@@ -36,6 +44,8 @@ public final class EditorModel {
     public var selectedEffect: TimelineEffect.ID?
     /// The additional movie being positioned above the main cut.
     public var selectedVideoLayer: VideoLayer.ID?
+    /// Progress and result of smart reframe for the selected added video.
+    public internal(set) var subjectTracking: SubjectTrackingState = .idle
     /// Decoded overlay pictures, by overlay. Filled when playback is prepared and when one is added.
     public internal(set) var overlayImages: [Overlay.ID: UIImage] = [:]
     /// Where this project's files live, once playback has been prepared.
@@ -869,6 +879,7 @@ extension EditorModel {
 
     public func select(videoLayer id: VideoLayer.ID?) {
         selectedVideoLayer = id
+        subjectTracking = .idle
         if id != nil {
             inspectedSegment = nil
             selectedAudio = nil
@@ -938,6 +949,25 @@ extension EditorModel {
         }
     }
 
+    /// Mirroring is a property of the whole source, including every smart-reframe point. Toggling
+    /// only the base placement made an animated layer turn itself back around at its first frame.
+    public func toggleVideoLayerMirror(_ id: VideoLayer.ID) {
+        updateVideoLayer(id, coalescing: "video-layer-mirror-\(id)") { value in
+            func mirrored(_ placement: VideoPlacement) -> VideoPlacement {
+                var placement = placement
+                placement.isMirrored.toggle()
+                placement.focusX = placement.focusX.map { 1 - $0 }
+                return placement
+            }
+            value.placement = mirrored(value.placement)
+            value.keyframes = value.keyframes.map {
+                var frame = $0
+                frame.placement = mirrored(frame.placement)
+                return frame
+            }
+        }
+    }
+
     /// Places the layer. A layer without keyframes simply moves; one that already animates gets a
     /// keyframe at the playhead. Adding a keyframe to every drag used to turn a plain move made in
     /// the middle of a layer into a slow slide from the old place.
@@ -967,6 +997,64 @@ extension EditorModel {
             } else {
                 value.placement = placement.bounded
             }
+        }
+    }
+
+    /// Follows the principal face inside this layer's existing rectangle. The layout stays where
+    /// the user put it; only the crop moves, so side-by-side and picture-in-picture remain intact.
+    public func smartReframeVideoLayer(_ id: VideoLayer.ID) async {
+        if case .analyzing = subjectTracking { return }
+        guard let layer = project.videoLayers.first(where: { $0.id == id }),
+              let recording = project.recording(id: layer.recordingID),
+              let mediaDirectory
+        else {
+            subjectTracking = .failed
+            return
+        }
+
+        pause()
+        subjectTracking = .analyzing(0)
+        let source = mediaDirectory.appending(
+            path: (recording.relativePath as NSString).lastPathComponent,
+            directoryHint: .notDirectory
+        )
+        do {
+            let focuses = try await SubjectTracker().faceFocus(
+                in: source,
+                sourceStart: layer.sourceRange.start.seconds,
+                duration: layer.duration
+            ) { [weak self] progress in
+                guard self?.selectedVideoLayer == id else { return }
+                self?.subjectTracking = .analyzing(progress)
+            }
+            guard let index = project.videoLayers.firstIndex(where: { $0.id == id }) else {
+                subjectTracking = .idle
+                return
+            }
+            let original = project.videoLayers[index]
+            record("editor.change.smartReframe", symbol: "viewfinder")
+            var placements = focuses.map { focus -> VideoKeyframe in
+                var placement = original.placement(at: original.start.seconds + focus.time)
+                placement.fillsFrame = true
+                placement.focusX = placement.isMirrored ? 1 - focus.x : focus.x
+                placement.focusY = focus.y
+                return VideoKeyframe(time: focus.time, placement: placement.bounded)
+            }
+            guard let first = placements.first else {
+                subjectTracking = .noFace
+                return
+            }
+            project.videoLayers[index].placement = first.placement
+            placements.removeFirst()
+            project.videoLayers[index].keyframes = placements
+            project.updatedAt = .now
+            subjectTracking = .applied(focuses.count)
+        } catch SubjectTrackingError.noFace {
+            subjectTracking = .noFace
+        } catch is CancellationError {
+            subjectTracking = .idle
+        } catch {
+            subjectTracking = .failed
         }
     }
 }
