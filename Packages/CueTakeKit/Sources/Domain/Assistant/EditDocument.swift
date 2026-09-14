@@ -420,10 +420,11 @@ extension EditDocument {
             overlays: overlays,
             effects: project.effects.isEmpty ? nil : project.effects.enumerated().map { i, effect in
                 let settings = effect.background
+                let kind = effect.filter != nil ? "filter" : (effect.sound != nil ? "sound" : "background")
                 return Effect(
                     id: "e\(i + 1)",
-                    kind: "background",
-                    style: settings?.style.rawValue,
+                    kind: kind,
+                    style: settings?.style.rawValue ?? effect.filter?.look.rawValue ?? effect.sound?.preset.rawValue,
                     from: r2(effect.start.seconds),
                     to: r2(effect.end),
                     strength: settings.flatMap { $0.usesStrength ? r2($0.strength) : nil },

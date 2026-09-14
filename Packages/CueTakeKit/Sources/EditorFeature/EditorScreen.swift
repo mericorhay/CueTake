@@ -308,6 +308,8 @@ public struct EditorScreen: View {
         }
         // Undo can bring back an overlay whose picture is not in memory.
         .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
+        // Filters are drawn by the compositor from a live copy: moved, stretched, changed, undone.
+        .onChange(of: model.project.effects) { model.syncLiveFilters() }
         .animation(DS.Motion.settle, value: model.selectedOverlay)
         .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
         .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
@@ -736,8 +738,13 @@ public struct EditorScreen: View {
         } else if let clip = model.selectedAudioClip {
             audioPanel(clip)
         } else if let effect = model.selectedEffectValue {
-            EffectInspector(model: model, effect: effect) {
-                withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+            let close = { withAnimation(DS.Motion.settle) { model.select(effect: nil) } }
+            if effect.filter != nil {
+                FilterInspector(model: model, effect: effect, onClose: close)
+            } else if effect.sound != nil {
+                SoundInspector(model: model, effect: effect, onClose: close)
+            } else {
+                EffectInspector(model: model, effect: effect, onClose: close)
             }
         } else if let overlay = model.selectedOverlayValue {
             OverlayInspector(

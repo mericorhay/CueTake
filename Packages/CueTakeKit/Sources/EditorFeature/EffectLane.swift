@@ -2,13 +2,13 @@ import DesignSystem
 import Domain
 import SwiftUI
 
-/// What was applied where, under the clips: one row per kind of tool, each application a bar as
-/// long as the stretch it covers.
+/// What was applied where, under the clips: rows for backgrounds, filters, sound effects and
+/// playback, each application a bar as long as the stretch it covers.
 ///
 /// Before this a background, a speed-up or a freeze lived inside a panel and at most a badge on a
 /// clip, so after a few edits nobody could tell what had been done to which seconds. Here it reads
-/// like a sentence — "blur from 0:04 to 0:09, 1.5× over the example" — and every bar is the handle
-/// for changing it: tap to open it, drag to move it, pull an end to stretch it.
+/// like a sentence — "blur from 0:04 to 0:09, warm look over the example, echo on the last line" —
+/// and every bar is the handle for changing it: tap to open it, drag to move it, pull an end.
 struct EffectLane: View {
     @Bindable var model: EditorModel
     let scale: Double
@@ -16,16 +16,51 @@ struct EffectLane: View {
     var onOpenPlayback: (Segment.ID) -> Void = { _ in }
 
     static let rowHeight: CGFloat = 24
-    private static let space = "effectLane"
     static let rowSpacing: CGFloat = 3
+    private static let space = "effectLane"
     static let tint = Color(red: 0.4, green: 0.86, blue: 0.76)
+    static let filterTint = Color(red: 1.0, green: 0.8, blue: 0.36)
+    static let soundTint = Color(red: 0.74, green: 0.66, blue: 1.0)
     static let playbackTint = DS.Palette.accentWarm
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// The kinds of effect, each in rows of its own.
+    enum Group: CaseIterable {
+        case background, filter, sound
+
+        func contains(_ effect: TimelineEffect) -> Bool {
+            switch self {
+            case .background: effect.background != nil
+            case .filter: effect.filter != nil
+            case .sound: effect.sound != nil
+            }
+        }
+
+        var tint: Color {
+            switch self {
+            case .background: EffectLane.tint
+            case .filter: EffectLane.filterTint
+            case .sound: EffectLane.soundTint
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .background: "person.crop.rectangle"
+            case .filter: "camera.filters"
+            case .sound: "waveform"
+            }
+        }
+
+        static func of(_ effect: TimelineEffect) -> Group {
+            allCases.first { $0.contains(effect) } ?? .background
+        }
+    }
+
     // MARK: Layout
 
-    /// Background effects stacked into as many rows as overlaps need.
+    /// Effects stacked into as many rows as overlaps need.
     static func rows(for effects: [TimelineEffect]) -> [TimelineEffect.ID: Int] {
         var ends: [Double] = []
         var result: [TimelineEffect.ID: Int] = [:]
@@ -41,8 +76,8 @@ struct EffectLane: View {
         return result
     }
 
-    static func backgroundRows(in project: Project) -> Int {
-        let effects = project.effects.filter { $0.background != nil }
+    static func rows(of group: Group, in project: Project) -> Int {
+        let effects = project.effects.filter(group.contains)
         guard !effects.isEmpty else { return 0 }
         return (rows(for: effects).values.max() ?? 0) + 1
     }
@@ -52,7 +87,7 @@ struct EffectLane: View {
     }
 
     static func rowCount(in project: Project) -> Int {
-        backgroundRows(in: project) + (hasPlaybackRow(in: project) ? 1 : 0)
+        Group.allCases.reduce(0) { $0 + rows(of: $1, in: project) } + (hasPlaybackRow(in: project) ? 1 : 0)
     }
 
     static func height(in project: Project) -> CGFloat {
@@ -61,57 +96,71 @@ struct EffectLane: View {
         return CGFloat(count) * rowHeight + CGFloat(count - 1) * rowSpacing
     }
 
+    /// Where each group's rows begin, and the playback row after them.
+    static func firstRows(in project: Project) -> (groups: [Group: Int], playback: Int) {
+        var first: [Group: Int] = [:]
+        var next = 0
+        for group in Group.allCases {
+            first[group] = next
+            next += rows(of: group, in: project)
+        }
+        return (first, next)
+    }
+
     var body: some View {
-        let backgrounds = model.project.effects.filter { $0.background != nil }
-        let placement = Self.rows(for: backgrounds)
-        let backgroundRows = Self.backgroundRows(in: model.project)
+        let project = model.project
+        let layout = Self.firstRows(in: project)
 
         ZStack(alignment: .topLeading) {
-            ForEach(backgrounds) { effect in
-                backgroundBar(effect)
-                    .frame(width: max(CGFloat(effect.duration.seconds * scale) - 2, 18), height: Self.rowHeight)
-                    .offset(
-                        x: CGFloat(effect.start.seconds * scale),
-                        y: CGFloat(placement[effect.id] ?? 0) * (Self.rowHeight + Self.rowSpacing)
-                    )
-                    .zIndex(model.selectedEffect == effect.id ? 1 : 0)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
+            ForEach(Group.allCases, id: \.self) { group in
+                let effects = project.effects.filter(group.contains)
+                let placement = Self.rows(for: effects)
+                ForEach(effects) { effect in
+                    effectBar(effect, group: group)
+                        .frame(width: max(CGFloat(effect.duration.seconds * scale) - 2, 18), height: Self.rowHeight)
+                        .offset(
+                            x: CGFloat(effect.start.seconds * scale),
+                            y: CGFloat((layout.groups[group] ?? 0) + (placement[effect.id] ?? 0)) * (Self.rowHeight + Self.rowSpacing)
+                        )
+                        .zIndex(model.selectedEffect == effect.id ? 1 : 0)
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
+                }
             }
 
-            if Self.hasPlaybackRow(in: model.project) {
-                ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
+            if Self.hasPlaybackRow(in: project) {
+                ForEach(Array(project.segments.enumerated()), id: \.element.id) { index, segment in
                     if segment.playback.isModified {
                         playbackBar(segment, at: index)
                             .frame(width: max(CGFloat(segment.barWeight * scale) - 3, 18), height: Self.rowHeight)
                             .offset(
                                 x: CGFloat(model.start(at: index) * scale),
-                                y: CGFloat(backgroundRows) * (Self.rowHeight + Self.rowSpacing)
+                                y: CGFloat(layout.playback) * (Self.rowHeight + Self.rowSpacing)
                             )
                             .transition(.opacity)
                     }
                 }
             }
         }
-        .frame(height: Self.height(in: model.project), alignment: .topLeading)
+        .frame(height: Self.height(in: project), alignment: .topLeading)
         .coordinateSpace(.named(Self.space))
-        .animation(reduceMotion ? nil : DS.Motion.settle, value: model.project.effects.count)
+        .animation(reduceMotion ? nil : DS.Motion.settle, value: project.effects.count)
     }
 
-    // MARK: Backgrounds
+    // MARK: Effects
 
-    private func backgroundBar(_ effect: TimelineEffect) -> some View {
+    private func effectBar(_ effect: TimelineEffect, group: Group) -> some View {
         let selected = model.selectedEffect == effect.id
-        let settings = effect.background ?? BackgroundSettings(style: .blur)
-        let width = max(CGFloat(effect.duration.seconds * scale) - 2, 18)
+        let rendering = group == .background && model.backgroundProgress != nil
+            && (effect.background.map(model.isRenderingBackground) ?? false)
 
         return HStack(spacing: 5) {
-            Image(systemName: "person.crop.rectangle")
+            Image(systemName: group.symbol)
                 .font(.system(size: 9, weight: .bold))
-            Text(Self.summary(of: settings))
+            Text(Self.summary(of: effect))
                 .dsFont(.sans, .semibold, 10)
                 .lineLimit(1)
             Spacer(minLength: 0)
-            if model.backgroundProgress != nil, isRendering(effect) {
+            if rendering {
                 ProgressView()
                     .controlSize(.mini)
                     .tint(DS.Palette.inkInverse)
@@ -119,8 +168,7 @@ struct EffectLane: View {
         }
         .foregroundStyle(DS.Palette.inkInverse)
         .padding(.horizontal, selected ? 12 : 7)
-        .frame(width: width, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Self.tint.opacity(selected ? 1 : 0.72)))
+        .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(group.tint.opacity(selected ? 1 : 0.72)))
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0)
@@ -148,11 +196,6 @@ struct EffectLane: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
-    }
-
-    private func isRendering(_ effect: TimelineEffect) -> Bool {
-        guard let settings = effect.background else { return false }
-        return model.isRenderingBackground(settings)
     }
 
     // MARK: Playback
@@ -183,6 +226,19 @@ struct EffectLane: View {
     }
 
     // MARK: Labels
+
+    static func summary(of effect: TimelineEffect) -> String {
+        if let settings = effect.background { return summary(of: settings) }
+        if let filter = effect.filter {
+            let name = FilterPresets.label(filter.look)
+            return filter.look == .natural || filter.intensity > 0.999 ? name : "\(name) · %\(Int((filter.intensity * 100).rounded()))"
+        }
+        if let sound = effect.sound {
+            let name = SoundPresets.label(sound.preset)
+            return abs(sound.volume) > 0.05 ? "\(name) · \(String(format: "%+.0f dB", sound.volume))" : name
+        }
+        return ""
+    }
 
     static func summary(of settings: BackgroundSettings) -> String {
         let name = ToolDock.label(settings.style)

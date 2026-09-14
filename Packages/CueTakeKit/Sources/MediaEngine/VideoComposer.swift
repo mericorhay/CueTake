@@ -47,7 +47,14 @@ public struct VideoComposer: Sendable {
     ///   stores paths relative to the project because the container path changes between installs.
     /// - Parameter renderBackgrounds: render any missing background replacement first (export).
     ///   The preview passes false and plays those clips as shot until the editor's own render is done.
-    public func compose(project: Project, mediaDirectory: URL, renderBackgrounds: Bool = true) async throws -> Assembled {
+    /// - Parameter liveFilters: where the compositor reads filters from; the editor passes its own
+    ///   so a slider changes the picture without a rebuild. Nil reads them from `project`.
+    public func compose(
+        project: Project,
+        mediaDirectory: URL,
+        renderBackgrounds: Bool = true,
+        liveFilters: LiveFilters? = nil
+    ) async throws -> Assembled {
         let composition = AVMutableComposition()
         guard
             let videoTrack = composition.addMutableTrack(
@@ -71,6 +78,9 @@ public struct VideoComposer: Sendable {
 
         var cursor = CMTime.zero
         var instructions: [AVMutableVideoCompositionInstruction] = []
+        /// The voice's level from each moment on, for sound effects that change it.
+        var voiceLevels: [(time: CMTime, gain: Float)] = []
+        var effectTracks: [String: AVAssetTrack] = [:]
 
         for (segmentIndex, segment) in project.segments.enumerated() {
             guard let take = segment.selectedTake,
@@ -243,6 +253,56 @@ public struct VideoComposer: Sendable {
             // frame is asked for silence — a held picture playing a second of sound under it is
             // the one thing a freeze must never do.
             var hasAudio = false
+            let sounds = playback.freeze == nil && !playback.isReversed ? project.soundStretches(ofSegmentAt: segmentIndex) : []
+            if sounds.contains(where: { $0.sound != nil }) {
+                // Sound effects over part of the clip: the voice is laid in stretch by stretch, each
+                // from the voice as recorded (or repaired) or from its effect file, all of them on
+                // the recording's own clock.
+                var voiceFile: URL?
+                var baseTrack: AVAssetTrack?
+                if project.voiceEffects.isActive,
+                   let url = await cleaner.cleanedAudio(for: recording, effects: project.voiceEffects, in: mediaDirectory) {
+                    voiceFile = url
+                    baseTrack = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first
+                }
+                if baseTrack == nil {
+                    baseTrack = try? await original.loadTracks(withMediaType: .audio).first
+                    voiceFile = await VoiceCleaner.extractedVoice(for: recording, in: mediaDirectory)
+                }
+                let voiceToken = project.voiceEffects.isActive ? AudioEffectRenderer.token(for: project.voiceEffects) : "raw"
+                var audioCursor = cursor
+                for stretch in sounds {
+                    let from = CMTime(seconds: stretch.from * speed, preferredTimescale: 600)
+                    let to = stretch.to >= segment.barWeight - 0.001
+                        ? range.duration
+                        : CMTimeMinimum(range.duration, CMTime(seconds: stretch.to * speed, preferredTimescale: 600))
+                    guard to > from else { continue }
+                    let piece = CMTimeRange(start: originalStart + from, duration: to - from)
+                    let pieceTarget = CMTime(seconds: piece.duration.seconds / speed, preferredTimescale: 600)
+
+                    var track = baseTrack
+                    if let settings = stretch.sound, settings.needsRender, let voiceFile {
+                        let key = "\(recording.id)-\(voiceToken)-\(settings.token)"
+                        if effectTracks[key] == nil,
+                           let url = await SoundEffectRenderer().rendered(settings, recording: recording, voice: voiceFile, voiceToken: voiceToken, in: mediaDirectory),
+                           let rendered = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first {
+                            effectTracks[key] = rendered
+                        }
+                        track = effectTracks[key] ?? baseTrack
+                    }
+                    if let track, (try? audioTrack.insertTimeRange(piece, of: track, at: audioCursor)) != nil {
+                        hasAudio = true
+                        if abs(pieceTarget.seconds - piece.duration.seconds) > 0.001 {
+                            audioTrack.scaleTimeRange(CMTimeRange(start: audioCursor, duration: piece.duration), toDuration: pieceTarget)
+                        }
+                    }
+                    voiceLevels.append((audioCursor, Float(stretch.sound?.gain ?? 1)))
+                    audioCursor = audioCursor + pieceTarget
+                }
+                cursor = cursor + target
+                continue
+            }
+            voiceLevels.append((cursor, 1))
             if playback.freeze == nil, !playback.isReversed, project.voiceEffects.isActive {
                 if cleanedVoice[recording.id] == nil,
                    let url = await cleaner.cleanedAudio(for: recording, effects: project.voiceEffects, in: mediaDirectory),
@@ -278,7 +338,8 @@ public struct VideoComposer: Sendable {
             project: project,
             mediaDirectory: mediaDirectory,
             into: composition,
-            voiceTrack: audioTrack
+            voiceTrack: audioTrack,
+            voiceLevels: voiceLevels
         )
         let layered = try await addVideoLayers(project: project, directory: mediaDirectory, composition: composition, base: instructions, render: renderSize)
         let combinedMix = audioMix ?? AVMutableAudioMix()
@@ -291,6 +352,13 @@ public struct VideoComposer: Sendable {
             timescale: CMTimeScale(max(24, project.format.frameRate))
         )
         videoComposition.instructions = layered.instructions
+        // Filters need a compositor of their own. Only then: every other project keeps the
+        // system's, which is also the only one the export's caption tool works with.
+        if project.effects.contains(where: { $0.filter != nil }) {
+            let filters = liveFilters ?? LiveFilters(project.effects)
+            videoComposition.customVideoCompositorClass = FilterCompositor.self
+            videoComposition.instructions = layered.instructions.map { FilterInstruction($0, filters: filters) }
+        }
 
         return Assembled(
             composition: composition,
@@ -317,7 +385,8 @@ public struct VideoComposer: Sendable {
         project: Project,
         mediaDirectory: URL,
         into composition: AVMutableComposition,
-        voiceTrack: AVMutableCompositionTrack
+        voiceTrack: AVMutableCompositionTrack,
+        voiceLevels: [(time: CMTime, gain: Float)] = []
     ) async -> AVMutableAudioMix? {
 
         let renderer = AudioEffectRenderer()
@@ -381,7 +450,16 @@ public struct VideoComposer: Sendable {
         // The voice is named explicitly at full volume. Without an entry of its own it inherits
         // whatever the mix decides, and a track nobody described is a track that can surprise you.
         let voice = AVMutableAudioMixInputParameters(track: voiceTrack)
-        voice.setVolume(Float(min(max(project.mainVideoVolume, 0), 1)), at: .zero)
+        let mainVolume = Float(min(max(project.mainVideoVolume, 0), 1))
+        voice.setVolume(mainVolume, at: .zero)
+        // Sound effects raise or lower the voice over their stretch.
+        var lastTime = CMTime.negativeInfinity
+        var lastGain: Float = 1
+        for level in voiceLevels.sorted(by: { $0.time < $1.time }) where level.time > lastTime && level.gain != lastGain {
+            voice.setVolume(mainVolume * level.gain, at: level.time)
+            lastTime = level.time
+            lastGain = level.gain
+        }
         parameters.append(voice)
 
         let audioMix = AVMutableAudioMix()
@@ -430,6 +508,44 @@ public struct VideoComposer: Sendable {
         onProgress: (@MainActor @Sendable (Double) -> Void)? = nil
     ) async throws -> URL {
         try? FileManager.default.removeItem(at: destination)
+
+        // The caption tool only works with the system's compositor. A filtered video is written
+        // once with its filters, then captions and overlays are laid on that file.
+        if assembled.videoComposition.customVideoCompositorClass != nil {
+            let filtered = FileManager.default.temporaryDirectory
+                .appending(path: "filtered-\(UUID().uuidString).mov", directoryHint: .notDirectory)
+            defer { try? FileManager.default.removeItem(at: filtered) }
+            try await exportFiltered(assembled, to: filtered) { value in
+                await onProgress?(value * 0.6)
+            }
+            let asset = AVURLAsset(url: filtered)
+            let composition = AVMutableComposition()
+            let duration = try await asset.load(.duration)
+            if let video = try await asset.loadTracks(withMediaType: .video).first,
+               let track = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) {
+                try track.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: video, at: .zero)
+            }
+            if let audio = try await asset.loadTracks(withMediaType: .audio).first,
+               let track = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
+                try track.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: audio, at: .zero)
+            }
+            let plain = AVMutableVideoComposition()
+            plain.renderSize = assembled.videoComposition.renderSize
+            plain.frameDuration = assembled.videoComposition.frameDuration
+            if let videoTrack = composition.tracks(withMediaType: .video).first {
+                let instruction = AVMutableVideoCompositionInstruction()
+                instruction.timeRange = CMTimeRange(start: .zero, duration: duration)
+                instruction.layerInstructions = [AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)]
+                plain.instructions = [instruction]
+            }
+            var second = assembled
+            second.composition = composition
+            second.videoComposition = plain
+            second.audioMix = nil
+            return try await write(second, to: destination) { value in
+                onProgress?(0.6 + value * 0.4)
+            }
+        }
 
         // A passthrough preset ignores the video composition and hands back the source frames,
         // sideways and unscaled. The render size lives in the composition, so the preset only has
@@ -495,4 +611,37 @@ public struct VideoComposer: Sendable {
 private struct ProgressReader: @unchecked Sendable {
     let session: AVAssetExportSession
     var value: Double { Double(session.progress) }
+}
+
+extension VideoComposer {
+    /// The first of two passes for a filtered video: the picture through the filter compositor and
+    /// the mixed sound, with no captions.
+    func exportFiltered(
+        _ assembled: Assembled,
+        to destination: URL,
+        onProgress: @escaping @Sendable (Double) async -> Void
+    ) async throws {
+        let preset = assembled.format.resolution.prefersHEVC ? AVAssetExportPresetHEVCHighestQuality : AVAssetExportPresetHighestQuality
+        guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset) else {
+            throw ComposeError.exportFailed("no export session")
+        }
+        session.videoComposition = assembled.videoComposition
+        session.audioMix = assembled.audioMix
+        session.audioTimePitchAlgorithm = .spectral
+        let reader = ProgressReader(session: session)
+        let reporter = Task {
+            while !Task.isCancelled {
+                let value = reader.value
+                await onProgress(value)
+                if value >= 0.999 { return }
+                try? await Task.sleep(for: .milliseconds(150))
+            }
+        }
+        defer { reporter.cancel() }
+        do {
+            try await session.export(to: destination, as: .mov)
+        } catch {
+            throw ComposeError.exportFailed(error.localizedDescription)
+        }
+    }
 }

@@ -102,6 +102,8 @@ public final class EditorModel {
     public internal(set) var readyBackgrounds: Set<String> = []
     @ObservationIgnored var backgroundJob: Task<Void, Never>?
     @ObservationIgnored var backgroundJobKey = ""
+    /// The filters the preview's compositor reads on every frame, kept in step with the project.
+    @ObservationIgnored let liveFilters = LiveFilters()
     /// Background replacements that could not be made this session, so they are not retried on
     /// every rebuild. Choosing the background again clears them.
     @ObservationIgnored var failedBackgrounds: Set<String> = []
@@ -137,7 +139,13 @@ public final class EditorModel {
         let generation = playbackGeneration
         let assembled: VideoComposer.Assembled
         do {
-            assembled = try await VideoComposer().compose(project: project, mediaDirectory: mediaDirectory, renderBackgrounds: false)
+            liveFilters.update(project.effects)
+            assembled = try await VideoComposer().compose(
+                project: project,
+                mediaDirectory: mediaDirectory,
+                renderBackgrounds: false,
+                liveFilters: liveFilters
+            )
         } catch {
             // A build that was superseded or cancelled keeps the picture that is there. Only a real
             // failure with nothing else to show says so — a black frame explained nothing.
@@ -250,7 +258,12 @@ public final class EditorModel {
             return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)"
         } + [
             // Where every background effect sits, and whether its render is there to play.
-            "effects:" + project.effects.map { "\($0.start.seconds)+\($0.duration.seconds):\($0.background?.token ?? "-")" }.joined(separator: ","),
+            // Filters are read live by the compositor; only whether there are any changes the build.
+            "effects:" + project.effects.filter { $0.filter == nil }.map { effect in
+                let sound = effect.sound.map { "\($0.token)\($0.volume)" } ?? "-"
+                return "\(effect.start.seconds)+\(effect.duration.seconds):\(effect.background?.token ?? "-"):\(sound)"
+            }.joined(separator: ","),
+            "filters:\(project.effects.contains { $0.filter != nil })",
             "backgrounds:" + backgroundSignature,
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",

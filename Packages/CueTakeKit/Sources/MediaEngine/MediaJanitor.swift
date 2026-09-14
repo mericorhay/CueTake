@@ -65,6 +65,17 @@ public enum MediaJanitor {
         for job in BackgroundRemover.jobs(for: project, in: mediaDirectory) {
             keep.insert(job.name)
         }
+        // Sound effects: the voice copied out, and each effect rendered from it.
+        let sounds = project.effects.compactMap(\.sound).filter(\.needsRender)
+        if !sounds.isEmpty {
+            let voiceToken = project.voiceEffects.isActive ? AudioEffectRenderer.token(for: project.voiceEffects) : "raw"
+            for recording in project.recordings where used.contains(recording.id) {
+                keep.insert("\(recording.id.uuidString)-voice.m4a")
+                for sound in sounds {
+                    keep.insert("\(recording.id.uuidString)-sfx-\(voiceToken)-\(sound.token).m4a")
+                }
+            }
+        }
         for segment in project.segments where segment.playback.isReversed {
             guard let take = segment.selectedTake else { continue }
             let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
@@ -102,6 +113,7 @@ public enum MediaJanitor {
             || file.contains("-voice")
             || file.hasSuffix("-dry.m4a")
             || file.contains("-bg-")
+            || file.contains("-sfx-")
             || file.range(of: #"^[0-9A-F-]{36}-[nvr]{1,3}\.m4a$"#, options: .regularExpression) != nil
     }
 

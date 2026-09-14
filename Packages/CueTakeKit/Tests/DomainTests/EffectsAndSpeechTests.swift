@@ -62,6 +62,26 @@ struct EffectsAndSpeechTests {
         #expect(abs(opened.effects[0].duration.seconds - 5) < 0.001)
     }
 
+    @Test func soundAndFilterEffectsCoverOnlyTheirOwnKind() throws {
+        var project = project(lengths: [10])
+        project.effects = [
+            blur(from: 0, to: 10),
+            TimelineEffect(start: MediaTime(seconds: 2), duration: MediaTime(seconds: 3), kind: .sound(SoundSettings(preset: .echo))),
+            TimelineEffect(start: .zero, duration: MediaTime(seconds: 10), kind: .filter(FilterSettings(look: .warm))),
+        ]
+        let sounds = project.soundStretches(ofSegmentAt: 0)
+        #expect(sounds.count == 3)
+        #expect(sounds[1].sound?.preset == .echo && abs(sounds[1].from - 2) < 0.001 && abs(sounds[1].to - 5) < 0.001)
+        // Backgrounds ignore the sound and the filter.
+        #expect(project.stretches(ofSegmentAt: 0).count == 1)
+
+        let data = try JSONEncoder().encode(project)
+        let opened = try JSONDecoder().decode(Project.self, from: data)
+        #expect(opened.effects.map(\.kind) == project.effects.map(\.kind))
+        #expect(SoundSettings(preset: .deep).pitch == -5)
+        #expect(SoundSettings(preset: .echo, amount: 0.5).token != SoundSettings(preset: .echo, amount: 0.9).token)
+    }
+
     @Test func settingsThatLookDifferentRenderDifferentFiles() {
         let soft = BackgroundSettings(style: .blur, strength: 0.2)
         let strong = BackgroundSettings(style: .blur, strength: 0.8)

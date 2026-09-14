@@ -18,11 +18,11 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, background, text, image, video, captions, audio, delete, more
+        case ai, split, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { self == .trim || self == .speed || self == .ai || self == .background }
+        var opensPanel: Bool { [.trim, .speed, .ai, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -90,6 +90,7 @@ struct ToolDock: View {
         case .split: model.canSplitAtPlayhead || (model.selectedVideoLayer.map(model.canSplitVideoLayer) ?? false)
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .background: index != nil
+        case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .text, .image: true
         }
@@ -155,6 +156,8 @@ struct ToolDock: View {
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .background: glyph.symbolEffect(.bounce, value: count)
         case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
+        case .filter: glyph.symbolEffect(.bounce, value: count)
+        case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
     }
@@ -166,6 +169,8 @@ struct ToolDock: View {
         case .text: "textformat"
         case .image: "photo.badge.plus"
         case .video: "rectangle.split.2x1"
+        case .filter: "camera.filters"
+        case .sound: "waveform.badge.plus"
         case .split: "scissors"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
@@ -183,6 +188,8 @@ struct ToolDock: View {
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
         case .video: String(localized: "editor.dock.video", bundle: .module)
+        case .filter: String(localized: "editor.dock.filter", bundle: .module)
+        case .sound: String(localized: "editor.dock.sound", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
@@ -205,8 +212,15 @@ struct ToolDock: View {
             model.select(overlay: nil)
             model.select(effect: nil)
         }
-        // A background already under the playhead opens for editing rather than stacking another.
-        if item == .background, let existing = model.backgroundAtPlayhead {
+        // An effect of the same kind already under the playhead opens for editing rather than
+        // stacking another on top of it.
+        let existing: TimelineEffect? = switch item {
+        case .background: model.backgroundAtPlayhead
+        case .filter: model.project.effects.last { $0.filter != nil && $0.start.seconds <= model.playhead + 0.001 && model.playhead < $0.end - 0.001 }
+        case .sound: model.project.effects.last { $0.sound != nil && $0.start.seconds <= model.playhead + 0.001 && model.playhead < $0.end - 0.001 }
+        default: nil
+        }
+        if let existing {
             withAnimation(DS.Motion.settle) { model.select(effect: existing.id) }
             return
         }
@@ -234,7 +248,7 @@ struct ToolDock: View {
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
-        case .trim, .speed, .ai, .background: break
+        case .trim, .speed, .ai, .background, .filter, .sound: break
         }
     }
 
@@ -284,6 +298,8 @@ struct ToolDock: View {
                     case .trim: trimPanel(at: index)
                     case .speed: speedPanel(at: index)
                     case .background: backgroundPanel(at: index)
+                    case .filter: filterPanel(at: index)
+                    case .sound: soundPanel(at: index)
                     default: EmptyView()
                     }
                 }
@@ -534,7 +550,98 @@ struct ToolDock: View {
         }
     }
 
-    private func reachChip(_ reach: BackgroundReach, _ key: String.LocalizationValue) -> some View {
+    /// Where a new effect goes and when: the same three choices for every effect.
+    private func reachRow(at index: Int, tint: Color) -> some View {
+        let span = backgroundSpan(at: index)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                reachChip(.clip, "editor.background.reach.clip", tint: tint)
+                reachChip(.fromHere, "editor.background.reach.here", tint: tint)
+                reachChip(.whole, "editor.background.reach.whole", tint: tint)
+            }
+            Text(verbatim: "\(MediaTime(seconds: span.lowerBound).preciseTimecode) – \(MediaTime(seconds: span.upperBound).preciseTimecode)")
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(DS.Palette.ink(0.5))
+                .contentTransition(.numericText())
+        }
+    }
+
+    /// A colour look over a stretch: pick one, it lands on the timeline selected.
+    private func filterPanel(at index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            reachRow(at: index, tint: EffectLane.filterTint)
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(FilterPresets.looks.filter { $0 != .natural } + [.natural], id: \.self) { look in
+                        Button {
+                            let range = backgroundSpan(at: index)
+                            open = nil
+                            withAnimation(DS.Motion.settle) {
+                                model.addEffect(.filter(FilterSettings(look: look)), from: range.lowerBound, to: range.upperBound)
+                            }
+                        } label: {
+                            VStack(spacing: 6) {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(FilterPresets.swatch(look))
+                                    .frame(width: 52, height: 52)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .strokeBorder(DS.Palette.hairline(0.12), lineWidth: 1)
+                                    }
+                                Text(FilterPresets.label(look))
+                                    .dsFont(.sans, .medium, 10)
+                                    .foregroundStyle(DS.Palette.ink(0.6))
+                            }
+                        }
+                        .buttonStyle(.dsPress(radius: 10))
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+            Text("editor.filter.hint", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.45))
+        }
+    }
+
+    /// A sound effect on the voice over a stretch.
+    private func soundPanel(at index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            reachRow(at: index, tint: EffectLane.soundTint)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 4), spacing: 7) {
+                ForEach(SoundPresets.presets, id: \.self) { preset in
+                    Button {
+                        let range = backgroundSpan(at: index)
+                        open = nil
+                        withAnimation(DS.Motion.settle) {
+                            model.addEffect(.sound(SoundSettings(preset: preset)), from: range.lowerBound, to: range.upperBound)
+                        }
+                    } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: SoundPresets.symbol(preset))
+                                .font(.system(size: 15, weight: .medium))
+                            Text(SoundPresets.label(preset))
+                                .dsFont(.sans, .medium, 10)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .foregroundStyle(DS.Palette.ink(0.85))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(DS.Palette.hairline(0.07)))
+                    }
+                    .buttonStyle(.dsPress(radius: 13))
+                }
+            }
+            Text("editor.sound.hint", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.45))
+        }
+    }
+
+    private func reachChip(_ reach: BackgroundReach, _ key: String.LocalizationValue, tint: Color = EffectLane.tint) -> some View {
         let isOn = backgroundReach == reach
         return Button {
             withAnimation(DS.Motion.snap) { backgroundReach = reach }
@@ -544,7 +651,7 @@ struct ToolDock: View {
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 9)
-                .background(Capsule().fill(isOn ? EffectLane.tint : DS.Palette.hairline(0.07)))
+                .background(Capsule().fill(isOn ? tint : DS.Palette.hairline(0.07)))
         }
         .buttonStyle(.dsPress(radius: 20))
         .accessibilityAddTraits(isOn ? .isSelected : [])

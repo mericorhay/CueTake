@@ -16,6 +16,10 @@ public struct TimelineEffect: Identifiable, Hashable, Sendable, Codable {
     public enum Kind: Hashable, Sendable, Codable {
         /// Everything behind the person replaced.
         case background(BackgroundSettings)
+        /// A colour look over the picture.
+        case filter(FilterSettings)
+        /// A treatment of the voice in the footage.
+        case sound(SoundSettings)
     }
 
     public init(id: UUID = UUID(), start: MediaTime, duration: MediaTime, kind: Kind) {
@@ -31,9 +35,15 @@ public struct TimelineEffect: Identifiable, Hashable, Sendable, Codable {
     public var end: Double { start.seconds + duration.seconds }
 
     public var background: BackgroundSettings? {
-        switch kind {
-        case .background(let settings): settings
-        }
+        if case .background(let settings) = kind { settings } else { nil }
+    }
+
+    public var filter: FilterSettings? {
+        if case .filter(let settings) = kind { settings } else { nil }
+    }
+
+    public var sound: SoundSettings? {
+        if case .sound(let settings) = kind { settings } else { nil }
     }
 
     /// Whether any of it falls between `from` and `to`, on the finished video.
@@ -127,21 +137,29 @@ extension Project {
     /// couple of frames are merged: a sliver that short cannot be seen and costs a whole piece of
     /// composition. A frozen clip holds one frame, so it is one stretch.
     public func stretches(ofSegmentAt index: Int) -> [ClipStretch] {
+        pieces(ofSegmentAt: index) { $0.background }.map { ClipStretch(from: $0.from, to: $0.to, background: $0.value) }
+    }
+
+    /// A clip cut at every edge of the sound effects laid over it.
+    public func soundStretches(ofSegmentAt index: Int) -> [SoundStretch] {
+        pieces(ofSegmentAt: index) { $0.sound }.map { SoundStretch(from: $0.from, to: $0.to, sound: $0.value) }
+    }
+
+    private func pieces<Value: Hashable>(
+        ofSegmentAt index: Int,
+        _ value: (TimelineEffect) -> Value?
+    ) -> [(from: Double, to: Double, value: Value?)] {
         guard segments.indices.contains(index) else { return [] }
         let segment = segments[index]
         let start = timelineStart(ofSegmentAt: index)
         let length = segment.barWeight
-        let touching = effects(from: start, to: start + length).filter { $0.background != nil }
-        guard !touching.isEmpty else { return [ClipStretch(from: 0, to: length, background: nil)] }
-
-        func top(at local: Double) -> BackgroundSettings? {
-            touching.last { $0.start.seconds <= start + local && $0.end > start + local }?.background
-        }
+        let touching = effects(from: start, to: start + length).filter { value($0) != nil }
+        guard !touching.isEmpty else { return [(0, length, nil)] }
 
         if segment.playback.freeze != nil {
-            // The most-covering effect, so a background that holds most of the frozen frame shows.
+            // The most-covering effect, so one that holds most of the frozen frame shows.
             let best = touching.max { overlap($0, start, length) < overlap($1, start, length) }
-            return [ClipStretch(from: 0, to: length, background: best?.background)]
+            return [(0, length, best.flatMap(value))]
         }
 
         var edges: [Double] = [0, length]
@@ -161,13 +179,14 @@ extension Project {
         }
         if merged.count < 2 { merged = [0, length] }
 
-        var result: [ClipStretch] = []
+        var result: [(from: Double, to: Double, value: Value?)] = []
         for (from, to) in zip(merged, merged.dropFirst()) {
-            let background = top(at: (from + to) / 2)
-            if let last = result.last, last.background == background {
+            let middle = start + (from + to) / 2
+            let top = touching.last { $0.start.seconds <= middle && $0.end > middle }.flatMap(value)
+            if let last = result.last, last.value == top {
                 result[result.count - 1].to = to
             } else {
-                result.append(ClipStretch(from: from, to: to, background: background))
+                result.append((from, to, top))
             }
         }
         return result
