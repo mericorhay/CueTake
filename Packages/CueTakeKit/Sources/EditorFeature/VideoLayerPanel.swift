@@ -22,6 +22,27 @@ struct VideoLayerPanel: View {
             }
             if let layer {
                 Text(layer.title).dsFont(.mono, .medium, 10).foregroundStyle(DS.Palette.ink(0.5))
+                HStack(spacing: 8) {
+                    Image(systemName: layer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                    Text("editor.video.volume", bundle: .module)
+                        .dsFont(.mono, .medium, 9)
+                        .foregroundStyle(DS.Palette.ink(0.45))
+                    Slider(
+                        value: Binding(
+                            get: { model.selectedVideoLayerValue?.volume ?? layer.volume },
+                            set: { value in model.updateVideoLayer(layer.id) { $0.volume = value } }
+                        ),
+                        in: 0...1
+                    )
+                    .tint(DS.Palette.lime)
+                    .disabled(layer.isMuted)
+                    .opacity(layer.isMuted ? 0.35 : 1)
+                    Text(verbatim: "\(Int(layer.volume * 100))%")
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .frame(width: 36, alignment: .trailing)
+                }
                 Text("editor.video.layout", bundle: .module).dsFont(.sans, .medium, 11).foregroundStyle(DS.Palette.ink(0.5))
                 HStack(spacing: 7) {
                     layoutButton(.sideBySide, "rectangle.split.2x1")
