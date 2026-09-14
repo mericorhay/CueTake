@@ -216,7 +216,10 @@ struct RootView: View {
                 isSaving: model.isSaving,
                 onSave: { model.saveNow() },
                 onTranscribe: { Task { await model.transcribeNewTakes() } },
-                onAIEdit: aiEdit
+                onAIEdit: aiEdit,
+                onAllowCloudAI: model.dependencies.assistantClient.isConfigured
+                    ? { model.settingsModel.update(\.aiProcessing, to: .allowCloud) }
+                    : nil
             )
             .onChange(of: model.editorModel.project) {
                 guard !model.editorModel.isAIDriving else { return }

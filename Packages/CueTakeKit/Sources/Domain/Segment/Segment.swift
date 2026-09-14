@@ -24,7 +24,8 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     public var playback: ClipPlayback
     /// Everything behind the person replaced, or nil for the footage as shot.
     public var background: ClipBackground? = nil
-    /// Crop targets for the selected take, in seconds from the take's source-range start.
+    /// Builds 55–56 kept crop targets here, in seconds from the take's start. Read once on open
+    /// and moved to the recording (`Recording.reframe`); nothing reads it after that.
     public var smartReframe: [VideoFocusKeyframe] = []
     public var metadata: [String: String]
 
@@ -166,7 +167,6 @@ extension Segment {
             metadata: metadata
         )
         copy.background = background
-        copy.smartReframe = smartReframe
         return copy
     }
 

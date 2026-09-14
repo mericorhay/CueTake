@@ -28,6 +28,22 @@ struct VideoLayerPanel: View {
                         }
                         actions(layer)
                         smartReframe(layer)
+                        if model.isReframed(videoLayer: layer.id), !isAnalyzing {
+                            Button {
+                                withAnimation(DS.Motion.settle) { model.removeReframe(fromVideoLayer: layer.id) }
+                            } label: {
+                                Label {
+                                    Text("editor.video.smartReframe.remove", bundle: .module)
+                                } icon: {
+                                    Image(systemName: "xmark.circle")
+                                }
+                                .dsFont(.sans, .medium, 12)
+                                .foregroundStyle(DS.Palette.ink(0.6))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 6)
+                            }
+                            .buttonStyle(.dsPress(radius: 14))
+                        }
                         placement(layer)
                         sound(layer)
                     }
@@ -115,11 +131,13 @@ struct VideoLayerPanel: View {
 
     // MARK: - Placement
 
+    private var isAnalyzing: Bool {
+        if case .analyzing = model.subjectTracking { return true }
+        return false
+    }
+
     private func smartReframe(_ layer: VideoLayer) -> some View {
-        let analyzing: Bool = {
-            if case .analyzing = model.subjectTracking { return true }
-            return false
-        }()
+        let analyzing = isAnalyzing
         return Button {
             Task { await model.smartReframeVideoLayer(layer.id) }
         } label: {

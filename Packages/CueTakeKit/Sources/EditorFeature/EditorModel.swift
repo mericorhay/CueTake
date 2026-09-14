@@ -281,7 +281,7 @@ public final class EditorModel {
             "backgrounds:" + backgroundSignature,
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
-            "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.segments.map(\.smartReframe))",
+            "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.recordings.map { $0.reframe ?? [] })",
             "video-layers:" + project.videoLayers.map { layer in
                 "\(layer.id)|\(layer.recordingID)|\(layer.start.seconds)|\(layer.sourceRange.start.seconds)|\(layer.sourceRange.duration.seconds)|\(layer.placement)|\(layer.volume)|\(layer.isMuted)|\(layer.isHidden)|\(layer.keyframes)|\(layer.focusKeyframes ?? [])"
             }.joined(separator: ","),
@@ -1035,16 +1035,19 @@ extension EditorModel {
                 guard self?.selectedVideoLayer == id else { return }
                 self?.subjectTracking = .analyzing(progress)
             }
-            guard let index = project.videoLayers.firstIndex(where: { $0.id == id }) else {
+            // The layer as it is now: it may have been trimmed or moved while the frames were read.
+            guard let index = project.videoLayers.firstIndex(where: { $0.id == id }),
+                  project.videoLayers[index].sourceRange.start == layer.sourceRange.start
+            else {
                 subjectTracking = .idle
                 return
             }
-            let original = project.videoLayers[index]
-            record("editor.change.smartReframe", symbol: "viewfinder")
             guard !focuses.isEmpty else {
                 subjectTracking = .noFace
                 return
             }
+            let mirrored = project.videoLayers[index].placement.isMirrored
+            record("editor.change.smartReframe", symbol: "viewfinder")
             project.videoLayers[index].separateLegacyTracking()
             project.videoLayers[index].placement.fillsFrame = true
             project.videoLayers[index].placement.focusX = nil
@@ -1057,7 +1060,7 @@ extension EditorModel {
                 return frame
             }
             project.videoLayers[index].focusKeyframes = focuses.map {
-                VideoFocusKeyframe(time: $0.time, x: original.placement.isMirrored ? 1 - $0.x : $0.x, y: $0.y)
+                VideoFocusKeyframe(time: $0.time, x: mirrored ? 1 - $0.x : $0.x, y: $0.y)
             }
             project.updatedAt = .now
             subjectTracking = .applied(focuses.count)
@@ -1070,52 +1073,88 @@ extension EditorModel {
         }
     }
 
-    /// Reframes every recorded piece of the primary cut. Each segment keeps its own source-time
-    /// track so trimming, retakes and different source files cannot bleed into one another.
+    /// True when the added video follows a face.
+    public func isReframed(videoLayer id: VideoLayer.ID) -> Bool {
+        !(project.videoLayers.first { $0.id == id }?.orderedFocusKeyframes.isEmpty ?? true)
+    }
+
+    /// Stops following the face: the crop goes back to the centre.
+    public func removeReframe(fromVideoLayer id: VideoLayer.ID) {
+        guard isReframed(videoLayer: id),
+              let index = project.videoLayers.firstIndex(where: { $0.id == id }) else { return }
+        record("editor.change.smartReframeRemoved", symbol: "viewfinder")
+        project.videoLayers[index].focusKeyframes = []
+        project.updatedAt = .now
+        subjectTracking = .idle
+    }
+
+    /// True when any recording of the main video follows a face.
+    public var isMainVideoReframed: Bool {
+        project.recordings.contains { !($0.reframe ?? []).isEmpty }
+    }
+
+    /// Stops following faces in the main video.
+    public func removeMainReframe() {
+        guard isMainVideoReframed else { return }
+        record("editor.change.smartReframeRemoved", symbol: "viewfinder")
+        for index in project.recordings.indices { project.recordings[index].reframe = nil }
+        project.updatedAt = .now
+        mainSubjectTracking = .idle
+    }
+
+    /// Reframes the primary cut. Faces are found once per recording file, across the part of it
+    /// the clips use, and kept in the file's own seconds — so splitting, trimming, speed and
+    /// choosing another take all stay on the face. Edits made while it reads are kept: only the
+    /// recordings' tracks are written at the end.
     public func smartReframeMainVideo() async {
         if case .analyzing = mainSubjectTracking { return }
         guard let mediaDirectory else { mainSubjectTracking = .failed; return }
-        let candidates = project.segments.indices.filter { project.segments[$0].selectedTake != nil }
-        guard !candidates.isEmpty else { mainSubjectTracking = .failed; return }
+        // Per file: the span from the first used second to the last.
+        var spans: [(recording: Recording, start: Double, end: Double)] = []
+        for take in project.segments.compactMap(\.selectedTake) {
+            guard let recording = project.recording(id: take.recordingID) else { continue }
+            let start = take.sourceRange.start.seconds, end = start + take.sourceRange.duration.seconds
+            if let i = spans.firstIndex(where: { $0.recording.id == recording.id }) {
+                spans[i].start = min(spans[i].start, start)
+                spans[i].end = max(spans[i].end, end)
+            } else {
+                spans.append((recording, start, end))
+            }
+        }
+        guard !spans.isEmpty else { mainSubjectTracking = .failed; return }
         pause()
         mainSubjectTracking = .analyzing(0)
-        let original = project
-        var completed = 0
-        var points = 0
+        var tracks: [Recording.ID: [VideoFocusKeyframe]] = [:]
         do {
-            var updated = project
-            for index in candidates {
+            for (done, span) in spans.enumerated() {
                 try Task.checkCancellation()
-                guard let take = updated.segments[index].selectedTake,
-                      let recording = updated.recording(id: take.recordingID) else { continue }
-                let url = mediaDirectory.appending(path: (recording.relativePath as NSString).lastPathComponent, directoryHint: .notDirectory)
-                let completedBefore = completed
+                let url = mediaDirectory.appending(path: (span.recording.relativePath as NSString).lastPathComponent, directoryHint: .notDirectory)
                 do {
                     let focuses = try await SubjectTracker().faceFocus(
                         in: url,
-                        sourceStart: take.sourceRange.start.seconds,
-                        duration: take.sourceRange.duration.seconds
+                        sourceStart: span.start,
+                        duration: span.end - span.start
                     ) { [weak self] local in
-                        self?.mainSubjectTracking = .analyzing((Double(completedBefore) + local) / Double(candidates.count))
+                        self?.mainSubjectTracking = .analyzing((Double(done) + local) / Double(spans.count))
                     }
-                    updated.segments[index].smartReframe = focuses.map { VideoFocusKeyframe(time: $0.time, x: $0.x, y: $0.y) }
-                    points += focuses.count
+                    tracks[span.recording.id] = focuses.map { VideoFocusKeyframe(time: span.start + $0.time, x: $0.x, y: $0.y) }
                 } catch SubjectTrackingError.noFace {
-                    updated.segments[index].smartReframe = []
+                    continue
+                } catch SubjectTrackingError.emptyRange {
+                    continue
                 }
-                completed += 1
             }
+            let points = tracks.values.reduce(0) { $0 + $1.count }
             guard points > 0 else { mainSubjectTracking = .noFace; return }
             record("editor.change.smartReframe", symbol: "viewfinder")
-            project = updated
-            project.mainVideoPlacement.fillsFrame = true
+            for index in project.recordings.indices {
+                if let track = tracks[project.recordings[index].id] { project.recordings[index].reframe = track }
+            }
             project.updatedAt = .now
             mainSubjectTracking = .applied(points)
         } catch is CancellationError {
-            project = original
             mainSubjectTracking = .idle
         } catch {
-            project = original
             mainSubjectTracking = .failed
         }
     }

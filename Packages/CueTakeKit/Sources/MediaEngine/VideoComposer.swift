@@ -236,45 +236,49 @@ public struct VideoComposer: Sendable {
                 let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
                 let pieceTimelineStart = (pieceCursor - cursor).seconds
                 let pieceTimelineEnd = pieceTimelineStart + pieceTarget.seconds
-                if segment.smartReframe.isEmpty {
+                let focuses = recording.reframe ?? []
+                let takeStart = take.sourceRange.start.seconds
+                let takeLength = take.sourceRange.duration.seconds
+                if focuses.isEmpty {
                     // Keep the long-standing static instruction for ordinary clips. A ramp with
                     // identical endpoints is needlessly rejected by some iOS AVFoundation builds
                     // when the source has been time-scaled.
                     let geometry = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: project.mainVideoPlacement, render: renderSize)
                     layer.setTransform(geometry.transform, at: pieceCursor)
                     layer.setCropRectangle(geometry.crop, at: pieceCursor)
-                }
-                let internalTimes = segment.smartReframe.compactMap { frame -> Double? in
-                    let sourceOffset = playback.isReversed
-                        ? max(0, take.sourceRange.duration.seconds - frame.time)
-                        : frame.time
-                    let time = playback.timelineSeconds(forSource: sourceOffset)
-                    return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
-                }
-                let geometryTimes = ([pieceTimelineStart] + internalTimes + [pieceTimelineEnd]).sorted()
-                for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where !segment.smartReframe.isEmpty && to > from {
-                    let firstPlacement = Self.mainPlacement(
-                        project.mainVideoPlacement,
-                        focuses: segment.smartReframe,
-                        sourceDuration: take.sourceRange.duration.seconds,
-                        playback: playback,
-                        timelineTime: from
-                    )
-                    let lastPlacement = Self.mainPlacement(
-                        project.mainVideoPlacement,
-                        focuses: segment.smartReframe,
-                        sourceDuration: take.sourceRange.duration.seconds,
-                        playback: playback,
-                        timelineTime: to
-                    )
-                    let first = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: firstPlacement, render: renderSize)
-                    let last = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: lastPlacement, render: renderSize)
-                    let ramp = CMTimeRange(
-                        start: cursor + CMTime(seconds: from, preferredTimescale: 600),
-                        end: cursor + CMTime(seconds: to, preferredTimescale: 600)
-                    )
-                    layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: ramp)
-                    layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: ramp)
+                } else {
+                    let internalTimes = focuses.compactMap { frame -> Double? in
+                        let offset = frame.time - takeStart
+                        guard offset >= 0, offset <= takeLength else { return nil }
+                        let time = playback.timelineSeconds(forSource: playback.isReversed ? takeLength - offset : offset)
+                        return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
+                    }
+                    let geometryTimes = ([pieceTimelineStart] + internalTimes + [pieceTimelineEnd]).sorted()
+                    func geometry(at time: Double) -> VideoFrameGeometry {
+                        let placement = Self.mainPlacement(
+                            project.mainVideoPlacement,
+                            focuses: focuses,
+                            takeStart: takeStart,
+                            takeLength: takeLength,
+                            playback: playback,
+                            timelineTime: time
+                        )
+                        return VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: placement, render: renderSize)
+                    }
+                    for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where to - from > 0.002 {
+                        let first = geometry(at: from)
+                        let last = geometry(at: to)
+                        let start = cursor + CMTime(seconds: from, preferredTimescale: 600)
+                        // A still face is a still frame: no ramp with equal ends.
+                        guard first.transform != last.transform || first.crop != last.crop else {
+                            layer.setTransform(first.transform, at: start)
+                            layer.setCropRectangle(first.crop, at: start)
+                            continue
+                        }
+                        let ramp = CMTimeRange(start: start, end: cursor + CMTime(seconds: to, preferredTimescale: 600))
+                        layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: ramp)
+                        layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: ramp)
+                    }
                 }
                 layer.setOpacity(Float(project.mainVideoPlacement.bounded.opacity), at: pieceCursor)
                 let instruction = AVMutableVideoCompositionInstruction()
@@ -412,19 +416,19 @@ public struct VideoComposer: Sendable {
         )
     }
 
-    /// The face point at a primary clip's timeline moment. Focus uses source time so changing speed
-    /// keeps it attached to the same frame; reverse simply reads the source track backwards.
+    /// The face point at a primary clip's timeline moment. Focus uses file time so changing speed,
+    /// trimming or splitting keeps it attached to the same frame; reverse reads the take backwards.
     private static func mainPlacement(
         _ base: VideoPlacement,
         focuses: [VideoFocusKeyframe],
-        sourceDuration: Double,
+        takeStart: Double,
+        takeLength: Double,
         playback: ClipPlayback,
         timelineTime: Double
     ) -> VideoPlacement {
         guard !focuses.isEmpty else { return base }
-        let sourceTime = playback.isReversed
-            ? max(0, sourceDuration - playback.sourceSeconds(forTimeline: timelineTime))
-            : playback.sourceSeconds(forTimeline: timelineTime)
+        let offset = min(max(playback.sourceSeconds(forTimeline: timelineTime), 0), takeLength)
+        let sourceTime = takeStart + (playback.isReversed ? takeLength - offset : offset)
         let ordered = focuses.sorted { $0.time < $1.time }
         var previous = ordered[0]
         var focus = previous

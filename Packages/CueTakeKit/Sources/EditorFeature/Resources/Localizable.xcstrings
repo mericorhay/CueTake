@@ -834,23 +834,6 @@
         }
       }
     },
-    "editor.ai.unavailable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI editing is off. Allow cloud AI in Settings → Privacy & AI to use it."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI kurgu kapalı. Kullanmak için Ayarlar → Gizlilik ve AI bölümünde bulut AI'a izin ver."
-          }
-        }
-      }
-    },
     "editor.ai.applied %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -881,6 +864,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld düzenlemeyi uygula"
+          }
+        }
+      }
+    },
+    "editor.ai.consent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud AI sends your video's words and edit structure, and its sound for better captions, to our server. You can turn it off again in Settings."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulut AI; videonun sözlerini ve kurgu yapısını, daha iyi altyazı için de sesini sunucumuza gönderir. İzni Ayarlar'dan tekrar kapatabilirsin."
+          }
+        }
+      }
+    },
+    "editor.ai.consent.allow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow cloud AI"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulut AI'a izin ver"
           }
         }
       }
@@ -2177,6 +2194,23 @@
         }
       }
     },
+    "editor.ai.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI editing is off. Allow cloud AI in Settings → Privacy & AI to use it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI kurgu kapalı. Kullanmak için Ayarlar → Gizlilik ve AI bölümünde bulut AI'a izin ver."
+          }
+        }
+      }
+    },
     "editor.ai.undo": {
       "extractionState": "manual",
       "localizations": {
@@ -3452,6 +3486,40 @@
         }
       }
     },
+    "editor.change.smartReframe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smart reframe applied"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akıllı kadraj uygulandı"
+          }
+        }
+      }
+    },
+    "editor.change.smartReframeRemoved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smart reframe removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akıllı kadraj kaldırıldı"
+          }
+        }
+      }
+    },
     "editor.change.speechVersion": {
       "extractionState": "manual",
       "localizations": {
@@ -3550,23 +3618,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri alındı: %@"
-          }
-        }
-      }
-    },
-    "editor.change.smartReframe": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smart reframe applied"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Akıllı kadraj uygulandı"
           }
         }
       }
@@ -7531,6 +7582,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yüz bulunuyor… %lld%%"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove smart reframe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akıllı kadrajı kaldır"
           }
         }
       }

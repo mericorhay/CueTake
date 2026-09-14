@@ -55,6 +55,9 @@ public struct Recording: Identifiable, Hashable, Sendable, Codable {
     /// What both listeners heard in this file, passage by passage. Nil until it has been heard, and
     /// for recordings heard before there were two listeners.
     public var speech: TranscriptVersions? = nil
+    /// Where the face is in this file, in seconds of the file itself. Kept on the recording rather
+    /// than on a clip so splitting, trimming and choosing another take all read the same track.
+    public var reframe: [VideoFocusKeyframe]? = nil
 
     public init(
         id: UUID = UUID(),

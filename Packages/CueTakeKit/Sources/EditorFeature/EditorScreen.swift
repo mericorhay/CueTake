@@ -37,7 +37,8 @@ public struct EditorScreen: View {
         isSaving: Bool = false,
         onSave: @escaping () -> Void = {},
         onTranscribe: @escaping () -> Void = {},
-        onAIEdit: AIRequester? = nil
+        onAIEdit: AIRequester? = nil,
+        onAllowCloudAI: (() -> Void)? = nil
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -52,9 +53,11 @@ public struct EditorScreen: View {
         self.onSave = onSave
         self.onTranscribe = onTranscribe
         self.onAIEdit = onAIEdit
+        self.onAllowCloudAI = onAllowCloudAI
     }
 
     private let onAIEdit: AIRequester?
+    private let onAllowCloudAI: (() -> Void)?
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
@@ -773,6 +776,7 @@ public struct EditorScreen: View {
                     onAddVideo: onAddVideo,
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
+                    onAllowCloudAI: onAllowCloudAI,
                     onAddImage: { pickingImage = true },
                     onShowAIChanges: { showsAIChanges = true },
                     open: $dockPanel

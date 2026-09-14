@@ -100,6 +100,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         adoptClipBackgrounds()
         // Freeze is gone from the app: held frames it made are removed, frozen clips play.
         removeFreezes()
+        // Smart reframe first kept its points on clips, relative to the take.
+        adoptClipReframes()
     }
 
     public var locale: Locale { Locale(identifier: localeIdentifier) }
@@ -200,6 +202,25 @@ extension Project {
         for index in segments.indices where segments[index].playback.freeze != nil {
             segments[index].playback.freeze = nil
             segments[index].metadata["freezeFrame"] = nil
+        }
+    }
+}
+
+extension Project {
+    /// Moves reframe points kept on clips (builds 55–56) to their recordings, in file seconds.
+    mutating func adoptClipReframes() {
+        for index in segments.indices where !segments[index].smartReframe.isEmpty {
+            let points = segments[index].smartReframe
+            segments[index].smartReframe = []
+            guard let take = segments[index].selectedTake,
+                  let recording = recordings.firstIndex(where: { $0.id == take.recordingID })
+            else { continue }
+            let start = take.sourceRange.start.seconds
+            let moved = points.map { VideoFocusKeyframe(time: start + $0.time, x: $0.x, y: $0.y) }
+            let kept = (recordings[recording].reframe ?? []).filter {
+                $0.time < start || $0.time > start + take.sourceRange.duration.seconds
+            }
+            recordings[recording].reframe = (kept + moved).sorted { $0.time < $1.time }
         }
     }
 }

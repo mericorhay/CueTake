@@ -14,6 +14,8 @@ struct ToolDock: View {
     let onMore: () -> Void
     /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
     var aiRequest: AIRequester? = nil
+    /// Turns cloud AI on from the AI panel. Nil in a build without the assistant.
+    var onAllowCloudAI: (() -> Void)? = nil
     var onAddImage: () -> Void = {}
     var onShowAIChanges: () -> Void = {}
 
@@ -296,14 +298,7 @@ struct ToolDock: View {
                             }
                         )
                     } else {
-                        Label {
-                            Text("editor.ai.unavailable", bundle: .module)
-                                .dsFont(.sans, .regular, 12, lineHeight: 1.4)
-                        } icon: {
-                            Image(systemName: "lock.shield")
-                                .foregroundStyle(DS.Palette.accentWarm)
-                        }
-                        .foregroundStyle(DS.Palette.ink(0.65))
+                        aiConsentPanel
                     }
                 } else if item == .reframe {
                     mainReframePanel
@@ -314,7 +309,6 @@ struct ToolDock: View {
                     case .background: backgroundPanel(at: index)
                     case .filter: filterPanel(at: index)
                     case .sound: soundPanel(at: index)
-                    case .reframe: mainReframePanel
                     default: EmptyView()
                     }
                 }
@@ -330,11 +324,68 @@ struct ToolDock: View {
         )
     }
 
+    /// AI sends the video's words and structure to the server. Off by default, so the panel asks
+    /// right here instead of sending the user to Settings.
+    private var aiConsentPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                Text(onAllowCloudAI == nil ? "editor.ai.unavailable" : "editor.ai.consent", bundle: .module)
+                    .dsFont(.sans, .regular, 12, lineHeight: 1.4)
+                    .fixedSize(horizontal: false, vertical: true)
+            } icon: {
+                Image(systemName: "lock.shield")
+                    .foregroundStyle(DS.Palette.accentWarm)
+            }
+            .foregroundStyle(DS.Palette.ink(0.65))
+            if let onAllowCloudAI {
+                Button {
+                    withAnimation(DS.Motion.settle) { onAllowCloudAI() }
+                } label: {
+                    Label {
+                        Text("editor.ai.consent.allow", bundle: .module)
+                    } icon: {
+                        Image(systemName: "sparkles")
+                    }
+                    .dsFont(.sans, .semibold, 13)
+                    .foregroundStyle(DS.Palette.ink)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 11)
+                    .background(Capsule().fill(DS.Palette.hairline(0.1)))
+                }
+                .buttonStyle(.dsPress(radius: 22))
+            }
+        }
+    }
+
     private var mainReframePanel: some View {
-        let analyzing: Bool = {
-            if case .analyzing = model.mainSubjectTracking { return true }
-            return false
-        }()
+        VStack(spacing: 8) {
+            mainReframeButton
+            if model.isMainVideoReframed, !isMainAnalyzing {
+                Button {
+                    withAnimation(DS.Motion.settle) { model.removeMainReframe() }
+                } label: {
+                    Label {
+                        Text("editor.video.smartReframe.remove", bundle: .module)
+                    } icon: {
+                        Image(systemName: "xmark.circle")
+                    }
+                    .dsFont(.sans, .medium, 12)
+                    .foregroundStyle(DS.Palette.ink(0.6))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+                .buttonStyle(.dsPress(radius: 14))
+            }
+        }
+    }
+
+    private var isMainAnalyzing: Bool {
+        if case .analyzing = model.mainSubjectTracking { return true }
+        return false
+    }
+
+    private var mainReframeButton: some View {
+        let analyzing = isMainAnalyzing
         return Button {
             Task { await model.smartReframeMainVideo() }
         } label: {
