@@ -293,7 +293,7 @@ extension Project {
                     : nil
                 let adaptive = CaptionTimingEngine.range(
                     for: cue,
-                    transcript: Transcript(localeIdentifier: project.localeIdentifier, words: spoken),
+                    transcript: Transcript(localeIdentifier: localeIdentifier, words: spoken),
                     nextStart: nextCueStart
                 )
                 let relativeRange = adaptive ?? cue.range
