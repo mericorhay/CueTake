@@ -408,6 +408,9 @@ public struct EditorScreen: View {
                 // second set of them inside the frame would be two players arguing.
                 VideoPlayer(player: player)
                     .disabled(true)
+                    // A different player (another project) gets a fresh video view: the old view
+                    // would keep drawing the player it was made with.
+                    .id(ObjectIdentifier(player))
             } else {
                 RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
                     .fill(DS.Palette.camera)

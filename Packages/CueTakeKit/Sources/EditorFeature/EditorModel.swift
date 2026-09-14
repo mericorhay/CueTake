@@ -126,7 +126,6 @@ public final class EditorModel {
         playbackProblem = nil
 
         let wasPlaying = isPlaying
-        teardownPlayer()
         let item = AVPlayerItem(asset: assembled.composition)
         // Levels, fades and ducking in the preview too. An editor whose preview plays the music at
         // full volume and whose export ducks it is not previewing anything.
@@ -135,24 +134,33 @@ public final class EditorModel {
         // Without this the preview plays raw source frames while the export applies the framing,
         // which is the worst kind of editor: one that shows you something it will not deliver.
         item.videoComposition = assembled.videoComposition
-        let player = AVPlayer(playerItem: item)
-        // Often enough to look continuous, rarely enough not to fight the scrub.
-        timeObserver = player.addPeriodicTimeObserver(
-            forInterval: CMTime(seconds: 0.03, preferredTimescale: 600),
-            queue: .main
-        ) { [weak self] time in
-            MainActor.assumeIsolated {
-                guard let self, !self.isScrubbing, self.isPlaying else { return }
-                self.playhead = min(time.seconds, self.duration)
+
+        // One player for the life of the editor, with its item swapped. A new AVPlayer per rebuild
+        // left the preview black: the video view on screen kept drawing the player it was first
+        // given, which had just been stopped and emptied.
+        let player: AVPlayer
+        if let existing = self.player {
+            existing.pause()
+            existing.replaceCurrentItem(with: item)
+            player = existing
+        } else {
+            player = AVPlayer(playerItem: item)
+            // Often enough to look continuous, rarely enough not to fight the scrub.
+            timeObserver = player.addPeriodicTimeObserver(
+                forInterval: CMTime(seconds: 0.03, preferredTimescale: 600),
+                queue: .main
+            ) { [weak self] time in
+                MainActor.assumeIsolated {
+                    guard let self, !self.isScrubbing, self.isPlaying else { return }
+                    self.playhead = min(time.seconds, self.duration)
+                }
             }
+            self.player = player
         }
-        self.player = player
         builtSignature = signature
-        // The new player starts where the playhead is, not at zero, and keeps playing if it was.
+        // The new item starts where the playhead is, not at zero, and keeps playing if it was.
         playhead = min(playhead, duration)
-        if playhead > 0.01 {
-            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600)) { _ in }
-        }
+        player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
         if wasPlaying { player.play() }
     }
 
