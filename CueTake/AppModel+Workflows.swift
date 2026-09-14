@@ -4,6 +4,7 @@ import Domain
 import EditorFeature
 import Foundation
 import Persistence
+import SettingsFeature
 import SwiftUI
 import WorkflowsFeature
 
