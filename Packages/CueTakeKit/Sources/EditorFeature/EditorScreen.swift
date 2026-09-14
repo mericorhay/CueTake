@@ -228,11 +228,14 @@ public struct EditorScreen: View {
         // run of edits is one rebuild.
         .onChange(of: model.compositionSignature) {
             guard !model.isAIDriving else { return }
+            // Only the wait is cancelled by a newer change, never a build under way: cancelling one
+            // half-built used to take the player down with it and leave the preview black.
             rebuild?.cancel()
             rebuild = Task {
                 try? await Task.sleep(for: .milliseconds(250))
                 guard !Task.isCancelled else { return }
-                await onPrepare()
+                let prepare = onPrepare
+                await Task { await prepare() }.value
             }
         }
         .onChange(of: model.isAIDriving) { _, driving in
@@ -408,6 +411,35 @@ public struct EditorScreen: View {
             } else {
                 RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous)
                     .fill(DS.Palette.camera)
+                    .overlay {
+                        if let problem = model.playbackProblem {
+                            VStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(DS.Palette.accent)
+                                Text("editor.preview.failed", bundle: .module)
+                                    .dsFont(.sans, .semibold, 13)
+                                    .foregroundStyle(DS.Palette.ink)
+                                Text(verbatim: problem)
+                                    .dsFont(.mono, .medium, 9)
+                                    .foregroundStyle(DS.Palette.ink(0.45))
+                                    .lineLimit(3)
+                                    .multilineTextAlignment(.center)
+                                Button {
+                                    Task { await onPrepare() }
+                                } label: {
+                                    Text("editor.ai.retry", bundle: .module)
+                                        .dsFont(.sans, .semibold, 12)
+                                        .foregroundStyle(DS.Palette.inkInverse)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 7)
+                                        .background(Capsule().fill(DS.Palette.ink))
+                                }
+                                .buttonStyle(.dsPress(radius: 20))
+                            }
+                            .padding(16)
+                        }
+                    }
             }
         }
         .frame(height: previewHeight)

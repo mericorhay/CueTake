@@ -80,6 +80,13 @@ public final class EditorModel {
     /// The real playback. Nil until the project's media has been composed — a project that has
     /// been planned but not shot has nothing to play, and the transport still has to work.
     public private(set) var player: AVPlayer?
+    /// Why the preview could not be built, when it could not. Shown instead of a black frame.
+    public private(set) var playbackProblem: String?
+    /// Counts builds, so a slow one that finishes after a newer one never replaces its player.
+    @ObservationIgnored private var playbackGeneration = 0
+    /// What the current player was built from. A request to build the same thing again is ignored:
+    /// replacing a working player with an identical one only blinks the picture.
+    @ObservationIgnored private var builtSignature: [String]?
     private var timeObserver: Any?
 
     public init(project: Project) {
@@ -99,13 +106,24 @@ public final class EditorModel {
             teardownPlayer()
             return
         }
-        guard let assembled = try? await VideoComposer().compose(
-            project: project,
-            mediaDirectory: mediaDirectory
-        ) else {
-            teardownPlayer()
+        let signature = compositionSignature
+        if player != nil, builtSignature == signature { return }
+        playbackGeneration += 1
+        let generation = playbackGeneration
+        let assembled: VideoComposer.Assembled
+        do {
+            assembled = try await VideoComposer().compose(project: project, mediaDirectory: mediaDirectory)
+        } catch {
+            // A build that was superseded or cancelled keeps the picture that is there. Only a real
+            // failure with nothing else to show says so — a black frame explained nothing.
+            guard generation == playbackGeneration, !Task.isCancelled else { return }
+            if player == nil {
+                playbackProblem = String(describing: error)
+            }
             return
         }
+        guard generation == playbackGeneration else { return }
+        playbackProblem = nil
 
         let wasPlaying = isPlaying
         teardownPlayer()
@@ -129,9 +147,12 @@ public final class EditorModel {
             }
         }
         self.player = player
+        builtSignature = signature
         // The new player starts where the playhead is, not at zero, and keeps playing if it was.
         playhead = min(playhead, duration)
-        player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+        if playhead > 0.01 {
+            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600)) { _ in }
+        }
         if wasPlaying { player.play() }
     }
 
@@ -149,10 +170,13 @@ public final class EditorModel {
         } + [
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
-        ]
+        ] + project.audio.map { clip in
+            "audio:\(clip.id.uuidString)|\(clip.start.seconds)|\(clip.sourceRange.start.seconds)|\(clip.sourceRange.duration.seconds)|\(clip.gain)|\(clip.fadeIn.seconds)|\(clip.fadeOut.seconds)|\(clip.speed)|\(clip.isMuted)|\(clip.ducksUnderVoice)|\(AudioEffectRenderer.token(for: clip.effects))"
+        }
     }
 
     private func teardownPlayer() {
+        builtSignature = nil
         if let timeObserver { player?.removeTimeObserver(timeObserver) }
         timeObserver = nil
         player?.pause()
@@ -201,7 +225,7 @@ public final class EditorModel {
         isPlaying = true
 
         if let player {
-            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600))
+            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600)) { _ in }
             player.play()
             return
         }

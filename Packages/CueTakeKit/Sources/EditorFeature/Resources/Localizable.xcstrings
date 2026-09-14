@@ -3981,6 +3981,23 @@
         }
       }
     },
+    "editor.preview.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The preview could not be built"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önizleme hazırlanamadı"
+          }
+        }
+      }
+    },
     "editor.retakeSegment": {
       "extractionState": "manual",
       "localizations": {
