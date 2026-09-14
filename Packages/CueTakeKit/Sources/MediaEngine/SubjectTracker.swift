@@ -98,7 +98,7 @@ public struct SubjectTracker: Sendable {
         let request = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         guard (try? handler.perform([request])) != nil else { return nil }
-        return request.results.max { left, right in
+        return request.results?.max { left, right in
             score(left, near: previous) < score(right, near: previous)
         }
     }
