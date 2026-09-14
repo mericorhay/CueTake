@@ -87,7 +87,7 @@ struct ToolDock: View {
 
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
-        case .split: model.canSplitAtPlayhead
+        case .split: model.canSplitAtPlayhead || (model.selectedVideoLayer.map(model.canSplitVideoLayer) ?? false)
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .background: index != nil
         case .delete: index != nil && model.project.segments.count > 1
@@ -218,7 +218,12 @@ struct ToolDock: View {
         switch item {
         case .split:
             model.pulse(.split)
-            withAnimation(settle) { model.splitAtPlayhead() }
+            // With an added video selected the razor cuts that video; otherwise the clip.
+            if let layer = model.selectedVideoLayer, model.canSplitVideoLayer(layer) {
+                withAnimation(settle) { model.splitVideoLayer(layer) }
+            } else {
+                withAnimation(settle) { model.splitAtPlayhead() }
+            }
         case .delete:
             guard let index else { return }
             model.pulse(.delete)

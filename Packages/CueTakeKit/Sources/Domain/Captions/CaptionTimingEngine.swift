@@ -77,7 +77,11 @@ public enum CaptionTimingEngine {
         let start = max(0, firstStart)
         let spoken = max(0.05, lastEnd - start)
         let reading = Double(max(1, text.count)) / charactersPerSecond
-        let wanted = min(maximumSeconds, max(minimumSeconds, max(spoken + spokenTailSeconds, reading)))
+        // Shown for as long as it is being said, and — for a short cue said quickly — a little
+        // longer so it can be read, up to `maximumSeconds`. The cap limits only that extension:
+        // capping the spoken part took a caption off screen while its words were still coming.
+        let readable = min(maximumSeconds, max(minimumSeconds, reading))
+        let wanted = max(spoken + spokenTailSeconds, readable)
 
         let available = nextStart.map {
             max(0.05, $0 - start - handoffGapSeconds)

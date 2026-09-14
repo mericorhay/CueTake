@@ -833,7 +833,13 @@ extension EditorModel {
         guard let index = project.videoLayers.firstIndex(where: { $0.id == id }) else { return }
         record("editor.change.videoLayerAdjust", symbol: "rectangle.split.2x1", coalescing: key)
         change(&project.videoLayers[index])
-        project.videoLayers[index].sourceRange.duration = MediaTime(seconds: max(0.2, project.videoLayers[index].sourceRange.duration.seconds))
+        // Never longer than the file behind it: past its last frame there is nothing to play.
+        var length = max(0.2, project.videoLayers[index].sourceRange.duration.seconds)
+        if let recording = project.recording(id: project.videoLayers[index].recordingID) {
+            length = min(length, max(0.2, recording.duration.seconds - project.videoLayers[index].sourceRange.start.seconds))
+        }
+        project.videoLayers[index].sourceRange.duration = MediaTime(seconds: length)
+        project.videoLayers[index].start = MediaTime(seconds: max(0, project.videoLayers[index].start.seconds))
         project.videoLayers[index].placement = project.videoLayers[index].placement.bounded
         project.videoLayers[index].volume = min(max(project.videoLayers[index].volume, 0), 1)
         project.updatedAt = .now
@@ -855,6 +861,8 @@ extension EditorModel {
         project.mainVideoPlacement = placements[0]
         for index in project.videoLayers.indices {
             project.videoLayers[index].placement = placements[min(index + 1, placements.count - 1)]
+            // A layout is a place, not a path: old motion would pull the layer straight back out.
+            project.videoLayers[index].keyframes = []
         }
         project.updatedAt = .now
     }
@@ -870,10 +878,13 @@ extension EditorModel {
         }
     }
 
+    /// Places the layer. A layer without keyframes simply moves; one that already animates gets a
+    /// keyframe at the playhead. Adding a keyframe to every drag used to turn a plain move made in
+    /// the middle of a layer into a slow slide from the old place.
     public func setVideoLayerPlacement(_ id: VideoLayer.ID, _ placement: VideoPlacement) {
         updateVideoLayer(id, coalescing: "video-layer-placement-\(id)") { value in
             let time = min(max(playhead - value.start.seconds, 0), value.duration)
-            if time > 0.01 || !value.keyframes.isEmpty {
+            if !value.keyframes.isEmpty {
                 value.keyframes.removeAll { abs($0.time - time) < 0.02 }
                 value.keyframes.append(VideoKeyframe(time: time, placement: placement.bounded))
                 value.keyframes.sort { $0.time < $1.time }
@@ -889,7 +900,7 @@ extension EditorModel {
             placement.x += x
             placement.y += y
             let time = min(max(playhead - value.start.seconds, 0), value.duration)
-            if time > 0.01 || !value.keyframes.isEmpty {
+            if !value.keyframes.isEmpty {
                 value.keyframes.removeAll { abs($0.time - time) < 0.02 }
                 value.keyframes.append(VideoKeyframe(time: time, placement: placement.bounded))
                 value.keyframes.sort { $0.time < $1.time }

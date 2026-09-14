@@ -36,7 +36,7 @@ struct EditorTimeline: View {
         let overlays = model.project.overlays.isEmpty ? 0 : OverlayLane.height(for: model.project.overlays) + 7
         let captions = hasCaptions ? CaptionLane.height + 7 : 0
         let effects = EffectLane.rowCount(in: model.project) > 0 ? EffectLane.height(in: model.project) + 7 : 0
-        let videoLayers = model.project.videoLayers.isEmpty ? 0 : CGFloat(model.project.videoLayers.count) * 29 + 25
+        let videoLayers = model.project.videoLayers.isEmpty ? 0 : VideoLayerLane.height(for: model.project.videoLayers) + 7
         return audio + overlays + captions + effects + videoLayers
     }
 

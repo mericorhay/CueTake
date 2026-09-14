@@ -613,6 +613,40 @@
         }
       }
     },
+    "editor.video.importFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This video could not be added."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu video eklenemedi."
+          }
+        }
+      }
+    },
+    "editor.video.limit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can add up to three extra videos."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En fazla üç ek video ekleyebilirsin."
+          }
+        }
+      }
+    },
     "export.failed.generic": {
       "extractionState": "manual",
       "localizations": {

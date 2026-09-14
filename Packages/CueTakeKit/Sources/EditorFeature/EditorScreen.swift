@@ -90,6 +90,8 @@ public struct EditorScreen: View {
         if let landscapePreviewHeight { return landscapePreviewHeight }
         // An overlay or a caption being placed gets the big picture: both are placed by looking.
         if model.selectedOverlay != nil || editingCaption != nil { return 390 }
+        // A video layer is judged by looking at where it sits in the frame.
+        if model.selectedVideoLayer != nil { return 250 }
         // A background being tuned is judged by looking at it, but its panel is tall.
         if model.selectedEffect != nil { return 250 }
         if previewExpanded { return 430 }
@@ -155,49 +157,39 @@ public struct EditorScreen: View {
         // normal behaviour of a sheet, and it is the only version of this that cannot run out of
         // room.
         .overlay(alignment: .bottom) {
-            GeometryReader { panelGeometry in
-                if isPanelOpen {
-                    if model.selectedVideoLayer != nil {
-                        VideoLayerPanel(
-                            model: model,
-                            onOpenPlacementEditor: { showsVideoPlacementEditor = true },
-                            onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
-                        )
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxHeight: min(380, panelGeometry.size.height * 0.54), alignment: .bottom)
-                    } else {
-                        ScrollView {
-                            if let captionID = editingCaption {
-                                CaptionQuickPanel(
-                                    model: model,
-                                    captionID: captionID,
-                                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
-                                    onOpenAll: {
-                                        editingCaption = nil
-                                        onCaptions()
-                                    },
-                                    onSwitch: { editingCaption = $0 }
-                                )
-                            } else if let clip = model.selectedAudioClip {
-                                audioPanel(clip)
-                            } else if let effect = model.selectedEffectValue {
-                                EffectInspector(model: model, effect: effect) {
-                                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
-                                }
-                            } else if let overlay = model.selectedOverlayValue {
-                                OverlayInspector(model: model, overlay: overlay) {
-                                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
-                                }
-                            } else if let id = model.inspectedSegment,
-                                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
-                                inspector(at: index)
-                            }
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                        .frame(maxHeight: max(180, panelGeometry.size.height * 0.62))
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                    }
+            // One sheet at a time, each sized to what it holds and anchored to the bottom edge.
+            // Wrapping them in a screen-high GeometryReader and ScrollView put the sheets at the
+            // top of the screen and left transparent space under them, over the picture.
+            if let captionID = editingCaption {
+                CaptionQuickPanel(
+                    model: model,
+                    captionID: captionID,
+                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
+                    onOpenAll: {
+                        editingCaption = nil
+                        onCaptions()
+                    },
+                    onSwitch: { editingCaption = $0 }
+                )
+            } else if model.selectedVideoLayerValue != nil {
+                VideoLayerPanel(
+                    model: model,
+                    onOpenPlacementEditor: { showsVideoPlacementEditor = true },
+                    onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
+                )
+            } else if let clip = model.selectedAudioClip {
+                audioPanel(clip)
+            } else if let effect = model.selectedEffectValue {
+                EffectInspector(model: model, effect: effect) {
+                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
                 }
+            } else if let overlay = model.selectedOverlayValue {
+                OverlayInspector(model: model, overlay: overlay) {
+                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+                }
+            } else if let id = model.inspectedSegment,
+                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
+                inspector(at: index)
             }
         }
         .animation(DS.Motion.settle, value: isPanelOpen)

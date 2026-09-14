@@ -188,24 +188,32 @@ final class AppModel {
     /// Copies a selected movie into the open project as a second video track. It does not create a
     /// new segment: the layer is timed independently and can play beside the main cut.
     func importVideoLayer(_ item: PhotosPickerItem) async {
+        // Checked before copying: a file copied only to be refused is a minute wasted and space used.
+        takeEditorEditsIfEditing()
+        guard project.videoLayers.count < VideoLayer.maximumAdditionalLayers else {
+            show(notice: String(localized: "editor.video.limit"))
+            return
+        }
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
         busy = String(localized: "busy.importing")
         defer { busy = nil }
         guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
               let imported = try? await MediaImporter().importClip(from: movie.url, into: mediaDirectory)
         else {
-            notice = String(localized: "editor.video.importFailed")
+            show(notice: String(localized: "editor.video.importFailed"))
             return
         }
         try? FileManager.default.removeItem(at: movie.url)
-        guard project.videoLayers.count < VideoLayer.maximumAdditionalLayers else {
-            notice = String(localized: "editor.video.limit")
-            return
-        }
+        // The editor may have changed while the file was copied.
+        takeEditorEditsIfEditing()
         project.recordings.append(imported.recording)
+        // Starts where the playhead is: that is the moment the user was looking at when they
+        // chose to add a video there.
+        let start = min(max(0, editorModel.playhead), max(0, editorModel.duration - 0.2))
         let layer = VideoLayer(
             recordingID: imported.recording.id,
             title: imported.suggestedTitle,
+            start: MediaTime(seconds: start),
             sourceRange: imported.take.sourceRange,
             placement: project.videoLayers.isEmpty ? .inset : VideoPlacement(x: 0.05, y: 0.64, width: 0.31, height: 0.31, fillsFrame: true)
         )

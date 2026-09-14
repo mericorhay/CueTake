@@ -3282,40 +3282,6 @@
         }
       }
     },
-    "editor.change.voice": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Voice cleanup"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ses temizleme"
-          }
-        }
-      }
-    },
-    "editor.change.workflow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Workflow run"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Workflow çalıştırıldı"
-          }
-        }
-      }
-    },
     "editor.change.videoLayerAdjust": {
       "extractionState": "manual",
       "localizations": {
@@ -3363,6 +3329,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Video düzeni değiştirildi"
+          }
+        }
+      }
+    },
+    "editor.change.voice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice cleanup"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses temizleme"
+          }
+        }
+      }
+    },
+    "editor.change.workflow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow run"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workflow çalıştırıldı"
           }
         }
       }
@@ -6073,6 +6073,23 @@
         }
       }
     },
+    "editor.video.moveHere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move here"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buraya taşı"
+          }
+        }
+      }
+    },
     "editor.video.mute": {
       "extractionState": "manual",
       "localizations": {
@@ -6086,23 +6103,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sessize al"
-          }
-        }
-      }
-    },
-    "editor.video.volume": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Volume"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ses seviyesi"
           }
         }
       }
@@ -6175,6 +6175,23 @@
         }
       }
     },
+    "editor.video.opacity": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opacity"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opaklık"
+          }
+        }
+      }
+    },
     "editor.video.placement": {
       "extractionState": "manual",
       "localizations": {
@@ -6198,13 +6215,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drag to move · pinch to resize"
+            "value": "Drag to move · pinch or use the slider to resize"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Taşımak için sürükle · boyut için iki parmakla sıkıştır"
+            "value": "Taşımak için sürükle · boyut için iki parmakla sıkıştır ya da kaydırıcıyı kullan"
           }
         }
       }
@@ -6226,6 +6243,23 @@
         }
       }
     },
+    "editor.video.resetPlacement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset position"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konumu sıfırla"
+          }
+        }
+      }
+    },
     "editor.video.selectHint": {
       "extractionState": "manual",
       "localizations": {
@@ -6239,6 +6273,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Düzenlemek için timeline’da bir video katmanı seç."
+          }
+        }
+      }
+    },
+    "editor.video.size": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boyut"
+          }
+        }
+      }
+    },
+    "editor.video.sourceStart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VIDEO FROM"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VİDEONUN BAŞI"
+          }
+        }
+      }
+    },
+    "editor.video.volume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses seviyesi"
+          }
+        }
+      }
+    },
+    "editor.video.where": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nerede"
           }
         }
       }
