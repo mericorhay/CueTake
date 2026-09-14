@@ -18,6 +18,8 @@ struct EditorTimeline: View {
 
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
+    /// The clip whose front is being trimmed, and where its footage started when the finger went down.
+    @State private var leadTrim: (index: Int, origin: Double)?
     @State private var lift: (index: Int, offset: Double)?
     /// Bumped every time something snaps, which is what the haptic keys off.
     @State private var snapCount = 0
@@ -75,7 +77,7 @@ struct EditorTimeline: View {
         }
         .scrollIndicators(.hidden)
         .scrollPosition($position)
-        .scrollDisabled(trim != nil || lift != nil || model.isAdjustingTimeline)
+        .scrollDisabled(trim != nil || leadTrim != nil || lift != nil || model.isAdjustingTimeline)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { width in
@@ -357,6 +359,9 @@ struct EditorTimeline: View {
         .overlay(alignment: .trailing) {
             if isSelected { trimHandle(at: index) }
         }
+        .overlay(alignment: .leading) {
+            if isSelected, segment.selectedTake != nil, segment.playback.freeze == nil { leadHandle(at: index) }
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(DS.Palette.ink(isSelected ? 0.9 : 0), lineWidth: 2)
@@ -391,13 +396,60 @@ struct EditorTimeline: View {
             snapCount += 1
         }
         .gesture(reorderDrag(at: index), including: isLifted ? .all : .subviews)
+        // How long the clip is, over it, while either end is pulled.
+        .overlay(alignment: .top) {
+            if trim?.index == index || leadTrim?.index == index {
+                Text(verbatim: String(format: "%.2f s", segment.barWeight))
+                    .dsFont(.mono, .medium, 11)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .fixedSize()
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(DS.Palette.ink))
+                    .offset(y: -30)
+                    .allowsHitTesting(false)
+            }
+        }
     }
 
-    /// Only the trailing edge trims.
-    ///
-    /// A leading handle would have to move the start of the take inside its file, and until there
-    /// is a file there is nothing for it to mean. Shipping one that silently did something else
-    /// would be worse than not shipping it.
+    /// The front of a clip: pulled right it starts later in its footage, pulled left it brings back
+    /// footage from before it. The picture shows the first frame the clip now starts on.
+    private func leadHandle(at index: Int) -> some View {
+        let isActive = leadTrim?.index == index
+        return RoundedRectangle(cornerRadius: 3, style: .continuous)
+            .fill(DS.Palette.ink)
+            .frame(width: isActive ? 6 : 4, height: 30)
+            .padding(.leading, 4)
+            .frame(width: 30, height: 64, alignment: .leading)
+            .contentShape(Rectangle())
+            .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isActive)
+            .gesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .onChanged { gesture in
+                        guard project(index)?.selectedTake != nil else { return }
+                        if leadTrim == nil, let take = project(index)?.selectedTake {
+                            leadTrim = (index, take.sourceRange.start.seconds)
+                            model.isAdjustingTimeline = true
+                            model.pause()
+                        }
+                        guard let leadTrim, let segment = project(index), let take = segment.selectedTake else { return }
+                        let speed = min(max(segment.playback.speed, 0.1), 8)
+                        let wanted = leadTrim.origin + Double(gesture.translation.width) / scale * speed
+                        model.trimStart(by: wanted - take.sourceRange.start.seconds, at: index)
+                        model.seek(to: model.start(at: index) + 0.01)
+                    }
+                    .onEnded { _ in
+                        leadTrim = nil
+                        model.isAdjustingTimeline = false
+                    }
+            )
+    }
+
+    private func project(_ index: Int) -> Segment? {
+        model.project.segments.indices.contains(index) ? model.project.segments[index] : nil
+    }
+
+    /// The end of a clip: its length, or how long a held frame is held.
     private func trimHandle(at index: Int) -> some View {
         let isActive = trim?.index == index
         return RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -422,14 +474,26 @@ struct EditorTimeline: View {
             .onEnded { _ in zoomOrigin = nil }
     }
 
+    /// Measured on the screen, not on the handle: the handle rides the clip's end, and measured on
+    /// itself every step of the drag moved the ruler it was measured against.
     private func trimGesture(at index: Int) -> some Gesture {
-        DragGesture(minimumDistance: 1)
+        DragGesture(minimumDistance: 1, coordinateSpace: .global)
             .onChanged { gesture in
+                guard model.project.segments.indices.contains(index) else { return }
                 let origin = trim?.origin ?? model.project.segments[index].barWeight
-                if trim == nil { trim = (index, origin) }
+                if trim == nil {
+                    trim = (index, origin)
+                    model.isAdjustingTimeline = true
+                    model.pause()
+                }
                 model.setDuration(origin + Double(gesture.translation.width) / scale, forSegmentAt: index)
+                let end = model.start(at: index) + model.project.segments[index].barWeight
+                model.seek(to: max(model.start(at: index), end - 0.04))
             }
-            .onEnded { _ in trim = nil }
+            .onEnded { _ in
+                trim = nil
+                model.isAdjustingTimeline = false
+            }
     }
 
     /// Long press picks a clip up; dragging it then moves it past its neighbours.

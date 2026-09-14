@@ -70,6 +70,8 @@ public struct EditorScreen: View {
     @State private var previewExpanded = false
     @State private var showsTranscript = false
     @State private var showsVideoPlacementEditor = false
+    /// Where typing goes while the keyboard is up.
+    @State private var typing: TextEntryTarget?
 
     /// Whatever the tools should act on: the inspected clip, or the one under the playhead.
     private var workingIndex: Int? {
@@ -103,6 +105,60 @@ public struct EditorScreen: View {
     }
 
     public var body: some View {
+        ZStack(alignment: .bottom) {
+            // The editor ignores the keyboard, so nothing jumps when it comes up; the typing bar
+            // does not, so it sits right on top of it.
+            editor
+                .ignoresSafeArea(.keyboard)
+            if let typing {
+                TextEntryBar(title: typingTitle(typing), text: typingText(typing)) {
+                    withAnimation(DS.Motion.settle) { self.typing = nil }
+                }
+                .id(typing)
+            }
+        }
+        .animation(DS.Motion.settle, value: typing)
+    }
+
+    private func typingTitle(_ target: TextEntryTarget) -> String {
+        switch target {
+        case .caption: String(localized: "editor.captionQuick.title", bundle: .module)
+        case .overlay: String(localized: "editor.overlay.text", bundle: .module)
+        }
+    }
+
+    private func typingText(_ target: TextEntryTarget) -> Binding<String> {
+        switch target {
+        case .caption(let id):
+            Binding(
+                get: {
+                    guard let index = model.segmentIndex(ofCaption: id) else { return "" }
+                    return model.project.segments[index].captions.first { $0.id == id }?.text ?? ""
+                },
+                set: { text in
+                    guard let index = model.segmentIndex(ofCaption: id) else { return }
+                    model.updateCaption(id, at: index) { $0.text = text }
+                }
+            )
+        case .overlay(let id):
+            Binding(
+                get: {
+                    guard case .text(let text)? = model.project.overlays.first(where: { $0.id == id })?.content else { return "" }
+                    return text.text
+                },
+                set: { value in
+                    model.updateOverlay(id, coalescing: "overlay-text") {
+                        if case .text(var text) = $0.content {
+                            text.text = value
+                            $0.content = .text(text)
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    private var editor: some View {
         GeometryReader { proxy in
             if proxy.size.width > proxy.size.height {
                 // Landscape gets its own arrangement: the picture on the left at the height of the
@@ -666,7 +722,8 @@ public struct EditorScreen: View {
                         editingCaption = nil
                         onCaptions()
                     },
-                    onSwitch: { editingCaption = $0 }
+                    onSwitch: { editingCaption = $0 },
+                    onType: { typing = .caption(captionID) }
                 )
             }
             .scrollBounceBehavior(.basedOnSize)
@@ -683,9 +740,12 @@ public struct EditorScreen: View {
                 withAnimation(DS.Motion.settle) { model.select(effect: nil) }
             }
         } else if let overlay = model.selectedOverlayValue {
-            OverlayInspector(model: model, overlay: overlay) {
-                withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
-            }
+            OverlayInspector(
+                model: model,
+                overlay: overlay,
+                onClose: { withAnimation(DS.Motion.settle) { model.select(overlay: nil) } },
+                onType: { typing = .overlay(overlay.id) }
+            )
         } else if let id = model.inspectedSegment,
                   let index = model.project.segments.firstIndex(where: { $0.id == id }) {
             inspector(at: index)

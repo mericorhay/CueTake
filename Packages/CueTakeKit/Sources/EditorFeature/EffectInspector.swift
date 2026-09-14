@@ -96,6 +96,9 @@ struct EffectInspector: View {
                             }
                         }
                     }
+                    smallButton("editor.tool.split", symbol: "scissors") {
+                        withAnimation(DS.Motion.settle) { model.splitEffect(effect.id) }
+                    }
                     smallButton("editor.effect.wholeVideo", symbol: "arrow.left.and.right") {
                         let length = model.duration
                         model.updateEffect(effect.id, coalescing: "effect-fit") {

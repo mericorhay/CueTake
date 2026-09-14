@@ -165,3 +165,50 @@ extension EditorModel {
         seek(to: min(playhead, duration))
     }
 }
+
+extension EditorModel {
+    /// The project before and after one recorded edit, by its entry.
+    private func span(of entryID: ChangeEntry.ID) -> (index: Int, before: Project, after: Project)? {
+        guard let index = past.firstIndex(where: { $0.entry.id == entryID }) else { return nil }
+        let after = index + 1 < past.count ? past[index + 1].project : project
+        return (index, past[index].project, after)
+    }
+
+    /// What taking back one edit would also take back: later edits to the same things.
+    ///
+    /// Taking back a trim of clip 2 restores clip 2 as it was before the trim, so a later change
+    /// to clip 2's captions goes with it. Said before it happens, never discovered after.
+    public func editsCaughtUp(inUndoing entryID: ChangeEntry.ID) -> [ChangeEntry] {
+        guard let (index, before, after) = span(of: entryID) else { return [] }
+        let touched = Set(after.changedTargets(since: before))
+        guard !touched.isEmpty else { return [] }
+        var caught: [ChangeEntry] = []
+        for later in (index + 1)..<past.count {
+            let laterAfter = later + 1 < past.count ? past[later + 1].project : project
+            if !touched.isDisjoint(with: laterAfter.changedTargets(since: past[later].project)) {
+                caught.append(past[later].entry)
+            }
+        }
+        return caught
+    }
+
+    public func canUndoOnly(_ entryID: ChangeEntry.ID) -> Bool {
+        guard let (_, before, after) = span(of: entryID) else { return false }
+        return !after.changedTargets(since: before).isEmpty
+    }
+
+    /// Takes back one edit from anywhere in the list, leaving the edits after it in place.
+    ///
+    /// Undo could only walk backwards: to take back the 23rd of 25 edits, the 24th and 25th had to
+    /// go too. The edit's own before and after say what it touched; only those things are put
+    /// back, and taking it back is itself an edit that can be undone.
+    public func undoOnly(_ entryID: ChangeEntry.ID) {
+        guard let (_, before, after) = span(of: entryID) else { return }
+        let targets = after.changedTargets(since: before)
+        guard !targets.isEmpty, let label = past.first(where: { $0.entry.id == entryID })?.entry.label else { return }
+        record("editor.change.undoOne \(label)", symbol: "arrow.uturn.backward")
+        adopt(project.restoring(targets, from: before))
+        reconcileAIChanges()
+        pulse(.undo)
+    }
+}

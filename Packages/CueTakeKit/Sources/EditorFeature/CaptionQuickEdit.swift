@@ -50,6 +50,8 @@ struct CaptionQuickPanel: View {
     let onOpenAll: () -> Void
     /// Moves the panel to another caption: the one that replaced this after a change of words.
     var onSwitch: (CaptionCue.ID) -> Void = { _ in }
+    /// Opens typing above the keyboard.
+    var onType: () -> Void = {}
 
     @FocusState private var typing: Bool
 
@@ -86,22 +88,11 @@ struct CaptionQuickPanel: View {
             }
 
             if let index, let cue {
-                TextField(
-                    String(localized: "editor.captionQuick.placeholder", bundle: .module),
-                    text: Binding(
-                        get: { cue.text },
-                        set: { text in model.updateCaption(captionID, at: index) { $0.text = text } }
-                    ),
-                    axis: .vertical
+                TextEntryField(
+                    text: cue.text,
+                    placeholder: String(localized: "editor.captionQuick.placeholder", bundle: .module),
+                    action: onType
                 )
-                .lineLimit(1...3)
-                .dsFont(.sans, .semibold, 16)
-                .foregroundStyle(DS.Palette.ink)
-                .tint(DS.Palette.lime)
-                .focused($typing)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.07)))
 
                 SpeechVersionsRow(model: model, captionID: captionID, onReplaced: onSwitch)
             }

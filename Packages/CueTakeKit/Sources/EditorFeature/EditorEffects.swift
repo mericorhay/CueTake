@@ -117,7 +117,7 @@ extension EditorModel {
         let segment = project.segments[index]
         let length = segment.barWeight
         guard let range,
-              segment.playback.freeze == nil, !segment.playback.isReversed,
+              segment.playback.freeze == nil,
               range.lowerBound > 0.15 || length - range.upperBound > 0.15,
               range.upperBound - range.lowerBound > 0.2
         else {
@@ -132,16 +132,61 @@ extension EditorModel {
         var target = index
         if length - range.upperBound > 0.15 {
             seek(to: clipStart + range.upperBound)
-            splitAtPlayhead()
+            splitAtPlayhead(snapToWords: false)
         }
         if range.lowerBound > 0.15 {
             seek(to: clipStart + range.lowerBound)
-            splitAtPlayhead()
+            splitAtPlayhead(snapToWords: false)
             target = index + 1
         }
         updatePlayback(at: target, change)
         endBatch(startingFrom: before, label: "editor.change.playbackRange", symbol: "gauge.with.dots.needle.67percent")
         inspectedSegment = project.segments.indices.contains(target) ? project.segments[target].id : inspectedSegment
         seek(to: min(returnTo, duration))
+    }
+
+    // MARK: - Cutting at the playhead
+
+    public func canSplitEffect(_ id: TimelineEffect.ID) -> Bool {
+        guard let effect = project.effects.first(where: { $0.id == id }) else { return false }
+        return playhead - effect.start.seconds > TimelineEffect.minimumLength && effect.end - playhead > TimelineEffect.minimumLength
+    }
+
+    /// Cuts an effect in two at the playhead, so each half can be moved, stretched or changed.
+    public func splitEffect(_ id: TimelineEffect.ID) {
+        guard canSplitEffect(id), let index = project.effects.firstIndex(where: { $0.id == id }) else { return }
+        record("editor.change.split", symbol: "scissors")
+        let effect = project.effects[index]
+        var left = effect
+        left.duration = MediaTime(seconds: playhead - effect.start.seconds)
+        let right = TimelineEffect(start: MediaTime(seconds: playhead), duration: MediaTime(seconds: effect.end - playhead), kind: effect.kind)
+        project.effects[index] = left
+        project.effects.insert(right, at: index + 1)
+        project.updatedAt = .now
+        select(effect: right.id)
+    }
+
+    public func canSplitOverlay(_ id: Overlay.ID) -> Bool {
+        guard let overlay = project.overlays.first(where: { $0.id == id }) else { return false }
+        let end = overlay.start.seconds + overlay.duration.seconds
+        return playhead - overlay.start.seconds > Overlay.shortest && end - playhead > Overlay.shortest
+    }
+
+    /// Cuts a text or picture in two at the playhead.
+    public func splitOverlay(_ id: Overlay.ID) {
+        guard canSplitOverlay(id), let index = project.overlays.firstIndex(where: { $0.id == id }) else { return }
+        record("editor.change.split", symbol: "scissors")
+        let overlay = project.overlays[index]
+        let end = overlay.start.seconds + overlay.duration.seconds
+        var left = overlay
+        left.duration = MediaTime(seconds: playhead - overlay.start.seconds)
+        var right = Overlay(content: overlay.content, start: MediaTime(seconds: playhead))
+        right.duration = MediaTime(seconds: end - playhead)
+        right.transform = overlay.transform
+        right.animation = overlay.animation
+        project.overlays[index] = left
+        project.overlays.insert(right, at: index + 1)
+        project.updatedAt = .now
+        select(overlay: right.id)
     }
 }

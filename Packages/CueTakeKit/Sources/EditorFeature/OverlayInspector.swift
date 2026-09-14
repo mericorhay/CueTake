@@ -10,8 +10,8 @@ struct OverlayInspector: View {
     @Bindable var model: EditorModel
     let overlay: Overlay
     let onClose: () -> Void
-
-    @FocusState private var editingText: Bool
+    /// Opens typing above the keyboard.
+    var onType: () -> Void = {}
 
     private var end: Double { overlay.start.seconds + overlay.duration.seconds }
 
@@ -88,6 +88,9 @@ struct OverlayInspector: View {
                 smallButton("editor.overlay.endHere", symbol: "arrow.left.to.line") {
                     model.endOverlayAtPlayhead(overlay.id)
                 }
+                smallButton("editor.tool.split", symbol: "scissors") {
+                    withAnimation(DS.Motion.settle) { model.splitOverlay(overlay.id) }
+                }
                 smallButton("editor.overlay.untilEnd", symbol: "arrow.right.to.line.compact") {
                     // Read before the edit: the change closure has the project open for writing.
                     let videoEnd = model.duration
@@ -104,28 +107,11 @@ struct OverlayInspector: View {
     private func textControls(_ text: OverlayText) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             DSKicker(String(localized: "editor.overlay.words", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
-            TextField(
-                String(localized: "editor.overlay.placeholder", bundle: .module),
-                text: Binding(
-                    get: { text.text },
-                    set: { value in
-                        model.updateOverlay(overlay.id, coalescing: "overlay-text") {
-                            if case .text(var t) = $0.content {
-                                t.text = value
-                                $0.content = .text(t)
-                            }
-                        }
-                    }
-                ),
-                axis: .vertical
+            TextEntryField(
+                text: text.text,
+                placeholder: String(localized: "editor.overlay.placeholder", bundle: .module),
+                action: onType
             )
-            .lineLimit(1...4)
-            .focused($editingText)
-            .dsFont(.sans, .semibold, 15)
-            .foregroundStyle(DS.Palette.ink)
-            .tint(DS.Palette.accent)
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.07)))
 
             ScrollView(.horizontal) {
                 HStack(spacing: 6) {

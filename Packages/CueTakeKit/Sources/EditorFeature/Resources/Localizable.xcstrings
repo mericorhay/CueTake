@@ -3027,6 +3027,23 @@
         }
       }
     },
+    "editor.change.freezeFrame": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame held"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kare donduruldu"
+          }
+        }
+      }
+    },
     "editor.change.freezeLength": {
       "extractionState": "manual",
       "localizations": {
@@ -3282,6 +3299,23 @@
         }
       }
     },
+    "editor.change.undoOne %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Took back: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri alındı: %@"
+          }
+        }
+      }
+    },
     "editor.change.videoLayerAdjust": {
       "extractionState": "manual",
       "localizations": {
@@ -3503,6 +3537,57 @@
         }
       }
     },
+    "editor.changes.undoThis": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take back only this"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sadece bunu geri al"
+          }
+        }
+      }
+    },
+    "editor.changes.undoThis.also %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This also takes back %lld later changes to the same thing"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu, aynı yerde sonradan yapılan %lld değişikliği de geri alır"
+          }
+        }
+      }
+    },
+    "editor.changes.undoThis.confirm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take them back"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri al"
+          }
+        }
+      }
+    },
     "editor.dock.ai": {
       "extractionState": "manual",
       "localizations": {
@@ -3696,13 +3781,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hold + or − to keep trimming. Words and captions follow the footage."
+            "value": "Pull the yellow handles to choose where the clip starts and stops. The clip's ends on the timeline trim too."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kırpmaya devam etmek için + ya da −'ye basılı tut. Kelimeler ve altyazılar görüntüyle birlikte gelir."
+            "value": "Klibin nerede başlayıp biteceğini sarı tutamaçları çekerek seç. Zaman çizelgesinde klibin uçlarından da kırpabilirsin."
           }
         }
       }
@@ -5467,13 +5552,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hold one frame"
+            "value": "Hold the frame under the playhead"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tek kareyi tut"
+            "value": "Oynatma çizgisindeki kareyi dondur"
           }
         }
       }
@@ -5603,13 +5688,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cut at the playhead"
+            "value": "Cut at the playhead, between words"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Oynatma başında kes"
+            "value": "Oynatma çizgisinden, kelime arasından kes"
           }
         }
       }
@@ -5705,13 +5790,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Length, by the second"
+            "value": "Pull the clip's ends"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saniye saniye süre"
+            "value": "Klibin uçlarından çek"
           }
         }
       }

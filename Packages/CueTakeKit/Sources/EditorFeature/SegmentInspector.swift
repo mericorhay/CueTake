@@ -174,11 +174,12 @@ struct SegmentInspector: View {
                     model.seekToStart(of: index)
                 }
 
-                stepper(
+                // Read here; changed by pulling the clip's ends on the timeline above.
+                field(
                     segment.playback.freeze == nil ? "editor.timing.duration" : "editor.timing.held",
-                    value: segment.barWeight
-                ) { delta in
-                    model.setDuration(segment.barWeight + delta, forSegmentAt: index)
+                    value: String(format: "%.2f s", segment.barWeight)
+                ) {
+                    model.seekToStart(of: index)
                 }
             }
 
@@ -216,11 +217,8 @@ struct SegmentInspector: View {
                     isOn: segment.playback.freeze != nil,
                     enabled: true
                 ) {
-                    model.updatePlayback(at: index) { playback in
-                        // Two seconds is long enough to read as a deliberate hold and short enough
-                        // not to feel like the video has stopped working.
-                        playback.freeze = playback.freeze == nil ? MediaTime(seconds: 2) : nil
-                    }
+                    // The frame under the playhead, held as a clip of its own.
+                    model.toggleFreeze(at: index)
                 }
             }
 

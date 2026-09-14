@@ -301,37 +301,31 @@ struct ToolDock: View {
 
     private func trimPanel(at index: Int) -> some View {
         let segment = model.project.segments[index]
-        let take = segment.selectedTake
-        let total = model.recordingLength(at: index) ?? max(segment.sourceSeconds, 0.01)
-        let start = take?.sourceRange.start.seconds ?? 0
-        let end = take?.sourceRange.end.seconds ?? segment.sourceSeconds
 
-        return VStack(alignment: .leading, spacing: 12) {
-            // The whole recording, with the part in the video lit. Trimming is choosing a window,
-            // and this is the window.
-            GeometryReader { proxy in
-                let width = proxy.size.width
-                ZStack(alignment: .leading) {
-                    Capsule().fill(DS.Palette.hairline(0.08))
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(DS.Palette.segment(at: segment.role.paletteIndex).opacity(0.85))
-                        .frame(width: max(6, width * CGFloat((end - start) / total)))
-                        .offset(x: width * CGFloat(start / total))
-                        .animation(DS.Motion.snap, value: start)
-                        .animation(DS.Motion.snap, value: end)
-                }
+        return VStack(alignment: .leading, spacing: 10) {
+            if let take = segment.selectedTake, segment.playback.freeze == nil {
+                // The whole recording, with the part in the video held between two handles.
+                FootageTrimStrip(
+                    model: model,
+                    recordingID: take.recordingID,
+                    from: take.sourceRange.start.seconds,
+                    to: take.sourceRange.end.seconds,
+                    tint: DS.Palette.segment(at: segment.role.paletteIndex),
+                    onStart: { wanted in
+                        guard let current = model.project.segments[safe: index]?.selectedTake else { return }
+                        model.trimStart(by: wanted - current.sourceRange.start.seconds, at: index)
+                    },
+                    onEnd: { wanted in
+                        guard let current = model.project.segments[safe: index]?.selectedTake else { return }
+                        model.trimEnd(by: wanted - current.sourceRange.end.seconds, at: index)
+                    },
+                    moment: { seconds in
+                        guard let fresh = model.project.segments[safe: index], let current = fresh.selectedTake else { return nil }
+                        let offset = fresh.playback.timelineSeconds(forSource: max(0, seconds - current.sourceRange.start.seconds))
+                        return model.start(at: index) + min(offset, fresh.barWeight)
+                    }
+                )
             }
-            .frame(height: 18)
-
-            HStack(spacing: 8) {
-                trimStepper("editor.dock.trim.start", value: start) { delta in
-                    model.trimStart(by: delta, at: index)
-                }
-                trimStepper("editor.dock.trim.end", value: end) { delta in
-                    model.trimEnd(by: delta, at: index)
-                }
-            }
-            .disabled(take == nil || segment.playback.freeze != nil)
 
             Text("editor.dock.trim.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11)
@@ -455,9 +449,8 @@ struct ToolDock: View {
                     applyPlayback(at: index) { $0.isReversed.toggle() }
                 }
                 toggle("editor.dock.freeze", symbol: "snowflake", isOn: playback.freeze != nil, enabled: true) {
-                    applyPlayback(at: index) {
-                        $0.freeze = $0.freeze == nil ? MediaTime(seconds: 2) : nil
-                    }
+                    model.pulse(.speed)
+                    withAnimation(DS.Motion.settle) { model.toggleFreeze(at: index) }
                 }
             }
         }

@@ -68,16 +68,64 @@ struct TranscriptEditingTests {
         model.undo()
         #expect(model.project.segments.count == 1)
 
+        // A reversed clip is cut too: the half that plays first holds the end of the footage.
         model.project.segments[0].playback.isReversed = true
-        model.seek(to: 5)
-        #expect(!model.canSplitAtPlayhead)
+        model.seek(to: 4)
+        #expect(model.canSplitAtPlayhead)
         model.splitAtPlayhead()
-        #expect(model.project.segments.count == 1)
+        #expect(model.project.segments.count == 2)
+        #expect(abs((model.project.segments[0].selectedTake?.sourceRange.start.seconds ?? 0) - 9) < 0.01)
+        model.undo()
 
         model.project.segments[0].playback.isReversed = false
         model.project.segments[0].playback.freeze = MediaTime(seconds: 2)
         model.seek(to: 1)
         #expect(!model.canSplitAtPlayhead)
+    }
+
+    @Test func aCutInsideAWordMovesToItsEdge() {
+        let model = model()
+        // "the" is said from 5.0 to 5.4; a cut at 5.3 goes to its end rather than through it.
+        model.seek(to: 5.3)
+        model.splitAtPlayhead()
+        #expect(model.project.segments.count == 2)
+        #expect(abs((model.project.segments[0].selectedTake?.sourceRange.duration.seconds ?? 0) - 5.4) < 0.001)
+        #expect(model.project.segments[1].selectedTake?.transcript?.words.map(\.text) == ["point"])
+    }
+
+    @Test func freezingHoldsTheFrameUnderThePlayhead() {
+        let model = model()
+        model.seek(to: 4)
+        model.freezeFrameAtPlayhead(seconds: 2)
+        let segments = model.project.segments
+        #expect(segments.count == 3)
+        #expect(segments[1].playback.freeze?.seconds == 2)
+        // The held frame is the one at four seconds into the take, which starts three into the file.
+        #expect(abs((segments[1].selectedTake?.sourceRange.start.seconds ?? 0) - 7) < 0.01)
+        #expect(abs(model.duration - 12) < 0.01)
+        // One step back, and toggling it off removes the held frame.
+        model.toggleFreeze(at: 1)
+        #expect(model.project.segments.count == 2)
+        model.undo()
+        model.undo()
+        #expect(model.project.segments.count == 1)
+    }
+
+    @Test func oneEditCanBeTakenBackWithoutTheOnesAfterIt() {
+        let model = model()
+        model.addTextOverlay()
+        let text = model.project.overlays[0].id
+        model.updateOverlay(text, coalescing: "t1") { $0.start = MediaTime(seconds: 4) }
+        model.seek(to: 3.5)
+        model.splitAtPlayhead()
+        #expect(model.project.segments.count == 2)
+
+        // Take back only the move of the text: the split after it stays.
+        let move = model.changes[1]
+        #expect(model.editsCaughtUp(inUndoing: move.id).isEmpty)
+        model.undoOnly(move.id)
+        #expect(model.project.segments.count == 2)
+        #expect(model.project.overlays.first?.start.seconds != 4)
     }
 
     @Test func tighteningCutsOnlyTheLongPause() {

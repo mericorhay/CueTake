@@ -22,6 +22,8 @@ struct ChangesSheet: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var confirmingRevert = false
+    /// An edit waiting for "yes" because taking it back also takes back later ones.
+    @State private var pendingUndo: (entry: ChangeEntry, caught: [ChangeEntry])?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -31,6 +33,20 @@ struct ChangesSheet: View {
             list
         }
         .background(DS.Palette.screen)
+        .confirmationDialog(
+            String(localized: "editor.changes.undoThis.also \(pendingUndo?.caught.count ?? 0)", bundle: .module),
+            isPresented: Binding(get: { pendingUndo != nil }, set: { if !$0 { pendingUndo = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let pending = pendingUndo {
+                Button(String(localized: "editor.changes.undoThis.confirm", bundle: .module), role: .destructive) {
+                    withAnimation(DS.Motion.settle) { model.undoOnly(pending.entry.id) }
+                    pendingUndo = nil
+                }
+            }
+        } message: {
+            Text(verbatim: pendingUndo?.caught.map(\.label).joined(separator: ", ") ?? "")
+        }
         .animation(DS.Motion.snap, value: confirmingRevert)
         .animation(reduceMotion ? nil : DS.Motion.settle, value: model.changes.count)
     }
@@ -148,6 +164,26 @@ struct ChangesSheet: View {
                             Text(change.at.formatted(date: .omitted, time: .standard))
                                 .dsFont(.mono, .medium, 9)
                                 .foregroundStyle(DS.Palette.ink(0.3))
+
+                            // Any edit, not just the newest: the ones after it stay.
+                            if model.canUndoOnly(change.id) {
+                                Button {
+                                    let caught = model.editsCaughtUp(inUndoing: change.id)
+                                    if caught.isEmpty {
+                                        withAnimation(DS.Motion.settle) { model.undoOnly(change.id) }
+                                    } else {
+                                        pendingUndo = (change, caught)
+                                    }
+                                } label: {
+                                    Image(systemName: "arrow.uturn.backward")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(DS.Palette.ink(0.85))
+                                        .frame(width: 34, height: 30)
+                                        .background(Capsule().fill(DS.Palette.hairline(0.1)))
+                                }
+                                .buttonStyle(.dsPressIcon)
+                                .accessibilityLabel(Text("editor.changes.undoThis", bundle: .module))
+                            }
                         }
                         .padding(.horizontal, 11)
                         .padding(.vertical, 8)

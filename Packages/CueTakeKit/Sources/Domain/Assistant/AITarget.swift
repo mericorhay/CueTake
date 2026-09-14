@@ -17,6 +17,12 @@ public enum AITarget: Hashable, Sendable {
     case overlay(UUID)
     /// A tool laid over a stretch of the video.
     case effect(UUID)
+    /// An added video playing over the main one.
+    case videoLayer(UUID)
+    /// Where the main video sits in the frame, and how loud it is.
+    case mainVideo
+    /// A recorded or imported file: which listener's words it uses.
+    case recording(UUID)
     case audio(UUID)
     case voice
     case title
@@ -67,6 +73,20 @@ extension Project {
                 Self.restore(id, in: &result.overlays, from: source.overlays)
             case .effect(let id):
                 Self.restore(id, in: &result.effects, from: source.effects)
+            case .videoLayer(let id):
+                Self.restore(id, in: &result.videoLayers, from: source.videoLayers)
+            case .mainVideo:
+                result.mainVideoPlacement = source.mainVideoPlacement
+                result.mainVideoVolume = source.mainVideoVolume
+            case .recording(let id):
+                // A file comes back, never goes: takes elsewhere may still point at it.
+                if let old = source.recordings.first(where: { $0.id == id }) {
+                    if let now = result.recordings.firstIndex(where: { $0.id == id }) {
+                        result.recordings[now] = old
+                    } else {
+                        result.recordings.append(old)
+                    }
+                }
             case .audio(let id):
                 Self.restore(id, in: &result.audio, from: source.audio)
             case .voice:
@@ -97,6 +117,12 @@ extension Project {
                 overlays.first(where: { $0.id == id }) == other.overlays.first(where: { $0.id == id })
             case .effect(let id):
                 effects.first(where: { $0.id == id }) == other.effects.first(where: { $0.id == id })
+            case .videoLayer(let id):
+                videoLayers.first(where: { $0.id == id }) == other.videoLayers.first(where: { $0.id == id })
+            case .mainVideo:
+                mainVideoPlacement == other.mainVideoPlacement && mainVideoVolume == other.mainVideoVolume
+            case .recording(let id):
+                recordings.first(where: { $0.id == id }) == other.recordings.first(where: { $0.id == id })
             case .audio(let id):
                 audio.first(where: { $0.id == id }) == other.audio.first(where: { $0.id == id })
             case .voice:
@@ -125,5 +151,45 @@ extension Project {
         case (nil, nil):
             break
         }
+    }
+}
+
+extension Project {
+    /// Everything that differs between this project and `before`, as the things a restore puts back.
+    ///
+    /// What makes taking back one edit out of many possible: the edit's own before and after say
+    /// which clips, captions, texts, sounds or settings it touched, and only those are restored —
+    /// the edits made after it elsewhere stay.
+    public func changedTargets(since before: Project) -> [AITarget] {
+        var targets: [AITarget] = []
+
+        func diff<Item: Identifiable & Equatable>(_ now: [Item], _ then: [Item], _ make: (Item.ID) -> AITarget) {
+            let old = Dictionary(then.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+            let new = Dictionary(now.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+            for item in then where new[item.id] != item { targets.append(make(item.id)) }
+            for item in now where old[item.id] == nil { targets.append(make(item.id)) }
+        }
+
+        diff(segments, before.segments) { .clip($0) }
+        let commonNow = segments.map(\.id).filter { id in before.segments.contains { $0.id == id } }
+        let commonThen = before.segments.map(\.id).filter { id in segments.contains { $0.id == id } }
+        if commonNow != commonThen || segments.count != before.segments.count {
+            targets.append(.clipOrder)
+        }
+        diff(overlays, before.overlays) { .overlay($0) }
+        diff(effects, before.effects) { .effect($0) }
+        diff(audio, before.audio) { .audio($0) }
+        diff(videoLayers, before.videoLayers) { .videoLayer($0) }
+        for recording in before.recordings {
+            if recordings.first(where: { $0.id == recording.id }) != recording { targets.append(.recording(recording.id)) }
+        }
+        if captionStyle != before.captionStyle { targets.append(.captionStyle) }
+        if captionWindow != before.captionWindow { targets.append(.captionWindow) }
+        if voiceEffects != before.voiceEffects { targets.append(.voice) }
+        if title != before.title { targets.append(.title) }
+        if mainVideoPlacement != before.mainVideoPlacement || mainVideoVolume != before.mainVideoVolume {
+            targets.append(.mainVideo)
+        }
+        return targets
     }
 }

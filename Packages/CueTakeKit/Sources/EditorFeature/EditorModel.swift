@@ -457,22 +457,54 @@ public final class EditorModel {
     public var canSplitAtPlayhead: Bool {
         guard let (index, offset) = segmentAtPlayhead else { return false }
         let segment = project.segments[index]
-        return offset > 0.15 && segment.barWeight - offset > 0.15
-            && segment.playback.freeze == nil && !segment.playback.isReversed
+        return offset > 0.15 && segment.barWeight - offset > 0.15 && segment.playback.freeze == nil
     }
 
-    public func splitAtPlayhead() {
+    /// Where a cut at `offset` into a clip really goes, in the clip's footage seconds.
+    ///
+    /// A cut that lands inside a word leaves half a syllable on each side, and the jump it makes
+    /// is the first thing anyone notices in a talking video. When the playhead is inside a word,
+    /// the cut moves to the nearer edge of that word — a quarter of a second at most.
+    func cutPoint(inSegmentAt index: Int, offset: Double, snapToWords: Bool = true) -> Double {
+        let segment = project.segments[index]
+        let length = segment.sourceSeconds
+        let sourceOffset = min(max(0, segment.playback.sourceSeconds(forTimeline: offset)), length)
+        // Reversed, the timeline runs from the end of the footage.
+        let footage = segment.playback.isReversed ? length - sourceOffset : sourceOffset
+        guard snapToWords, let words = segment.selectedTake?.transcript?.words,
+              let word = words.first(where: { $0.range.start.seconds < footage && footage < $0.range.end.seconds })
+        else { return footage }
+        let before = word.range.start.seconds
+        let after = word.range.end.seconds
+        let nearer = footage - before < after - footage ? before : after
+        guard abs(nearer - footage) <= 0.25, nearer > 0.1, nearer < length - 0.1 else { return footage }
+        return nearer
+    }
+
+    /// Splits the segment under the playhead in two.
+    ///
+    /// The razor, and the tool our model was waiting for: both halves point at the same recording
+    /// with adjacent source ranges, so nothing is copied, nothing is re-encoded, and the file on
+    /// disk is untouched. A split is two numbers. It lands between words rather than inside one,
+    /// works on reversed clips too, and the playhead moves to where the cut really went.
+    ///
+    /// - Parameter snapToWords: off for cuts made at an exact number (the AI's, a speed range's).
+    public func splitAtPlayhead(snapToWords: Bool = true) {
         guard let (index, offset) = segmentAtPlayhead else { return }
         let segment = project.segments[index]
         // A split right on a boundary produces an empty clip, which is never what was meant.
         guard offset > 0.15, segment.barWeight - offset > 0.15 else { return }
-        // A freeze has one frame to divide and a reversed clip runs the other way, so where the
-        // playhead is does not map to where the cut would be. Both are refused rather than cut
-        // somewhere plausible-looking and wrong.
-        guard segment.playback.freeze == nil, !segment.playback.isReversed else { return }
+        // A freeze holds one frame: there is nothing inside it to divide.
+        guard segment.playback.freeze == nil else { return }
 
-        // In source seconds, which is what the take's range is measured in.
-        let sourceOffset = segment.playback.sourceSeconds(forTimeline: offset)
+        let reversed = segment.playback.isReversed
+        let length = segment.sourceSeconds
+        // In footage seconds from the start of the take.
+        let footage = cutPoint(inSegmentAt: index, offset: offset, snapToWords: snapToWords)
+        guard footage > 0.05, length - footage > 0.05 else { return }
+        // The part of the footage that comes first on the timeline, and the part after it.
+        let first = reversed ? (from: footage, to: length) : (from: 0.0, to: footage)
+        let second = reversed ? (from: 0.0, to: footage) : (from: footage, to: length)
 
         var left = segment
         var right = segment.copyWithNewIdentity()
@@ -480,21 +512,21 @@ public final class EditorModel {
         if let take = segment.selectedTake {
             var leftTake = take
             leftTake.sourceRange = MediaTimeRange(
-                start: take.sourceRange.start,
-                duration: MediaTime(seconds: sourceOffset)
+                start: take.sourceRange.start + MediaTime(seconds: first.from),
+                duration: MediaTime(seconds: first.to - first.from)
             )
-            leftTake.transcript = take.transcript?.slice(from: 0, to: sourceOffset)
+            leftTake.transcript = take.transcript?.slice(from: first.from, to: first.to)
             var rightTake = Take(
                 recordingID: take.recordingID,
                 sourceRange: MediaTimeRange(
-                    start: take.sourceRange.start + MediaTime(seconds: sourceOffset),
-                    duration: take.sourceRange.duration - MediaTime(seconds: sourceOffset)
+                    start: take.sourceRange.start + MediaTime(seconds: second.from),
+                    duration: MediaTime(seconds: second.to - second.from)
                 ),
                 status: take.status
             )
             // The words go with their footage. This used to be nil, which left the right half with
             // no transcript, no captions and nothing to edit by text until it was listened to again.
-            rightTake.transcript = take.transcript?.slice(from: sourceOffset, to: take.sourceRange.duration.seconds)
+            rightTake.transcript = take.transcript?.slice(from: second.from, to: second.to)
 
             left.takes = [leftTake]
             left.selectedTakeID = leftTake.id
@@ -503,8 +535,8 @@ public final class EditorModel {
         } else {
             // Estimates are in source seconds like everything else a segment stores, so the split
             // point has to be converted even when there is no footage behind it yet.
-            left.estimatedDuration = MediaTime(seconds: sourceOffset)
-            right.estimatedDuration = MediaTime(seconds: segment.sourceSeconds - sourceOffset)
+            left.estimatedDuration = MediaTime(seconds: first.to - first.from)
+            right.estimatedDuration = MediaTime(seconds: second.to - second.from)
         }
 
         if let leftWords = left.selectedTake?.transcript, let rightWords = right.selectedTake?.transcript,
@@ -523,14 +555,84 @@ public final class EditorModel {
         // Read again from each half's words, with anything typed by hand carried to the side it
         // was on. Clearing them was how a split used to delete a clip's captions.
         let maxWords = project.captionStyle.maxWordsPerCue
-        left.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions)
-        right.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions.map { $0.shifted(by: -sourceOffset) })
+        left.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions.map { $0.shifted(by: -first.from) })
+        right.refreshCaptions(maxWordsPerCue: maxWords, carrying: segment.captions.map { $0.shifted(by: -second.from) })
 
         record("editor.change.split", symbol: "scissors")
         project.segments[index] = left
         project.segments.insert(right, at: index + 1)
         project.updatedAt = .now
         inspectedSegment = right.id
+        // The playhead to where the cut really went: the start of the second half.
+        seek(to: start(at: index + 1))
+    }
+
+    /// Holds the frame under the playhead for a moment, as a clip of its own.
+    ///
+    /// Freeze used to stop a whole clip on its first frame, which is never the frame anyone wanted.
+    /// Now the clip is cut at the playhead and the frame there is held between the halves for two
+    /// seconds, and the held clip's length is pulled like any clip's on the timeline.
+    public func freezeFrameAtPlayhead(seconds: Double = 2) {
+        guard let (index, offset) = segmentAtPlayhead else { return }
+        let segment = project.segments[index]
+        guard segment.playback.freeze == nil, let take = segment.selectedTake else { return }
+
+        let length = segment.sourceSeconds
+        let before = project
+        beginBatch()
+
+        var insertAt = index + 1
+        var frame: Double
+        if offset <= 0.15 {
+            insertAt = index
+            frame = segment.playback.isReversed ? length - 0.04 : 0
+        } else if segment.barWeight - offset <= 0.15 {
+            frame = segment.playback.isReversed ? 0 : max(0, length - 0.04)
+        } else {
+            let footage = min(max(0, segment.playback.sourceSeconds(forTimeline: offset)), length)
+            frame = segment.playback.isReversed ? length - footage : footage
+            splitAtPlayhead(snapToWords: false)
+        }
+        frame = min(max(0, frame), max(0, length - 0.04))
+
+        var held = segment.copyWithNewIdentity()
+        let heldTake = Take(
+            recordingID: take.recordingID,
+            sourceRange: MediaTimeRange(
+                start: take.sourceRange.start + MediaTime(seconds: frame),
+                duration: MediaTime(seconds: min(0.5, max(0.04, length - frame)))
+            ),
+            status: take.status
+        )
+        held.takes = [heldTake]
+        held.selectedTakeID = heldTake.id
+        held.captions = []
+        held.playback = ClipPlayback(freeze: MediaTime(seconds: seconds))
+        held.metadata["freezeFrame"] = "1"
+
+        project.segments.insert(held, at: min(insertAt, project.segments.count))
+        project.updatedAt = .now
+        endBatch(startingFrom: before, label: "editor.change.freezeFrame", symbol: "snowflake")
+        inspectedSegment = held.id
+        seek(to: start(at: min(insertAt, project.segments.count - 1)) + 0.01)
+    }
+
+    /// Whether a clip is a held frame made by `freezeFrameAtPlayhead`.
+    public func isHeldFrame(at index: Int) -> Bool {
+        project.segments.indices.contains(index) && project.segments[index].metadata["freezeFrame"] == "1"
+    }
+
+    /// Freeze on or off, the way the tools mean it: on holds the frame under the playhead; off
+    /// removes a held frame, or lets an old whole-clip freeze play again.
+    public func toggleFreeze(at index: Int) {
+        guard project.segments.indices.contains(index) else { return }
+        if isHeldFrame(at: index), project.segments.count > 1 {
+            deleteSegment(at: index)
+        } else if project.segments[index].playback.freeze != nil {
+            updatePlayback(at: index) { $0.freeze = nil }
+        } else {
+            freezeFrameAtPlayhead()
+        }
     }
 
     /// Removes a segment. Everything after it closes up on its own, because the timeline is

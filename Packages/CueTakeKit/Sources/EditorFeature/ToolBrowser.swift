@@ -184,7 +184,7 @@ struct ToolBrowser: View {
                     symbol: "scissors",
                     title: "editor.tool.split",
                     note: "editor.tools.split.note",
-                    enabled: model.segmentAtPlayhead != nil,
+                    enabled: model.canSplitAtPlayhead,
                     tint: DS.Palette.lime
                 ) { model.pulse(.split); model.splitAtPlayhead() },
 
@@ -248,11 +248,7 @@ struct ToolBrowser: View {
                     enabled: index != nil,
                     tint: DS.Palette.lime
                 ) {
-                    if let index {
-                        model.updatePlayback(at: index) { playback in
-                            playback.freeze = playback.freeze == nil ? MediaTime(seconds: 2) : nil
-                        }
-                    }
+                    if let index { model.toggleFreeze(at: index) }
                     open(.timing)
                 },
 

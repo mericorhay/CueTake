@@ -818,7 +818,7 @@ extension EditorModel {
                 guard local > 0.15, local < segment.sourceSeconds - 0.15 else { return nil }
                 let count = m.project.segments.count
                 m.seek(to: m.start(at: i) + segment.playback.timelineSeconds(forSource: local))
-                m.splitAtPlayhead()
+                m.splitAtPlayhead(snapToWords: false)
                 guard m.project.segments.count == count + 1 else { return nil }
                 pieces.insert((at, m.project.segments[i + 1].id.uuidString), at: p + 1)
                 splits.pieces[clip] = pieces
