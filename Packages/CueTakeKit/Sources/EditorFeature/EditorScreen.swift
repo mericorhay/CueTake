@@ -156,7 +156,8 @@ public struct EditorScreen: View {
                     onOpenAll: {
                         editingCaption = nil
                         onCaptions()
-                    }
+                    },
+                    onSwitch: { editingCaption = $0 }
                 )
             } else if let clip = model.selectedAudioClip {
                 audioPanel(clip)

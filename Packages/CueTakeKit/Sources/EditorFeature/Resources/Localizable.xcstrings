@@ -3197,6 +3197,23 @@
         }
       }
     },
+    "editor.change.speechVersion": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words from the other listener"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer motorun metni seçildi"
+          }
+        }
+      }
+    },
     "editor.change.split": {
       "extractionState": "manual",
       "localizations": {
@@ -4453,6 +4470,108 @@
           "stringUnit": {
             "state": "translated",
             "value": "Segmenti tekrar çek"
+          }
+        }
+      }
+    },
+    "editor.speech.agree": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both listeners heard the same"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İki motor da aynı şeyi duydu"
+          }
+        }
+      }
+    },
+    "editor.speech.byAI %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI picked %@ · see both"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI %@ metnini seçti · ikisini gör"
+          }
+        }
+      }
+    },
+    "editor.speech.byRule %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using %@ · see both"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ metni kullanılıyor · ikisini gör"
+          }
+        }
+      }
+    },
+    "editor.speech.byYou %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You picked %@ · see both"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sen %@ metnini seçtin · ikisini gör"
+          }
+        }
+      }
+    },
+    "editor.speech.cloud": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SERVER"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SUNUCU"
+          }
+        }
+      }
+    },
+    "editor.speech.device": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PHONE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TELEFON"
           }
         }
       }

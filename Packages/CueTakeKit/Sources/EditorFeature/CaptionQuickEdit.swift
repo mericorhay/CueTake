@@ -48,6 +48,8 @@ struct CaptionQuickPanel: View {
     let captionID: CaptionCue.ID
     let onClose: () -> Void
     let onOpenAll: () -> Void
+    /// Moves the panel to another caption: the one that replaced this after a change of words.
+    var onSwitch: (CaptionCue.ID) -> Void = { _ in }
 
     @FocusState private var typing: Bool
 
@@ -100,6 +102,8 @@ struct CaptionQuickPanel: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.07)))
+
+                SpeechVersionsRow(model: model, captionID: captionID, onReplaced: onSwitch)
             }
 
             HStack(spacing: 10) {

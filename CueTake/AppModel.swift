@@ -727,7 +727,15 @@ final class AppModel {
         }
 
         busy = String(localized: "busy.aligning")
-        let heard = try? await dependencies.speech.transcribeFile(at: capture.url, localeIdentifier: project.localeIdentifier)
+        let versions = try? await listen(
+            to: capture.url,
+            localeIdentifier: project.localeIdentifier,
+            script: project.segments.map(\.script).joined(separator: " ")
+        )
+        let heard = versions?.merged
+        if let versions, let stored = project.recordings.firstIndex(where: { $0.id == recording.id }) {
+            project.recordings[stored].speech = versions
+        }
         busy = nil
 
         var starts: [Double] = project.segments.indices.map { index in
@@ -852,10 +860,10 @@ final class AppModel {
         }
 
         // One listen per file. A studio recording is one file behind every segment.
-        let speech = dependencies.speech
         let locale = project.localeIdentifier
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
         var heard: [Recording.ID: Transcript] = [:]
+        var heardVersions: [Recording.ID: TranscriptVersions] = [:]
         var failure: (any Error)?
         for recordingID in pending {
             guard let recording = recordings[recordingID] else { continue }
@@ -863,9 +871,19 @@ final class AppModel {
                 path: (recording.relativePath as NSString).lastPathComponent,
                 directoryHint: .notDirectory
             )
+            // What the speaker meant to say in this file, as a hint for both the server listener
+            // and the judge.
+            let script = project.segments
+                .filter { $0.takes.contains { $0.recordingID == recordingID } }
+                .map(\.script)
+                .joined(separator: " ")
             do {
-                let transcript = try await speech.transcribeFile(at: url, localeIdentifier: locale)
-                if !transcript.words.isEmpty { heard[recordingID] = transcript }
+                let versions = try await listen(to: url, localeIdentifier: locale, script: script)
+                let transcript = versions.merged
+                if !transcript.words.isEmpty {
+                    heard[recordingID] = transcript
+                    heardVersions[recordingID] = versions
+                }
             } catch {
                 failure = error
             }
@@ -874,6 +892,12 @@ final class AppModel {
         // Applied to the project as it is now, not as it was when listening began: the user may
         // have cut, trimmed or reordered in the meantime, and those edits must survive.
         takeEditorEditsIfEditing()
+        // Both versions kept with the file, so either can be chosen later.
+        for (recordingID, versions) in heardVersions {
+            if let stored = project.recordings.firstIndex(where: { $0.id == recordingID }) {
+                project.recordings[stored].speech = versions
+            }
+        }
         var captioned = 0
         for index in project.segments.indices {
             guard let takeID = project.segments[index].selectedTakeID,
@@ -926,7 +950,7 @@ final class AppModel {
 
     /// The editor's copy wins only while the editor is the screen being used. The captions screen
     /// edits the project directly, and taking the editor's older copy then would undo its edits.
-    private func takeEditorEditsIfEditing() {
+    func takeEditorEditsIfEditing() {
         if screen == .editor { adoptEditorEdits() }
     }
 

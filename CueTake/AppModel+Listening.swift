@@ -1,0 +1,82 @@
+import AIServices
+import Domain
+import Foundation
+import MediaEngine
+import SpeechEngine
+
+/// Hearing a recording twice.
+///
+/// Two listeners that know nothing of each other — Apple's on the phone and Whisper on the server —
+/// hear the same file at the same time. Their words are checked against the sound itself (a word
+/// where the file is silent was invented), laid side by side passage by passage, picked by rule,
+/// and where they still disagree the server model reads both and chooses. Both versions stay in
+/// the project, so the choice can be seen and changed later.
+extension AppModel {
+    /// Everything both listeners heard in a file, decided.
+    ///
+    /// Throws only when neither could hear anything at all, with the phone's reason — it is the
+    /// one that explains a language or a permission.
+    func listen(to url: URL, localeIdentifier: String, script: String) async throws -> TranscriptVersions {
+        let speech = dependencies.speech
+        let client = dependencies.assistantClient
+
+        async let deviceResult = Self.deviceTranscript(of: url, speech: speech, localeIdentifier: localeIdentifier)
+        async let cloudResult: [TimedWord]? = Self.cloudWords(of: url, client: client, localeIdentifier: localeIdentifier, script: script)
+        async let activity = VoiceActivity.measure(url)
+
+        let device = await deviceResult
+        let cloud = await cloudResult
+        let sound = await activity
+
+        let deviceWords = (try? device.get().words) ?? []
+        if deviceWords.isEmpty, cloud?.isEmpty ?? true, case .failure(let error) = device {
+            throw error
+        }
+
+        let voicedDevice = sound?.voiced(deviceWords) ?? deviceWords
+        let voicedCloud = cloud.map { sound?.voiced($0) ?? $0 }
+        var versions = TranscriptVersions(
+            localeIdentifier: localeIdentifier,
+            device: voicedDevice,
+            cloud: voicedCloud,
+            script: script
+        )
+
+        let disputed = versions.disputed
+        if !disputed.isEmpty, client.isConfigured,
+           let choices = try? await client.judgeSpeech(disputed, script: script, localeIdentifier: localeIdentifier) {
+            for (passage, source) in choices {
+                versions.choose(source, forPassage: passage, by: .ai)
+            }
+        }
+        return versions
+    }
+
+    nonisolated private static func deviceTranscript(
+        of url: URL,
+        speech: any SpeechTranscribing,
+        localeIdentifier: String
+    ) async -> Result<Transcript, any Error> {
+        do {
+            return .success(try await speech.transcribeFile(at: url, localeIdentifier: localeIdentifier))
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    /// The server's words, or nil when it could not be asked or did not answer.
+    nonisolated private static func cloudWords(
+        of url: URL,
+        client: AssistantClient,
+        localeIdentifier: String,
+        script: String
+    ) async -> [TimedWord]? {
+        guard client.isConfigured else { return nil }
+        guard let compact = try? await SpeechAudio.compact(url) else { return nil }
+        defer { try? FileManager.default.removeItem(at: compact) }
+        // The service takes up to 25 MB, which at this size is well over an hour of talking.
+        let size = (try? compact.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        guard size > 0, size < 24_000_000 else { return nil }
+        return try? await client.transcribe(audio: compact, localeIdentifier: localeIdentifier, prompt: script)
+    }
+}

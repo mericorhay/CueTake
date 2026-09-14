@@ -403,6 +403,13 @@ enum LegacySpeech {
     }
 
     /// Every word of an audio file, with when it was said.
+    ///
+    /// Listens to the whole file. The recogniser hands a long recording back one utterance at a
+    /// time — each pause ends a "final" result holding only the words since the last one — and this
+    /// used to stop at the first of them: a talking video came back as its first sentence, or as
+    /// nothing at all when the file opened on a moment of silence ("no speech detected" for that
+    /// first stretch). Every final result is kept now, and the answer is given when the task says
+    /// it has finished.
     static func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
         let recognizer = try await recognizer(for: localeIdentifier)
         let request = SFSpeechURLRecognitionRequest(url: url)
@@ -413,46 +420,73 @@ enum LegacySpeech {
             request.requiresOnDeviceRecognition = true
         }
 
-        let lock = NSLock()
-        nonisolated(unsafe) var finished = false
-        nonisolated(unsafe) var task: SFSpeechRecognitionTask?
-
+        let collector = FileRecognition()
         let words: [TimedWord] = try await withCheckedThrowingContinuation { continuation in
-            task = recognizer.recognitionTask(with: request) { result, error in
-                let words: [TimedWord]? = result.flatMap { result in
-                    guard result.isFinal else { return nil }
-                    return result.bestTranscription.segments.map { segment in
+            collector.continuation = continuation
+            collector.task = recognizer.recognitionTask(with: request, delegate: collector)
+        }
+        // The recogniser and its delegate have to live until the last word is in.
+        withExtendedLifetime((recognizer, collector)) {}
+        return Transcript(localeIdentifier: localeIdentifier, words: words)
+    }
+
+    /// Collects every final result of one file, in order, and answers once.
+    final class FileRecognition: NSObject, SFSpeechRecognitionTaskDelegate, @unchecked Sendable {
+        private let lock = NSLock()
+        private var words: [TimedWord] = []
+        private var answered = false
+        var continuation: CheckedContinuation<[TimedWord], any Error>?
+        var task: SFSpeechRecognitionTask?
+
+        func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishRecognition result: SFSpeechRecognitionResult) {
+            let segments = result.bestTranscription.segments
+                .map { (text: $0.substring.trimmingCharacters(in: .whitespacesAndNewlines), start: $0.timestamp, length: $0.duration, confidence: $0.confidence) }
+                .filter { !$0.text.isEmpty }
+            guard !segments.isEmpty else { return }
+            lock.withLock {
+                let lastEnd = words.last.map { $0.range.end.seconds } ?? 0
+                var fresh = segments[...]
+                var shift = 0.0
+                if segments.count >= words.count, !words.isEmpty,
+                   zip(words, segments).allSatisfy({ $0.text == $1.text }) {
+                    // The whole transcript so far, sent again with more on the end.
+                    fresh = segments.dropFirst(words.count)
+                } else if let first = segments.first, !words.isEmpty, first.start < lastEnd - 0.3 {
+                    // A result timed from its own beginning rather than the file's.
+                    shift = lastEnd + 0.3 - first.start
+                }
+                for segment in fresh {
+                    words.append(
                         TimedWord(
-                            text: segment.substring,
+                            text: segment.text,
                             range: MediaTimeRange(
-                                start: MediaTime(seconds: segment.timestamp),
-                                duration: MediaTime(seconds: max(0.05, segment.duration))
+                                start: MediaTime(seconds: segment.start + shift),
+                                duration: MediaTime(seconds: max(0.05, segment.length))
                             ),
                             confidence: Double(segment.confidence)
                         )
-                    }
-                }
-                guard error != nil || words != nil else { return }
-                let first = lock.withLock {
-                    defer { finished = true }
-                    return !finished
-                }
-                guard first else { return }
-                if let words {
-                    continuation.resume(returning: words)
-                } else if let error {
-                    // "No speech detected" is an answer, not a failure.
-                    let code = (error as NSError).code
-                    if code == 1110 || code == 203 {
-                        continuation.resume(returning: [])
-                    } else {
-                        continuation.resume(throwing: error)
-                    }
+                    )
                 }
             }
         }
-        withExtendedLifetime(task) {}
-        return Transcript(localeIdentifier: localeIdentifier, words: words)
+
+        func speechRecognitionTask(_ task: SFSpeechRecognitionTask, didFinishSuccessfully successfully: Bool) {
+            let (heard, first) = lock.withLock { () -> ([TimedWord], Bool) in
+                defer { answered = true }
+                return (words, !answered)
+            }
+            guard first else { return }
+            if successfully || !heard.isEmpty {
+                continuation?.resume(returning: heard)
+                return
+            }
+            // "No speech detected" is an answer, not a failure.
+            if let error = task.error as NSError?, error.code != 1110, error.code != 203 {
+                continuation?.resume(throwing: error)
+            } else {
+                continuation?.resume(returning: [])
+            }
+        }
     }
 
     /// The microphone, live, for following the script.
