@@ -256,7 +256,12 @@ public struct RetakeScreen: View {
             if !saving, model.state == .compare { model.stopCamera(); preparePreview() }
         }
         .onChange(of: model.originalRecordingURL) { _, _ in preparePreview() }
-        .onChange(of: scenePhase) { _, phase in if phase == .background { model.stopTimers() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { model.stopTimers() }
+            if phase == .active, model.state == .ready, model.cameraAuthorization == .denied {
+                Task { await model.startCamera(position: camera) }
+            }
+        }
         .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
             get: { model.captureError != nil },
             set: { if !$0 { model.captureError = nil } }

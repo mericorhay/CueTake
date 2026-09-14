@@ -49,6 +49,7 @@ public struct CompleteScreen: View {
                         }
                     }
                 }
+                .frame(height: 56)
                 .padding(.bottom, 16)
 
                 DSPrimaryButton(
