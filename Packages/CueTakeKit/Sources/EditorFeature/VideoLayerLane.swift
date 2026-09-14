@@ -7,6 +7,14 @@ struct VideoLayerLane: View {
     @Bindable var model: EditorModel
     let scale: Double
 
+    @State private var drag: DragState?
+    @State private var trim: DragState?
+
+    private struct DragState: Equatable {
+        var id: VideoLayer.ID
+        var origin: Double
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 5) {
@@ -16,27 +24,77 @@ struct VideoLayerLane: View {
             .dsFont(.mono, .medium, 9)
             .foregroundStyle(DS.Palette.ink(0.45))
             ForEach(model.project.videoLayers) { layer in
-                Button {
-                    withAnimation(DS.Motion.snap) { model.select(videoLayer: model.selectedVideoLayer == layer.id ? nil : layer.id) }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: layer.isMuted ? "speaker.slash.fill" : "video.fill")
-                            .font(.system(size: 9, weight: .semibold))
-                        Text(layer.title)
-                            .dsFont(.sans, .semibold, 10)
-                            .lineLimit(1)
-                        Spacer(minLength: 0)
-                    }
-                    .foregroundStyle(DS.Palette.inkInverse)
-                    .padding(.horizontal, 8)
+                view(for: layer)
                     .frame(width: max(38, CGFloat(layer.duration * scale)), height: 25, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(DS.Palette.lime.opacity(model.selectedVideoLayer == layer.id ? 1 : 0.65)))
-                    .overlay(RoundedRectangle(cornerRadius: 7).stroke(DS.Palette.ink, lineWidth: model.selectedVideoLayer == layer.id ? 2 : 0))
-                }
-                .buttonStyle(.dsPress(radius: 7))
-                .offset(x: CGFloat(layer.start.seconds * scale))
+                    .offset(x: CGFloat(layer.start.seconds * scale))
+                    .zIndex(model.selectedVideoLayer == layer.id ? 1 : 0)
             }
         }
         .frame(minHeight: CGFloat(model.project.videoLayers.count) * 29 + 18, alignment: .topLeading)
+    }
+
+    private func view(for layer: VideoLayer) -> some View {
+        let isSelected = model.selectedVideoLayer == layer.id
+        return HStack(spacing: 6) {
+            Image(systemName: layer.isMuted ? "speaker.slash.fill" : "video.fill")
+                .font(.system(size: 9, weight: .semibold))
+            Text(layer.title)
+                .dsFont(.sans, .semibold, 10)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DS.Palette.inkInverse)
+        .padding(.horizontal, 8)
+        .background(RoundedRectangle(cornerRadius: 7).fill(DS.Palette.lime.opacity(isSelected ? 1 : 0.65)))
+        .overlay(RoundedRectangle(cornerRadius: 7).stroke(DS.Palette.ink, lineWidth: isSelected ? 2 : 0))
+        .overlay(alignment: .trailing) {
+            if isSelected { trimHandle(for: layer) }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 7))
+        .contentShape(RoundedRectangle(cornerRadius: 7))
+        .onTapGesture {
+            withAnimation(DS.Motion.snap) { model.select(videoLayer: isSelected ? nil : layer.id) }
+        }
+        .gesture(moveGesture(for: layer))
+    }
+
+    private func trimHandle(for layer: VideoLayer) -> some View {
+        RoundedRectangle(cornerRadius: 3, style: .continuous)
+            .fill(DS.Palette.ink)
+            .frame(width: trim?.id == layer.id ? 5 : 3, height: 16)
+            .padding(.trailing, 3)
+            .frame(width: 24, height: 25, alignment: .trailing)
+            .contentShape(Rectangle())
+            .gesture(trimGesture(for: layer))
+    }
+
+    private func moveGesture(for layer: VideoLayer) -> some Gesture {
+        DragGesture(minimumDistance: 3)
+            .onChanged { gesture in
+                let origin = drag?.origin ?? layer.start.seconds
+                if drag == nil {
+                    drag = DragState(id: layer.id, origin: origin)
+                    model.select(videoLayer: layer.id)
+                }
+                let raw = origin + Double(gesture.translation.width) / scale
+                let tolerance = TimelineScale.snapTolerance(pointsPerSecond: scale)
+                let target = model.snapTarget(for: raw, tolerance: tolerance) ?? raw
+                model.updateVideoLayer(layer.id) { $0.start = MediaTime(seconds: max(0, target)) }
+            }
+            .onEnded { _ in drag = nil }
+    }
+
+    private func trimGesture(for layer: VideoLayer) -> some Gesture {
+        DragGesture(minimumDistance: 1)
+            .onChanged { gesture in
+                let origin = trim?.origin ?? layer.sourceRange.duration.seconds
+                if trim == nil { trim = DragState(id: layer.id, origin: origin) }
+                let wanted = origin + Double(gesture.translation.width) / scale
+                model.updateVideoLayer(layer.id) { edited in
+                    edited.sourceRange.duration = MediaTime(seconds: max(0.2, wanted))
+                }
+            }
+            .onEnded { _ in trim = nil }
     }
 }
