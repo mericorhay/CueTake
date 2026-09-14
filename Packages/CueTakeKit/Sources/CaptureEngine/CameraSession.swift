@@ -1,5 +1,6 @@
 import AVFoundation
 import Domain
+import Foundation
 import Observation
 
 /// Owns the `AVCaptureSession`: preview, device choice, permissions, and writing the file.
@@ -159,7 +160,7 @@ public final class CameraSession: @unchecked Sendable {
     /// preview alone never triggers a second permission prompt.
     public func startRecording(to url: URL) async -> Bool {
         let status = await Self.requestAuthorization(includingMicrophone: true)
-        guard status.camera == .authorized else { return false }
+        guard status.camera == .authorized, status.microphone == .authorized else { return false }
 
         return await withCheckedContinuation { continuation in
             queue.async { [self] in
@@ -190,8 +191,12 @@ public final class CameraSession: @unchecked Sendable {
                     session.commitConfiguration()
                 }
 
+                guard audioInput != nil else {
+                    continuation.resume(returning: false)
+                    return
+                }
+                recordingDelegate.onStart = { started in continuation.resume(returning: started) }
                 movieOutput.startRecording(to: url, recordingDelegate: recordingDelegate)
-                continuation.resume(returning: true)
             }
         }
     }
@@ -358,9 +363,29 @@ private final class AudioTap: NSObject, AVCaptureAudioDataOutputSampleBufferDele
 
 /// Bridges the delegate callback back to the `async` call that started the recording.
 private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var startHandler: (@Sendable (Bool) -> Void)?
+    private var finishHandler: (@Sendable (URL?) -> Void)?
+
+    var onStart: (@Sendable (Bool) -> Void)? {
+        get { lock.withLock { startHandler } }
+        set { lock.withLock { startHandler = newValue } }
+    }
     /// Set for the duration of one stop. Cleared as soon as it fires, so a later interruption
     /// cannot resume a continuation twice.
-    var onFinish: ((URL?) -> Void)?
+    var onFinish: (@Sendable (URL?) -> Void)? {
+        get { lock.withLock { finishHandler } }
+        set { lock.withLock { finishHandler = newValue } }
+    }
+
+    func fileOutput(_ output: AVCaptureFileOutput, didStartRecordingTo fileURL: URL, from connections: [AVCaptureConnection]) {
+        let handler = lock.withLock {
+            let handler = startHandler
+            startHandler = nil
+            return handler
+        }
+        handler?(true)
+    }
 
     func fileOutput(
         _ output: AVCaptureFileOutput,
@@ -368,8 +393,15 @@ private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDel
         from connections: [AVCaptureConnection],
         error: (any Error)?
     ) {
-        let handler = onFinish
-        onFinish = nil
-        handler?(error == nil ? outputFileURL : nil)
+        let handlers = lock.withLock {
+            let handlers = (startHandler, finishHandler)
+            startHandler = nil
+            finishHandler = nil
+            return handlers
+        }
+        // A failed start can finish without a didStart callback. Release the waiting shutter.
+        handlers.0?(false)
+        let saved = error == nil || (error as NSError?)?.userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool == true
+        handlers.1?(saved ? outputFileURL : nil)
     }
 }

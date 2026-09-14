@@ -443,6 +443,13 @@ public final class EditorModel {
     ///
     /// The script goes with it, cut at the same proportion, so the prompter and the captions still
     /// describe the right half.
+    public var canSplitAtPlayhead: Bool {
+        guard let (index, offset) = segmentAtPlayhead else { return false }
+        let segment = project.segments[index]
+        return offset > 0.15 && segment.barWeight - offset > 0.15
+            && segment.playback.freeze == nil && !segment.playback.isReversed
+    }
+
     public func splitAtPlayhead() {
         guard let (index, offset) = segmentAtPlayhead else { return }
         let segment = project.segments[index]

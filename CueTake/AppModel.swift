@@ -679,8 +679,10 @@ final class AppModel {
 
     /// Hands the studio a file to write into, so a take is a recording rather than a timer.
     func beginStudioCapture() async {
+        let studio = studioModel
+        guard await studio.prepareCapture() else { return }
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {
-            studioModel.startRecording()
+            studio.failCapture("studio.capture.storage")
             return
         }
         let url = mediaDirectory.appending(
@@ -688,7 +690,7 @@ final class AppModel {
             directoryHint: .notDirectory
         )
         // Three seconds to get back into frame, then rolling.
-        studioModel.beginCountdown(writingTo: url)
+        studio.beginCountdown(writingTo: url)
     }
 
     /// Folds a finished capture into the project: one recording, one take per segment.
@@ -798,8 +800,9 @@ final class AppModel {
 
     func beginRetakeCapture() async {
         guard let retakeModel else { return }
+        guard await retakeModel.prepareCapture() else { return }
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {
-            retakeModel.start()
+            retakeModel.failCapture("studio.capture.storage")
             return
         }
         retakeModel.start(

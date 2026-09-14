@@ -53,6 +53,28 @@ public final class RetakeModel {
     /// The file is being closed. "Keep" waits for it: keeping a take that has not been written yet
     /// keeps nothing.
     public private(set) var isSaving = false
+    public private(set) var isStarting = false
+    public var captureError: String?
+
+    public func prepareCapture() async -> Bool {
+        guard !isStarting, !isSaving, state == .ready else { return false }
+        isStarting = true
+        captureError = nil
+        let status = await CameraSession.requestAuthorization(includingMicrophone: true)
+        guard isStarting else { return false }
+        cameraAuthorization = status.camera
+        guard status.camera == .authorized, status.microphone == .authorized else {
+            failCapture("studio.capture.permissions")
+            return false
+        }
+        return true
+    }
+
+    public func failCapture(_ key: String.LocalizationValue) {
+        captureError = String(localized: key, bundle: .module)
+        isStarting = false
+        state = .ready
+    }
 
     /// - Parameter localeIdentifier: the project's language, for listening to the reader.
     public init(segment: Segment, localeIdentifier: String = Locale.current.identifier, speech: any SpeechTranscribing = SystemSpeechTranscriber()) {
@@ -76,17 +98,29 @@ public final class RetakeModel {
     /// Rolls, with the text following the reader's voice — or a real speaking pace when the voice
     /// cannot be heard. It used to run a 130 ms timer and stop the take when the words ran out.
     public func start(writingTo url: URL? = nil) {
-        guard state != .rolling else { return }
+        guard isStarting, state == .ready else { return }
+        guard let url else { failCapture("studio.capture.storage"); return }
+        Task { [weak self] in
+            guard let self else { return }
+            let started = await camera.startRecording(to: url)
+            guard isStarting else {
+                if started { _ = await camera.stopRecording() }
+                return
+            }
+            guard started else { failCapture("studio.capture.failed"); return }
+            isStarting = false
+            didStart(to: url)
+        }
+    }
+
+    private func didStart(to url: URL) {
         state = .rolling
         wordIndex = 0
         lastCapture = nil
 
         recordingURL = url
         recordingStart = .now
-        if let url {
-            Task { [camera] in _ = await camera.startRecording(to: url) }
-        }
-        driver.start(camera: url == nil ? nil : camera)
+        driver.start(camera: camera)
     }
 
     public func stop() {
@@ -96,12 +130,14 @@ public final class RetakeModel {
     /// Cancels the running timer without touching what is already on screen, the way the design
     /// clears its intervals on every navigation.
     public func stopTimers() {
+        isStarting = false
         task?.cancel()
         task = nil
         if state == .rolling { finish() }
     }
 
     public func redo() {
+        guard !isSaving, !isStarting else { return }
         task?.cancel()
         task = nil
         state = .ready
@@ -110,6 +146,7 @@ public final class RetakeModel {
     }
 
     private func finish() {
+        guard state == .rolling, !isSaving else { return }
         task?.cancel()
         task = nil
         driver.stop(camera: camera)
@@ -123,7 +160,11 @@ public final class RetakeModel {
             Task { [weak self] in
                 let url = await self?.camera.stopRecording()
                 guard let self else { return }
-                if let url { lastCapture = (url, elapsed) }
+                if let url {
+                    lastCapture = (url, elapsed)
+                } else {
+                    failCapture("studio.capture.saveFailed")
+                }
                 isSaving = false
             }
         }
@@ -132,6 +173,7 @@ public final class RetakeModel {
 }
 
 public struct RetakeScreen: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Bindable private var model: RetakeModel
     private let camera: CameraPosition
     /// Same arrangement as the studio: the screen asks, the project's owner answers with a path.
@@ -166,6 +208,7 @@ public struct RetakeScreen: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 10) {
                     DSBackButton(size: 34, fontSize: 15, style: .glass, action: onBack)
+                        .disabled(model.state == .rolling || model.isSaving || model.isStarting)
                     DSKicker(
                         String(localized: "retake.kicker \(model.segment.role.displayLabel)", bundle: .module),
                         color: DS.Palette.ink(0.55)
@@ -186,7 +229,14 @@ public struct RetakeScreen: View {
             .dsScreenLayout(scrolls: true)
         }
         .task { await model.startCamera(position: camera) }
-        .onDisappear { model.stopCamera() }
+        .onDisappear { model.stopTimers(); model.stopCamera() }
+        .onChange(of: scenePhase) { _, phase in if phase == .background { model.stopTimers() } }
+        .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
+            get: { model.captureError != nil },
+            set: { if !$0 { model.captureError = nil } }
+        )) {
+            Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
+        } message: { Text(model.captureError ?? "") }
         .dsEnter(.screen())
     }
 
@@ -236,6 +286,13 @@ public struct RetakeScreen: View {
                 }
             }
             .buttonStyle(.dsPress)
+            .disabled(model.isStarting)
+            .accessibilityLabel(Text("studio.record", bundle: .module))
+            if model.isStarting {
+                ProgressView(String(localized: "studio.capture.preparing", bundle: .module))
+                    .tint(DS.Palette.ink)
+                    .padding(.top, 12)
+            }
         }
         .dsEnter(.rise(duration: 0.4))
     }
@@ -297,6 +354,11 @@ public struct RetakeScreen: View {
 
     private var compareState: some View {
         VStack(spacing: 0) {
+            if model.isSaving {
+                ProgressView(String(localized: "studio.saving", bundle: .module))
+                    .tint(DS.Palette.ink)
+                    .padding(.bottom, 14)
+            }
             HStack(spacing: 8) {
                 takeCard(
                     .old,
@@ -320,6 +382,7 @@ public struct RetakeScreen: View {
                 ) {
                     model.redo()
                 }
+                .disabled(model.isSaving)
 
                 DSPrimaryButton(
                     String(
@@ -332,8 +395,8 @@ public struct RetakeScreen: View {
                     onKeep(model.choice)
                 }
                 // Keeping the new take waits for its file to be closed.
-                .disabled(model.isSaving && model.choice == .new)
-                .opacity(model.isSaving && model.choice == .new ? 0.5 : 1)
+                .disabled(model.isSaving || (model.choice == .new && model.lastCapture == nil))
+                .opacity(model.isSaving ? 0.5 : 1)
             }
         }
         .dsEnter(.rise(duration: 0.4))

@@ -4,11 +4,8 @@ import SwiftUI
 
 /// The editing tools, one row under the picture, where a thumb already is.
 ///
-/// They used to live in a toolbar below the timeline and the caption strip — below the bottom of
-/// the phone on most projects, so the cut and trim tools simply were not there. Now they sit
-/// directly above the timeline, and the tools that need more than a tap open *out of their own
-/// button*: the chip grows into its panel while the rest of the row steps aside one after another,
-/// and closing plays the same thing backwards, every tool settling back into its place.
+/// The row stays in place while a panel opens below it. Keeping the other tools visible gives
+/// editing a stable home and makes switching tools a single tap.
 struct ToolDock: View {
     @Bindable var model: EditorModel
     let onCaptions: () -> Void
@@ -39,7 +36,6 @@ struct ToolDock: View {
     enum BackgroundReach: Hashable {
         case clip, fromHere, whole
     }
-    @Namespace private var morph
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The clip the tools act on: the one being inspected, or the one under the playhead.
@@ -52,15 +48,12 @@ struct ToolDock: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        VStack(alignment: .leading, spacing: 10) {
             row
-                .allowsHitTesting(open == nil)
 
             if let open {
                 panel(for: open)
-                    .matchedGeometryEffect(id: open.id, in: morph)
-                    .transition(.asymmetric(insertion: .identity, removal: .opacity))
-                    .zIndex(1)
+                    .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -77,27 +70,8 @@ struct ToolDock: View {
     private var row: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 7) {
-                ForEach(Array(visibleItems.enumerated()), id: \.element.id) { position, item in
-                    let hidden = open != nil
-                    Group {
-                        if open == item {
-                            // Holds the chip's place while the chip itself is the panel.
-                            Color.clear.frame(width: 64, height: 58)
-                        } else {
-                            chip(item)
-                                .matchedGeometryEffect(id: item.id, in: morph)
-                        }
-                    }
-                    // The others step aside in turn, outward from the tool that was opened, and
-                    // come back in the same order when it closes.
-                    .scaleEffect(hidden && open != item ? 0.6 : 1)
-                    .opacity(hidden && open != item ? 0 : 1)
-                    .offset(y: hidden && open != item ? 14 : 0)
-                    .animation(
-                        (reduceMotion ? Animation.easeOut(duration: 0.15) : DS.Motion.settle)
-                            .delay(Double(distance(from: position)) * 0.035),
-                        value: open
-                    )
+                ForEach(visibleItems) { item in
+                    chip(item)
                 }
             }
             .padding(.vertical, 2)
@@ -110,15 +84,11 @@ struct ToolDock: View {
         Item.allCases.filter { $0 != .ai || aiRequest != nil }
     }
 
-    private func distance(from position: Int) -> Int {
-        guard let open, let origin = visibleItems.firstIndex(of: open) else { return position }
-        return abs(position - origin)
-    }
-
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
-        case .split: model.segmentAtPlayhead != nil
-        case .trim, .speed, .duplicate, .background: index != nil
+        case .split: model.canSplitAtPlayhead
+        case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
+        case .speed, .duplicate, .background: index != nil
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .more, .ai, .text, .image: true
         }
@@ -164,6 +134,12 @@ struct ToolDock: View {
         }
         .buttonStyle(.dsPress(radius: 16))
         .disabled(!enabled)
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(open == item ? (ai ? AIPalette.blue : DS.Palette.lime) : .clear, lineWidth: 2)
+                .allowsHitTesting(false)
+        }
+        .accessibilityAddTraits(open == item ? .isSelected : [])
     }
 
     @ViewBuilder
@@ -218,13 +194,24 @@ struct ToolDock: View {
     }
 
     private func activate(_ item: Item) {
+        model.pause()
+        if item.opensPanel {
+            // Preserve the chosen clip by moving the playhead before dismissing its inspector.
+            if let index, model.inspectedSegment != nil {
+                model.seek(to: model.start(at: index) + 0.01)
+            }
+            model.inspectedSegment = nil
+            model.selectedAudio = nil
+            model.select(overlay: nil)
+            model.select(effect: nil)
+        }
         // A background already under the playhead opens for editing rather than stacking another.
         if item == .background, let existing = model.backgroundAtPlayhead {
             withAnimation(DS.Motion.settle) { model.select(effect: existing.id) }
             return
         }
         if item.opensPanel {
-            open = item
+            open = open == item ? nil : item
             return
         }
         let settle = reduceMotion ? Animation.easeOut(duration: 0.15) : DS.Motion.settle
@@ -260,8 +247,8 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if let index {
-                    Text(model.project.segments[index].role.displayLabel)
+                if item != .ai, let index {
+                    Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.4))
                 }
@@ -272,10 +259,11 @@ struct ToolDock: View {
                     Image(systemName: "xmark")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(DS.Palette.ink)
-                        .frame(width: 28, height: 28)
+                        .frame(width: 44, height: 44)
                         .background(Circle().fill(DS.Palette.hairline(0.1)))
                 }
                 .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("editor.panel.close", bundle: .module))
             }
 
             Group {

@@ -54,6 +54,32 @@ struct TranscriptEditingTests {
         #expect(segments[1].script == "this is the point")
     }
 
+    @Test func splitAvailabilityTracksBoundariesPlaybackAndUndo() {
+        let model = model()
+        model.seek(to: 0.1)
+        #expect(!model.canSplitAtPlayhead)
+        model.splitAtPlayhead()
+        #expect(model.project.segments.count == 1)
+
+        model.seek(to: 5)
+        #expect(model.canSplitAtPlayhead)
+        model.splitAtPlayhead()
+        #expect(model.project.segments.count == 2)
+        model.undo()
+        #expect(model.project.segments.count == 1)
+
+        model.project.segments[0].playback.isReversed = true
+        model.seek(to: 5)
+        #expect(!model.canSplitAtPlayhead)
+        model.splitAtPlayhead()
+        #expect(model.project.segments.count == 1)
+
+        model.project.segments[0].playback.isReversed = false
+        model.project.segments[0].playback.freeze = MediaTime(seconds: 2)
+        model.seek(to: 1)
+        #expect(!model.canSplitAtPlayhead)
+    }
+
     @Test func tighteningCutsOnlyTheLongPause() {
         let model = model()
         #expect(model.silenceGaps(at: 0).count == 1)

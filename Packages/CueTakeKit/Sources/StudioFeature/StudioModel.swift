@@ -15,6 +15,7 @@ import Teleprompter
 public final class StudioModel {
     public enum Phase: Sendable {
         case idle
+        case preparing
         case recording
         /// Stop was pressed and the file is being closed. The take does not exist until this ends,
         /// and moving on before it did is how a recording used to go missing.
@@ -32,6 +33,33 @@ public final class StudioModel {
     public private(set) var countdown: Int?
     /// Seconds since recording began.
     public private(set) var elapsed: Double = 0
+    public var captureError: String?
+
+    public var hasScript: Bool {
+        project.segments.contains { !$0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    public var hasFootage: Bool { project.segments.contains { $0.selectedTake != nil } }
+
+    /// Reserve the shutter before any suspension, and settle permissions before the countdown.
+    public func prepareCapture() async -> Bool {
+        guard phase == .idle || phase == .complete else { return false }
+        phase = .preparing
+        captureError = nil
+        let status = await CameraSession.requestAuthorization(includingMicrophone: true)
+        guard phase == .preparing else { return false }
+        cameraAuthorization = status.camera
+        guard status.camera == .authorized, status.microphone == .authorized else {
+            failCapture("studio.capture.permissions")
+            return false
+        }
+        return true
+    }
+
+    public func failCapture(_ key: String.LocalizationValue) {
+        captureError = String(localized: key, bundle: .module)
+        phase = .idle
+    }
 
     public let teleprompter = TeleprompterModel()
     public private(set) var project: Project
@@ -44,7 +72,7 @@ public final class StudioModel {
 
     /// Flipping mid-take would change the shot inside one file, so it is refused while rolling.
     public func flipCamera() {
-        guard phase != .recording else { return }
+        guard phase == .idle, countdown == nil else { return }
         cameraPosition = cameraPosition == .front ? .back : .front
         zoom = 1
         camera.setZoom(1)
@@ -142,7 +170,7 @@ public final class StudioModel {
     /// first seconds of every take are the reader reaching back from the shutter, which is exactly
     /// the footage they then have to trim.
     public func beginCountdown(from seconds: Int = 3, writingTo url: URL? = nil) {
-        guard task == nil, phase == .idle || phase == .complete else { return }
+        guard task == nil, phase == .preparing else { return }
         teleprompter.isSettingsOpen = false
         pendingRecordingURL = url
         countdown = seconds
@@ -166,6 +194,8 @@ public final class StudioModel {
         task?.cancel()
         task = nil
         countdown = nil
+        pendingRecordingURL = nil
+        phase = .idle
     }
 
     /// Where the file is being written, and when each segment began inside it.
@@ -182,7 +212,27 @@ public final class StudioModel {
     public private(set) var lastCapture: (url: URL, segmentStarts: [Double], duration: Double)?
 
     public func startRecording(writingTo url: URL? = nil) {
-        guard phase == .idle || phase == .complete else { return }
+        guard phase == .preparing else { return }
+        guard let url else {
+            failCapture("studio.capture.storage")
+            return
+        }
+        Task { [weak self] in
+            guard let self else { return }
+            let started = await camera.startRecording(to: url)
+            guard phase == .preparing else {
+                if started { _ = await camera.stopRecording() }
+                return
+            }
+            guard started else {
+                failCapture("studio.capture.failed")
+                return
+            }
+            didStartRecording(to: url)
+        }
+    }
+
+    private func didStartRecording(to url: URL) {
         phase = .recording
         segmentIndex = 0
         wordIndex = 0
@@ -195,10 +245,7 @@ public final class StudioModel {
         recordingStart = .now
         segmentStarts = [0]
 
-        if let url {
-            Task { [camera] in _ = await camera.startRecording(to: url) }
-        }
-        driver.start(camera: url == nil ? nil : camera)
+        if hasScript { driver.start(camera: camera) }
 
         clock = Task { [weak self] in
             while !Task.isCancelled {
@@ -231,8 +278,10 @@ public final class StudioModel {
             guard let self else { return }
             if let finished {
                 lastCapture = (finished, starts, duration)
+                phase = .complete
+            } else {
+                failCapture("studio.capture.saveFailed")
             }
-            phase = .complete
         }
     }
 
@@ -248,6 +297,7 @@ public final class StudioModel {
         task?.cancel()
         task = nil
         countdown = nil
+        if phase == .preparing { phase = .idle }
         if phase == .recording {
             stopRecording()
         }

@@ -4389,6 +4389,23 @@
         }
       }
     },
+    "editor.panel.close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close tool"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aracı kapat"
+          }
+        }
+      }
+    },
     "editor.preview.failed": {
       "extractionState": "manual",
       "localizations": {
@@ -4453,6 +4470,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tüm klip"
+          }
+        }
+      }
+    },
+    "editor.redo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yinele"
           }
         }
       }
@@ -5100,6 +5134,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Böl"
+          }
+        }
+      }
+    },
+    "editor.tool.target %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$lld"
           }
         }
       }
@@ -5763,6 +5814,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "NE SÖYLEDİN"
+          }
+        }
+      }
+    },
+    "editor.undo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri al"
           }
         }
       }

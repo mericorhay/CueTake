@@ -131,9 +131,12 @@ public struct EditorScreen: View {
                     statusStrip
                     preview
                     transport
-                    timelineBlock
-
-                    Spacer(minLength: 0)
+                    ScrollView {
+                        timelineBlock
+                            .padding(.bottom, 28)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollIndicators(.visible)
                 }
                 .padding(.top, 58)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
@@ -148,6 +151,9 @@ public struct EditorScreen: View {
         // normal behaviour of a sheet, and it is the only version of this that cannot run out of
         // room.
         .overlay(alignment: .bottom) {
+            GeometryReader { panelGeometry in
+                if isPanelOpen {
+                    ScrollView {
             if let captionID = editingCaption {
                 CaptionQuickPanel(
                     model: model,
@@ -172,6 +178,12 @@ public struct EditorScreen: View {
             } else if let id = model.inspectedSegment,
                       let index = model.project.segments.firstIndex(where: { $0.id == id }) {
                 inspector(at: index)
+            }
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .frame(maxHeight: max(180, panelGeometry.size.height * 0.62))
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                }
             }
         }
         .animation(DS.Motion.settle, value: isPanelOpen)
@@ -263,8 +275,11 @@ public struct EditorScreen: View {
         // Undo can bring back an overlay whose picture is not in memory.
         .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
         .animation(DS.Motion.settle, value: model.selectedOverlay)
-        .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil } }
-        .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil } }
+        .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.selectedEffect) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.selectedAudio) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: dockPanel) { _, panel in if panel != nil { editingCaption = nil } }
         .onChange(of: model.isPlaying) { _, playing in if playing { editingCaption = nil } }
         .animation(DS.Motion.settle, value: editingCaption)
         .background(DS.Palette.screen)
@@ -278,6 +293,7 @@ public struct EditorScreen: View {
             Text(model.project.title)
                 .dsFont(.sans, .semibold, 13)
                 .foregroundStyle(DS.Palette.ink)
+                .lineLimit(1)
                 .frame(maxWidth: .infinity)
 
             Button(action: onExport) {
@@ -405,6 +421,7 @@ public struct EditorScreen: View {
         }
         .buttonStyle(.dsPressIcon)
         .disabled(!enabled)
+        .accessibilityLabel(Text(String(localized: symbol == "arrow.uturn.backward" ? "editor.undo" : "editor.redo", bundle: .module)))
         .animation(DS.Motion.snap, value: enabled)
     }
 

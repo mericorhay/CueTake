@@ -3,6 +3,7 @@ import DesignSystem
 import Domain
 import SwiftUI
 import Teleprompter
+import UIKit
 
 /// Camera, teleprompter overlay and the shutter. Also hosts recording, since the design keeps the
 /// same frame and only swaps the controls.
@@ -48,6 +49,8 @@ public struct StudioScreen: View {
             .onEnded { _ in zoomOrigin = nil }
     }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var isRequestingCapture = false
 
     public var body: some View {
         GeometryReader { proxy in
@@ -72,18 +75,24 @@ public struct StudioScreen: View {
                         .transition(.opacity)
                 }
 
-                TeleprompterPanel(
+                if model.hasScript {
+                    TeleprompterPanel(
                     model: model.teleprompter,
                     frameSize: proxy.size,
                     segmentColor: DS.Palette.segment(
                         at: model.currentSegment?.role.paletteIndex ?? 0
                     )
                 )
+                }
 
                 topBar
                     .studioTopBarInsets(isLandscape: model.isLandscape)
 
                 controls
+
+                if model.cameraAuthorization == .denied {
+                    permissionCard
+                }
 
                 if model.teleprompter.isSettingsOpen {
                     settingsSheet(in: proxy.size)
@@ -107,7 +116,25 @@ public struct StudioScreen: View {
         .background(DS.Palette.screen)
         .dsEnter(.screen(duration: 0.5))
         .task { await model.startCamera(position: camera) }
-        .onDisappear { model.stopCamera() }
+        .onDisappear {
+            model.stopTimers()
+            model.stopCamera()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { model.stopTimers() }
+            if phase == .active, model.cameraAuthorization == .denied {
+                Task { await model.startCamera(position: camera) }
+            }
+        }
+        .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
+            get: { model.captureError != nil },
+            set: { if !$0 { model.captureError = nil } }
+        )) {
+            Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
+            Button(String(localized: "studio.settings.open", bundle: .module)) { openSettings() }
+        } message: {
+            Text(model.captureError ?? "")
+        }
         .onChange(of: model.phase) { _, phase in
             if phase == .complete { onFinished() }
         }
@@ -129,33 +156,24 @@ public struct StudioScreen: View {
 
                 Spacer(minLength: 0)
 
-                segmentPips
+                if model.hasScript { segmentPips }
 
-                DSCircleButton(model.cameraPosition == .front ? "◧" : "◨", fontSize: 15, style: .glass) {
+                cameraControl("arrow.triangle.2.circlepath.camera", label: "studio.camera.flip") {
                     model.flipCamera()
                 }
-                .opacity(model.phase == .recording ? 0.3 : 1)
 
-                DSCircleButton("⊞", fontSize: 15, style: .glass) {
+                cameraControl("grid", label: "studio.camera.grid", selected: model.showsGrid) {
                     model.showsGrid.toggle()
                 }
-                .opacity(model.showsGrid ? 1 : 0.55)
                 .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: model.showsGrid)
-
-                DSCircleButton("⟲", fontSize: 14, style: .glass) {
-                    model.setLandscape(!model.isLandscape)
-                }
-                // The glyph turns with the thing it turns. A rotate button that does not rotate is
-                // the clearest case of a label describing an action the interface never performs.
-                .rotationEffect(.degrees(model.isLandscape ? -90 : 0))
-                .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.isLandscape)
             }
+            .disabled(model.phase == .preparing || isRequestingCapture)
         }
     }
 
     private var segmentPips: some View {
         HStack(spacing: 6) {
-            ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
+            ForEach(Array(model.project.segments.prefix(5).enumerated()), id: \.element.id) { index, segment in
                 let isCurrent = index == model.segmentIndex
                 Capsule()
                     .fill(
@@ -200,9 +218,10 @@ public struct StudioScreen: View {
             .background(Capsule().fill(DS.Palette.accent(0.16)))
             .overlay(Capsule().stroke(DS.Palette.accent(0.45), lineWidth: 1))
 
-            progressPips
-
-            prompterBadge
+            if model.hasScript {
+                progressPips
+                prompterBadge
+            }
         }
     }
 
@@ -285,14 +304,14 @@ public struct StudioScreen: View {
             } trailing: {
                 EmptyView()
             }
-        } else if model.phase == .finishing {
+        } else if model.phase == .finishing || model.phase == .preparing {
             StudioControlCluster(isLandscape: model.isLandscape) {
                 EmptyView()
             } center: {
                 HStack(spacing: 10) {
                     ProgressView()
                         .tint(DS.Palette.ink)
-                    Text("studio.saving", bundle: .module)
+                    Text(String(localized: model.phase == .finishing ? "studio.saving" : "studio.capture.preparing", bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                 }
@@ -305,14 +324,28 @@ public struct StudioScreen: View {
             }
         } else {
             StudioControlCluster(isLandscape: model.isLandscape) {
-                DSCircleButton("Aa", size: 48, font: DS.archivo(.semibold, 15), style: .glass) {
-                    model.teleprompter.isSettingsOpen.toggle()
+                if model.hasScript {
+                    labeledControl("textformat", label: "studio.prompter.settings") {
+                        model.teleprompter.isSettingsOpen.toggle()
+                    }
+                } else {
+                    Color.clear.frame(width: 72, height: 68)
                 }
             } center: {
-                shutter
+                VStack(spacing: 6) {
+                    shutter
+                    Text("studio.record", bundle: .module)
+                        .dsFont(.sans, .semibold, 12)
+                        .foregroundStyle(DS.Palette.ink)
+                }
             } trailing: {
-                DSCircleButton("⤢", size: 48, fontSize: 17, style: .glass, action: onOpenEditor)
+                if model.hasFootage {
+                    labeledControl("slider.horizontal.3", label: "studio.editor", action: onOpenEditor)
+                } else {
+                    Color.clear.frame(width: 72, height: 68)
+                }
             }
+            .disabled(isRequestingCapture || model.cameraAuthorization != .authorized)
         }
     }
 
@@ -333,12 +366,18 @@ public struct StudioScreen: View {
             }
         }
         .buttonStyle(StopButtonStyle())
+        .accessibilityLabel(Text("studio.stop", bundle: .module))
     }
 
     private var shutter: some View {
         Button {
+            guard !isRequestingCapture else { return }
+            isRequestingCapture = true
             shutterPresses += 1
-            Task { await onBeginCapture() }
+            Task {
+                await onBeginCapture()
+                isRequestingCapture = false
+            }
         } label: {
             ZStack {
                 RecordRing()
@@ -364,6 +403,68 @@ public struct StudioScreen: View {
             }
         }
         .buttonStyle(ShutterButtonStyle())
+        .accessibilityLabel(Text("studio.record", bundle: .module))
+        .sensoryFeedback(.impact(weight: .medium), trigger: shutterPresses)
+    }
+
+    private func cameraControl(_ symbol: String, label: String.LocalizationValue, selected: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(selected ? DS.Palette.lime : DS.Palette.ink)
+                .frame(width: 44, height: 44)
+                .dsGlass(in: Circle())
+        }
+        .buttonStyle(.dsPressIcon)
+        .accessibilityLabel(Text(String(localized: label, bundle: .module)))
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func labeledControl(_ symbol: String, label: String.LocalizationValue, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: symbol)
+                    .font(.system(size: 19, weight: .medium))
+                    .frame(width: 48, height: 48)
+                    .dsGlass(in: Circle())
+                Text(String(localized: label, bundle: .module))
+                    .dsFont(.sans, .medium, 11)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(DS.Palette.ink)
+            .frame(width: 72)
+        }
+        .buttonStyle(.dsPressIcon)
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private var permissionCard: some View {
+        VStack(spacing: 14) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 28))
+            Text("studio.camera.permission", bundle: .module)
+                .dsFont(.archivo, .bold, 20)
+            Text("studio.camera.permission.detail", bundle: .module)
+                .dsFont(.sans, .regular, 14)
+                .multilineTextAlignment(.center)
+            Button(action: openSettings) {
+                Text("studio.settings.open", bundle: .module)
+                    .dsFont(.sans, .semibold, 14)
+                    .padding(14)
+                    .background(Capsule().fill(DS.Palette.lime))
+                    .foregroundStyle(DS.Palette.inkInverse)
+            }
+            .buttonStyle(.dsPress)
+        }
+        .foregroundStyle(DS.Palette.ink)
+        .padding(24)
+        .frame(maxWidth: 340)
+        .dsGlass(in: RoundedRectangle(cornerRadius: 24))
+        .padding(.horizontal, 24)
     }
 
     /// Only while it is not 1x. A zoom indicator that is always on screen is one more thing to
