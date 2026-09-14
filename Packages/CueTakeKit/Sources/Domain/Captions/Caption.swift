@@ -287,17 +287,26 @@ extension Project {
 
             let spoken = segment.selectedTake?.transcript?.words ?? []
 
-            for cue in segment.captions {
-                let start = cursor + cue.range.start.seconds * stretch
-                let duration = max(0.2, cue.range.duration.seconds * stretch)
+            for (cueIndex, cue) in segment.captions.enumerated() {
+                let nextCueStart = cueIndex + 1 < segment.captions.count
+                    ? segment.captions[cueIndex + 1].range.start.seconds
+                    : nil
+                let adaptive = CaptionTimingEngine.range(
+                    for: cue,
+                    transcript: Transcript(localeIdentifier: project.localeIdentifier, words: spoken),
+                    nextStart: nextCueStart
+                )
+                let relativeRange = adaptive ?? cue.range
+                let start = cursor + relativeRange.start.seconds * stretch
+                let duration = max(0.2, relativeRange.duration.seconds * stretch)
                 guard start < cursor + length + 0.01 else { continue }
 
                 // The words inside this cue's time, from the transcript. A cue the user retyped
                 // no longer matches what was said word for word, so it is shown without them.
                 let words: [PlacedWord] = cue.isUserEdited ? [] : spoken
                     .filter {
-                        $0.range.start.seconds >= cue.range.start.seconds - 0.02
-                            && $0.range.start.seconds < cue.range.end.seconds - 0.01
+                            $0.range.start.seconds >= relativeRange.start.seconds - 0.02
+                            && $0.range.start.seconds < relativeRange.end.seconds - 0.01
                     }
                     .map { word in
                         PlacedWord(

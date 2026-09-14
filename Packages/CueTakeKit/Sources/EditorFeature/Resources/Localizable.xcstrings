@@ -3316,6 +3316,57 @@
         }
       }
     },
+    "editor.change.videoLayerAdjust": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video layer adjusted"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video katmanı ayarlandı"
+          }
+        }
+      }
+    },
+    "editor.change.videoLayerRemove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video layer removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video katmanı kaldırıldı"
+          }
+        }
+      }
+    },
+    "editor.change.videoLayout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video layout changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video düzeni değiştirildi"
+          }
+        }
+      }
+    },
     "editor.changes.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -5875,13 +5926,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use the timeline bar to set timing. Layout presets update the main video and this layer together."
+            "value": "Drag the bar to move it, pull either edge to trim it, or open full screen to place it precisely."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Zamanlamayı timeline çubuğundan ayarla. Yerleşim hazırları ana videoyu ve bu katmanı birlikte düzenler."
+            "value": "Taşımak için çubuğu sürükle, kesmek için uçlarını çek veya tam ekranda hassasça yerleştir."
           }
         }
       }
@@ -6120,6 +6171,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Videoyu yukarı taşı"
+          }
+        }
+      }
+    },
+    "editor.video.placement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust video position"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video konumunu ayarla"
+          }
+        }
+      }
+    },
+    "editor.video.placementHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to move · pinch to resize"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşımak için sürükle · boyut için iki parmakla sıkıştır"
           }
         }
       }

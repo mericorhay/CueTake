@@ -822,8 +822,16 @@ extension EditorModel {
     }
 
     public func updateVideoLayer(_ id: VideoLayer.ID, _ change: (inout VideoLayer) -> Void) {
+        updateVideoLayer(id, coalescing: nil, change)
+    }
+
+    public func updateVideoLayer(
+        _ id: VideoLayer.ID,
+        coalescing key: String?,
+        _ change: (inout VideoLayer) -> Void
+    ) {
         guard let index = project.videoLayers.firstIndex(where: { $0.id == id }) else { return }
-        record("editor.change.videoLayer", symbol: "rectangle.split.2x1")
+        record("editor.change.videoLayerAdjust", symbol: "rectangle.split.2x1", coalescing: key)
         change(&project.videoLayers[index])
         project.videoLayers[index].sourceRange.duration = MediaTime(seconds: max(0.2, project.videoLayers[index].sourceRange.duration.seconds))
         project.videoLayers[index].placement = project.videoLayers[index].placement.bounded
@@ -855,15 +863,28 @@ extension EditorModel {
         guard let layer = project.videoLayers.first(where: { $0.id == id }) else { return }
         let time = min(max(playhead - layer.start.seconds, 0), layer.duration)
         let placement = layer.placement(at: playhead)
-        updateVideoLayer(id) { value in
+        updateVideoLayer(id, coalescing: "video-layer-keyframe-\(id)") { value in
             value.keyframes.removeAll { abs($0.time - time) < 0.02 }
             value.keyframes.append(VideoKeyframe(time: time, placement: placement))
             value.keyframes.sort { $0.time < $1.time }
         }
     }
 
+    public func setVideoLayerPlacement(_ id: VideoLayer.ID, _ placement: VideoPlacement) {
+        updateVideoLayer(id, coalescing: "video-layer-placement-\(id)") { value in
+            let time = min(max(playhead - value.start.seconds, 0), value.duration)
+            if time > 0.01 || !value.keyframes.isEmpty {
+                value.keyframes.removeAll { abs($0.time - time) < 0.02 }
+                value.keyframes.append(VideoKeyframe(time: time, placement: placement.bounded))
+                value.keyframes.sort { $0.time < $1.time }
+            } else {
+                value.placement = placement.bounded
+            }
+        }
+    }
+
     public func nudgeVideoLayer(_ id: VideoLayer.ID, x: Double = 0, y: Double = 0) {
-        updateVideoLayer(id) { value in
+        updateVideoLayer(id, coalescing: "video-layer-nudge-\(id)") { value in
             var placement = value.placement(at: playhead)
             placement.x += x
             placement.y += y

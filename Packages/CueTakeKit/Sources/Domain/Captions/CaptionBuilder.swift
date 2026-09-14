@@ -56,17 +56,22 @@ public enum CaptionBuilder {
 
         flush()
 
-        // A cue on screen for a tenth of a second is a flash nobody can read. Each one stays at
-        // least long enough to be read, without running into the next.
+        // Adapt every generated cue to the words it actually contains. This also guarantees that
+        // a cue never begins before speech and does not linger into the next sentence.
         for index in cues.indices {
-            let start = cues[index].range.start.seconds
             let next = index + 1 < cues.count ? cues[index + 1].range.start.seconds : .infinity
-            let end = max(cues[index].range.end.seconds, min(start + minimumSeconds, next))
-            cues[index].range = MediaTimeRange(start: cues[index].range.start, duration: MediaTime(seconds: end - start))
+            let nextStart = next.isFinite ? next : nil
+            let words = transcript.words.filter {
+                $0.range.start.seconds >= cues[index].range.start.seconds - 0.02
+                    && $0.range.start.seconds < cues[index].range.end.seconds + 0.02
+            }
+            if let range = CaptionTimingEngine.range(text: cues[index].text, words: words, nextStart: nextStart) {
+                cues[index].range = range
+            }
         }
         return cues
     }
 
     /// The shortest a caption is shown for, when the next one does not start sooner.
-    public static let minimumSeconds = 0.5
+    public static let minimumSeconds = CaptionTimingEngine.minimumSeconds
 }

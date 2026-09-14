@@ -69,6 +69,7 @@ public struct EditorScreen: View {
     @State private var editingCaption: CaptionCue.ID?
     @State private var previewExpanded = false
     @State private var showsTranscript = false
+    @State private var showsVideoPlacementEditor = false
 
     /// Whatever the tools should act on: the inspected clip, or the one under the playhead.
     private var workingIndex: Int? {
@@ -156,40 +157,46 @@ public struct EditorScreen: View {
         .overlay(alignment: .bottom) {
             GeometryReader { panelGeometry in
                 if isPanelOpen {
-                    ScrollView {
-                        if let captionID = editingCaption {
-                            CaptionQuickPanel(
-                                model: model,
-                                captionID: captionID,
-                                onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
-                                onOpenAll: {
-                                    editingCaption = nil
-                                    onCaptions()
-                                },
-                                onSwitch: { editingCaption = $0 }
-                            )
-                        } else if let clip = model.selectedAudioClip {
-                            audioPanel(clip)
-                        } else if let effect = model.selectedEffectValue {
-                            EffectInspector(model: model, effect: effect) {
-                                withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+                    if model.selectedVideoLayer != nil {
+                        VideoLayerPanel(
+                            model: model,
+                            onOpenPlacementEditor: { showsVideoPlacementEditor = true },
+                            onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
+                        )
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxHeight: min(380, panelGeometry.size.height * 0.54), alignment: .bottom)
+                    } else {
+                        ScrollView {
+                            if let captionID = editingCaption {
+                                CaptionQuickPanel(
+                                    model: model,
+                                    captionID: captionID,
+                                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
+                                    onOpenAll: {
+                                        editingCaption = nil
+                                        onCaptions()
+                                    },
+                                    onSwitch: { editingCaption = $0 }
+                                )
+                            } else if let clip = model.selectedAudioClip {
+                                audioPanel(clip)
+                            } else if let effect = model.selectedEffectValue {
+                                EffectInspector(model: model, effect: effect) {
+                                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+                                }
+                            } else if let overlay = model.selectedOverlayValue {
+                                OverlayInspector(model: model, overlay: overlay) {
+                                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+                                }
+                            } else if let id = model.inspectedSegment,
+                                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
+                                inspector(at: index)
                             }
-                        } else if let overlay = model.selectedOverlayValue {
-                            OverlayInspector(model: model, overlay: overlay) {
-                                withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
-                            }
-                        } else if model.selectedVideoLayer != nil {
-                            VideoLayerPanel(model: model) {
-                                withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) }
-                            }
-                        } else if let id = model.inspectedSegment,
-                                  let index = model.project.segments.firstIndex(where: { $0.id == id }) {
-                            inspector(at: index)
                         }
+                        .scrollBounceBehavior(.basedOnSize)
+                        .frame(maxHeight: max(180, panelGeometry.size.height * 0.62))
+                        .frame(maxHeight: .infinity, alignment: .bottom)
                     }
-                    .scrollBounceBehavior(.basedOnSize)
-                    .frame(maxHeight: max(180, panelGeometry.size.height * 0.62))
-                    .frame(maxHeight: .infinity, alignment: .bottom)
                 }
             }
         }
@@ -246,6 +253,11 @@ public struct EditorScreen: View {
             )
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showsVideoPlacementEditor) {
+            VideoLayerPlacementEditor(model: model) {
+                showsVideoPlacementEditor = false
+            }
         }
         .task { await onPrepare() }
         // Speed, freeze and reverse change what the composition *is*, not just how it is drawn,

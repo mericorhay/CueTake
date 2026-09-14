@@ -6,6 +6,7 @@ import SwiftUI
 /// the timeline and placement controls remain available for precise work.
 struct VideoLayerPanel: View {
     @Bindable var model: EditorModel
+    let onOpenPlacementEditor: () -> Void
     let onClose: () -> Void
 
     private var layer: VideoLayer? { model.selectedVideoLayerValue }
@@ -22,6 +23,14 @@ struct VideoLayerPanel: View {
             }
             if let layer {
                 Text(layer.title).dsFont(.mono, .medium, 10).foregroundStyle(DS.Palette.ink(0.5))
+                Button(action: onOpenPlacementEditor) {
+                    Label(String(localized: "editor.video.placement", bundle: .module), systemImage: "arrow.up.left.and.arrow.down.right")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                }
+                .foregroundStyle(DS.Palette.inkInverse)
+                .background(Capsule().fill(DS.Palette.ink))
+                .buttonStyle(.dsPress(radius: 20))
                 HStack(spacing: 8) {
                     Image(systemName: layer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                         .foregroundStyle(DS.Palette.ink(0.5))
@@ -31,7 +40,7 @@ struct VideoLayerPanel: View {
                     Slider(
                         value: Binding(
                             get: { model.selectedVideoLayerValue?.volume ?? layer.volume },
-                            set: { value in model.updateVideoLayer(layer.id) { $0.volume = value } }
+                            set: { value in model.updateVideoLayer(layer.id, coalescing: "video-layer-volume-\(layer.id)") { $0.volume = value } }
                         ),
                         in: 0...1
                     )

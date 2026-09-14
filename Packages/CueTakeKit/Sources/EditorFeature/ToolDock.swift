@@ -18,7 +18,7 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, background, text, image, video, captions, audio, duplicate, delete, more
+        case ai, split, trim, speed, background, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -89,7 +89,7 @@ struct ToolDock: View {
         switch item {
         case .split: model.canSplitAtPlayhead
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
-        case .speed, .duplicate, .background: index != nil
+        case .speed, .background: index != nil
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .text, .image: true
         }
@@ -151,7 +151,6 @@ struct ToolDock: View {
         case .split: glyph.symbolEffect(.rotate, value: count)
         case .trim: glyph.symbolEffect(.bounce.byLayer, value: count)
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
-        case .duplicate: glyph.symbolEffect(.bounce.up, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .background: glyph.symbolEffect(.bounce, value: count)
@@ -172,7 +171,6 @@ struct ToolDock: View {
         case .speed: "gauge.with.dots.needle.67percent"
         case .captions: "captions.bubble"
         case .audio: "music.note"
-        case .duplicate: "plus.square.on.square"
         case .delete: "trash"
         case .more: "square.grid.2x2"
         }
@@ -190,7 +188,6 @@ struct ToolDock: View {
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
         case .captions: String(localized: "editor.captions", bundle: .module)
         case .audio: String(localized: "editor.dock.audio", bundle: .module)
-        case .duplicate: String(localized: "editor.tool.duplicate", bundle: .module)
         case .delete: String(localized: "editor.tool.delete", bundle: .module)
         case .more: String(localized: "editor.dock.more", bundle: .module)
         }
@@ -222,10 +219,6 @@ struct ToolDock: View {
         case .split:
             model.pulse(.split)
             withAnimation(settle) { model.splitAtPlayhead() }
-        case .duplicate:
-            guard let index else { return }
-            model.pulse(.duplicate)
-            withAnimation(settle) { model.duplicateSegment(at: index) }
         case .delete:
             guard let index else { return }
             model.pulse(.delete)

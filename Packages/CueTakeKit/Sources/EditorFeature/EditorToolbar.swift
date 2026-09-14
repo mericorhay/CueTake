@@ -63,10 +63,6 @@ struct EditorToolbar: View {
             if let index { model.mergeWithNext(at: index) }
         }
 
-        tool(.duplicate, "plus.square.on.square", "editor.tool.duplicate", enabled: index != nil) {
-            if let index { model.duplicateSegment(at: index) }
-        }
-
         tool(
             .delete,
             "trash",
@@ -98,10 +94,6 @@ struct EditorToolbar: View {
             enabled: true
         ) {
             model.updateAudio(clip.id) { $0.isMuted.toggle() }
-        }
-
-        tool(.duplicate, "plus.square.on.square", "editor.tool.duplicate", enabled: true) {
-            model.duplicateAudio(clip.id)
         }
 
         tool(.delete, "trash", "editor.tool.delete", enabled: true, isDestructive: true) {

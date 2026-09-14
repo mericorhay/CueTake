@@ -200,17 +200,6 @@ struct ToolBrowser: View {
                 },
 
                 Item(
-                    id: "duplicate",
-                    symbol: "plus.square.on.square",
-                    title: "editor.tool.duplicate",
-                    note: "editor.tools.duplicate.note",
-                    enabled: index != nil,
-                    tint: DS.Palette.lime
-                ) {
-                    if let index { model.pulse(.duplicate); model.duplicateSegment(at: index) }
-                },
-
-                Item(
                     id: "delete",
                     symbol: "trash",
                     title: "editor.tool.delete",

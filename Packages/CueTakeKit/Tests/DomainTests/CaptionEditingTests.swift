@@ -78,6 +78,32 @@ struct CaptionEditingTests {
         #expect(right?.words.map(\.text) == ["four", "later"])
         #expect(abs((right?.words.first?.range.start.seconds ?? -1) - 0.3) < 0.001)
     }
+
+    @Test func adaptiveTimingStartsOnSpeechAndHandsOffBeforeNextCue() {
+        let transcript = Transcript(localeIdentifier: "en", words: [
+            word("hello", 1.2),
+            word("there", 1.65),
+            word("next", 3.0),
+        ])
+        let cues = CaptionBuilder.cues(from: transcript, maxWordsPerCue: 2)
+
+        #expect(abs(cues[0].range.start.seconds - 1.2) < 0.001)
+        #expect(cues[0].range.end.seconds < 3.0)
+        #expect(cues[0].range.duration.seconds <= CaptionTimingEngine.maximumSeconds + 0.001)
+    }
+
+    @Test func legacyLongCueIsAdaptedToItsSpokenWords() {
+        let transcript = Transcript(localeIdentifier: "en", words: [
+            word("hello", 1.2),
+            word("there", 1.65),
+            word("later", 3.0),
+        ])
+        let cue = CaptionCue(text: "hello there", range: range(0, 5))
+        let adapted = CaptionTimingEngine.range(for: cue, transcript: transcript, nextStart: 3)
+
+        #expect(abs((adapted?.start.seconds ?? -1) - 1.2) < 0.001)
+        #expect((adapted?.end.seconds ?? 0) < 3)
+    }
 }
 
 /// What a model actually writes for a workflow: flat steps, strings for numbers, one bad entry.
