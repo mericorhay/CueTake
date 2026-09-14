@@ -125,21 +125,9 @@
       "extractionState": "manual",
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%1$lld segment\nready to edit."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%1$lld segments\nready to edit."
-                }
-              }
-            }
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld segments\nready to edit."
           }
         },
         "tr": {

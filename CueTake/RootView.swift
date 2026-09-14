@@ -19,6 +19,7 @@ struct RootView: View {
     @Bindable var model: AppModel
 
     @State private var pickedFootage: [PhotosPickerItem] = []
+    @State private var pickedVideoLayer: PhotosPickerItem?
 
     var body: some View {
         ZStack {
@@ -66,6 +67,7 @@ struct RootView: View {
             maxSelectionCount: 30,
             matching: .videos
         )
+        .photosPicker(isPresented: $model.isPickingVideoLayer, selection: $pickedVideoLayer, matching: .videos)
         // Files rather than the photo picker: music does not live in the photo library. Copying
         // happens in the importer, so the security-scoped loan this hands back only has to survive
         // the copy.
@@ -86,6 +88,11 @@ struct RootView: View {
             let picked = items
             pickedFootage = []
             Task { await model.importFootage(picked) }
+        }
+        .onChange(of: pickedVideoLayer) { _, item in
+            guard let item else { return }
+            pickedVideoLayer = nil
+            Task { await model.importVideoLayer(item) }
         }
         .sheet(isPresented: $model.isJourneyOpen) {
             JourneyMapSheet(model: model)
@@ -202,6 +209,7 @@ struct RootView: View {
                 onCaptions: { model.go(to: .captions) },
                 onRetake: { model.startRetake(of: $0) },
                 onAddAudio: { model.isPickingAudio = true },
+                onAddVideo: { model.isPickingVideoLayer = true },
                 saveLabel: model.saveLabel,
                 isSaving: model.isSaving,
                 onSave: { model.saveNow() },

@@ -14,6 +14,7 @@ public struct EditorScreen: View {
     private let onRetake: (Segment.ID) -> Void
     /// Asks the layer that owns the file system to bring a piece of audio in.
     private let onAddAudio: () -> Void
+    private let onAddVideo: () -> Void
     /// What the app layer says about the file on disk, and how to make it write now.
     private let saveLabel: String
     private let isSaving: Bool
@@ -31,6 +32,7 @@ public struct EditorScreen: View {
         onCaptions: @escaping () -> Void,
         onRetake: @escaping (Segment.ID) -> Void,
         onAddAudio: @escaping () -> Void = {},
+        onAddVideo: @escaping () -> Void = {},
         saveLabel: String = "",
         isSaving: Bool = false,
         onSave: @escaping () -> Void = {},
@@ -44,6 +46,7 @@ public struct EditorScreen: View {
         self.onCaptions = onCaptions
         self.onRetake = onRetake
         self.onAddAudio = onAddAudio
+        self.onAddVideo = onAddVideo
         self.saveLabel = saveLabel
         self.isSaving = isSaving
         self.onSave = onSave
@@ -94,7 +97,7 @@ public struct EditorScreen: View {
 
     private var isPanelOpen: Bool {
         model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
-            || model.selectedEffect != nil || editingCaption != nil
+            || model.selectedEffect != nil || model.selectedVideoLayer != nil || editingCaption != nil
     }
 
     public var body: some View {
@@ -174,6 +177,10 @@ public struct EditorScreen: View {
                         } else if let overlay = model.selectedOverlayValue {
                             OverlayInspector(model: model, overlay: overlay) {
                                 withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+                            }
+                        } else if model.selectedVideoLayer != nil {
+                            VideoLayerPanel(model: model) {
+                                withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) }
                             }
                         } else if let id = model.inspectedSegment,
                                   let index = model.project.segments.firstIndex(where: { $0.id == id }) {
@@ -279,6 +286,7 @@ public struct EditorScreen: View {
         .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
         .onChange(of: model.selectedEffect) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
         .onChange(of: model.selectedAudio) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.selectedVideoLayer) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
         .onChange(of: dockPanel) { _, panel in if panel != nil { editingCaption = nil } }
         .onChange(of: model.isPlaying) { _, playing in if playing { editingCaption = nil } }
         .animation(DS.Motion.settle, value: editingCaption)
@@ -650,6 +658,7 @@ public struct EditorScreen: View {
                     model: model,
                     onCaptions: onCaptions,
                     onAddAudio: onAddAudio,
+                    onAddVideo: onAddVideo,
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
                     onAddImage: { pickingImage = true },

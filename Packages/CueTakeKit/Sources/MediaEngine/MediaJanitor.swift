@@ -43,7 +43,7 @@ public enum MediaJanitor {
         }
         func name(_ path: String) -> String { (path as NSString).lastPathComponent }
 
-        let used = Set(project.segments.flatMap { $0.takes.map(\.recordingID) })
+        let used = Set(project.segments.flatMap { $0.takes.map(\.recordingID) } + project.videoLayers.map(\.recordingID))
         let untranscribed = Set(project.segments.flatMap { $0.takes.filter { $0.transcript == nil }.map(\.recordingID) })
         var keep: Set<String> = ["cover.jpg"]
 

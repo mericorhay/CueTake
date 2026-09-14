@@ -224,7 +224,10 @@ public struct VideoComposer: Sendable {
                 }
 
                 let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
-                layer.setTransform(Self.fit(natural: trackNatural, preferred: trackPreferred, into: renderSize), at: pieceCursor)
+                let geometry = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: project.mainVideoPlacement, render: renderSize)
+                layer.setTransform(geometry.transform, at: pieceCursor)
+                layer.setCropRectangle(geometry.crop, at: pieceCursor)
+                layer.setOpacity(Float(project.mainVideoPlacement.bounded.opacity), at: pieceCursor)
                 let instruction = AVMutableVideoCompositionInstruction()
                 instruction.timeRange = CMTimeRange(start: pieceCursor, duration: pieceTarget)
                 instruction.layerInstructions = [layer]
@@ -269,7 +272,7 @@ public struct VideoComposer: Sendable {
             cursor = cursor + target
         }
 
-        guard !instructions.isEmpty else { throw ComposeError.nothingToCompose }
+        guard !instructions.isEmpty || !project.videoLayers.isEmpty else { throw ComposeError.nothingToCompose }
 
         let audioMix = await mix(
             project: project,
@@ -277,6 +280,9 @@ public struct VideoComposer: Sendable {
             into: composition,
             voiceTrack: audioTrack
         )
+        let layered = try await addVideoLayers(project: project, directory: mediaDirectory, composition: composition, base: instructions, render: renderSize)
+        let combinedMix = audioMix ?? AVMutableAudioMix()
+        combinedMix.inputParameters += layered.audio
 
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = renderSize
@@ -284,12 +290,12 @@ public struct VideoComposer: Sendable {
             value: 1,
             timescale: CMTimeScale(max(24, project.format.frameRate))
         )
-        videoComposition.instructions = instructions
+        videoComposition.instructions = layered.instructions
 
         return Assembled(
             composition: composition,
             videoComposition: videoComposition,
-            audioMix: audioMix,
+            audioMix: combinedMix,
             format: project.format,
             captions: project.captionCues,
             captionStyle: project.captionStyle,
@@ -313,7 +319,6 @@ public struct VideoComposer: Sendable {
         into composition: AVMutableComposition,
         voiceTrack: AVMutableCompositionTrack
     ) async -> AVMutableAudioMix? {
-        guard !project.audio.isEmpty else { return nil }
 
         let renderer = AudioEffectRenderer()
         let spoken = project.spokenRanges
@@ -372,12 +377,11 @@ public struct VideoComposer: Sendable {
             parameters.append(input)
         }
 
-        guard !parameters.isEmpty else { return nil }
 
         // The voice is named explicitly at full volume. Without an entry of its own it inherits
         // whatever the mix decides, and a track nobody described is a track that can surprise you.
         let voice = AVMutableAudioMixInputParameters(track: voiceTrack)
-        voice.setVolume(1, at: .zero)
+        voice.setVolume(Float(min(max(project.mainVideoVolume, 0), 1)), at: .zero)
         parameters.append(voice)
 
         let audioMix = AVMutableAudioMix()

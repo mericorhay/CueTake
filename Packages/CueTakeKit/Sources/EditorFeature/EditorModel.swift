@@ -34,6 +34,8 @@ public final class EditorModel {
     public var selectedOverlay: Overlay.ID?
     /// The effect laid over a stretch of the video being edited. See `EditorEffects`.
     public var selectedEffect: TimelineEffect.ID?
+    /// The additional movie being positioned above the main cut.
+    public var selectedVideoLayer: VideoLayer.ID?
     /// Decoded overlay pictures, by overlay. Filled when playback is prepared and when one is added.
     public internal(set) var overlayImages: [Overlay.ID: UIImage] = [:]
     /// Where this project's files live, once playback has been prepared.
@@ -247,6 +249,10 @@ public final class EditorModel {
             "backgrounds:" + backgroundSignature,
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
+            "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)",
+            "video-layers:" + project.videoLayers.map { layer in
+                "\(layer.id)|\(layer.recordingID)|\(layer.start.seconds)|\(layer.sourceRange.start.seconds)|\(layer.sourceRange.duration.seconds)|\(layer.placement)|\(layer.volume)|\(layer.isMuted)|\(layer.isHidden)|\(layer.keyframes)"
+            }.joined(separator: ","),
         ] + project.audio.map { clip in
             "audio:\(clip.id.uuidString)|\(clip.start.seconds)|\(clip.sourceRange.start.seconds)|\(clip.sourceRange.duration.seconds)|\(clip.gain)|\(clip.fadeIn.seconds)|\(clip.fadeOut.seconds)|\(clip.speed)|\(clip.isMuted)|\(clip.ducksUnderVoice)|\(AudioEffectRenderer.token(for: clip.effects))"
         }
@@ -798,7 +804,51 @@ extension EditorModel {
     /// Music that runs past the last clip is a real thing people do — an outro over black — and a
     /// timeline that refuses to draw it makes the tail impossible to trim.
     public var timelineDuration: Double {
-        max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0)
+        max(duration, project.audio.map { $0.timelineRange.end.seconds }.max() ?? 0, project.videoLayers.map(\.end).max() ?? 0)
+    }
+
+    public var selectedVideoLayerValue: VideoLayer? {
+        selectedVideoLayer.flatMap { id in project.videoLayers.first { $0.id == id } }
+    }
+
+    public func select(videoLayer id: VideoLayer.ID?) {
+        selectedVideoLayer = id
+        if id != nil {
+            inspectedSegment = nil
+            selectedAudio = nil
+            selectedOverlay = nil
+            selectedEffect = nil
+        }
+    }
+
+    public func updateVideoLayer(_ id: VideoLayer.ID, _ change: (inout VideoLayer) -> Void) {
+        guard let index = project.videoLayers.firstIndex(where: { $0.id == id }) else { return }
+        record("editor.change.videoLayer", symbol: "rectangle.split.2x1")
+        change(&project.videoLayers[index])
+        project.videoLayers[index].sourceRange.duration = MediaTime(seconds: max(0.2, project.videoLayers[index].sourceRange.duration.seconds))
+        project.videoLayers[index].placement = project.videoLayers[index].placement.bounded
+        project.videoLayers[index].volume = min(max(project.videoLayers[index].volume, 0), 1)
+        project.updatedAt = .now
+    }
+
+    public func removeVideoLayer(_ id: VideoLayer.ID) {
+        guard project.videoLayers.contains(where: { $0.id == id }) else { return }
+        record("editor.change.videoLayerRemove", symbol: "trash")
+        project.videoLayers.removeAll { $0.id == id }
+        if selectedVideoLayer == id { selectedVideoLayer = nil }
+        project.updatedAt = .now
+    }
+
+    /// Applies a layout to the main movie and all additional movies, preserving their timing.
+    public func applyVideoLayout(_ layout: VideoLayout) {
+        guard !project.videoLayers.isEmpty else { return }
+        record("editor.change.videoLayout", symbol: "rectangle.split.2x1")
+        let placements = layout.placements(count: min(1 + project.videoLayers.count, 4))
+        project.mainVideoPlacement = placements[0]
+        for index in project.videoLayers.indices {
+            project.videoLayers[index].placement = placements[min(index + 1, placements.count - 1)]
+        }
+        project.updatedAt = .now
     }
 }
 

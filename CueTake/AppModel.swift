@@ -151,6 +151,8 @@ final class AppModel {
 
     /// Drives the photo picker.
     var isPickingFootage = false
+    /// A movie picked for a simultaneous video layer in the open project.
+    var isPickingVideoLayer = false
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
@@ -182,6 +184,37 @@ final class AppModel {
     /// The journey map: where the user is, what is next, and the way to ask.
     var isJourneyOpen = false
     var isAssistantWired = false
+
+    /// Copies a selected movie into the open project as a second video track. It does not create a
+    /// new segment: the layer is timed independently and can play beside the main cut.
+    func importVideoLayer(_ item: PhotosPickerItem) async {
+        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
+        busy = String(localized: "busy.importing")
+        defer { busy = nil }
+        guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
+              let imported = try? await MediaImporter().importClip(from: movie.url, into: mediaDirectory)
+        else {
+            notice = String(localized: "editor.video.importFailed")
+            return
+        }
+        try? FileManager.default.removeItem(at: movie.url)
+        guard project.videoLayers.count < VideoLayer.maximumAdditionalLayers else {
+            notice = String(localized: "editor.video.limit")
+            return
+        }
+        project.recordings.append(imported.recording)
+        let layer = VideoLayer(
+            recordingID: imported.recording.id,
+            title: imported.suggestedTitle,
+            sourceRange: imported.take.sourceRange,
+            placement: project.videoLayers.isEmpty ? .inset : VideoPlacement(x: 0.05, y: 0.64, width: 0.31, height: 0.31, fillsFrame: true)
+        )
+        project.videoLayers.append(layer)
+        project.updatedAt = .now
+        editorModel.project = project
+        editorModel.select(videoLayer: layer.id)
+        scheduleSave()
+    }
 
     /// Turns picked clips into segments, in the order they were chosen.
     ///

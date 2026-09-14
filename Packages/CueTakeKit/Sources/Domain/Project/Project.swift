@@ -25,6 +25,9 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     public var voiceEffects: AudioEffects
     /// Pictures and text over the video, bottom to top.
     public var overlays: [Overlay]
+    public var videoLayers: [VideoLayer]
+    public var mainVideoPlacement: VideoPlacement
+    public var mainVideoVolume: Double
     /// When captions are shown, on the finished video. Nil shows them throughout.
     public var captionWindow: MediaTimeRange?
     /// Tools laid over stretches of the finished video, bottom to top (see `TimelineEffect`).
@@ -56,6 +59,9 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         self.audio = audio
         self.voiceEffects = AudioEffects()
         self.overlays = []
+        self.videoLayers = []
+        self.mainVideoPlacement = .full
+        self.mainVideoVolume = 1
         self.captionWindow = nil
         self.effects = []
         self.createdAt = createdAt
@@ -82,6 +88,9 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         audio = try container.decodeIfPresent([AudioClip].self, forKey: .audio) ?? []
         voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? AudioEffects()
         overlays = (try? container.decodeIfPresent([Overlay].self, forKey: .overlays)) ?? []
+        videoLayers = try container.decodeIfPresent([VideoLayer].self, forKey: .videoLayers) ?? []
+        mainVideoPlacement = try container.decodeIfPresent(VideoPlacement.self, forKey: .mainVideoPlacement) ?? .full
+        mainVideoVolume = try container.decodeIfPresent(Double.self, forKey: .mainVideoVolume) ?? 1
         captionWindow = try? container.decodeIfPresent(MediaTimeRange.self, forKey: .captionWindow)
         effects = (try? container.decodeIfPresent([TimelineEffect].self, forKey: .effects)) ?? []
         createdAt = try container.decode(Date.self, forKey: .createdAt)

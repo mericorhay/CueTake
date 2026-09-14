@@ -156,6 +156,9 @@ extension EditorModel {
         if let selected = selectedOverlay, !restored.overlays.contains(where: { $0.id == selected }) {
             selectedOverlay = nil
         }
+        if let selected = selectedVideoLayer, !restored.videoLayers.contains(where: { $0.id == selected }) {
+            selectedVideoLayer = nil
+        }
         // Through `seek` rather than the property: the player has to be told too, or the picture
         // stays where the undone edit left it.
         pause()

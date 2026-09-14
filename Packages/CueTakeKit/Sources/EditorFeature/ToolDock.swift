@@ -10,6 +10,7 @@ struct ToolDock: View {
     @Bindable var model: EditorModel
     let onCaptions: () -> Void
     let onAddAudio: () -> Void
+    let onAddVideo: () -> Void
     let onMore: () -> Void
     /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
     var aiRequest: AIRequester? = nil
@@ -17,7 +18,7 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, background, text, image, captions, audio, duplicate, delete, more
+        case ai, split, trim, speed, background, text, image, video, captions, audio, duplicate, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -90,7 +91,7 @@ struct ToolDock: View {
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .duplicate, .background: index != nil
         case .delete: index != nil && model.project.segments.count > 1
-        case .captions, .audio, .more, .ai, .text, .image: true
+        case .captions, .audio, .video, .more, .ai, .text, .image: true
         }
     }
 
@@ -154,7 +155,7 @@ struct ToolDock: View {
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .background: glyph.symbolEffect(.bounce, value: count)
-        case .text, .image: glyph.symbolEffect(.bounce.up, value: count)
+        case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
     }
@@ -165,6 +166,7 @@ struct ToolDock: View {
         case .background: "person.crop.rectangle"
         case .text: "textformat"
         case .image: "photo.badge.plus"
+        case .video: "rectangle.split.2x1"
         case .split: "scissors"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
@@ -182,6 +184,7 @@ struct ToolDock: View {
         case .background: String(localized: "editor.dock.background", bundle: .module)
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
+        case .video: String(localized: "editor.dock.video", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
@@ -229,6 +232,7 @@ struct ToolDock: View {
             withAnimation(settle) { model.deleteSegment(at: index) }
         case .text: withAnimation(settle) { model.addTextOverlay() }
         case .image: onAddImage()
+        case .video: onAddVideo()
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
