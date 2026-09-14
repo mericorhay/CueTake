@@ -186,8 +186,24 @@ function json(body, status = 200) {
   });
 }
 
+// A provider connection must not keep an edit or workflow spinning forever. Returning a normal
+// gateway response lets the app show its existing retry message and also lets the fallback model
+// take over when one Groq model stalls.
+async function fetchUpstream(url, options, timeoutMilliseconds = 45_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMilliseconds);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    console.log("upstream fetch failed", error && error.name ? error.name : "network");
+    return new Response("", { status: 504 });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function askAnthropic(env, messages, options = {}) {
-  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+  const upstream = await fetchUpstream("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -235,7 +251,7 @@ async function askGroq(env, messages, options = {}) {
   for (const model of models) {
     const reasoning = model.startsWith("openai/gpt-oss");
     const call = (json, effort) =>
-      fetch("https://api.groq.com/openai/v1/chat/completions", {
+      fetchUpstream("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${env.GROQ_API_KEY}` },
         body: JSON.stringify({
@@ -413,11 +429,11 @@ async function handleTranscribe(request, env, url) {
       form.append("temperature", "0");
       if (/^[a-z]{2,3}$/.test(language)) form.append("language", language);
       if (prompt) form.append("prompt", prompt);
-      return fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+      return fetchUpstream("https://api.groq.com/openai/v1/audio/transcriptions", {
         method: "POST",
         headers: { authorization: `Bearer ${env.GROQ_API_KEY}` },
         body: form,
-      });
+      }, 120_000);
     };
     let upstream = await send();
     if (upstream.status === 429) {
@@ -477,7 +493,7 @@ async function handleSpeech(body, env) {
 // provider's model list: no tokens spent, no user data.
 async function handleHealth(env, url) {
   if (url.searchParams.get("models") === "1" && env.GROQ_API_KEY) {
-    const upstream = await fetch("https://api.groq.com/openai/v1/models", {
+    const upstream = await fetchUpstream("https://api.groq.com/openai/v1/models", {
       headers: { authorization: `Bearer ${env.GROQ_API_KEY}` },
     });
     const list = upstream.ok ? (await upstream.json()).data || [] : [];
@@ -485,7 +501,7 @@ async function handleHealth(env, url) {
   }
   if (url.searchParams.get("limits") === "1" && env.GROQ_API_KEY) {
     // One-token request, to read the account's per-minute limits from the headers.
-    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const upstream = await fetchUpstream("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${env.GROQ_API_KEY}` },
       body: JSON.stringify({
@@ -507,10 +523,10 @@ async function handleHealth(env, url) {
   try {
     const upstream =
       provider === "groq"
-        ? await fetch("https://api.groq.com/openai/v1/models", {
+        ? await fetchUpstream("https://api.groq.com/openai/v1/models", {
             headers: { authorization: `Bearer ${env.GROQ_API_KEY}` },
           })
-        : await fetch("https://api.anthropic.com/v1/models", {
+        : await fetchUpstream("https://api.anthropic.com/v1/models", {
             headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
           });
     status = upstream.status;
@@ -546,9 +562,13 @@ export default {
     // Audio, not JSON.
     if (path === "/transcribe") return handleTranscribe(request, env, url);
 
+    const declaredJSONSize = Number(request.headers.get("content-length") || 0);
+    if (declaredJSONSize > 1_000_000) return json({ error: "too large" }, 413);
     let body;
     try {
-      body = await request.json();
+      const raw = await request.text();
+      if (raw.length > 1_000_000) return json({ error: "too large" }, 413);
+      body = JSON.parse(raw);
     } catch {
       return json({ error: "bad json" }, 400);
     }
