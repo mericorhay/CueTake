@@ -61,7 +61,7 @@ extension VideoComposer {
             if !layer.isMuted, let sourceAudio = try await asset.loadTracks(withMediaType: .audio).first,
                let track = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
                 let available = try await sourceAudio.load(.timeRange)
-                let audioRange = CMTimeRangeGetIntersection(range, available)
+                let audioRange = CMTimeRangeGetIntersection(range, otherRange: available)
                 if audioRange.duration.seconds > 0 {
                     try track.insertTimeRange(audioRange, of: sourceAudio, at: at + audioRange.start - range.start)
                     let input = AVMutableAudioMixInputParameters(track: track)
