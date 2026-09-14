@@ -72,7 +72,7 @@ public struct VideoComposer: Sendable {
         var cursor = CMTime.zero
         var instructions: [AVMutableVideoCompositionInstruction] = []
 
-        for segment in project.segments {
+        for (segmentIndex, segment) in project.segments.enumerated() {
             guard let take = segment.selectedTake,
                   let recording = recordings[take.recordingID]
             else { continue }
@@ -117,27 +117,6 @@ public struct VideoComposer: Sendable {
                 }
             }
 
-            // Everything behind the person replaced, from whichever picture this clip plays.
-            if let background = segment.background {
-                let destination = BackgroundRemover.cachedURL(take: take, reversed: pictureReplaced, background: background, in: mediaDirectory)
-                var processed: URL?
-                if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
-                    processed = destination
-                } else if renderBackgrounds {
-                    processed = await BackgroundRemover().render(
-                        source: url,
-                        range: CMTimeRange(start: sourceStart, duration: sourceLength),
-                        background: background,
-                        destination: destination
-                    )
-                }
-                if let processed {
-                    url = processed
-                    sourceStart = .zero
-                    pictureReplaced = true
-                }
-            }
-
             let asset = AVURLAsset(url: url)
 
             guard let sourceVideo = try await asset.loadTracks(withMediaType: .video).first else {
@@ -167,10 +146,95 @@ public struct VideoComposer: Sendable {
             guard range.duration.seconds > 0.001 else { continue }
             // Where the sound for this range is: the recording's own timeline, unless the sound too
             // was written to a file of its own that starts at zero (reversed).
-            let soundStart = reversedAudio != nil ? CMTime.zero : (pictureReplaced ? originalStart : range.start)
+            let soundStart = reversedAudio != nil ? CMTime.zero : originalStart
             let soundRange = CMTimeRange(start: soundStart, duration: range.duration)
 
-            try videoTrack.insertTimeRange(range, of: sourceVideo, at: cursor)
+            // The picture, stretch by stretch: a background effect can cover part of a clip, so the
+            // clip is laid in as pieces, each from the footage as shot or from its processed copy.
+            // Speed and freeze are the same operation to a composition — take the range just
+            // inserted and say how long it should last instead — applied to each piece.
+            let natural = try await sourceVideo.load(.naturalSize)
+            let preferred = try await sourceVideo.load(.preferredTransform)
+            let speed = min(max(playback.speed, 0.1), 8)
+            var processedTracks: [String: (track: AVAssetTrack, duration: CMTime, natural: CGSize, preferred: CGAffineTransform)] = [:]
+            var pieceCursor = cursor
+
+            for stretch in project.stretches(ofSegmentAt: segmentIndex) {
+                var pieceRange: CMTimeRange
+                if playback.freeze != nil {
+                    pieceRange = range
+                } else {
+                    let from = CMTime(seconds: stretch.from * speed, preferredTimescale: 600)
+                    let to = stretch.to >= segment.barWeight - 0.001
+                        ? range.duration
+                        : CMTimeMinimum(range.duration, CMTime(seconds: stretch.to * speed, preferredTimescale: 600))
+                    guard to > from else { continue }
+                    pieceRange = CMTimeRange(start: range.start + from, duration: to - from)
+                }
+
+                var track = sourceVideo
+                var trackNatural = natural
+                var trackPreferred = preferred
+                if let settings = stretch.background {
+                    let destination = BackgroundRemover.cachedURL(take: take, reversed: pictureReplaced, settings: settings, in: mediaDirectory)
+                    if processedTracks[settings.token] == nil {
+                        var processed: URL?
+                        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+                            processed = destination
+                        } else if renderBackgrounds {
+                            processed = await BackgroundRemover().render(
+                                source: url,
+                                range: CMTimeRange(start: sourceStart, duration: sourceLength),
+                                settings: settings,
+                                destination: destination
+                            )
+                        }
+                        let copy = processed.map { AVURLAsset(url: $0) }
+                        if let copy,
+                           let copyTrack = try? await copy.loadTracks(withMediaType: .video).first,
+                           let copyDuration = try? await copy.load(.duration),
+                           let copyNatural = try? await copyTrack.load(.naturalSize),
+                           let copyPreferred = try? await copyTrack.load(.preferredTransform) {
+                            processedTracks[settings.token] = (copyTrack, copyDuration, copyNatural, copyPreferred)
+                        }
+                    }
+                    // The processed copy starts where the take starts, so the same offset
+                    // addresses it. Played as shot until it exists.
+                    if let copy = processedTracks[settings.token] {
+                        let start = pieceRange.start - sourceStart
+                        let length = CMTimeMinimum(pieceRange.duration, copy.duration - start)
+                        if start < copy.duration, length.seconds > 0.001 {
+                            pieceRange = CMTimeRange(start: start, duration: length)
+                            track = copy.track
+                            trackNatural = copy.natural
+                            trackPreferred = copy.preferred
+                        }
+                    }
+                }
+
+                try videoTrack.insertTimeRange(pieceRange, of: track, at: pieceCursor)
+                let pieceTarget = CMTime(
+                    seconds: playback.freeze != nil
+                        ? playback.timelineSeconds(forSource: 0)
+                        : pieceRange.duration.seconds / speed,
+                    preferredTimescale: 600
+                )
+                if abs(pieceTarget.seconds - pieceRange.duration.seconds) > 0.001 {
+                    videoTrack.scaleTimeRange(CMTimeRange(start: pieceCursor, duration: pieceRange.duration), toDuration: pieceTarget)
+                }
+
+                let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
+                layer.setTransform(Self.fit(natural: trackNatural, preferred: trackPreferred, into: renderSize), at: pieceCursor)
+                let instruction = AVMutableVideoCompositionInstruction()
+                instruction.timeRange = CMTimeRange(start: pieceCursor, duration: pieceTarget)
+                instruction.layerInstructions = [layer]
+                instructions.append(instruction)
+
+                pieceCursor = pieceCursor + pieceTarget
+            }
+            let target = pieceCursor - cursor
+            guard target > .zero else { continue }
+
             // Audio is optional on purpose: a clip with no audio track is a legitimate thing to
             // put in a video, and refusing the whole export over it would be absurd. A frozen
             // frame is asked for silence — a held picture playing a second of sound under it is
@@ -197,32 +261,10 @@ public struct VideoComposer: Sendable {
                let sourceAudio = try await original.loadTracks(withMediaType: .audio).first {
                 hasAudio = (try? audioTrack.insertTimeRange(soundRange, of: sourceAudio, at: cursor)) != nil
             }
-
-            // Speed and freeze are the same operation to a composition: take the range that was
-            // just inserted and say how long it should last instead. Both tracks, or the voice
-            // walks away from the picture at the first slowed clip.
-            let target = CMTime(
-                seconds: playback.timelineSeconds(forSource: range.duration.seconds),
-                preferredTimescale: 600
-            )
-            if abs(target.seconds - range.duration.seconds) > 0.001 {
-                let inserted = CMTimeRange(start: cursor, duration: range.duration)
-                videoTrack.scaleTimeRange(inserted, toDuration: target)
-                if hasAudio {
-                    audioTrack.scaleTimeRange(inserted, toDuration: target)
-                }
+            // The voice lasts exactly as long as the pictures laid above it.
+            if hasAudio, abs(target.seconds - range.duration.seconds) > 0.001 {
+                audioTrack.scaleTimeRange(CMTimeRange(start: cursor, duration: range.duration), toDuration: target)
             }
-
-            let natural = try await sourceVideo.load(.naturalSize)
-            let preferred = try await sourceVideo.load(.preferredTransform)
-
-            let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
-            layer.setTransform(Self.fit(natural: natural, preferred: preferred, into: renderSize), at: cursor)
-
-            let instruction = AVMutableVideoCompositionInstruction()
-            instruction.timeRange = CMTimeRange(start: cursor, duration: target)
-            instruction.layerInstructions = [layer]
-            instructions.append(instruction)
 
             cursor = cursor + target
         }

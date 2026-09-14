@@ -1140,6 +1140,23 @@
         }
       }
     },
+    "editor.ai.op.backgroundSpan %@ %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background %3$@ from %1$@ s to %2$@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@–%2$@ sn arası arka plan: %3$@"
+          }
+        }
+      }
+    },
     "editor.ai.op.caption %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1391,6 +1408,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ses kaldırıldı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.removeEffect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effect removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekt kaldırıldı"
           }
         }
       }
@@ -2364,6 +2398,40 @@
         }
       }
     },
+    "editor.background.color": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk"
+          }
+        }
+      }
+    },
+    "editor.background.dim": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dim"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Karart"
+          }
+        }
+      }
+    },
     "editor.background.failed": {
       "extractionState": "manual",
       "localizations": {
@@ -2398,6 +2466,23 @@
         }
       }
     },
+    "editor.background.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a look. It lands on the timeline, where you can drag it, stretch its ends and fine-tune it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir görünüm seç. Zaman çizelgesine eklenir; oradan sürükleyip uçlarını uzatabilir, ayarlarını değiştirebilirsin."
+          }
+        }
+      }
+    },
     "editor.background.none": {
       "extractionState": "manual",
       "localizations": {
@@ -2421,13 +2506,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The person is cut out on this iPhone. It is prepared in the background while you keep editing; the clip plays as shot until it is ready."
+            "value": "The person is cut out on this iPhone and prepared in the background while you keep editing. Until it is ready the video plays as shot."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kişi bu iPhone'da ayrılır. Sen düzenlemeye devam ederken arka planda hazırlanır; hazır olana kadar klip orijinal haliyle oynar."
+            "value": "Kişi bu iPhone'da ayrılır ve sen düzenlemeye devam ederken arka planda hazırlanır. Hazır olana kadar video orijinal haliyle oynar."
           }
         }
       }
@@ -2445,6 +2530,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Arka plan %%%lld"
+          }
+        }
+      }
+    },
+    "editor.background.reach.clip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu klip"
+          }
+        }
+      }
+    },
+    "editor.background.reach.here": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From here"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buradan"
+          }
+        }
+      }
+    },
+    "editor.background.reach.whole": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm video"
           }
         }
       }
@@ -2857,6 +2993,40 @@
         }
       }
     },
+    "editor.change.effect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effect changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekt değişti"
+          }
+        }
+      }
+    },
+    "editor.change.effectRemoved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effect removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekt kaldırıldı"
+          }
+        }
+      }
+    },
     "editor.change.freezeLength": {
       "extractionState": "manual",
       "localizations": {
@@ -2972,6 +3142,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Oynatma değişti"
+          }
+        }
+      }
+    },
+    "editor.change.playbackRange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed over a stretch"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aralığa hız uygulandı"
           }
         }
       }
@@ -3482,6 +3669,176 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bitti"
+          }
+        }
+      }
+    },
+    "editor.effect.blurAmount": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blur"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulanıklık"
+          }
+        }
+      }
+    },
+    "editor.effect.customColor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özel renk"
+          }
+        }
+      }
+    },
+    "editor.effect.dimAmount": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Darkness"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Karartma"
+          }
+        }
+      }
+    },
+    "editor.effect.feather": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edge softness"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kenar yumuşaklığı"
+          }
+        }
+      }
+    },
+    "editor.effect.fineEdges": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine edges"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İnce kenarlar"
+          }
+        }
+      }
+    },
+    "editor.effect.fineEdges.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Better hair and hands. Slower to prepare, warms the phone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saç ve ellerde daha temiz. Hazırlaması daha uzun, telefonu ısıtır."
+          }
+        }
+      }
+    },
+    "editor.effect.fitClip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fit to clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klibe sığdır"
+          }
+        }
+      }
+    },
+    "editor.effect.look": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Görünüm"
+          }
+        }
+      }
+    },
+    "editor.effect.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove background"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka planı kaldır"
+          }
+        }
+      }
+    },
+    "editor.effect.wholeVideo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm video"
           }
         }
       }
@@ -4028,6 +4385,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Önizleme hazırlanamadı"
+          }
+        }
+      }
+    },
+    "editor.range.endHere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End at playhead"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonu oynatıcıya al"
+          }
+        }
+      }
+    },
+    "editor.range.startHere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start at playhead"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başı oynatıcıya al"
+          }
+        }
+      }
+    },
+    "editor.range.whole": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm klip"
           }
         }
       }

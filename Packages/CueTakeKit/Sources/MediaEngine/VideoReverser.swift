@@ -1,4 +1,5 @@
 import AVFoundation
+import Domain
 import Foundation
 
 /// Writes a clip backwards.
@@ -21,6 +22,16 @@ public struct VideoReverser: Sendable {
     public enum ReverseError: Error {
         case noVideoTrack
         case cannotWrite
+    }
+
+    /// Names a take's trimmed range: every file written from one take carries it.
+    public static func key(for take: Take) -> String {
+        "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
+    }
+
+    /// Where a take's reversed copy is written.
+    public static func cachedURL(for take: Take, in directory: URL) -> URL {
+        directory.appending(path: "\(key(for: take))-rev.mov", directoryHint: .notDirectory)
     }
 
     /// Roughly what a phone can hold without being killed for it.

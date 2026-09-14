@@ -81,8 +81,10 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case duplicateOverlay(overlay: String, start: Double?)
         /// Moves every caption of one clip (or all clips) earlier or later, for captions out of sync.
         case shiftCaptions(clip: String?, by: Double)
-        /// Replaces what is behind the person in one clip (or all clips); nil style puts it back.
-        case setBackground(clip: String?, style: String?)
+        /// Replaces what is behind the person over a stretch of the video; no style takes it away.
+        case setBackground(BackgroundRequest)
+        /// Removes a tool laid over a stretch of the video.
+        case removeEffect(effect: String)
 
         case unknown(type: String)
 
@@ -122,6 +124,7 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .duplicateOverlay: "duplicateOverlay"
             case .shiftCaptions: "shiftCaptions"
             case .setBackground: "setBackground"
+            case .removeEffect: "removeEffect"
             case .unknown(let type): type
             }
         }
@@ -438,7 +441,18 @@ extension EditPlan.Operation: Codable {
             self = .duplicateOverlay(overlay: overlay, start: f.number("start"))
         case "setBackground":
             let style = f.string("style") ?? f.string("background")
-            self = .setBackground(clip: f.string("clip"), style: style == "none" ? nil : style)
+            self = .setBackground(BackgroundRequest(
+                clip: f.string("clip"),
+                style: style == "none" ? nil : style,
+                from: f.number("from") ?? f.number("start"),
+                to: f.number("to") ?? f.number("end"),
+                strength: f.number("strength") ?? f.number("amount"),
+                feather: f.number("feather") ?? f.number("edge"),
+                color: f.string("color")
+            ))
+        case "removeEffect":
+            guard let effect = f.string("effect") ?? f.string("id") else { self = unknown; return }
+            self = .removeEffect(effect: effect)
         case "shiftCaptions":
             guard let by = f.number("by") ?? f.number("seconds") else { self = unknown; return }
             self = .shiftCaptions(clip: f.string("clip"), by: by)
@@ -547,8 +561,12 @@ extension EditPlan.Operation: Codable {
             try put("overlay", overlay); try put("start", start)
         case .shiftCaptions(let clip, let by):
             try put("clip", clip); try put("by", by)
-        case .setBackground(let clip, let style):
-            try put("clip", clip); try put("style", style ?? "none")
+        case .setBackground(let request):
+            try put("clip", request.clip); try put("style", request.style ?? "none")
+            try put("from", request.from); try put("to", request.to)
+            try put("strength", request.strength); try put("feather", request.feather); try put("color", request.color)
+        case .removeEffect(let effect):
+            try put("effect", effect)
         case .unknown:
             break
         }
@@ -589,10 +607,48 @@ extension EditPlan {
             case .setScript(let clip, let text): .setScript(clip: refs.clip(clip), text: text)
             case .selectTake(let clip, let take): .selectTake(clip: refs.clip(clip), take: refs.take(take))
             case .shiftCaptions(let clip, let by): .shiftCaptions(clip: clip.map(refs.clip), by: by)
-            case .setBackground(let clip, let style): .setBackground(clip: clip.map(refs.clip), style: style)
+            case .setBackground(let request):
+                .setBackground(BackgroundRequest(
+                    clip: request.clip.map(refs.clip), style: request.style, from: request.from, to: request.to,
+                    strength: request.strength, feather: request.feather, color: request.color
+                ))
+            case .removeEffect(let effect): .removeEffect(effect: refs.effect(effect))
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }
         })
+    }
+}
+
+/// A background over a stretch of the video, as the model asked for it.
+///
+/// The stretch is `from`–`to` on the finished video when given, otherwise the clip, otherwise the
+/// whole video.
+public struct BackgroundRequest: Hashable, Sendable {
+    public var clip: String?
+    /// A `ClipBackground` name; nil removes backgrounds from the stretch.
+    public var style: String?
+    public var from: Double?
+    public var to: Double?
+    public var strength: Double?
+    public var feather: Double?
+    public var color: String?
+
+    public init(
+        clip: String? = nil,
+        style: String?,
+        from: Double? = nil,
+        to: Double? = nil,
+        strength: Double? = nil,
+        feather: Double? = nil,
+        color: String? = nil
+    ) {
+        self.clip = clip
+        self.style = style
+        self.from = from
+        self.to = to
+        self.strength = strength
+        self.feather = feather
+        self.color = color
     }
 }
 

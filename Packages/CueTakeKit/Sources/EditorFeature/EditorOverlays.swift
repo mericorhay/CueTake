@@ -68,6 +68,7 @@ extension EditorModel {
         if id != nil {
             inspectedSegment = nil
             selectedAudio = nil
+            selectedEffect = nil
         }
     }
 

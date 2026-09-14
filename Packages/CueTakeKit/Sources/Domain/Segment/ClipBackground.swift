@@ -13,6 +13,10 @@ public enum ClipBackground: String, Hashable, Sendable, Codable, CaseIterable {
     case green
     /// A dark studio gradient.
     case studio
+    /// The real background, darkened, so the person stands out and the room stays.
+    case dim
+    /// Any flat colour.
+    case color
 
     public var token: String { rawValue }
 }

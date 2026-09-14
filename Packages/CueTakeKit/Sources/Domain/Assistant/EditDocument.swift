@@ -28,6 +28,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     /// Captions show only between these finished-video seconds; nil means throughout.
     public var captionWindow: [Double]?
     public var overlays: [OverlayItem]?
+    /// Tools laid over stretches of the finished video.
+    public var effects: [Effect]?
     public var voice: Voice
     public var fonts: [String]
     public var animations: [String]
@@ -46,8 +48,6 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var speed: Double?
         public var reversed: Bool?
         public var freeze: Double?
-        /// What replaces the background behind the person, when anything does.
-        public var background: String?
         public var title: String?
         /// The prompter script, only when there are no words yet.
         public var script: String?
@@ -169,6 +169,19 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var animation: String
     }
 
+    /// A background (or later another tool) from one moment of the finished video to another.
+    public struct Effect: Codable, Sendable, Equatable {
+        /// `e1`, `e2`… bottom to top.
+        public var id: String
+        public var kind: String
+        public var style: String?
+        public var from: Double
+        public var to: Double
+        public var strength: Double?
+        public var feather: Double?
+        public var color: String?
+    }
+
     public struct Voice: Codable, Sendable, Equatable {
         public var noiseReduction: Bool
         public var voiceEnhance: Bool
@@ -191,6 +204,7 @@ public struct EditReferences: Sendable {
     public var overlays: [String: UUID] = [:]
     public var audio: [String: UUID] = [:]
     public var takes: [String: UUID] = [:]
+    public var effects: [String: UUID] = [:]
 
     public init(project: Project) {
         var caption = 0
@@ -209,6 +223,7 @@ public struct EditReferences: Sendable {
             }
         }
         for (i, overlay) in project.overlays.enumerated() { overlays["o\(i + 1)"] = overlay.id }
+        for (i, effect) in project.effects.enumerated() { effects["e\(i + 1)"] = effect.id }
         for (i, clip) in project.audio.enumerated() { audio["a\(i + 1)"] = clip.id }
     }
 
@@ -233,6 +248,7 @@ public struct EditReferences: Sendable {
     public func overlay(_ reference: String) -> String { Self.resolve(reference, in: overlays) }
     public func audioClip(_ reference: String) -> String { Self.resolve(reference, in: audio) }
     public func take(_ reference: String) -> String { Self.resolve(reference, in: takes) }
+    public func effect(_ reference: String) -> String { Self.resolve(reference, in: effects) }
 }
 
 extension EditDocument {
@@ -286,7 +302,6 @@ extension EditDocument {
                     speed: abs(playback.speed - 1) > 0.001 ? playback.speed : nil,
                     reversed: playback.isReversed ? true : nil,
                     freeze: playback.freeze.map { r2($0.seconds) },
-                    background: segment.background?.rawValue,
                     title: segment.title.isEmpty ? nil : segment.title,
                     script: words.isEmpty && !segment.script.isEmpty ? String(segment.script.prefix(400)) : nil,
                     words: words.map { Word(text: $0.text, start: r2($0.range.start.seconds), end: r2($0.range.end.seconds)) },
@@ -403,6 +418,19 @@ extension EditDocument {
             ),
             captionWindow: project.captionWindow.map { [r2($0.start.seconds), r2($0.end.seconds)] },
             overlays: overlays,
+            effects: project.effects.isEmpty ? nil : project.effects.enumerated().map { i, effect in
+                let settings = effect.background
+                return Effect(
+                    id: "e\(i + 1)",
+                    kind: "background",
+                    style: settings?.style.rawValue,
+                    from: r2(effect.start.seconds),
+                    to: r2(effect.end),
+                    strength: settings.flatMap { $0.usesStrength ? r2($0.strength) : nil },
+                    feather: settings.map { r2($0.feather) },
+                    color: settings?.color?.hex
+                )
+            },
             voice: Voice(
                 noiseReduction: project.voiceEffects.noiseReduction,
                 voiceEnhance: project.voiceEffects.voiceEnhance,

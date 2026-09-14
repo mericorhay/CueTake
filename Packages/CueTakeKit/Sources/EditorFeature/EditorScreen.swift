@@ -86,12 +86,15 @@ public struct EditorScreen: View {
         if let landscapePreviewHeight { return landscapePreviewHeight }
         // An overlay or a caption being placed gets the big picture: both are placed by looking.
         if model.selectedOverlay != nil || editingCaption != nil { return 390 }
+        // A background being tuned is judged by looking at it, but its panel is tall.
+        if model.selectedEffect != nil { return 250 }
         if previewExpanded { return 430 }
         return isPanelOpen || dockPanel != nil ? 150 : 212
     }
 
     private var isPanelOpen: Bool {
-        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil || editingCaption != nil
+        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
+            || model.selectedEffect != nil || editingCaption != nil
     }
 
     public var body: some View {
@@ -157,6 +160,10 @@ public struct EditorScreen: View {
                 )
             } else if let clip = model.selectedAudioClip {
                 audioPanel(clip)
+            } else if let effect = model.selectedEffectValue {
+                EffectInspector(model: model, effect: effect) {
+                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+                }
             } else if let overlay = model.selectedOverlayValue {
                 OverlayInspector(model: model, overlay: overlay) {
                     withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
@@ -641,16 +648,33 @@ public struct EditorScreen: View {
             DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
                 .padding(.bottom, 6)
 
-            EditorTimeline(model: model) { id in
-                model.pause()
-                withAnimation(DS.Motion.settle) {
-                    model.inspectedSegment = nil
-                    model.selectedAudio = nil
-                    model.select(overlay: nil)
-                    dockPanel = nil
-                    editingCaption = id
+            EditorTimeline(
+                model: model,
+                onEditCaption: { id in
+                    model.pause()
+                    withAnimation(DS.Motion.settle) {
+                        model.inspectedSegment = nil
+                        model.selectedAudio = nil
+                        model.select(overlay: nil)
+                        model.select(effect: nil)
+                        dockPanel = nil
+                        editingCaption = id
+                    }
+                },
+                onOpenPlayback: { id in
+                    guard let index = model.project.segments.firstIndex(where: { $0.id == id }) else { return }
+                    model.pause()
+                    withAnimation(DS.Motion.settle) {
+                        editingCaption = nil
+                        model.select(effect: nil)
+                        model.select(overlay: nil)
+                        model.selectedAudio = nil
+                        model.inspectedSegment = nil
+                        model.seek(to: model.start(at: index) + 0.01)
+                        dockPanel = .speed
+                    }
                 }
-            }
+            )
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)

@@ -30,6 +30,15 @@ struct ToolDock: View {
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
     @Binding var open: Item?
     @State private var fired: [Item: Int] = [:]
+    /// The stretch of the clip a speed, reverse or freeze applies to, and the clip it belongs to.
+    @State private var playbackRange: ClosedRange<Double>?
+    @State private var playbackRangeClip: Segment.ID?
+    /// Where a new background goes: this clip, from the playhead on, or the whole video.
+    @State private var backgroundReach: BackgroundReach = .clip
+
+    enum BackgroundReach: Hashable {
+        case clip, fromHere, whole
+    }
     @Namespace private var morph
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -209,6 +218,11 @@ struct ToolDock: View {
     }
 
     private func activate(_ item: Item) {
+        // A background already under the playhead opens for editing rather than stacking another.
+        if item == .background, let existing = model.backgroundAtPlayhead {
+            withAnimation(DS.Motion.settle) { model.select(effect: existing.id) }
+            return
+        }
         if item.opensPanel {
             open = item
             return
@@ -367,17 +381,66 @@ struct ToolDock: View {
         .buttonStyle(.dsPressIcon)
     }
 
+    /// The part of the clip playback changes apply to, reset whenever the clip changes.
+    private func playbackRangeBinding(at index: Int) -> Binding<ClosedRange<Double>> {
+        let segment = model.project.segments[index]
+        let whole = 0...segment.barWeight
+        return Binding(
+            get: {
+                guard playbackRangeClip == segment.id, let range = playbackRange,
+                      range.upperBound <= segment.barWeight + 0.001
+                else { return whole }
+                return range
+            },
+            set: { value in
+                playbackRangeClip = segment.id
+                playbackRange = value
+            }
+        )
+    }
+
+    private func playbackPlayhead(at index: Int) -> Double? {
+        guard let here = model.segmentAtPlayhead, here.index == index else { return nil }
+        return here.offset
+    }
+
+    /// Applies a playback change to the chosen stretch, and then forgets the stretch: after a split
+    /// the clip under the tools is the stretch itself.
+    private func applyPlayback(at index: Int, _ change: @escaping (inout ClipPlayback) -> Void) {
+        let range = playbackRangeBinding(at: index).wrappedValue
+        let segment = model.project.segments[index]
+        let isWhole = range.lowerBound < 0.05 && segment.barWeight - range.upperBound < 0.05
+        model.pulse(.speed)
+        withAnimation(DS.Motion.settle) {
+            model.updatePlayback(at: index, range: isWhole ? nil : range, change)
+        }
+        playbackRange = nil
+        playbackRangeClip = nil
+    }
+
     private func speedPanel(at index: Int) -> some View {
-        let playback = model.project.segments[index].playback
+        let segment = model.project.segments[index]
+        let playback = segment.playback
         let choices: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2]
+        // Frozen and reversed clips are changed whole: their footage does not run forwards under
+        // the playhead, so there is no honest place to cut them.
+        let canPickRange = playback.freeze == nil && !playback.isReversed && segment.barWeight > 0.8
 
         return VStack(alignment: .leading, spacing: 10) {
+            if canPickRange {
+                ClipRangeBar(
+                    range: playbackRangeBinding(at: index),
+                    length: segment.barWeight,
+                    playhead: playbackPlayhead(at: index),
+                    tint: EffectLane.playbackTint
+                )
+            }
+
             HStack(spacing: 6) {
                 ForEach(choices, id: \.self) { speed in
                     let isOn = abs(playback.speed - speed) < 0.001 && playback.freeze == nil
                     Button {
-                        model.pulse(.speed)
-                        model.updatePlayback(at: index) {
+                        applyPlayback(at: index) {
                             $0.speed = speed
                             $0.freeze = nil
                         }
@@ -399,10 +462,10 @@ struct ToolDock: View {
 
             HStack(spacing: 8) {
                 toggle("editor.dock.reverse", symbol: "backward.fill", isOn: playback.isReversed, enabled: playback.freeze == nil) {
-                    model.updatePlayback(at: index) { $0.isReversed.toggle() }
+                    applyPlayback(at: index) { $0.isReversed.toggle() }
                 }
                 toggle("editor.dock.freeze", symbol: "snowflake", isOn: playback.freeze != nil, enabled: true) {
-                    model.updatePlayback(at: index) {
+                    applyPlayback(at: index) {
                         $0.freeze = $0.freeze == nil ? MediaTime(seconds: 2) : nil
                     }
                 }
@@ -410,25 +473,50 @@ struct ToolDock: View {
         }
     }
 
-    /// What goes behind the person: one tap per look, applied to this clip or to all of them.
+    static let backgroundChoices: [ClipBackground] = [.blur, .dim, .studio, .black, .white, .green, .color]
+
+    /// Where a new background goes, on the finished video.
+    private func backgroundSpan(at index: Int) -> ClosedRange<Double> {
+        switch backgroundReach {
+        case .clip:
+            return model.timelineRange(ofSegmentAt: index)
+        case .fromHere:
+            let start = model.playhead
+            return start...min(model.duration, start + 3)
+        case .whole:
+            return 0...model.duration
+        }
+    }
+
+    /// What goes behind the person, and over which stretch: the look is chosen here, and the new
+    /// background lands on the timeline selected, ready to be moved, stretched and fine-tuned.
     private func backgroundPanel(at index: Int) -> some View {
-        let current = model.project.segments[index].background
-        let choices: [ClipBackground?] = [nil, .blur, .studio, .black, .white, .green]
-        let everywhere = model.project.segments.count > 1
-            && model.project.segments.allSatisfy { $0.background == current }
+        let span = backgroundSpan(at: index)
 
         return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                reachChip(.clip, "editor.background.reach.clip")
+                reachChip(.fromHere, "editor.background.reach.here")
+                reachChip(.whole, "editor.background.reach.whole")
+            }
+
+            Text(verbatim: "\(MediaTime(seconds: span.lowerBound).preciseTimecode) – \(MediaTime(seconds: span.upperBound).preciseTimecode)")
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(DS.Palette.ink(0.5))
+                .contentTransition(.numericText())
+
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
-                    ForEach(Array(choices.enumerated()), id: \.offset) { _, choice in
-                        let isOn = current == choice
+                    ForEach(Self.backgroundChoices, id: \.self) { choice in
                         Button {
-                            withAnimation(DS.Motion.snap) {
-                                if everywhere {
-                                    model.setBackgroundForAll(choice)
-                                } else {
-                                    model.setBackground(choice, at: index)
-                                }
+                            let range = backgroundSpan(at: index)
+                            open = nil
+                            withAnimation(DS.Motion.settle) {
+                                model.addBackground(
+                                    BackgroundSettings(style: choice, color: choice == .color ? EffectInspector.colors[0] : nil),
+                                    from: range.lowerBound,
+                                    to: range.upperBound
+                                )
                             }
                         } label: {
                             VStack(spacing: 6) {
@@ -436,21 +524,20 @@ struct ToolDock: View {
                                     .fill(Self.swatch(choice))
                                     .frame(width: 52, height: 52)
                                     .overlay {
-                                        Image(systemName: choice == nil ? "person.fill" : "person.fill")
+                                        Image(systemName: "person.fill")
                                             .font(.system(size: 20, weight: .semibold))
                                             .foregroundStyle(choice == .white ? Color.black.opacity(0.75) : Color.white.opacity(0.9))
                                     }
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                            .strokeBorder(isOn ? DS.Palette.lime : DS.Palette.hairline(0.12), lineWidth: isOn ? 2.5 : 1)
+                                            .strokeBorder(DS.Palette.hairline(0.12), lineWidth: 1)
                                     }
                                 Text(Self.label(choice))
                                     .dsFont(.sans, .medium, 10)
-                                    .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.6))
+                                    .foregroundStyle(DS.Palette.ink(0.6))
                             }
                         }
                         .buttonStyle(.dsPress(radius: 10))
-                        .animation(DS.Motion.snap, value: isOn)
                     }
                 }
                 .padding(.vertical, 2)
@@ -458,35 +545,43 @@ struct ToolDock: View {
             .scrollIndicators(.hidden)
             .scrollClipDisabled()
 
-            HStack(spacing: 8) {
-                toggle("editor.background.all", symbol: "square.stack.3d.up", isOn: everywhere, enabled: model.project.segments.count > 1) {
-                    withAnimation(DS.Motion.snap) {
-                        if everywhere {
-                            model.setBackground(current, at: index)
-                            for other in model.project.segments.indices where other != index {
-                                model.setBackground(nil, at: other)
-                            }
-                        } else {
-                            model.setBackgroundForAll(current)
-                        }
-                    }
-                }
-            }
-
-            Text("editor.background.note", bundle: .module)
+            Text("editor.background.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11, lineHeight: 1.35)
                 .foregroundStyle(DS.Palette.ink(0.45))
         }
     }
 
-    static func swatch(_ background: ClipBackground?) -> AnyShapeStyle {
+    private func reachChip(_ reach: BackgroundReach, _ key: String.LocalizationValue) -> some View {
+        let isOn = backgroundReach == reach
+        return Button {
+            withAnimation(DS.Motion.snap) { backgroundReach = reach }
+        } label: {
+            Text(String(localized: key, bundle: .module))
+                .dsFont(.sans, .medium, 12)
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(Capsule().fill(isOn ? EffectLane.tint : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 20))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    static func swatch(_ background: ClipBackground?, color: RGBAColor? = nil) -> AnyShapeStyle {
         switch background {
         case nil: AnyShapeStyle(LinearGradient(colors: [Color(red: 0.35, green: 0.3, blue: 0.25), Color(red: 0.2, green: 0.24, blue: 0.3)], startPoint: .topLeading, endPoint: .bottomTrailing))
         case .blur: AnyShapeStyle(LinearGradient(colors: [Color(red: 0.5, green: 0.45, blue: 0.4).opacity(0.8), Color(red: 0.3, green: 0.36, blue: 0.45).opacity(0.8)], startPoint: .top, endPoint: .bottom))
+        case .dim: AnyShapeStyle(LinearGradient(colors: [Color(red: 0.22, green: 0.2, blue: 0.18), Color(red: 0.1, green: 0.11, blue: 0.14)], startPoint: .top, endPoint: .bottom))
         case .studio: AnyShapeStyle(RadialGradient(colors: [Color(red: 0.22, green: 0.23, blue: 0.27), Color(red: 0.03, green: 0.03, blue: 0.04)], center: .center, startRadius: 2, endRadius: 40))
         case .black: AnyShapeStyle(Color.black)
         case .white: AnyShapeStyle(Color.white)
         case .green: AnyShapeStyle(Color(red: 0, green: 0.8, blue: 0.25))
+        case .color:
+            if let color {
+                AnyShapeStyle(Color(red: color.red, green: color.green, blue: color.blue))
+            } else {
+                AnyShapeStyle(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center))
+            }
         }
     }
 
@@ -494,10 +589,12 @@ struct ToolDock: View {
         switch background {
         case nil: String(localized: "editor.background.none", bundle: .module)
         case .blur: String(localized: "editor.background.blur", bundle: .module)
+        case .dim: String(localized: "editor.background.dim", bundle: .module)
         case .studio: String(localized: "editor.background.studio", bundle: .module)
         case .black: String(localized: "editor.background.black", bundle: .module)
         case .white: String(localized: "editor.background.white", bundle: .module)
         case .green: String(localized: "editor.background.green", bundle: .module)
+        case .color: String(localized: "editor.background.color", bundle: .module)
         }
     }
 

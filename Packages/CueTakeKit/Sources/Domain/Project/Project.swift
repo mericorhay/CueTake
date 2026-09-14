@@ -27,6 +27,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     public var overlays: [Overlay]
     /// When captions are shown, on the finished video. Nil shows them throughout.
     public var captionWindow: MediaTimeRange?
+    /// Tools laid over stretches of the finished video, bottom to top (see `TimelineEffect`).
+    public var effects: [TimelineEffect]
     public var createdAt: Date
     public var updatedAt: Date
     public var metadata: [String: String]
@@ -55,6 +57,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         self.voiceEffects = AudioEffects()
         self.overlays = []
         self.captionWindow = nil
+        self.effects = []
         self.createdAt = createdAt
         self.updatedAt = createdAt
         self.metadata = metadata
@@ -80,9 +83,12 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? AudioEffects()
         overlays = (try? container.decodeIfPresent([Overlay].self, forKey: .overlays)) ?? []
         captionWindow = try? container.decodeIfPresent(MediaTimeRange.self, forKey: .captionWindow)
+        effects = (try? container.decodeIfPresent([TimelineEffect].self, forKey: .effects)) ?? []
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
+        // Backgrounds used to be a setting of the whole clip.
+        adoptClipBackgrounds()
     }
 
     public var locale: Locale { Locale(identifier: localeIdentifier) }

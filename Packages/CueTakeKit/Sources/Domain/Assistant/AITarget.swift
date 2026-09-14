@@ -15,6 +15,8 @@ public enum AITarget: Hashable, Sendable {
     case captionStyle
     case captionWindow
     case overlay(UUID)
+    /// A tool laid over a stretch of the video.
+    case effect(UUID)
     case audio(UUID)
     case voice
     case title
@@ -63,6 +65,8 @@ extension Project {
                 result.captionWindow = source.captionWindow
             case .overlay(let id):
                 Self.restore(id, in: &result.overlays, from: source.overlays)
+            case .effect(let id):
+                Self.restore(id, in: &result.effects, from: source.effects)
             case .audio(let id):
                 Self.restore(id, in: &result.audio, from: source.audio)
             case .voice:
@@ -91,6 +95,8 @@ extension Project {
                 captionWindow == other.captionWindow
             case .overlay(let id):
                 overlays.first(where: { $0.id == id }) == other.overlays.first(where: { $0.id == id })
+            case .effect(let id):
+                effects.first(where: { $0.id == id }) == other.effects.first(where: { $0.id == id })
             case .audio(let id):
                 audio.first(where: { $0.id == id }) == other.audio.first(where: { $0.id == id })
             case .voice:

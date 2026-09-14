@@ -176,11 +176,14 @@ struct AIDirectorTests {
         let outcome = model.apply(EditPlan(summary: "", operations: [
             .deleteClip(clip: clip),
             .cut(clip: clip, from: 0, to: 10),
-            .setBackground(clip: "c2", style: "blur"),
+            .setBackground(BackgroundRequest(clip: "c2", style: "blur", strength: 80)),
         ]))
         #expect(model.project.segments.count == 2)
         #expect(model.project.segments[0].selectedTake?.sourceRange.duration.seconds == 10)
-        #expect(model.project.segments[1].background == .blur)
+        let effect = model.project.effects.first
+        #expect(effect?.background?.style == .blur)
+        #expect(effect?.background?.strength == 0.8)
+        #expect(abs((effect?.start.seconds ?? -1) - model.start(at: 1)) < 0.01)
         #expect(outcome.skipped.contains("deleteClip"))
     }
 

@@ -62,9 +62,8 @@ public enum MediaJanitor {
                 keep.insert((file as NSString).deletingPathExtension + "-speech.m4a")
             }
         }
-        for segment in project.segments {
-            guard let background = segment.background, let take = segment.selectedTake else { continue }
-            keep.insert(BackgroundRemover.cachedURL(take: take, reversed: segment.playback.isReversed, background: background, in: mediaDirectory).lastPathComponent)
+        for job in BackgroundRemover.jobs(for: project, in: mediaDirectory) {
+            keep.insert(job.name)
         }
         for segment in project.segments where segment.playback.isReversed {
             guard let take = segment.selectedTake else { continue }

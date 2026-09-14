@@ -52,6 +52,9 @@ public struct Recording: Identifiable, Hashable, Sendable, Codable {
     public var camera: CameraPosition
     public var duration: MediaTime
     public var createdAt: Date
+    /// What both listeners heard in this file, passage by passage. Nil until it has been heard, and
+    /// for recordings heard before there were two listeners.
+    public var speech: TranscriptVersions? = nil
 
     public init(
         id: UUID = UUID(),

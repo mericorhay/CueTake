@@ -32,6 +32,8 @@ public final class EditorModel {
     public var selectedAudio: AudioClip.ID?
     /// The picture or text being edited over the preview.
     public var selectedOverlay: Overlay.ID?
+    /// The effect laid over a stretch of the video being edited. See `EditorEffects`.
+    public var selectedEffect: TimelineEffect.ID?
     /// Decoded overlay pictures, by overlay. Filled when playback is prepared and when one is added.
     public internal(set) var overlayImages: [Overlay.ID: UIImage] = [:]
     /// Where this project's files live, once playback has been prepared.
@@ -228,12 +230,6 @@ public final class EditorModel {
         }
     }
 
-    /// A clip's background as the preview sees it: none, waiting for its render, or ready.
-    private func backgroundState(of segment: Segment) -> String {
-        guard let name = backgroundCacheName(for: segment) else { return "-" }
-        return readyBackgrounds.contains(name) ? "ready:\(name)" : "pending:\(name)"
-    }
-
     /// Everything that changes what the preview plays: which footage, which part of it, in what
     /// order, at what speed, with what voice. The player is rebuilt whenever this changes.
     ///
@@ -244,8 +240,11 @@ public final class EditorModel {
             let take = segment.selectedTake
             let range = take.map { "\($0.id.uuidString):\($0.sourceRange.start.seconds):\($0.sourceRange.duration.seconds)" } ?? "-"
             let playback = segment.playback
-            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)|\(backgroundState(of: segment))"
+            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)"
         } + [
+            // Where every background effect sits, and whether its render is there to play.
+            "effects:" + project.effects.map { "\($0.start.seconds)+\($0.duration.seconds):\($0.background?.token ?? "-")" }.joined(separator: ","),
+            "backgrounds:" + backgroundSignature,
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
         ] + project.audio.map { clip in
@@ -304,6 +303,7 @@ public final class EditorModel {
         isPlaying = true
 
         if let player {
+            PlaybackAudio.activate()
             player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600)) { _ in }
             player.play()
             return
@@ -807,26 +807,6 @@ extension EditorModel {
         // Coalesced by segment: typing in the script field is one edit, not one per keystroke.
         record("editor.change.segment", symbol: "pencil", coalescing: "segment-\(index)")
         change(&project.segments[index])
-        project.updatedAt = .now
-    }
-
-    /// Replaces what is behind the person in one clip, or puts the footage back with nil.
-    public func setBackground(_ background: ClipBackground?, at index: Int) {
-        guard project.segments.indices.contains(index), project.segments[index].background != background else { return }
-        record("editor.change.background", symbol: "person.crop.rectangle")
-        failedBackgrounds.removeAll()
-        project.segments[index].background = background
-        project.updatedAt = .now
-    }
-
-    /// The same background for every clip, as one edit.
-    public func setBackgroundForAll(_ background: ClipBackground?) {
-        guard project.segments.contains(where: { $0.background != background }) else { return }
-        record("editor.change.background", symbol: "person.crop.rectangle")
-        failedBackgrounds.removeAll()
-        for index in project.segments.indices {
-            project.segments[index].background = background
-        }
         project.updatedAt = .now
     }
 

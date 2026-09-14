@@ -11,6 +11,8 @@ struct EditorTimeline: View {
     @Bindable var model: EditorModel
     /// Opens a caption for editing on the picture.
     var onEditCaption: (CaptionCue.ID) -> Void = { _ in }
+    /// Opens a clip's speed, reverse and freeze.
+    var onOpenPlayback: (Segment.ID) -> Void = { _ in }
 
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
@@ -33,7 +35,8 @@ struct EditorTimeline: View {
             : 0
         let overlays = model.project.overlays.isEmpty ? 0 : OverlayLane.height(for: model.project.overlays) + 7
         let captions = hasCaptions ? CaptionLane.height + 7 : 0
-        return audio + overlays + captions
+        let effects = EffectLane.rowCount(in: model.project) > 0 ? EffectLane.height(in: model.project) + 7 : 0
+        return audio + overlays + captions + effects
     }
 
     private var hasCaptions: Bool {
@@ -119,6 +122,9 @@ struct EditorTimeline: View {
                     OverlayLane(model: model, scale: scale)
                 }
                 clipRow
+                if EffectLane.rowCount(in: model.project) > 0 {
+                    EffectLane(model: model, scale: scale, onOpenPlayback: onOpenPlayback)
+                }
                 if hasCaptions {
                     CaptionLane(
                         model: model,

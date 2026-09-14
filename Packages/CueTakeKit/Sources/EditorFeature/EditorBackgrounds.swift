@@ -9,11 +9,17 @@ import MediaEngine
 /// after another, with progress, and when a copy is ready the preview is rebuilt to use it. It used
 /// to run inside the preview build, where a render that stalled left the picture black for good.
 extension EditorModel {
-    /// The file a clip's background replacement is written to, or nil when it has none.
-    func backgroundCacheName(for segment: Segment) -> String? {
-        guard let background = segment.background, let take = segment.selectedTake else { return nil }
-        let reversed = segment.playback.isReversed && segment.playback.freeze == nil
-        return BackgroundRemover.cacheName(take: take, reversed: reversed, background: background)
+    /// What the preview knows about the processed copies: which exist, which are still to come.
+    var backgroundSignature: String {
+        guard let mediaDirectory else { return "" }
+        return BackgroundRemover.jobs(for: project, in: mediaDirectory)
+            .map { "\($0.name):\(readyBackgrounds.contains($0.name) ? "ready" : "pending")" }
+            .joined(separator: ",")
+    }
+
+    /// Whether a processed copy with this look is being rendered right now.
+    func isRenderingBackground(_ settings: BackgroundSettings) -> Bool {
+        backgroundJob != nil && backgroundJobKey.contains("-bg-" + settings.token + ".mov")
     }
 
     /// Says on the picture, for a few seconds, that a clip keeps its own background.
@@ -29,36 +35,17 @@ extension EditorModel {
     func prepareBackgrounds() {
         guard let mediaDirectory else { return }
 
-        var pending: [(name: String, source: URL, range: CMTimeRange, background: ClipBackground, destination: URL)] = []
-        for segment in project.segments {
-            guard let name = backgroundCacheName(for: segment),
-                  let background = segment.background,
-                  let take = segment.selectedTake,
-                  let recording = project.recordings.first(where: { $0.id == take.recordingID })
-            else { continue }
-            guard !failedBackgrounds.contains(name) else { continue }
-            let destination = mediaDirectory.appending(path: name, directoryHint: .notDirectory)
-            if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
-                readyBackgrounds.insert(name)
+        var pending: [BackgroundRemover.Job] = []
+        for job in BackgroundRemover.jobs(for: project, in: mediaDirectory) {
+            guard !failedBackgrounds.contains(job.name) else { continue }
+            if FileManager.default.fileExists(atPath: job.destination.path(percentEncoded: false)) {
+                if !readyBackgrounds.contains(job.name) { readyBackgrounds.insert(job.name) }
                 continue
             }
-
-            let length = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
-            if segment.playback.isReversed, segment.playback.freeze == nil {
-                // A reversed clip's background is taken from its reversed copy, which the preview
-                // build writes first; until it exists there is nothing to process.
-                let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
-                let reversed = mediaDirectory.appending(path: "\(key)-rev.mov", directoryHint: .notDirectory)
-                guard FileManager.default.fileExists(atPath: reversed.path(percentEncoded: false)) else { continue }
-                pending.append((name, reversed, CMTimeRange(start: .zero, duration: length), background, destination))
-            } else {
-                let source = mediaDirectory.appending(
-                    path: (recording.relativePath as NSString).lastPathComponent,
-                    directoryHint: .notDirectory
-                )
-                let start = CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600)
-                pending.append((name, source, CMTimeRange(start: start, duration: length), background, destination))
-            }
+            // A reversed clip's background is taken from its reversed copy, which the preview
+            // build writes first; until it exists there is nothing to process.
+            guard !job.waitsForReverse else { continue }
+            pending.append(job)
         }
 
         let key = pending.map(\.name).joined(separator: ",")
@@ -79,14 +66,14 @@ extension EditorModel {
         backgroundJob = Task(priority: .utility) { [weak self] in
             guard let model = self else { return }
             let count = Double(work.count)
-            for (index, item) in work.enumerated() {
+            for (index, job) in work.enumerated() {
                 guard !Task.isCancelled else { return }
                 let done = Double(index)
                 let url = await BackgroundRemover().render(
-                    source: item.source,
-                    range: item.range,
-                    background: item.background,
-                    destination: item.destination
+                    source: job.source,
+                    range: job.range,
+                    settings: job.settings,
+                    destination: job.destination
                 ) { [weak model] value in
                     Task { @MainActor in
                         guard let model, model.backgroundJobKey == key else { return }
@@ -95,9 +82,9 @@ extension EditorModel {
                 }
                 guard !Task.isCancelled else { return }
                 if url != nil {
-                    model.readyBackgrounds.insert(item.name)
+                    model.readyBackgrounds.insert(job.name)
                 } else {
-                    model.failedBackgrounds.insert(item.name)
+                    model.failedBackgrounds.insert(job.name)
                     model.showBackgroundFailure()
                 }
             }

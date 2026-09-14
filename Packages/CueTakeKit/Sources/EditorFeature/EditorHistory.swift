@@ -74,7 +74,11 @@ extension EditorModel {
     }
 
     /// Ends a batch as a single undo step back to `before`.
-    public func endBatch(startingFrom before: Project) {
+    public func endBatch(
+        startingFrom before: Project,
+        label: String.LocalizationValue = "editor.change.workflow",
+        symbol: String = "flowchart"
+    ) {
         isApplyingPlan = false
         guard before != project else { return }
         editCount += 1
@@ -83,8 +87,8 @@ extension EditorModel {
                 project: before,
                 entry: ChangeEntry(
                     id: editCount,
-                    label: String(localized: "editor.change.workflow", bundle: .module),
-                    symbol: "flowchart"
+                    label: String(localized: label, bundle: .module),
+                    symbol: symbol
                 ),
                 coalescingKey: nil
             )
@@ -145,6 +149,9 @@ extension EditorModel {
         }
         if let selected = selectedAudio, !restored.audio.contains(where: { $0.id == selected }) {
             selectedAudio = nil
+        }
+        if let selected = selectedEffect, !restored.effects.contains(where: { $0.id == selected }) {
+            selectedEffect = nil
         }
         if let selected = selectedOverlay, !restored.overlays.contains(where: { $0.id == selected }) {
             selectedOverlay = nil

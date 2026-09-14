@@ -55,6 +55,18 @@ public enum CaptionBuilder {
         }
 
         flush()
+
+        // A cue on screen for a tenth of a second is a flash nobody can read. Each one stays at
+        // least long enough to be read, without running into the next.
+        for index in cues.indices {
+            let start = cues[index].range.start.seconds
+            let next = index + 1 < cues.count ? cues[index + 1].range.start.seconds : .infinity
+            let end = max(cues[index].range.end.seconds, min(start + minimumSeconds, next))
+            cues[index].range = MediaTimeRange(start: cues[index].range.start, duration: MediaTime(seconds: end - start))
+        }
         return cues
     }
+
+    /// The shortest a caption is shown for, when the next one does not start sooner.
+    public static let minimumSeconds = 0.5
 }

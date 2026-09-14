@@ -861,21 +861,62 @@ extension EditorModel {
 
         // Backgrounds
         for op in ops {
-            guard case .setBackground(let clip, let style) = op else { continue }
-            let background = style.flatMap(ClipBackground.init(rawValue:))
-            if style != nil, background == nil { skipped.append(op.type); continue }
-            if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
-            add("person.crop.rectangle", describe(op), op, locate: { m in
-                guard let clip, let i = m.index(ofClip: clip) else { return (nil, nil) }
-                return (m.start(at: i) + 0.05, m.clipRange(i))
-            }) { m in
-                if let clip {
-                    guard let i = m.index(ofClip: clip) else { return nil }
-                    m.project.segments[i].background = background
-                    return [.clip(m.project.segments[i].id)]
+            if case .removeEffect(let effect) = op {
+                guard project.effects.contains(where: { $0.id.uuidString == effect }) else { skipped.append(op.type); continue }
+                add("trash", describe(op), op, locate: { m in
+                    guard let found = m.project.effects.first(where: { $0.id.uuidString == effect }) else { return (nil, nil) }
+                    return (found.start.seconds + 0.05, found.start.seconds...found.end)
+                }) { m in
+                    guard let found = m.project.effects.firstIndex(where: { $0.id.uuidString == effect }) else { return nil }
+                    let id = m.project.effects[found].id
+                    m.project.effects.remove(at: found)
+                    return [.effect(id)]
                 }
-                for i in m.project.segments.indices { m.project.segments[i].background = background }
-                return m.project.segments.map { .clip($0.id) }
+                continue
+            }
+            guard case .setBackground(let request) = op else { continue }
+            let style = request.style.flatMap(ClipBackground.init(rawValue:))
+            if request.style != nil, style == nil { skipped.append(op.type); continue }
+            if request.from == nil, let clip = request.clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+            // The stretch: the seconds asked for, else the clip, else the whole video.
+            let span: (EditorModel) -> ClosedRange<Double>? = { m in
+                if let from = request.from {
+                    let start = max(0, min(from, m.duration))
+                    let end = min(m.duration, max(request.to ?? m.duration, start + TimelineEffect.minimumLength))
+                    return start...max(end, start + TimelineEffect.minimumLength)
+                }
+                if let clip = request.clip {
+                    guard let i = m.index(ofClip: clip) else { return nil }
+                    return m.timelineRange(ofSegmentAt: i)
+                }
+                return 0...m.duration
+            }
+            add("person.crop.rectangle", describe(op), op, locate: { m in
+                guard let range = span(m) else { return (nil, nil) }
+                return (range.lowerBound + 0.05, range)
+            }) { m in
+                guard let range = span(m) else { return nil }
+                var targets: [AITarget] = []
+                // What was there over the same stretch goes: a new look replaces, it does not stack.
+                for effect in m.project.effects where effect.background != nil
+                    && effect.start.seconds >= range.lowerBound - 0.05 && effect.end <= range.upperBound + 0.05 {
+                    targets.append(.effect(effect.id))
+                }
+                m.project.effects.removeAll { effect in targets.contains(.effect(effect.id)) }
+                guard let style else { return targets.isEmpty ? nil : targets }
+                var settings = BackgroundSettings(style: style)
+                if let strength = request.strength { settings.strength = min(max(strength > 1 ? strength / 100 : strength, 0), 1) }
+                if let feather = request.feather { settings.feather = min(max(feather > 1 ? feather / 100 : feather, 0), 1) }
+                if let hex = request.color { settings.color = RGBAColor(hex: hex) }
+                let effect = TimelineEffect(
+                    start: MediaTime(seconds: range.lowerBound),
+                    duration: MediaTime(seconds: range.upperBound - range.lowerBound),
+                    kind: .background(settings)
+                )
+                m.project.effects.append(effect)
+                m.failedBackgrounds.removeAll()
+                targets.append(.effect(effect.id))
+                return targets
             }
         }
 
@@ -1157,6 +1198,7 @@ extension EditorModel {
         case .duplicateOverlay: "plus.square.on.square"
         case .shiftCaptions: "arrow.left.and.right"
         case .setBackground: "person.crop.rectangle"
+        case .removeEffect: "trash"
         case .unknown: "questionmark"
         }
     }
@@ -1231,8 +1273,14 @@ extension EditorModel {
             L("editor.ai.op.duplicateOverlay \(overlayName(id))")
         case .shiftCaptions(_, let by):
             L("editor.ai.op.shiftCaptions \(Self.seconds(by))")
-        case .setBackground(let clip, let style):
-            L("editor.ai.op.background \(clip.map(clipNumber) ?? "*") \(ToolDock.label(style.flatMap(ClipBackground.init(rawValue:))))")
+        case .setBackground(let request):
+            if let from = request.from {
+                L("editor.ai.op.backgroundSpan \(Self.seconds(from)) \(Self.seconds(request.to ?? from)) \(ToolDock.label(request.style.flatMap(ClipBackground.init(rawValue:))))")
+            } else {
+                L("editor.ai.op.background \(request.clip.map(clipNumber) ?? "*") \(ToolDock.label(request.style.flatMap(ClipBackground.init(rawValue:))))")
+            }
+        case .removeEffect:
+            L("editor.ai.op.removeEffect")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

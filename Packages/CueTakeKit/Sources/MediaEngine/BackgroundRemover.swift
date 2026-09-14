@@ -30,14 +30,68 @@ public struct BackgroundRemover: Sendable {
     /// behind a person; the composer scales it into the frame like any clip.
     static let longestSide: CGFloat = 1920
 
-    /// The file name of the processed copy of one take.
-    public static func cacheName(take: Take, reversed: Bool, background: ClipBackground) -> String {
-        let key = "\(take.id.uuidString)-\(Int(take.sourceRange.start.seconds * 1000))-\(Int(take.sourceRange.duration.seconds * 1000))"
-        return "\(key)\(reversed ? "-rev" : "")-bg-\(background.token).mov"
+    /// The file name of the processed copy of one take: the whole take, so moving or stretching an
+    /// effect inside it never needs a new render.
+    public static func cacheName(take: Take, reversed: Bool, settings: BackgroundSettings) -> String {
+        "\(VideoReverser.key(for: take))\(reversed ? "-rev" : "")-bg-\(settings.token).mov"
     }
 
-    public static func cachedURL(take: Take, reversed: Bool, background: ClipBackground, in directory: URL) -> URL {
-        directory.appending(path: cacheName(take: take, reversed: reversed, background: background), directoryHint: .notDirectory)
+    public static func cachedURL(take: Take, reversed: Bool, settings: BackgroundSettings, in directory: URL) -> URL {
+        directory.appending(path: cacheName(take: take, reversed: reversed, settings: settings), directoryHint: .notDirectory)
+    }
+
+    /// One processed copy a project needs.
+    public struct Job: Hashable, Sendable {
+        public var name: String
+        /// The picture it is made from: the recording, or the clip's reversed copy.
+        public var source: URL
+        public var range: CMTimeRange
+        public var settings: BackgroundSettings
+        public var destination: URL
+        /// The reversed copy it is made from has not been written yet.
+        public var waitsForReverse: Bool
+    }
+
+    /// Every processed copy the project's background effects need, whether or not it exists yet.
+    public static func jobs(for project: Project, in mediaDirectory: URL) -> [Job] {
+        var result: [Job] = []
+        var names = Set<String>()
+        for (index, segment) in project.segments.enumerated() {
+            let wanted = project.backgrounds(ofSegmentAt: index)
+            guard !wanted.isEmpty,
+                  let take = segment.selectedTake,
+                  let recording = project.recording(id: take.recordingID)
+            else { continue }
+            let reversed = segment.playback.isReversed && segment.playback.freeze == nil
+            let length = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
+            let source: URL
+            let range: CMTimeRange
+            var waits = false
+            if reversed {
+                source = VideoReverser.cachedURL(for: take, in: mediaDirectory)
+                range = CMTimeRange(start: .zero, duration: length)
+                waits = !FileManager.default.fileExists(atPath: source.path(percentEncoded: false))
+            } else {
+                source = mediaDirectory.appending(
+                    path: (recording.relativePath as NSString).lastPathComponent,
+                    directoryHint: .notDirectory
+                )
+                range = CMTimeRange(start: CMTime(seconds: take.sourceRange.start.seconds, preferredTimescale: 600), duration: length)
+            }
+            for settings in wanted {
+                let name = cacheName(take: take, reversed: reversed, settings: settings)
+                guard names.insert(name).inserted else { continue }
+                result.append(Job(
+                    name: name,
+                    source: source,
+                    range: range,
+                    settings: settings,
+                    destination: mediaDirectory.appending(path: name, directoryHint: .notDirectory),
+                    waitsForReverse: waits
+                ))
+            }
+        }
+        return result
     }
 
     /// Renders the processed copy if it is not there yet. Nil when it could not be made.
@@ -48,20 +102,20 @@ public struct BackgroundRemover: Sendable {
     public func render(
         source: URL,
         range: CMTimeRange,
-        background: ClipBackground,
+        settings: BackgroundSettings,
         destination: URL,
         progress: @escaping @Sendable (Double) -> Void = { _ in }
     ) async -> URL? {
         if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
             return destination
         }
-        return try? await Self.render(source: source, range: range, background: background, to: destination, progress: progress)
+        return try? await Self.render(source: source, range: range, settings: settings, to: destination, progress: progress)
     }
 
     static func render(
         source: URL,
         range: CMTimeRange,
-        background: ClipBackground,
+        settings: BackgroundSettings,
         to destination: URL,
         progress: @Sendable (Double) -> Void
     ) async throws -> URL {
@@ -127,7 +181,7 @@ public struct BackgroundRemover: Sendable {
         let context = CIContext(options: [.cacheIntermediates: false])
         let request = VNGeneratePersonSegmentationRequest()
         // Balanced is Apple's setting for video: steady from frame to frame at a heat a phone can hold.
-        request.qualityLevel = .balanced
+        request.qualityLevel = settings.fineEdges ? .accurate : .balanced
         request.outputPixelFormat = kCVPixelFormatType_OneComponent8
         let sequence = VNSequenceRequestHandler()
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
@@ -162,13 +216,19 @@ public struct BackgroundRemover: Sendable {
                 if (try? sequence.perform([request], on: placed)) != nil,
                    let maskBuffer = request.results?.first?.pixelBuffer {
                     let mask = CIImage(cvPixelBuffer: maskBuffer)
-                    let fitted = mask.transformed(by: CGAffineTransform(
+                    var fitted = mask.transformed(by: CGAffineTransform(
                         scaleX: bounds.width / mask.extent.width,
                         y: bounds.height / mask.extent.height
                     ))
+                    // A soft edge: the mask blurred a little, so hair and shoulders fade into the new
+                    // background instead of looking cut out with scissors.
+                    if settings.feather > 0.01 {
+                        let radius = settings.feather * Double(min(width, height)) * 0.012
+                        fitted = fitted.clampedToExtent().applyingGaussianBlur(sigma: radius).cropped(to: bounds)
+                    }
                     let blend = CIFilter.blendWithMask()
                     blend.inputImage = placed
-                    blend.backgroundImage = Self.backdrop(background, behind: placed, in: bounds)
+                    blend.backgroundImage = Self.backdrop(settings, behind: placed, in: bounds)
                     blend.maskImage = fitted
                     composed = blend.outputImage?.cropped(to: bounds) ?? placed
                 } else {
@@ -217,16 +277,29 @@ public struct BackgroundRemover: Sendable {
         return destination
     }
 
-    private static func backdrop(_ background: ClipBackground, behind frame: CIImage, in bounds: CGRect) -> CIImage {
-        switch background {
+    private static func backdrop(_ settings: BackgroundSettings, behind frame: CIImage, in bounds: CGRect) -> CIImage {
+        func solid(_ red: Double, _ green: Double, _ blue: Double) -> CIImage {
+            CIImage(color: CIColor(red: red, green: green, blue: blue)).cropped(to: bounds)
+        }
+        switch settings.style {
         case .blur:
-            return frame.clampedToExtent().applyingGaussianBlur(sigma: 22).cropped(to: bounds)
+            // Strength 0 is a gentle softening, 1 is the room gone to shapes.
+            let sigma = (4 + settings.strength * 56) * Double(min(bounds.width, bounds.height)) / 1080
+            return frame.clampedToExtent().applyingGaussianBlur(sigma: sigma).cropped(to: bounds)
+        case .dim:
+            return frame.applyingFilter("CIColorControls", parameters: [
+                kCIInputBrightnessKey: -0.5 * settings.strength,
+                kCIInputSaturationKey: 1 - 0.6 * settings.strength,
+            ]).cropped(to: bounds)
         case .black:
-            return CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: bounds)
+            return solid(0, 0, 0)
         case .white:
-            return CIImage(color: CIColor(red: 1, green: 1, blue: 1)).cropped(to: bounds)
+            return solid(1, 1, 1)
         case .green:
-            return CIImage(color: CIColor(red: 0, green: 0.8, blue: 0.25)).cropped(to: bounds)
+            return solid(0, 0.8, 0.25)
+        case .color:
+            let color = settings.color ?? RGBAColor(red: 0.1, green: 0.1, blue: 0.12)
+            return solid(color.red, color.green, color.blue)
         case .studio:
             let gradient = CIFilter.radialGradient()
             gradient.center = CGPoint(x: bounds.midX, y: bounds.height * 0.6)
