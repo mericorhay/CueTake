@@ -25,6 +25,8 @@ public struct AISession: Equatable {
     /// What was sent: clips and words, for the "reading" line.
     public var clips: Int
     public var words: Int
+    /// 1 while the plan is made and carried out, 2 while the result is checked and finished off.
+    public var pass = 1
 }
 
 public struct AIStepInfo: Identifiable, Equatable {
@@ -157,6 +159,7 @@ extension EditorModel {
                     if self.problem(with: second) == nil { plan = second }
                 }
                 await self.drive(plan)
+                await self.secondPass(after: plan, instruction: text, using: request)
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 withAnimation(.snappy(duration: 0.3)) {
@@ -166,6 +169,39 @@ extension EditorModel {
                 }
             }
         }
+    }
+
+    /// Looks at the result once more and finishes what the first plan left undone.
+    ///
+    /// A single answer is written blind: the model plans every change against the video as it was.
+    /// The second look reads the video as it now is — cuts made, captions moved, looks laid — and
+    /// adds what is still missing or can be done better. An empty answer means it is done, and the
+    /// run ends as it was.
+    func secondPass(after plan: EditPlan, instruction: String, using request: @escaping AIRequester) async {
+        guard !Task.isCancelled, case .finished(let applied, let skipped)? = aiSession?.phase, applied > 0 else { return }
+        let finished = AISession.Phase.finished(applied: applied, skipped: skipped)
+        withAnimation(.snappy(duration: 0.3)) {
+            aiSession?.pass = 2
+            aiSession?.phase = .thinking
+        }
+        let result = project
+        let document = await Task.detached(priority: .userInitiated) { EditDocument(project: result) }.value
+        let note = """
+
+        [Second pass. You already made these changes: \(plan.summary) The document now shows the video after them, with new ids. \
+        Check it against the request and add only what is still missing or clearly better: exact timing against the words, captions, \
+        titles, looks, sound, rhythm. Do not repeat or undo what is done. If nothing is left, return an empty operations list.]
+        """
+        guard let second = try? await request(document, instruction + note), !Task.isCancelled else {
+            withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
+            return
+        }
+        let resolved = second.resolvingReferences(in: project)
+        guard !aiSteps(for: resolved).steps.isEmpty else {
+            withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
+            return
+        }
+        await drive(second, carrying: (applied, skipped))
     }
 
     /// Why a plan would change nothing, written for the model; nil when it would change something.
@@ -205,7 +241,7 @@ extension EditorModel {
 
     // MARK: - Running
 
-    func drive(_ original: EditPlan) async {
+    func drive(_ original: EditPlan, carrying earlier: (applied: Int, skipped: Int) = (0, 0)) async {
         let plan = original.resolvingReferences(in: project)
         let (steps, skipped) = aiSteps(for: plan)
         guard !steps.isEmpty else {
@@ -228,7 +264,8 @@ extension EditorModel {
         isApplyingPlan = true
 
         withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) {
-            aiSession?.summary = plan.summary
+            let before = aiSession?.summary ?? ""
+            aiSession?.summary = earlier.applied > 0 && !before.isEmpty ? before + " " + plan.summary : plan.summary
             aiSession?.steps = steps.map(\.info)
             aiSession?.current = 0
             aiSession?.phase = .applying
@@ -258,6 +295,8 @@ extension EditorModel {
                 // The tools select what they make; mid-run that would open a panel over the timeline.
                 inspectedSegment = nil
                 selectedOverlay = nil
+                selectedEffect = nil
+                selectedVideoLayer = nil
                 return touched
             }
             guard let targets else {
@@ -288,6 +327,8 @@ extension EditorModel {
                 if Task.isCancelled {
                     // Stopped before the first change landed: nothing to report.
                     aiSession = nil
+                } else if earlier.applied > 0 {
+                    aiSession?.phase = .finished(applied: earlier.applied, skipped: earlier.skipped)
                 } else {
                     aiSession?.phase = .failed(String(localized: "editor.ai.nothing", bundle: .module))
                 }
@@ -307,7 +348,7 @@ extension EditorModel {
         aiChanges.insert(set, at: 0)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.72)) {
             aiSession?.changeSetID = set.id
-            aiSession?.phase = .finished(applied: applied, skipped: skippedCount)
+            aiSession?.phase = .finished(applied: applied + earlier.applied, skipped: skippedCount + earlier.skipped)
         }
     }
 
@@ -920,6 +961,235 @@ extension EditorModel {
             }
         }
 
+        // Filters, sound effects and effect timing — laid on the finished video's clock, before any
+        // cut moves it, so the document's times are still the times they name.
+        func span(_ m: EditorModel, clip: String?, from: Double?, to: Double?) -> ClosedRange<Double>? {
+            if let from {
+                let start = max(0, min(from, m.duration))
+                let end = min(m.duration, max(to ?? m.duration, start + TimelineEffect.minimumLength))
+                return start...max(end, start + TimelineEffect.minimumLength)
+            }
+            if let clip {
+                guard let i = m.index(ofClip: clip) else { return nil }
+                return m.timelineRange(ofSegmentAt: i)
+            }
+            return 0...m.duration
+        }
+        func effectPlace(_ m: EditorModel, _ id: String) -> (time: Double?, scan: ClosedRange<Double>?) {
+            guard let effect = m.project.effects.first(where: { $0.id.uuidString == id }) else { return (nil, nil) }
+            return (effect.start.seconds + 0.05, effect.start.seconds...effect.end)
+        }
+        func videoPlace(_ m: EditorModel, _ id: String) -> (time: Double?, scan: ClosedRange<Double>?) {
+            guard let layer = m.project.videoLayers.first(where: { $0.id.uuidString == id }) else { return (nil, nil) }
+            return (layer.start.seconds + 0.05, layer.start.seconds...layer.end)
+        }
+
+        for op in ops {
+            switch op {
+            case .setFilter(let request):
+                if let effect = request.effect {
+                    guard let uuid = UUID(uuidString: effect), project.effects.contains(where: { $0.id == uuid && $0.filter != nil }) else {
+                        skipped.append(op.type); continue
+                    }
+                    add("camera.filters", describe(op), op, locate: { effectPlace($0, effect) }) { m in
+                        guard let current = m.project.effects.first(where: { $0.id == uuid })?.filter else { return nil }
+                        m.updateEffect(uuid, coalescing: "ai") { $0.kind = .filter(request.applied(to: current)) }
+                        if request.from != nil || request.to != nil, let range = span(m, clip: nil, from: request.from, to: request.to) {
+                            m.updateEffect(uuid, coalescing: "ai") {
+                                $0.start = MediaTime(seconds: range.lowerBound)
+                                $0.duration = MediaTime(seconds: range.upperBound - range.lowerBound)
+                            }
+                        }
+                        return [.effect(uuid)]
+                    }
+                } else {
+                    if request.from == nil, let clip = request.clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                    let id = UUID()
+                    add("camera.filters", describe(op), op, locate: { m in
+                        guard let range = span(m, clip: request.clip, from: request.from, to: request.to) else { return (nil, nil) }
+                        return (range.lowerBound + 0.05, range)
+                    }) { m in
+                        guard let range = span(m, clip: request.clip, from: request.from, to: request.to) else { return nil }
+                        let settings = request.applied(to: FilterSettings(look: .natural))
+                        m.project.effects.append(TimelineEffect(
+                            id: id,
+                            start: MediaTime(seconds: range.lowerBound),
+                            duration: MediaTime(seconds: range.upperBound - range.lowerBound),
+                            kind: .filter(settings)
+                        ))
+                        return [.effect(id)]
+                    }
+                }
+            case .setSound(let request):
+                if let effect = request.effect {
+                    guard let uuid = UUID(uuidString: effect), project.effects.contains(where: { $0.id == uuid && $0.sound != nil }) else {
+                        skipped.append(op.type); continue
+                    }
+                    add("waveform", describe(op), op, locate: { effectPlace($0, effect) }) { m in
+                        guard let current = m.project.effects.first(where: { $0.id == uuid })?.sound else { return nil }
+                        m.updateEffect(uuid, coalescing: "ai") { $0.kind = .sound(request.applied(to: current)) }
+                        if request.from != nil || request.to != nil, let range = span(m, clip: nil, from: request.from, to: request.to) {
+                            m.updateEffect(uuid, coalescing: "ai") {
+                                $0.start = MediaTime(seconds: range.lowerBound)
+                                $0.duration = MediaTime(seconds: range.upperBound - range.lowerBound)
+                            }
+                        }
+                        return [.effect(uuid)]
+                    }
+                } else {
+                    guard request.preset.flatMap(SoundSettings.Preset.init(rawValue:)) != nil || request.volume != nil || request.pitch != nil else {
+                        skipped.append(op.type); continue
+                    }
+                    if request.from == nil, let clip = request.clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                    let id = UUID()
+                    add("waveform", describe(op), op, locate: { m in
+                        guard let range = span(m, clip: request.clip, from: request.from, to: request.to) else { return (nil, nil) }
+                        return (range.lowerBound + 0.05, range)
+                    }) { m in
+                        guard let range = span(m, clip: request.clip, from: request.from, to: request.to) else { return nil }
+                        let settings = request.applied(to: SoundSettings(preset: .clean))
+                        m.project.effects.append(TimelineEffect(
+                            id: id,
+                            start: MediaTime(seconds: range.lowerBound),
+                            duration: MediaTime(seconds: range.upperBound - range.lowerBound),
+                            kind: .sound(settings)
+                        ))
+                        return [.effect(id)]
+                    }
+                }
+            case .retimeEffect(let effect, let from, let to):
+                guard let uuid = UUID(uuidString: effect), project.effects.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("arrow.left.and.right", describe(op), op, locate: { effectPlace($0, effect) }) { m in
+                    guard let current = m.project.effects.first(where: { $0.id == uuid }) else { return nil }
+                    let start = from ?? current.start.seconds
+                    let end = to ?? (start + current.duration.seconds)
+                    m.updateEffect(uuid, coalescing: "ai") {
+                        $0.start = MediaTime(seconds: max(0, start))
+                        $0.duration = MediaTime(seconds: max(TimelineEffect.minimumLength, end - max(0, start)))
+                    }
+                    return [.effect(uuid)]
+                }
+            case .splitEffect(let effect, let at):
+                guard let uuid = UUID(uuidString: effect), project.effects.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("scissors", describe(op), op, locate: { _ in (at, nil) }) { m in
+                    let count = m.project.effects.count
+                    m.seek(to: at)
+                    m.splitEffect(uuid)
+                    guard m.project.effects.count > count, let index = m.project.effects.firstIndex(where: { $0.id == uuid }) else { return nil }
+                    return [.effect(uuid), .effect(m.project.effects[index + 1].id)]
+                }
+            case .updateVideo(let video, let patch):
+                guard let uuid = UUID(uuidString: video), project.videoLayers.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("rectangle.inset.filled", describe(op), op, locate: { videoPlace($0, video) }) { m in
+                    guard let layer = m.project.videoLayers.first(where: { $0.id == uuid }) else { return nil }
+                    if let sourceStart = patch.sourceStart { m.setVideoLayerSourceStart(uuid, to: sourceStart) }
+                    if let start = patch.start {
+                        // A new start moves the video; with an end as well, it is placed exactly.
+                        if patch.end != nil { m.moveVideoLayer(uuid, to: start, coalescing: "ai") } else { m.moveVideoLayer(uuid, to: start, coalescing: "ai") }
+                    }
+                    if let end = patch.end { m.setVideoLayerEnd(uuid, to: end, coalescing: "ai") }
+                    if patch.movesPlacement {
+                        m.updateVideoLayer(uuid, coalescing: "ai") { $0.placement = patch.placement(over: layer.placement) }
+                    }
+                    m.updateVideoLayer(uuid, coalescing: "ai") {
+                        if let volume = patch.volume { $0.volume = FilterRequest.unit(volume) }
+                        if let muted = patch.muted { $0.isMuted = muted }
+                        if let hidden = patch.hidden { $0.isHidden = hidden }
+                    }
+                    return [.videoLayer(uuid)]
+                }
+            case .keyframeVideo(let video, let at, let patch):
+                guard let uuid = UUID(uuidString: video), project.videoLayers.contains(where: { $0.id == uuid }), patch.movesPlacement else {
+                    skipped.append(op.type); continue
+                }
+                add("diamond", describe(op), op, locate: { _ in (at, nil) }) { m in
+                    guard let layer = m.project.videoLayers.first(where: { $0.id == uuid }) else { return nil }
+                    let time = min(max(at - layer.start.seconds, 0), layer.duration)
+                    let placement = patch.placement(over: layer.placement(at: at))
+                    m.updateVideoLayer(uuid, coalescing: "ai") { value in
+                        if value.keyframes.isEmpty, time > 0.01 {
+                            // Motion starts from where the video already is.
+                            value.keyframes.append(VideoKeyframe(time: 0, placement: value.placement))
+                        }
+                        value.keyframes.removeAll { abs($0.time - time) < 0.02 }
+                        value.keyframes.append(VideoKeyframe(time: time, placement: placement))
+                        value.keyframes.sort { $0.time < $1.time }
+                    }
+                    return [.videoLayer(uuid)]
+                }
+            case .layoutVideos(let name):
+                guard let layout = VideoLayout(rawValue: name), !project.videoLayers.isEmpty else { skipped.append(op.type); continue }
+                add("rectangle.split.2x1", describe(op), op) { m in
+                    m.applyVideoLayout(layout)
+                    return [.mainVideo] + m.project.videoLayers.map { .videoLayer($0.id) }
+                }
+            case .removeVideo(let video):
+                guard let uuid = UUID(uuidString: video), project.videoLayers.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("trash", describe(op), op, locate: { videoPlace($0, video) }) { m in
+                    m.removeVideoLayer(uuid)
+                    return [.videoLayer(uuid)]
+                }
+            case .splitVideo(let video, let at):
+                guard let uuid = UUID(uuidString: video), project.videoLayers.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("scissors", describe(op), op, locate: { _ in (at, nil) }) { m in
+                    let count = m.project.videoLayers.count
+                    m.seek(to: at)
+                    m.splitVideoLayer(uuid)
+                    guard m.project.videoLayers.count > count, let index = m.project.videoLayers.firstIndex(where: { $0.id == uuid }) else { return nil }
+                    return [.videoLayer(uuid), .videoLayer(m.project.videoLayers[index + 1].id)]
+                }
+            case .splitOverlay(let overlay, let at):
+                guard let uuid = UUID(uuidString: overlay), project.overlays.contains(where: { $0.id == uuid }) else {
+                    skipped.append(op.type); continue
+                }
+                add("scissors", describe(op), op, locate: { _ in (at, nil) }) { m in
+                    let count = m.project.overlays.count
+                    m.seek(to: at)
+                    m.splitOverlay(uuid)
+                    guard m.project.overlays.count > count, let index = m.project.overlays.firstIndex(where: { $0.id == uuid }) else { return nil }
+                    return [.overlay(uuid), .overlay(m.project.overlays[index + 1].id)]
+                }
+            case .mainVolume(let volume):
+                add("speaker.wave.2", describe(op), op) { m in
+                    m.project.mainVideoVolume = min(max(volume, 0), 1)
+                    return [.mainVideo]
+                }
+            case .useTranscript(let clip, let name):
+                guard let source = SpeechSource(rawValue: name) else { skipped.append(op.type); continue }
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                add("waveform.badge.magnifyingglass", describe(op), op) { m in
+                    // The recordings the named clip (or every clip) is cut from.
+                    let recordings = Set(m.project.segments.enumerated().compactMap { i, segment -> Recording.ID? in
+                        if let clip, m.index(ofClip: clip) != i { return nil }
+                        return segment.selectedTake?.recordingID
+                    })
+                    var targets: [AITarget] = []
+                    for id in recordings {
+                        guard let versions = m.project.recording(id: id)?.speech, versions.hasCloud else { continue }
+                        for passage in versions.passages where passage.choice != source {
+                            m.project.choose(source, forPassage: passage.id, inRecording: id, by: .ai)
+                        }
+                        targets.append(.recording(id))
+                    }
+                    guard !targets.isEmpty else { return nil }
+                    targets += m.project.segments.map { .clip($0.id) }
+                    return targets
+                }
+            default:
+                continue
+            }
+        }
+
         // Duplicates
         for op in ops {
             guard case .duplicateClip(let clip) = op else { continue }
@@ -1049,6 +1319,40 @@ extension EditorModel {
                     m.project.segments = reordered
                 }
                 return [.clipOrder]
+            }
+        }
+
+        // Held frames, last: they add clips, which would move every later time the plan names. The
+        // moment is turned into a clip and a second of its footage while the document's times still
+        // hold, then found again through the pieces cuts made of that clip.
+        for op in ops {
+            guard case .freezeFrame(let at, let seconds) = op else { continue }
+            var anchor: (clip: String, footage: Double)?
+            var running = 0.0
+            for segment in project.segments {
+                if at >= running, at < running + segment.barWeight, segment.playback.freeze == nil {
+                    anchor = (segment.id.uuidString, segment.playback.sourceSeconds(forTimeline: at - running))
+                    break
+                }
+                running += segment.barWeight
+            }
+            guard let anchor else { skipped.append(op.type); continue }
+            add("snowflake", describe(op), op, locate: { m in
+                guard let i = m.index(ofClip: anchor.clip) else { return (nil, nil) }
+                return (m.timelineSeconds(clip: i, footage: anchor.footage), nil)
+            }) { m in
+                let pieces = splits.pieces(of: anchor.clip)
+                guard let p = pieces.lastIndex(where: { $0.offset <= anchor.footage }),
+                      let i = m.index(ofClip: pieces[p].id)
+                else { return nil }
+                let segment = m.project.segments[i]
+                let local = anchor.footage - pieces[p].offset
+                guard local >= 0, local <= segment.sourceSeconds else { return nil }
+                let count = m.project.segments.count
+                m.seek(to: m.start(at: i) + segment.playback.timelineSeconds(forSource: local))
+                m.freezeFrameAtPlayhead(seconds: min(max(seconds ?? 2, 0.3), 10))
+                guard m.project.segments.count > count, let held = m.inspectedSegment else { return nil }
+                return [.clipOrder, .clip(held)] + m.project.segments.map { .clip($0.id) }
             }
         }
 
@@ -1199,6 +1503,16 @@ extension EditorModel {
         case .shiftCaptions: "arrow.left.and.right"
         case .setBackground: "person.crop.rectangle"
         case .removeEffect: "trash"
+        case .setFilter: "camera.filters"
+        case .setSound: "waveform"
+        case .retimeEffect: "arrow.left.and.right"
+        case .splitEffect, .splitVideo, .splitOverlay: "scissors"
+        case .freezeFrame: "snowflake"
+        case .updateVideo, .layoutVideos: "rectangle.inset.filled"
+        case .keyframeVideo: "diamond"
+        case .removeVideo: "trash"
+        case .mainVolume: "speaker.wave.2"
+        case .useTranscript: "waveform.badge.magnifyingglass"
         case .unknown: "questionmark"
         }
     }
@@ -1281,6 +1595,28 @@ extension EditorModel {
             }
         case .removeEffect:
             L("editor.ai.op.removeEffect")
+        case .setFilter(let request):
+            L("editor.ai.op.filter \(request.look.flatMap(FilterSettings.Look.init(rawValue:)).map(FilterPresets.label) ?? "")")
+        case .setSound(let request):
+            L("editor.ai.op.sound \(request.preset.flatMap(SoundSettings.Preset.init(rawValue:)).map(SoundPresets.label) ?? "")")
+        case .retimeEffect:
+            L("editor.ai.op.retimeEffect")
+        case .splitEffect(_, let at), .splitVideo(_, let at), .splitOverlay(_, let at):
+            L("editor.ai.op.splitAt \(Self.seconds(at))")
+        case .freezeFrame(let at, let seconds):
+            L("editor.ai.op.freezeFrame \(Self.seconds(at)) \(Self.seconds(seconds ?? 2))")
+        case .updateVideo:
+            L("editor.ai.op.video")
+        case .keyframeVideo(_, let at, _):
+            L("editor.ai.op.videoMove \(Self.seconds(at))")
+        case .layoutVideos:
+            L("editor.ai.op.layout")
+        case .removeVideo:
+            L("editor.ai.op.removeVideo")
+        case .mainVolume(let volume):
+            L("editor.ai.op.mainVolume \(Int((volume * 100).rounded()))")
+        case .useTranscript(_, let source):
+            L("editor.ai.op.transcript \(source == "cloud" ? SpeechVersionsRow.name(.cloud) : SpeechVersionsRow.name(.device))")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

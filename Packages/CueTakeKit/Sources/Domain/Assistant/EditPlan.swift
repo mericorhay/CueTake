@@ -85,6 +85,30 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case setBackground(BackgroundRequest)
         /// Removes a tool laid over a stretch of the video.
         case removeEffect(effect: String)
+        /// Lays or changes a colour look.
+        case setFilter(FilterRequest)
+        /// Lays or changes a sound effect on the voice.
+        case setSound(SoundRequest)
+        /// Moves or stretches any effect: new start and end on the finished video.
+        case retimeEffect(effect: String, from: Double?, to: Double?)
+        /// Cuts an effect in two at a moment of the finished video.
+        case splitEffect(effect: String, at: Double)
+        /// Holds the frame at a moment of the finished video for `seconds`.
+        case freezeFrame(at: Double, seconds: Double?)
+        /// Changes an added video: when, which part, where, how loud.
+        case updateVideo(video: String, patch: VideoPatch)
+        /// Makes an added video move: its place at a moment of the finished video.
+        case keyframeVideo(video: String, at: Double, patch: VideoPatch)
+        /// Arranges the main video and the added ones: sideBySide, stacked, pictureInPicture, grid.
+        case layoutVideos(layout: String)
+        case removeVideo(video: String)
+        case splitVideo(video: String, at: Double)
+        /// Cuts a text or picture in two at a moment of the finished video.
+        case splitOverlay(overlay: String, at: Double)
+        /// The main video's own level, 0…1.
+        case mainVolume(Double)
+        /// Which listener's words a clip (or every clip) uses: device or cloud.
+        case useTranscript(clip: String?, source: String)
 
         case unknown(type: String)
 
@@ -125,6 +149,19 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .shiftCaptions: "shiftCaptions"
             case .setBackground: "setBackground"
             case .removeEffect: "removeEffect"
+            case .setFilter: "setFilter"
+            case .setSound: "setSound"
+            case .retimeEffect: "retimeEffect"
+            case .splitEffect: "splitEffect"
+            case .freezeFrame: "freezeFrame"
+            case .updateVideo: "updateVideo"
+            case .keyframeVideo: "keyframeVideo"
+            case .layoutVideos: "layoutVideos"
+            case .removeVideo: "removeVideo"
+            case .splitVideo: "splitVideo"
+            case .splitOverlay: "splitOverlay"
+            case .mainVolume: "mainVolume"
+            case .useTranscript: "useTranscript"
             case .unknown(let type): type
             }
         }
@@ -453,12 +490,75 @@ extension EditPlan.Operation: Codable {
         case "removeEffect":
             guard let effect = f.string("effect") ?? f.string("id") else { self = unknown; return }
             self = .removeEffect(effect: effect)
+        case "setFilter", "filter":
+            self = .setFilter(FilterRequest(
+                effect: f.string("effect"), clip: f.string("clip"),
+                from: f.number("from") ?? f.number("start"), to: f.number("to") ?? f.number("end"),
+                look: f.string("look") ?? f.string("preset") ?? f.string("style"),
+                intensity: f.number("intensity"), brightness: f.number("brightness"), contrast: f.number("contrast"),
+                saturation: f.number("saturation"), warmth: f.number("warmth"), vignette: f.number("vignette"),
+                sharpness: f.number("sharpness")
+            ))
+        case "setSound", "soundEffect":
+            self = .setSound(SoundRequest(
+                effect: f.string("effect"), clip: f.string("clip"),
+                from: f.number("from") ?? f.number("start"), to: f.number("to") ?? f.number("end"),
+                preset: f.string("preset") ?? f.string("style"),
+                amount: f.number("amount") ?? f.number("strength"), pitch: f.number("pitch"),
+                volume: f.number("volume") ?? f.number("gainDb")
+            ))
+        case "retimeEffect", "moveEffect":
+            guard let effect = f.string("effect") else { self = unknown; return }
+            let from = f.number("from") ?? f.number("start"), to = f.number("to") ?? f.number("end")
+            guard from != nil || to != nil else { self = unknown; return }
+            self = .retimeEffect(effect: effect, from: from, to: to)
+        case "splitEffect":
+            guard let effect = f.string("effect"), let at = f.number("at") else { self = unknown; return }
+            self = .splitEffect(effect: effect, at: at)
+        case "freezeFrame":
+            guard let at = f.number("at") else { self = unknown; return }
+            self = .freezeFrame(at: at, seconds: f.number("seconds"))
+        case "updateVideo":
+            guard let video = f.string("video") else { self = unknown; return }
+            let patch = Self.videoPatch(f)
+            guard !patch.isEmpty else { self = unknown; return }
+            self = .updateVideo(video: video, patch: patch)
+        case "keyframeVideo":
+            guard let video = f.string("video"), let at = f.number("at") else { self = unknown; return }
+            self = .keyframeVideo(video: video, at: at, patch: Self.videoPatch(f))
+        case "layoutVideos":
+            guard let layout = f.string("layout") else { self = unknown; return }
+            self = .layoutVideos(layout: layout)
+        case "removeVideo":
+            guard let video = f.string("video") else { self = unknown; return }
+            self = .removeVideo(video: video)
+        case "splitVideo":
+            guard let video = f.string("video"), let at = f.number("at") else { self = unknown; return }
+            self = .splitVideo(video: video, at: at)
+        case "splitOverlay":
+            guard let overlay = f.string("overlay"), let at = f.number("at") else { self = unknown; return }
+            self = .splitOverlay(overlay: overlay, at: at)
+        case "mainVolume":
+            guard let volume = f.number("volume") else { self = unknown; return }
+            self = .mainVolume(FilterRequest.unit(volume))
+        case "useTranscript":
+            guard let source = f.string("source"), ["device", "cloud"].contains(source) else { self = unknown; return }
+            self = .useTranscript(clip: f.string("clip"), source: source)
         case "shiftCaptions":
             guard let by = f.number("by") ?? f.number("seconds") else { self = unknown; return }
             self = .shiftCaptions(clip: f.string("clip"), by: by)
         default:
             self = unknown
         }
+    }
+
+    private static func videoPatch(_ f: PlanFields) -> VideoPatch {
+        VideoPatch(
+            start: f.number("start"), end: f.number("end"), sourceStart: f.number("sourceStart"),
+            x: f.number("x"), y: f.number("y"), width: f.number("width") ?? f.number("w"),
+            height: f.number("height") ?? f.number("h"), opacity: f.number("opacity"),
+            volume: f.number("volume"), muted: f.flag("muted"), hidden: f.flag("hidden"), mirrored: f.flag("mirrored")
+        )
     }
 
     private static func overlayPatch(_ f: PlanFields) -> EditPlan.OverlayPatch? {
@@ -567,6 +667,39 @@ extension EditPlan.Operation: Codable {
             try put("strength", request.strength); try put("feather", request.feather); try put("color", request.color)
         case .removeEffect(let effect):
             try put("effect", effect)
+        case .setFilter(let r):
+            try put("effect", r.effect); try put("clip", r.clip); try put("from", r.from); try put("to", r.to)
+            try put("look", r.look); try put("intensity", r.intensity); try put("brightness", r.brightness)
+            try put("contrast", r.contrast); try put("saturation", r.saturation); try put("warmth", r.warmth)
+            try put("vignette", r.vignette); try put("sharpness", r.sharpness)
+        case .setSound(let r):
+            try put("effect", r.effect); try put("clip", r.clip); try put("from", r.from); try put("to", r.to)
+            try put("preset", r.preset); try put("amount", r.amount); try put("pitch", r.pitch); try put("volume", r.volume)
+        case .retimeEffect(let effect, let from, let to):
+            try put("effect", effect); try put("from", from); try put("to", to)
+        case .splitEffect(let effect, let at):
+            try put("effect", effect); try put("at", at)
+        case .freezeFrame(let at, let seconds):
+            try put("at", at); try put("seconds", seconds)
+        case .updateVideo(let video, let p), .keyframeVideo(let video, _, let p):
+            try put("video", video)
+            if case .keyframeVideo(_, let at, _) = self { try put("at", at) }
+            try put("start", p.start); try put("end", p.end); try put("sourceStart", p.sourceStart)
+            try put("x", p.x); try put("y", p.y); try put("width", p.width); try put("height", p.height)
+            try put("opacity", p.opacity); try put("volume", p.volume); try put("muted", p.muted)
+            try put("hidden", p.hidden); try put("mirrored", p.mirrored)
+        case .layoutVideos(let layout):
+            try put("layout", layout)
+        case .removeVideo(let video):
+            try put("video", video)
+        case .splitVideo(let video, let at):
+            try put("video", video); try put("at", at)
+        case .splitOverlay(let overlay, let at):
+            try put("overlay", overlay); try put("at", at)
+        case .mainVolume(let volume):
+            try put("volume", volume)
+        case .useTranscript(let clip, let source):
+            try put("clip", clip); try put("source", source)
         case .unknown:
             break
         }
@@ -613,6 +746,17 @@ extension EditPlan {
                     strength: request.strength, feather: request.feather, color: request.color
                 ))
             case .removeEffect(let effect): .removeEffect(effect: refs.effect(effect))
+            case .setFilter(let r): .setFilter(r.resolving(effect: refs.effect, clip: refs.clip))
+            case .setSound(let r): .setSound(r.resolving(effect: refs.effect, clip: refs.clip))
+            case .retimeEffect(let effect, let from, let to): .retimeEffect(effect: refs.effect(effect), from: from, to: to)
+            case .splitEffect(let effect, let at): .splitEffect(effect: refs.effect(effect), at: at)
+            case .updateVideo(let video, let patch): .updateVideo(video: refs.video(video), patch: patch)
+            case .keyframeVideo(let video, let at, let patch): .keyframeVideo(video: refs.video(video), at: at, patch: patch)
+            case .removeVideo(let video): .removeVideo(video: refs.video(video))
+            case .splitVideo(let video, let at): .splitVideo(video: refs.video(video), at: at)
+            case .splitOverlay(let overlay, let at): .splitOverlay(overlay: refs.overlay(overlay), at: at)
+            case .useTranscript(let clip, let source): .useTranscript(clip: clip.map(refs.clip), source: source)
+            case .freezeFrame, .layoutVideos, .mainVolume: op
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }
         })

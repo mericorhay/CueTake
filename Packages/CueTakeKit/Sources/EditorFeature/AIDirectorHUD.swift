@@ -76,7 +76,7 @@ struct AIDirectorHUD: View {
         HStack(spacing: 12) {
             AIOrb(fast: false)
             VStack(alignment: .leading, spacing: 3) {
-                Text("editor.ai.hud.reading", bundle: .module)
+                Text(session.pass > 1 ? "editor.ai.hud.reviewing" : "editor.ai.hud.reading", bundle: .module)
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
                 Text(verbatim: "“\(session.instruction)”")

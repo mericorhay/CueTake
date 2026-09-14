@@ -30,6 +30,12 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var overlays: [OverlayItem]?
     /// Tools laid over stretches of the finished video.
     public var effects: [Effect]?
+    /// Videos playing over the main one.
+    public var videos: [Video]?
+    /// The main video's own level when it is not 1.
+    public var mainVolume: Double?
+    /// True when a second listener heard the speech and `useTranscript` can switch between them.
+    public var twoListeners: Bool?
     public var voice: Voice
     public var fonts: [String]
     public var animations: [String]
@@ -180,6 +186,27 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var strength: Double?
         public var feather: Double?
         public var color: String?
+        /// A filter's or sound effect's settings that differ from their defaults.
+        public var values: [String: Double]?
+    }
+
+    /// An added video: `at`/`length` on the finished video, `file` where in its own file it
+    /// starts, `x,y,w,h` its place as fractions of the frame (top left), `keys` its motion.
+    public struct Video: Codable, Sendable, Equatable {
+        public var id: String
+        public var name: String
+        public var at: Double
+        public var length: Double
+        public var file: Double
+        public var x: Double
+        public var y: Double
+        public var w: Double
+        public var h: Double
+        public var opacity: Double?
+        public var volume: Double?
+        public var muted: Bool?
+        public var hidden: Bool?
+        public var keys: [[Double]]?
     }
 
     public struct Voice: Codable, Sendable, Equatable {
@@ -205,6 +232,7 @@ public struct EditReferences: Sendable {
     public var audio: [String: UUID] = [:]
     public var takes: [String: UUID] = [:]
     public var effects: [String: UUID] = [:]
+    public var videos: [String: UUID] = [:]
 
     public init(project: Project) {
         var caption = 0
@@ -224,6 +252,7 @@ public struct EditReferences: Sendable {
         }
         for (i, overlay) in project.overlays.enumerated() { overlays["o\(i + 1)"] = overlay.id }
         for (i, effect) in project.effects.enumerated() { effects["e\(i + 1)"] = effect.id }
+        for (i, layer) in project.videoLayers.enumerated() { videos["v\(i + 1)"] = layer.id }
         for (i, clip) in project.audio.enumerated() { audio["a\(i + 1)"] = clip.id }
     }
 
@@ -249,6 +278,7 @@ public struct EditReferences: Sendable {
     public func audioClip(_ reference: String) -> String { Self.resolve(reference, in: audio) }
     public func take(_ reference: String) -> String { Self.resolve(reference, in: takes) }
     public func effect(_ reference: String) -> String { Self.resolve(reference, in: effects) }
+    public func video(_ reference: String) -> String { Self.resolve(reference, in: videos) }
 }
 
 extension EditDocument {
@@ -429,9 +459,33 @@ extension EditDocument {
                     to: r2(effect.end),
                     strength: settings.flatMap { $0.usesStrength ? r2($0.strength) : nil },
                     feather: settings.map { r2($0.feather) },
-                    color: settings?.color?.hex
+                    color: settings?.color?.hex,
+                    values: Self.values(of: effect)
                 )
             },
+            videos: project.videoLayers.isEmpty ? nil : project.videoLayers.enumerated().map { i, layer in
+                Video(
+                    id: "v\(i + 1)",
+                    name: String(layer.title.prefix(30)),
+                    at: r2(layer.start.seconds),
+                    length: r2(layer.duration),
+                    file: r2(layer.sourceRange.start.seconds),
+                    x: r2(layer.placement.x),
+                    y: r2(layer.placement.y),
+                    w: r2(layer.placement.width),
+                    h: r2(layer.placement.height),
+                    opacity: layer.placement.opacity < 0.999 ? r2(layer.placement.opacity) : nil,
+                    volume: layer.volume < 0.999 ? r2(layer.volume) : nil,
+                    muted: layer.isMuted ? true : nil,
+                    hidden: layer.isHidden ? true : nil,
+                    // [at on the finished video, x, y, w, h]
+                    keys: layer.keyframes.isEmpty ? nil : layer.orderedKeyframes.map {
+                        [r2(layer.start.seconds + $0.time), r2($0.placement.x), r2($0.placement.y), r2($0.placement.width), r2($0.placement.height)]
+                    }
+                )
+            },
+            mainVolume: project.mainVideoVolume < 0.999 ? r2(project.mainVideoVolume) : nil,
+            twoListeners: project.recordings.contains { $0.speech?.hasCloud == true } ? true : nil,
             voice: Voice(
                 noiseReduction: project.voiceEffects.noiseReduction,
                 voiceEnhance: project.voiceEffects.voiceEnhance,
@@ -441,6 +495,28 @@ extension EditDocument {
             animations: OverlayAnimation.allCases.map(\.rawValue),
             beats: beats
         )
+    }
+
+    /// A filter's or sound effect's settings, only those that are not their defaults.
+    static func values(of effect: TimelineEffect) -> [String: Double]? {
+        var values: [String: Double] = [:]
+        func put(_ key: String, _ value: Double, unless fallback: Double) {
+            if abs(value - fallback) > 0.001 { values[key] = (value * 100).rounded() / 100 }
+        }
+        if let filter = effect.filter {
+            put("intensity", filter.intensity, unless: 1)
+            put("brightness", filter.brightness, unless: 0)
+            put("contrast", filter.contrast, unless: 0)
+            put("saturation", filter.saturation, unless: 0)
+            put("warmth", filter.warmth, unless: 0)
+            put("vignette", filter.vignette, unless: 0)
+            put("sharpness", filter.sharpness, unless: 0)
+        } else if let sound = effect.sound {
+            put("amount", sound.amount, unless: 0.7)
+            put("pitch", sound.pitch, unless: SoundSettings.defaultPitch(for: sound.preset))
+            put("volume", sound.volume, unless: 0)
+        }
+        return values.isEmpty ? nil : values
     }
 
     /// Compact JSON for sending.

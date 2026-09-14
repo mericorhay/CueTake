@@ -42,6 +42,39 @@ struct AIDirectorTests {
         return false
     }
 
+    @Test func theAIUsesFiltersSoundEffectsAndHeldFrames() throws {
+        let model = model()
+        let text = """
+        {"summary":"s","operations":[
+          {"op":"setFilter","from":0,"to":4,"look":"cinematic","intensity":70},
+          {"op":"setSound","clip":"c1","preset":"echo","volume":-3},
+          {"op":"freezeFrame","at":5,"seconds":1.5},
+          {"op":"mainVolume","volume":0.8}
+        ]}
+        """
+        let plan = try EditPlan.decode(from: text)
+        #expect(plan.operations.count == 4)
+        let outcome = model.apply(plan)
+        #expect(outcome.skipped.isEmpty)
+        let filter = model.project.effects.first { $0.filter != nil }
+        #expect(filter?.filter?.look == .cinematic)
+        #expect(abs((filter?.filter?.intensity ?? 0) - 0.7) < 0.001)
+        #expect(abs((filter?.end ?? 0) - 4) < 0.01)
+        let sound = model.project.effects.first { $0.sound != nil }
+        #expect(sound?.sound?.preset == .echo && sound?.sound?.volume == -3)
+        #expect(model.project.segments.contains { $0.playback.freeze?.seconds == 1.5 })
+        #expect(model.project.mainVideoVolume == 0.8)
+        // One undo takes the whole run back.
+        model.undo()
+        #expect(model.project.effects.isEmpty)
+        #expect(model.project.segments.count == 1)
+
+        // The document names effects so the next plan can change them.
+        model.redo()
+        let document = model.document()
+        #expect(document.effects?.contains { $0.kind == "filter" && $0.style == "cinematic" } == true)
+    }
+
     @Test func aPlanReachesTheWholeStudioAndEachChangeReverts() throws {
         let model = model()
         let clip = model.project.segments[0].id.uuidString

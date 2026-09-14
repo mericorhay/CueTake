@@ -987,6 +987,23 @@
         }
       }
     },
+    "editor.ai.hud.reviewing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking the result and finishing off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonucu kontrol ediyor, eksikleri tamamlıyor"
+          }
+        }
+      }
+    },
     "editor.ai.hud.stats %lld %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1310,6 +1327,23 @@
         }
       }
     },
+    "editor.ai.op.filter %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtre: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.footage %@ %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1344,6 +1378,40 @@
         }
       }
     },
+    "editor.ai.op.freezeFrame %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frame held at %1$@ s for %2$@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ sn'deki kare %2$@ sn donduruldu"
+          }
+        }
+      }
+    },
+    "editor.ai.op.layout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videos arranged"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videolar yerleştirildi"
+          }
+        }
+      }
+    },
     "editor.ai.op.look": {
       "extractionState": "manual",
       "localizations": {
@@ -1357,6 +1425,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazı görünümü ayarlandı"
+          }
+        }
+      }
+    },
+    "editor.ai.op.mainVolume %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Main video level %lld%%"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ana video sesi %%%lld"
           }
         }
       }
@@ -1446,6 +1531,23 @@
         }
       }
     },
+    "editor.ai.op.removeVideo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video kaldırıldı"
+          }
+        }
+      }
+    },
     "editor.ai.op.rename %@ %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1476,6 +1578,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klipleri yeniden sırala"
+          }
+        }
+      }
+    },
+    "editor.ai.op.retimeEffect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effect moved"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Efekt taşındı"
           }
         }
       }
@@ -1531,6 +1650,23 @@
         }
       }
     },
+    "editor.ai.op.sound %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound effect: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ses efekti: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.speed %@ %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1561,6 +1697,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %1$@: %2$@. sn'de bölündü"
+          }
+        }
+      }
+    },
+    "editor.ai.op.splitAt %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut at %@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sn'den bölündü"
           }
         }
       }
@@ -1616,6 +1769,23 @@
         }
       }
     },
+    "editor.ai.op.transcript %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words from %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ metni kullanıldı"
+          }
+        }
+      }
+    },
     "editor.ai.op.trim %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1663,6 +1833,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Katman ayarlandı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.video": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video adjusted"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video ayarlandı"
+          }
+        }
+      }
+    },
+    "editor.ai.op.videoMove %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video moves at %@ s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video %@ sn'de hareket ediyor"
           }
         }
       }

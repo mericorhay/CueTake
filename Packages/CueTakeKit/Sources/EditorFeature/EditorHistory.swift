@@ -70,6 +70,11 @@ extension EditorModel {
     /// Starts work done from outside the editor — a workflow run — whose many tool calls should be
     /// one edit. Nothing is recorded until `endBatch(startingFrom:)`.
     public func beginBatch() {
+        // Inside a batch already (an AI run using a tool that batches): one step, still.
+        if isApplyingPlan {
+            batchDepth += 1
+            return
+        }
         isApplyingPlan = true
     }
 
@@ -79,6 +84,10 @@ extension EditorModel {
         label: String.LocalizationValue = "editor.change.workflow",
         symbol: String = "flowchart"
     ) {
+        if batchDepth > 0 {
+            batchDepth -= 1
+            return
+        }
         isApplyingPlan = false
         guard before != project else { return }
         editCount += 1

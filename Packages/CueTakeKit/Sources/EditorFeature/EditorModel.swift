@@ -70,6 +70,8 @@ public final class EditorModel {
     var editCount = 0
     /// True while an AI plan is being carried out, so its many tool calls make one undo step.
     @ObservationIgnored var isApplyingPlan = false
+    /// Batches begun inside another batch, so ending the inner one does not end the outer.
+    @ObservationIgnored var batchDepth = 0
 
     /// The AI at work: reading, then changing things one at a time. Nil when it is not. See `AIDirector`.
     public internal(set) var aiSession: AISession?
