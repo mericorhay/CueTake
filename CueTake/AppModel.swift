@@ -179,7 +179,9 @@ final class AppModel {
 
     // MARK: - Assistant & journey state (behaviour in AppModel+Assistant)
 
-    let assistant = AssistantModel(isConnected: AppDependencies.live.assistantClient.isConfigured)
+    // Privacy defaults to on-device only. The assistant becomes connected in `wireAssistant`
+    // only when both its endpoint and the user's cloud permission are present.
+    let assistant = AssistantModel(isConnected: false)
     var isAssistantOpen = false
     /// The journey map: where the user is, what is next, and the way to ask.
     var isJourneyOpen = false
@@ -565,17 +567,24 @@ final class AppModel {
         let project = project
         let store = dependencies.projectStore
         isSaving = true
+        saveFailed = false
         saveTask = Task {
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
-            try? await store.save(project)
+            do {
+                try await store.save(project)
+                savedAt = .now
+            } catch {
+                saveFailed = true
+            }
             isSaving = false
-            savedAt = .now
         }
     }
 
     /// True while a write is pending or in flight.
     private(set) var isSaving = false
+    /// True when the last disk write failed. A failed autosave must never be labelled as saved.
+    private(set) var saveFailed = false
     /// When the project last reached disk, or nil if it has not since the app opened.
     private(set) var savedAt: Date?
 
@@ -586,6 +595,7 @@ final class AppModel {
     /// wondering is worse than a button — so it says so, in a sentence, where it can be checked.
     var saveLabel: String {
         if isSaving { return String(localized: "save.saving") }
+        if saveFailed { return String(localized: "save.failed") }
         guard let savedAt else { return String(localized: "save.never") }
         return String(localized: "save.saved \(savedAt.formatted(date: .omitted, time: .shortened))")
     }
@@ -596,10 +606,15 @@ final class AppModel {
         let project = project
         let store = dependencies.projectStore
         isSaving = true
+        saveFailed = false
         saveTask = Task {
-            try? await store.save(project)
+            do {
+                try await store.save(project)
+                savedAt = .now
+            } catch {
+                saveFailed = true
+            }
             isSaving = false
-            savedAt = .now
         }
     }
 
@@ -661,7 +676,8 @@ final class AppModel {
             as: (any ScriptWriting).self,
             localeIdentifier: locale
         ) else {
-            if dependencies.assistantClient.isConfigured {
+            if settingsModel.settings.aiProcessing == .allowCloud,
+               dependencies.assistantClient.isConfigured {
                 let brief = ScriptBrief(
                     topic: promptModel.promptText,
                     targetDuration: MediaTime(seconds: Double(promptModel.lengthSeconds)),

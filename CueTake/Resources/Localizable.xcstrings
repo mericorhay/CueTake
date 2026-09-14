@@ -1175,6 +1175,23 @@
         }
       }
     },
+    "save.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save failed — tap to retry"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydedilemedi — yeniden denemek için dokun"
+          }
+        }
+      }
+    },
     "save.never": {
       "extractionState": "manual",
       "localizations": {

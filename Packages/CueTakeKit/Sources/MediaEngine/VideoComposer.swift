@@ -189,7 +189,7 @@ public struct VideoComposer: Sendable {
                     let destination = BackgroundRemover.cachedURL(take: take, reversed: pictureReplaced, settings: settings, in: mediaDirectory)
                     if processedTracks[settings.token] == nil {
                         var processed: URL?
-                        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+                        if BackgroundRemover.isUsableCache(destination) {
                             processed = destination
                         } else if renderBackgrounds {
                             processed = await BackgroundRemover().render(
@@ -507,8 +507,6 @@ public struct VideoComposer: Sendable {
         to destination: URL,
         onProgress: (@MainActor @Sendable (Double) -> Void)? = nil
     ) async throws -> URL {
-        try? FileManager.default.removeItem(at: destination)
-
         // The caption tool only works with the system's compositor. A filtered video is written
         // once with its filters, then captions and overlays are laid on that file.
         if assembled.videoComposition.customVideoCompositorClass != nil {
@@ -598,9 +596,22 @@ public struct VideoComposer: Sendable {
         }
         defer { reporter?.cancel() }
 
+        let partial = destination.deletingLastPathComponent().appending(
+            path: "partial-\(UUID().uuidString)-\(destination.lastPathComponent)",
+            directoryHint: .notDirectory
+        )
+        defer { try? FileManager.default.removeItem(at: partial) }
         do {
-            try await session.export(to: destination, as: .mov)
+            try await session.export(to: partial, as: .mov)
+            let rendered = AVURLAsset(url: partial)
+            let duration = try await rendered.load(.duration)
+            let videoTracks = try await rendered.loadTracks(withMediaType: .video)
+            guard duration.seconds > 0.001, !videoTracks.isEmpty
+            else { throw ComposeError.exportFailed("empty output") }
+            try? FileManager.default.removeItem(at: destination)
+            try FileManager.default.moveItem(at: partial, to: destination)
         } catch {
+            if let error = error as? ComposeError { throw error }
             throw ComposeError.exportFailed(error.localizedDescription)
         }
         return destination
@@ -640,7 +651,14 @@ extension VideoComposer {
         defer { reporter.cancel() }
         do {
             try await session.export(to: destination, as: .mov)
+            let rendered = AVURLAsset(url: destination)
+            let duration = try await rendered.load(.duration)
+            let videoTracks = try await rendered.loadTracks(withMediaType: .video)
+            guard duration.seconds > 0.001, !videoTracks.isEmpty
+            else { throw ComposeError.exportFailed("empty filtered output") }
         } catch {
+            try? FileManager.default.removeItem(at: destination)
+            if let error = error as? ComposeError { throw error }
             throw ComposeError.exportFailed(error.localizedDescription)
         }
     }

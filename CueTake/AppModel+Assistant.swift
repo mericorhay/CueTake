@@ -21,8 +21,12 @@ extension AppModel {
         let client = dependencies.assistantClient
         let store = dependencies.assistantStore
 
+        assistant.isConnected = client.isConfigured && settingsModel.settings.aiProcessing == .allowCloud
         assistant.send = { [weak self] session in
-            let locale = self?.project.localeIdentifier ?? Locale.current.identifier
+            guard let self,
+                  self.settingsModel.settings.aiProcessing == .allowCloud
+            else { throw AssistantClient.AssistantError.declined }
+            let locale = self.project.localeIdentifier
             return try await client.reply(to: session, localeIdentifier: locale)
         }
         assistant.save = { session in
@@ -55,6 +59,8 @@ extension AppModel {
     /// Opens the assistant, optionally with a question already asked.
     func openAssistant(asking question: String? = nil) {
         wireAssistant()
+        assistant.isConnected = dependencies.assistantClient.isConfigured
+            && settingsModel.settings.aiProcessing == .allowCloud
         if let question, !question.trimmingCharacters(in: .whitespaces).isEmpty {
             assistant.ask(question)
         }
@@ -243,6 +249,9 @@ extension AppModel {
 
     /// Asks the model for an edit plan of the open project.
     func requestEditPlan(_ document: EditDocument, _ instruction: String) async throws -> EditPlan {
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+        }
         do {
             return try await dependencies.assistantClient.editPlan(
                 for: document,

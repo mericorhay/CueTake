@@ -29,7 +29,7 @@ public struct SoundEffectRenderer: Sendable {
             path: "\(recording.id.uuidString)-sfx-\(voiceToken)-\(settings.token).m4a",
             directoryHint: .notDirectory
         )
-        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+        if AudioRenderCache.isUsable(destination) {
             return destination
         }
         return await Task.detached(priority: .userInitiated) {
@@ -39,12 +39,13 @@ public struct SoundEffectRenderer: Sendable {
 
     enum RenderError: Error {
         case noBuffer
+        case stalled
+        case failed
     }
 
     static func render(_ source: URL, to destination: URL, settings: SoundSettings) throws -> URL {
-        let partial = destination.deletingLastPathComponent()
-            .appending(path: "partial-" + destination.lastPathComponent, directoryHint: .notDirectory)
-        try? FileManager.default.removeItem(at: partial)
+        let partial = AudioRenderCache.partialURL(for: destination)
+        defer { try? FileManager.default.removeItem(at: partial) }
 
         let file = try AVAudioFile(forReading: source)
         let format = file.processingFormat
@@ -90,20 +91,30 @@ public struct SoundEffectRenderer: Sendable {
             throw RenderError.noBuffer
         }
 
+        var stalledAttempts = 0
         while engine.manualRenderingSampleTime < file.length {
             let remaining = file.length - engine.manualRenderingSampleTime
             let frames = AVAudioFrameCount(min(Int64(buffer.frameCapacity), remaining))
             let status = try engine.renderOffline(frames, to: buffer)
-            guard status == .success else { break }
-            try output.write(from: buffer)
+            switch status {
+            case .success:
+                stalledAttempts = 0
+                try output.write(from: buffer)
+            case .cannotDoInCurrentContext, .insufficientDataFromInputNode:
+                stalledAttempts += 1
+                guard stalledAttempts < 100 else { throw RenderError.stalled }
+            case .error:
+                throw RenderError.failed
+            @unknown default:
+                throw RenderError.failed
+            }
         }
 
         player.stop()
         engine.stop()
         engine.disableManualRenderingMode()
-        try? FileManager.default.removeItem(at: destination)
-        try FileManager.default.moveItem(at: partial, to: destination)
-        return destination
+        guard AudioRenderCache.isUsable(partial) else { throw RenderError.failed }
+        return try AudioRenderCache.publish(partial, to: destination)
     }
 
     /// Each preset as a setting of the same six units; the rest are bypassed.

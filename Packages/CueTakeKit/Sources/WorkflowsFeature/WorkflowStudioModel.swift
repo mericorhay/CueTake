@@ -26,6 +26,16 @@ public enum StudioStepState: Hashable, Sendable {
     case skipped(String)
 }
 
+public struct StudioRunSummary: Hashable, Sendable {
+    public var completed: Int
+    public var skipped: Int
+
+    public init(completed: Int, skipped: Int) {
+        self.completed = completed
+        self.skipped = skipped
+    }
+}
+
 /// Everything dragged around the studio is a string with a prefix. `String` is already
 /// `Transferable`, and one payload type means one drop handler per target instead of four.
 enum StudioDrag {
@@ -49,6 +59,7 @@ public final class WorkflowStudioModel {
 
     public private(set) var stepStates: [WorkflowStep.ID: StudioStepState] = [:]
     public private(set) var isRunning = false
+    public private(set) var lastRunSummary: StudioRunSummary?
     public var expandedStep: WorkflowStep.ID?
 
     public var aiRequest = ""
@@ -184,6 +195,9 @@ public final class WorkflowStudioModel {
             return before.contains("generateCaptions") ? nil : "studio.warning.needsCaptions"
         case .unsupported:
             return "studio.warning.unsupported"
+        case .export:
+            let after = definition.steps[(index + 1)...].contains { $0.isEnabled }
+            return after ? "studio.warning.exportLast" : nil
         default:
             return nil
         }
@@ -241,6 +255,7 @@ public final class WorkflowStudioModel {
 
     public func beginRun() {
         isRunning = true
+        lastRunSummary = nil
         stepStates = Dictionary(uniqueKeysWithValues: definition.steps.map { ($0.id, .waiting) })
     }
 
@@ -250,6 +265,13 @@ public final class WorkflowStudioModel {
 
     public func finishRun() {
         isRunning = false
+        lastRunSummary = StudioRunSummary(
+            completed: stepStates.values.filter { $0 == .done }.count,
+            skipped: stepStates.values.filter {
+                if case .skipped = $0 { return true }
+                return false
+            }.count
+        )
     }
 
     public func state(of id: WorkflowStep.ID) -> StudioStepState? {

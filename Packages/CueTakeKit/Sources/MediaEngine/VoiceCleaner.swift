@@ -27,7 +27,7 @@ public struct VoiceCleaner: Sendable {
     public func needsWork(for recordings: [Recording], effects: AudioEffects, in directory: URL) -> Bool {
         guard effects.isActive else { return false }
         return recordings.contains {
-            !FileManager.default.fileExists(atPath: cleanedURL(for: $0, effects: effects, in: directory).path(percentEncoded: false))
+            !AudioRenderCache.isUsable(cleanedURL(for: $0, effects: effects, in: directory))
         }
     }
 
@@ -37,7 +37,7 @@ public struct VoiceCleaner: Sendable {
         guard effects.isActive else { return nil }
 
         let cleaned = cleanedURL(for: recording, effects: effects, in: directory)
-        if FileManager.default.fileExists(atPath: cleaned.path(percentEncoded: false)) {
+        if AudioRenderCache.isUsable(cleaned) {
             return cleaned
         }
 
@@ -51,7 +51,7 @@ public struct VoiceCleaner: Sendable {
     /// The recording's sound as an m4a, copied out of its video the first time anyone asks.
     static func extractedVoice(for recording: Recording, in directory: URL) async -> URL? {
         let extracted = directory.appending(path: "\(recording.id.uuidString)-voice.m4a", directoryHint: .notDirectory)
-        if FileManager.default.fileExists(atPath: extracted.path(percentEncoded: false)) {
+        if AudioRenderCache.isUsable(extracted) {
             return extracted
         }
         let source = directory.appending(
@@ -63,16 +63,18 @@ public struct VoiceCleaner: Sendable {
 
     /// Copies a video's sound out to an m4a. No re-encode of the picture — there is no picture.
     private static func extract(from source: URL, to destination: URL) async -> Bool {
-        try? FileManager.default.removeItem(at: destination)
+        let partial = AudioRenderCache.partialURL(for: destination)
+        defer { try? FileManager.default.removeItem(at: partial) }
         let asset = AVURLAsset(url: source)
         guard (try? await asset.loadTracks(withMediaType: .audio).first) != nil,
               let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A)
         else { return false }
         do {
-            try await session.export(to: destination, as: .m4a)
-            return true
+            try await session.export(to: partial, as: .m4a)
+            guard AudioRenderCache.isUsable(partial) else { return false }
+            _ = try AudioRenderCache.publish(partial, to: destination)
+            return AudioRenderCache.isUsable(destination)
         } catch {
-            try? FileManager.default.removeItem(at: destination)
             return false
         }
     }

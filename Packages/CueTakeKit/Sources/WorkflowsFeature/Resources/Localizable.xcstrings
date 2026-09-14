@@ -800,6 +800,23 @@
         }
       }
     },
+    "studio.run.result %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld completed · %2$lld skipped"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld tamamlandı · %2$lld atlandı"
+          }
+        }
+      }
+    },
     "studio.run.running": {
       "extractionState": "manual",
       "localizations": {
@@ -1085,6 +1102,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Üst"
+          }
+        }
+      }
+    },
+    "studio.warning.exportLast": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put export last so the file includes every edit"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyanın tüm düzenlemeleri içermesi için dışa aktarmayı sona taşı"
           }
         }
       }

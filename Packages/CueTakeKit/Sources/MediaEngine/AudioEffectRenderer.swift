@@ -31,7 +31,7 @@ public struct AudioEffectRenderer: Sendable {
             path: "\(clip.id.uuidString)-\(Self.token(for: clip.effects)).m4a",
             directoryHint: .notDirectory
         )
-        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+        if AudioRenderCache.isUsable(destination) {
             return destination
         }
 
@@ -56,13 +56,16 @@ public struct AudioEffectRenderer: Sendable {
 
     enum RenderError: Error {
         case noBuffer
+        case stalled
+        case failed
     }
 
     /// Offline render through an EQ. Manual rendering mode rather than playback: this runs as fast
     /// as the CPU allows instead of in real time, which is the difference between a two second wait
     /// and a three minute one on a three minute song.
     static func render(_ source: URL, to destination: URL, effects: AudioEffects) throws -> URL {
-        try? FileManager.default.removeItem(at: destination)
+        let partial = AudioRenderCache.partialURL(for: destination)
+        defer { try? FileManager.default.removeItem(at: partial) }
 
         let file = try AVAudioFile(forReading: source)
         let format = file.processingFormat
@@ -91,7 +94,7 @@ public struct AudioEffectRenderer: Sendable {
         // on the system writes those. Compressed because an eight minute uncompressed cache entry
         // is a hundred megabytes of someone's phone for no gain anyone can hear.
         let output = try AVAudioFile(
-            forWriting: destination,
+            forWriting: partial,
             settings: [
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
                 AVSampleRateKey: format.sampleRate,
@@ -108,18 +111,30 @@ public struct AudioEffectRenderer: Sendable {
             throw RenderError.noBuffer
         }
 
+        var stalledAttempts = 0
         while engine.manualRenderingSampleTime < file.length {
             let remaining = file.length - engine.manualRenderingSampleTime
             let frames = AVAudioFrameCount(min(Int64(buffer.frameCapacity), remaining))
             let status = try engine.renderOffline(frames, to: buffer)
-            guard status == .success else { break }
-            try output.write(from: buffer)
+            switch status {
+            case .success:
+                stalledAttempts = 0
+                try output.write(from: buffer)
+            case .cannotDoInCurrentContext, .insufficientDataFromInputNode:
+                stalledAttempts += 1
+                guard stalledAttempts < 100 else { throw RenderError.stalled }
+            case .error:
+                throw RenderError.failed
+            @unknown default:
+                throw RenderError.failed
+            }
         }
 
         player.stop()
         engine.stop()
         engine.disableManualRenderingMode()
-        return destination
+        guard AudioRenderCache.isUsable(partial) else { throw RenderError.failed }
+        return try AudioRenderCache.publish(partial, to: destination)
     }
 
     /// Four bands, each earning its place.
@@ -159,5 +174,33 @@ public struct AudioEffectRenderer: Sendable {
         // Filtering takes energy out; without this, "clean it up" also means "make it quieter",
         // and people read quieter as worse.
         eq.globalGain = effects.noiseReduction ? 2 : 0
+    }
+}
+
+/// Audio renders are cached and can be requested by preview and export at the same time. Each
+/// writer therefore gets its own temporary file, and only a complete, readable result is exposed.
+enum AudioRenderCache {
+    static func isUsable(_ url: URL) -> Bool {
+        guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+              size > 0,
+              let file = try? AVAudioFile(forReading: url)
+        else { return false }
+        return file.length > 0
+    }
+
+    static func partialURL(for destination: URL) -> URL {
+        destination.deletingLastPathComponent().appending(
+            path: "partial-\(UUID().uuidString)-\(destination.lastPathComponent)",
+            directoryHint: .notDirectory
+        )
+    }
+
+    static func publish(_ partial: URL, to destination: URL) throws -> URL {
+        // A simultaneous render may have won while this one was working. Keep the first complete
+        // file and discard this equally valid duplicate.
+        if isUsable(destination) { return destination }
+        try? FileManager.default.removeItem(at: destination)
+        try FileManager.default.moveItem(at: partial, to: destination)
+        return destination
     }
 }

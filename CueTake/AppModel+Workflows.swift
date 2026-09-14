@@ -116,7 +116,8 @@ extension AppModel {
 
         var written: WorkflowDefinition?
         var failure: (any Error)?
-        if dependencies.assistantClient.isConfigured {
+        if settingsModel.settings.aiProcessing == .allowCloud,
+           dependencies.assistantClient.isConfigured {
             do {
                 written = try await dependencies.assistantClient.workflow(
                     from: text,
@@ -193,7 +194,8 @@ extension AppModel {
 
         // The server model first: it writes far better workflows than the on-device one. The
         // on-device model stays as the way it works offline or in a build without the assistant.
-        if dependencies.assistantClient.isConfigured {
+        if settingsModel.settings.aiProcessing == .allowCloud,
+           dependencies.assistantClient.isConfigured {
             let description = current.map {
                 "Change this workflow as requested and return the whole workflow.\nCurrent: \((try? $0.jsonString()) ?? "")\nRequest: \(request)"
             } ?? request

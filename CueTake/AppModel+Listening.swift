@@ -21,7 +21,10 @@ extension AppModel {
         let client = dependencies.assistantClient
 
         async let deviceResult = Self.deviceTranscript(of: url, speech: speech, localeIdentifier: localeIdentifier)
-        async let cloudResult: [TimedWord]? = Self.cloudWords(of: url, client: client, localeIdentifier: localeIdentifier, script: script)
+        let allowsCloud = settingsModel.settings.aiProcessing == .allowCloud
+        async let cloudResult: [TimedWord]? = allowsCloud
+            ? Self.cloudWords(of: url, client: client, localeIdentifier: localeIdentifier, script: script)
+            : nil
         async let activity = VoiceActivity.measure(url)
 
         let device = await deviceResult
@@ -43,7 +46,7 @@ extension AppModel {
         )
 
         let disputed = versions.disputed
-        if !disputed.isEmpty, client.isConfigured,
+        if !disputed.isEmpty, allowsCloud, client.isConfigured,
            let choices = try? await client.judgeSpeech(disputed, script: script, localeIdentifier: localeIdentifier) {
             for (passage, source) in choices {
                 versions.choose(source, forPassage: passage, by: .ai)

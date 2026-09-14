@@ -117,7 +117,8 @@ struct RootView: View {
 
     /// The script screen's rewrites on the server, or nil in a build without the assistant.
     private var scriptRewrite: ScriptScreen.ServerRewrite? {
-        guard model.dependencies.assistantClient.isConfigured else { return nil }
+        guard model.settingsModel.settings.aiProcessing == .allowCloud,
+              model.dependencies.assistantClient.isConfigured else { return nil }
         let model = model
         return { text, direction, role, script, locale in
             try await model.rewriteOnServer(text: text, direction: direction, role: role, script: script, localeIdentifier: locale)
@@ -126,7 +127,8 @@ struct RootView: View {
 
     /// The AI edit tool's line to the model, or nil in a build without the assistant.
     private var aiEdit: ((EditDocument, String) async throws -> EditPlan)? {
-        guard model.dependencies.assistantClient.isConfigured else { return nil }
+        guard model.settingsModel.settings.aiProcessing == .allowCloud,
+              model.dependencies.assistantClient.isConfigured else { return nil }
         let model = model
         return { document, instruction in
             try await model.requestEditPlan(document, instruction)

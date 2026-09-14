@@ -558,7 +558,7 @@ public struct WorkflowStudioScreen: View {
                 )
                 .dsFont(.sans, .semibold, 12)
                 .foregroundStyle(DS.Palette.ink)
-                Text("studio.run.saved", bundle: .module)
+                Text(runDetail)
                     .dsFont(.sans, .regular, 10)
                     .foregroundStyle(DS.Palette.ink(0.4))
             }
@@ -597,6 +597,16 @@ public struct WorkflowStudioScreen: View {
         .padding(.horizontal, 14)
         .padding(.bottom, 26)
         .animation(DS.Motion.snap, value: model.isRunning)
+    }
+
+    private var runDetail: String {
+        guard let summary = model.lastRunSummary else {
+            return String(localized: "studio.run.saved", bundle: .module)
+        }
+        return String(
+            localized: "studio.run.result \(summary.completed) \(summary.skipped)",
+            bundle: .module
+        )
     }
 
     // MARK: - Parts

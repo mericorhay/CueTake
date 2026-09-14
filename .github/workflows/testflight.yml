@@ -118,14 +118,15 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
           TESTFLIGHT_GROUPS: ${{ inputs.groups }}
-          # Strictly increasing and unique per run, so re-uploads never collide.
-          BUILD_NUMBER: ${{ github.run_number }}
+          # App Store Connect is queried by fastlane. This is only a migration
+          # floor for the first run after fixing the old workflow counter.
+          BUILD_NUMBER_FLOOR: "53"
         run: bundle exec fastlane beta
 
       - name: Upload the IPA as an artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: CueTake-build${{ github.run_number }}
+          name: CueTake-testflight-run${{ github.run_number }}
           path: build/*.ipa
           if-no-files-found: ignore

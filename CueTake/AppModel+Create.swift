@@ -44,6 +44,10 @@ extension AppModel {
     /// Writes the script on the server, for phones that cannot run the on-device model.
     func generateScriptOnServer(_ brief: ScriptBrief, localeIdentifier: String) async {
         promptModel.advance(to: 2)
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            promptModel.fail(Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+            return
+        }
         do {
             let draft = try await dependencies.assistantClient.writeScript(brief, localeIdentifier: localeIdentifier)
             promptModel.advance(to: 3)
@@ -65,6 +69,9 @@ extension AppModel {
 
     /// The script screen's rewrite chips, on the server.
     func rewriteOnServer(text: String, direction: String, role: String, script: String, localeIdentifier: String) async throws -> String {
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+        }
         do {
             return try await dependencies.assistantClient.rewrite(
                 text,

@@ -106,7 +106,7 @@ public struct BackgroundRemover: Sendable {
         destination: URL,
         progress: @escaping @Sendable (Double) -> Void = { _ in }
     ) async -> URL? {
-        if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+        if Self.isUsableCache(destination) {
             return destination
         }
         return try? await Self.render(source: source, range: range, settings: settings, to: destination, progress: progress)
@@ -119,9 +119,11 @@ public struct BackgroundRemover: Sendable {
         to destination: URL,
         progress: @Sendable (Double) -> Void
     ) async throws -> URL {
-        let partial = destination.deletingLastPathComponent()
-            .appending(path: "partial-" + destination.lastPathComponent, directoryHint: .notDirectory)
-        try? FileManager.default.removeItem(at: partial)
+        let partial = destination.deletingLastPathComponent().appending(
+            path: "partial-\(UUID().uuidString)-\(destination.lastPathComponent)",
+            directoryHint: .notDirectory
+        )
+        defer { try? FileManager.default.removeItem(at: partial) }
 
         let asset = AVURLAsset(url: source)
         guard let track = try await asset.loadTracks(withMediaType: .video).first else { throw RemoveError.noVideoTrack }
@@ -275,6 +277,11 @@ public struct BackgroundRemover: Sendable {
         try FileManager.default.moveItem(at: partial, to: destination)
         progress(1)
         return destination
+    }
+
+    static func isUsableCache(_ url: URL) -> Bool {
+        guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else { return false }
+        return size > 0
     }
 
     private static func backdrop(_ settings: BackgroundSettings, behind frame: CIImage, in bounds: CGRect) -> CIImage {
