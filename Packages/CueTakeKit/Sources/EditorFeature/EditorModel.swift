@@ -850,6 +850,33 @@ extension EditorModel {
         }
         project.updatedAt = .now
     }
+
+    public func addVideoKeyframe(to id: VideoLayer.ID) {
+        guard let layer = project.videoLayers.first(where: { $0.id == id }) else { return }
+        let time = min(max(playhead - layer.start.seconds, 0), layer.duration)
+        let placement = layer.placement(at: playhead)
+        updateVideoLayer(id) { value in
+            value.keyframes.removeAll { abs($0.time - time) < 0.02 }
+            value.keyframes.append(VideoKeyframe(time: time, placement: placement))
+            value.keyframes.sort { $0.time < $1.time }
+        }
+    }
+
+    public func nudgeVideoLayer(_ id: VideoLayer.ID, x: Double = 0, y: Double = 0) {
+        updateVideoLayer(id) { value in
+            var placement = value.placement(at: playhead)
+            placement.x += x
+            placement.y += y
+            let time = min(max(playhead - value.start.seconds, 0), value.duration)
+            if time > 0.01 || !value.keyframes.isEmpty {
+                value.keyframes.removeAll { abs($0.time - time) < 0.02 }
+                value.keyframes.append(VideoKeyframe(time: time, placement: placement.bounded))
+                value.keyframes.sort { $0.time < $1.time }
+            } else {
+                value.placement = placement.bounded
+            }
+        }
+    }
 }
 
 

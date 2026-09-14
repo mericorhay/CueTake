@@ -29,6 +29,21 @@ struct VideoLayerPanel: View {
                     layoutButton(.stacked, "rectangle.split.1x2")
                     layoutButton(.grid, "square.grid.2x2")
                 }
+                HStack(spacing: 7) {
+                    nudgeButton("arrow.left", label: "editor.video.nudge.left", x: -0.03)
+                    nudgeButton("arrow.right", label: "editor.video.nudge.right", x: 0.03)
+                    nudgeButton("arrow.up", label: "editor.video.nudge.up", y: -0.03)
+                    nudgeButton("arrow.down", label: "editor.video.nudge.down", y: 0.03)
+                    Button {
+                        model.addVideoKeyframe(to: layer.id)
+                    } label: {
+                        Label(String(localized: "editor.video.keyframe", bundle: .module), systemImage: "diamond.fill")
+                            .frame(maxWidth: .infinity).padding(.vertical, 10)
+                    }
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .background(Capsule().fill(AIPalette.blue))
+                    .buttonStyle(.dsPress(radius: 20))
+                }
                 HStack(spacing: 9) {
                     toggle("editor.video.mute", symbol: layer.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill", isOn: layer.isMuted) {
                         model.updateVideoLayer(layer.id) { $0.isMuted.toggle() }
@@ -70,6 +85,19 @@ struct VideoLayerPanel: View {
         .background(RoundedRectangle(cornerRadius: 11).fill(DS.Palette.hairline(0.08)))
         .buttonStyle(.dsPress(radius: 11))
         .accessibilityLabel(Text(layoutLabel(layout)))
+    }
+
+    private func nudgeButton(_ symbol: String, label: String.LocalizationValue, x: Double = 0, y: Double = 0) -> some View {
+        Button {
+            guard let layer else { return }
+            model.nudgeVideoLayer(layer.id, x: x, y: y)
+        } label: {
+            Image(systemName: symbol).frame(width: 35, height: 35)
+        }
+        .foregroundStyle(DS.Palette.ink)
+        .background(Circle().fill(DS.Palette.hairline(0.08)))
+        .buttonStyle(.dsPressIcon)
+        .accessibilityLabel(Text(String(localized: label, bundle: .module)))
     }
 
     private func toggle(_ key: String.LocalizationValue, symbol: String, isOn: Bool, action: @escaping () -> Void) -> some View {

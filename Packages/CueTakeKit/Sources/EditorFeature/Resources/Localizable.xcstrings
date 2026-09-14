@@ -5903,6 +5903,23 @@
         }
       }
     },
+    "editor.video.keyframe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyframe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar kare"
+          }
+        }
+      }
+    },
     "editor.video.layout": {
       "extractionState": "manual",
       "localizations": {
@@ -6018,6 +6035,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sessize al"
+          }
+        }
+      }
+    },
+    "editor.video.nudge.down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move video down"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoyu aşağı taşı"
+          }
+        }
+      }
+    },
+    "editor.video.nudge.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move video left"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoyu sola taşı"
+          }
+        }
+      }
+    },
+    "editor.video.nudge.right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move video right"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoyu sağa taşı"
+          }
+        }
+      }
+    },
+    "editor.video.nudge.up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move video up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoyu yukarı taşı"
           }
         }
       }
