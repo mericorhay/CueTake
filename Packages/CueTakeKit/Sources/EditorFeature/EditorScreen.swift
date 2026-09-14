@@ -514,9 +514,24 @@ public struct EditorScreen: View {
                 .background(Capsule().fill(DS.Palette.inkInverse(0.6)))
                 .padding(10)
                 .transition(.opacity.combined(with: .move(edge: .top)))
+            } else if model.backgroundFailed {
+                Label {
+                    Text("editor.background.failed", bundle: .module)
+                        .dsFont(.sans, .medium, 11)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(DS.Palette.accent)
+                }
+                .foregroundStyle(DS.Palette.ink)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(DS.Palette.inkInverse(0.7)))
+                .padding(10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .animation(DS.Motion.settle, value: model.backgroundProgress == nil)
+        .animation(DS.Motion.settle, value: model.backgroundFailed)
         .overlay(alignment: .topTrailing) {
             // Discoverable rather than a secret tap. The whole picture is the target, but nobody
             // taps a video expecting it to grow unless something says it will.

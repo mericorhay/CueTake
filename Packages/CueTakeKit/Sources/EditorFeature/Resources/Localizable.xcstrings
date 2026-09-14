@@ -2364,6 +2364,23 @@
         }
       }
     },
+    "editor.background.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't replace the background. The clip plays as shot."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan değiştirilemedi, klip orijinal haliyle oynuyor."
+          }
+        }
+      }
+    },
     "editor.background.green": {
       "extractionState": "manual",
       "localizations": {

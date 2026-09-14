@@ -93,6 +93,15 @@ public final class EditorModel {
     public internal(set) var readyBackgrounds: Set<String> = []
     @ObservationIgnored var backgroundJob: Task<Void, Never>?
     @ObservationIgnored var backgroundJobKey = ""
+    /// Background replacements that could not be made this session, so they are not retried on
+    /// every rebuild. Choosing the background again clears them.
+    @ObservationIgnored var failedBackgrounds: Set<String> = []
+    /// Set briefly when a background could not be replaced, to say so on the picture.
+    public internal(set) var backgroundFailed = false
+    /// The player's item failed while a background render was running; rebuild when it ends.
+    @ObservationIgnored var recoverAfterBackgrounds = false
+    @ObservationIgnored private var itemStatus: NSKeyValueObservation?
+    @ObservationIgnored private var playbackRetries = 0
     private var timeObserver: Any?
 
     public init(project: Project) {
@@ -141,6 +150,7 @@ public final class EditorModel {
         // Without this the preview plays raw source frames while the export applies the framing,
         // which is the worst kind of editor: one that shows you something it will not deliver.
         item.videoComposition = assembled.videoComposition
+        watch(item)
 
         // One player for the life of the editor, with its item swapped. A new AVPlayer per rebuild
         // left the preview black: the video view on screen kept drawing the player it was first
@@ -173,6 +183,51 @@ public final class EditorModel {
         prepareBackgrounds()
     }
 
+    /// Notices when the item on screen stops being playable.
+    ///
+    /// A failed item stays failed: AVKit shows its crossed-out play symbol and nothing short of a
+    /// new item brings the picture back. Before this the preview simply stayed that way — the
+    /// composition had not changed, so nothing ever rebuilt it.
+    private func watch(_ item: AVPlayerItem) {
+        let id = ObjectIdentifier(item)
+        itemStatus = item.observe(\.status, options: [.new]) { @Sendable [weak self] observed, _ in
+            let status = observed.status
+            let message = observed.error.map { String(describing: $0) } ?? "AVPlayerItem failed"
+            Task { @MainActor in
+                self?.itemStatusChanged(id, status: status, message: message)
+            }
+        }
+    }
+
+    private func itemStatusChanged(_ id: ObjectIdentifier, status: AVPlayerItem.Status, message: String) {
+        guard let current = player?.currentItem, ObjectIdentifier(current) == id else { return }
+        switch status {
+        case .readyToPlay:
+            playbackRetries = 0
+        case .failed:
+            builtSignature = nil
+            guard let mediaDirectory, playbackRetries < 3 else {
+                // Out of tries: say so, with a button, rather than a crossed-out frame.
+                teardownPlayer()
+                playbackRetries = 0
+                playbackProblem = message
+                return
+            }
+            playbackRetries += 1
+            if backgroundJob != nil {
+                // The render is the likeliest reason: wait for it rather than fail again beside it.
+                recoverAfterBackgrounds = true
+                return
+            }
+            Task { [weak self] in
+                try? await Task.sleep(for: .milliseconds(400))
+                await self?.loadPlayback(mediaDirectory: mediaDirectory)
+            }
+        default:
+            break
+        }
+    }
+
     /// A clip's background as the preview sees it: none, waiting for its render, or ready.
     private func backgroundState(of segment: Segment) -> String {
         guard let name = backgroundCacheName(for: segment) else { return "-" }
@@ -200,6 +255,7 @@ public final class EditorModel {
 
     private func teardownPlayer() {
         builtSignature = nil
+        itemStatus = nil
         if let timeObserver { player?.removeTimeObserver(timeObserver) }
         timeObserver = nil
         player?.pause()
@@ -758,6 +814,7 @@ extension EditorModel {
     public func setBackground(_ background: ClipBackground?, at index: Int) {
         guard project.segments.indices.contains(index), project.segments[index].background != background else { return }
         record("editor.change.background", symbol: "person.crop.rectangle")
+        failedBackgrounds.removeAll()
         project.segments[index].background = background
         project.updatedAt = .now
     }
@@ -766,6 +823,7 @@ extension EditorModel {
     public func setBackgroundForAll(_ background: ClipBackground?) {
         guard project.segments.contains(where: { $0.background != background }) else { return }
         record("editor.change.background", symbol: "person.crop.rectangle")
+        failedBackgrounds.removeAll()
         for index in project.segments.indices {
             project.segments[index].background = background
         }

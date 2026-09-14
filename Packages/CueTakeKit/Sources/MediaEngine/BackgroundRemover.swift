@@ -134,43 +134,65 @@ public struct BackgroundRemover: Sendable {
         var lastTime = CMTime.invalid
         var written = 0.0
 
-        while let sample = output.copyNextSampleBuffer() {
+        enum Frame {
+            case end, skip
+            case ready(CVPixelBuffer, CMTime)
+        }
+
+        frames: while true {
             if Task.isCancelled { throw fail(.cancelled) }
-            guard let pixels = CMSampleBufferGetImageBuffer(sample) else { continue }
-            // The reader can hand back a frame from just before the range; a negative or repeated
-            // time makes the writer fail, and a failed writer never becomes ready again.
-            let time = CMSampleBufferGetPresentationTimeStamp(sample) - range.start
-            guard time.seconds >= 0, !lastTime.isValid || time > lastTime else { continue }
+            // Every frame in its own pool. Without it the decoded 4K frames, masks and Core Image
+            // intermediates of the whole clip piled up until the render ran the phone out of
+            // memory — which took the preview player, decoding beside it, down too.
+            let frame: Frame = try autoreleasepool {
+                guard let sample = output.copyNextSampleBuffer() else { return .end }
+                guard let pixels = CMSampleBufferGetImageBuffer(sample) else { return .skip }
+                // The reader can hand back a frame from just before the range; a negative or repeated
+                // time makes the writer fail, and a failed writer never becomes ready again.
+                let time = CMSampleBufferGetPresentationTimeStamp(sample) - range.start
+                guard time.seconds >= 0, !lastTime.isValid || time > lastTime else { return .skip }
 
-            let oriented = CIImage(cvPixelBuffer: pixels).oriented(orientation)
-            let placed = oriented
-                .transformed(by: CGAffineTransform(translationX: -oriented.extent.minX, y: -oriented.extent.minY))
-                .transformed(by: CGAffineTransform(scaleX: CGFloat(width) / oriented.extent.width, y: CGFloat(height) / oriented.extent.height))
-                .cropped(to: bounds)
+                let oriented = CIImage(cvPixelBuffer: pixels).oriented(orientation)
+                let placed = oriented
+                    .transformed(by: CGAffineTransform(translationX: -oriented.extent.minX, y: -oriented.extent.minY))
+                    .transformed(by: CGAffineTransform(scaleX: CGFloat(width) / oriented.extent.width, y: CGFloat(height) / oriented.extent.height))
+                    .cropped(to: bounds)
 
-            let composed: CIImage
-            if (try? sequence.perform([request], on: placed)) != nil,
-               let maskBuffer = request.results?.first?.pixelBuffer {
-                let mask = CIImage(cvPixelBuffer: maskBuffer)
-                let fitted = mask.transformed(by: CGAffineTransform(
-                    scaleX: bounds.width / mask.extent.width,
-                    y: bounds.height / mask.extent.height
-                ))
-                let blend = CIFilter.blendWithMask()
-                blend.inputImage = placed
-                blend.backgroundImage = Self.backdrop(background, behind: placed, in: bounds)
-                blend.maskImage = fitted
-                composed = blend.outputImage?.cropped(to: bounds) ?? placed
-            } else {
-                // No person found in this frame: the frame as it is, so the clip never skips.
-                composed = placed
+                let composed: CIImage
+                if (try? sequence.perform([request], on: placed)) != nil,
+                   let maskBuffer = request.results?.first?.pixelBuffer {
+                    let mask = CIImage(cvPixelBuffer: maskBuffer)
+                    let fitted = mask.transformed(by: CGAffineTransform(
+                        scaleX: bounds.width / mask.extent.width,
+                        y: bounds.height / mask.extent.height
+                    ))
+                    let blend = CIFilter.blendWithMask()
+                    blend.inputImage = placed
+                    blend.backgroundImage = Self.backdrop(background, behind: placed, in: bounds)
+                    blend.maskImage = fitted
+                    composed = blend.outputImage?.cropped(to: bounds) ?? placed
+                } else {
+                    // No person found in this frame: the frame as it is, so the clip never skips.
+                    composed = placed
+                }
+
+                guard let pool = adaptor.pixelBufferPool else { throw fail(.cannotWrite) }
+                var outputBuffer: CVPixelBuffer?
+                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &outputBuffer)
+                guard let outputBuffer else { throw fail(.cannotWrite) }
+                context.render(composed, to: outputBuffer)
+                return .ready(outputBuffer, time)
             }
 
-            guard let pool = adaptor.pixelBufferPool else { throw fail(.cannotWrite) }
-            var outputBuffer: CVPixelBuffer?
-            CVPixelBufferPoolCreatePixelBuffer(nil, pool, &outputBuffer)
-            guard let outputBuffer else { throw fail(.cannotWrite) }
-            context.render(composed, to: outputBuffer)
+            let outputBuffer: CVPixelBuffer
+            let time: CMTime
+            switch frame {
+            case .end: break frames
+            case .skip: continue frames
+            case let .ready(buffer, at):
+                outputBuffer = buffer
+                time = at
+            }
 
             var waited = 0
             while !input.isReadyForMoreMediaData {

@@ -16,6 +16,15 @@ extension EditorModel {
         return BackgroundRemover.cacheName(take: take, reversed: reversed, background: background)
     }
 
+    /// Says on the picture, for a few seconds, that a clip keeps its own background.
+    func showBackgroundFailure() {
+        backgroundFailed = true
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(4))
+            self?.backgroundFailed = false
+        }
+    }
+
     /// Renders every missing background replacement, unless the same set is already under way.
     func prepareBackgrounds() {
         guard let mediaDirectory else { return }
@@ -27,6 +36,7 @@ extension EditorModel {
                   let take = segment.selectedTake,
                   let recording = project.recordings.first(where: { $0.id == take.recordingID })
             else { continue }
+            guard !failedBackgrounds.contains(name) else { continue }
             let destination = mediaDirectory.appending(path: name, directoryHint: .notDirectory)
             if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
                 readyBackgrounds.insert(name)
@@ -65,7 +75,8 @@ extension EditorModel {
         backgroundJobKey = key
         backgroundProgress = 0
         let work = pending
-        backgroundJob = Task { [weak self] in
+        // Below the preview and the interface: the render gives way to them, never the reverse.
+        backgroundJob = Task(priority: .utility) { [weak self] in
             guard let model = self else { return }
             let count = Double(work.count)
             for (index, item) in work.enumerated() {
@@ -83,12 +94,21 @@ extension EditorModel {
                     }
                 }
                 guard !Task.isCancelled else { return }
-                if url != nil { model.readyBackgrounds.insert(item.name) }
+                if url != nil {
+                    model.readyBackgrounds.insert(item.name)
+                } else {
+                    model.failedBackgrounds.insert(item.name)
+                    model.showBackgroundFailure()
+                }
             }
             guard model.backgroundJobKey == key else { return }
             model.backgroundProgress = nil
             model.backgroundJob = nil
             model.backgroundJobKey = ""
+            if model.recoverAfterBackgrounds, let directory = model.mediaDirectory {
+                model.recoverAfterBackgrounds = false
+                await model.loadPlayback(mediaDirectory: directory)
+            }
         }
     }
 }
