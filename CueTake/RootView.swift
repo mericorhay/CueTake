@@ -188,7 +188,7 @@ struct RootView: View {
         case .complete:
             CompleteScreen(
                 project: model.project,
-                onRetake: { model.startRetakeFromComplete() },
+                onRetake: { model.startRetake(of: $0) },
                 onEdit: { model.openEditor() },
                 onDone: { model.go(to: .export) }
             )

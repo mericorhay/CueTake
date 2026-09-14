@@ -131,7 +131,9 @@ public struct StudioScreen: View {
             set: { if !$0 { model.captureError = nil } }
         )) {
             Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
-            Button(String(localized: "studio.settings.open", bundle: .module)) { openSettings() }
+            if model.needsCapturePermissions {
+                Button(String(localized: "studio.settings.open", bundle: .module)) { openSettings() }
+            }
         } message: {
             Text(model.captureError ?? "")
         }
@@ -144,10 +146,10 @@ public struct StudioScreen: View {
 
     @ViewBuilder
     private var topBar: some View {
-        if model.phase == .recording || model.phase == .finishing {
+        if model.phase == .recording || model.phase == .finishing || model.phase == .complete {
             HStack {
                 Spacer(minLength: 0)
-                recordingStatus
+                if model.phase == .recording { recordingStatus }
                 Spacer(minLength: 0)
             }
         } else {
@@ -304,14 +306,14 @@ public struct StudioScreen: View {
             } trailing: {
                 EmptyView()
             }
-        } else if model.phase == .finishing || model.phase == .preparing {
+        } else if model.phase == .finishing || model.phase == .preparing || model.phase == .complete {
             StudioControlCluster(isLandscape: model.isLandscape) {
                 EmptyView()
             } center: {
                 HStack(spacing: 10) {
                     ProgressView()
                         .tint(DS.Palette.ink)
-                    Text(String(localized: model.phase == .finishing ? "studio.saving" : "studio.capture.preparing", bundle: .module))
+                    Text(String(localized: model.phase == .preparing ? "studio.capture.preparing" : "studio.saving", bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                 }
@@ -526,6 +528,11 @@ public struct StudioScreen: View {
         .ignoresSafeArea()
         .contentShape(Rectangle())
         .onTapGesture { model.cancelCountdown() }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("studio.countdown.cancel", bundle: .module))
+        .accessibilityValue(Text("\(value)"))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { model.cancelCountdown() }
         .dsMotion(DS.Motion.bloom, reduced: reduceMotion, value: value)
         .transition(.opacity)
     }

@@ -154,31 +154,31 @@ public struct EditorScreen: View {
             GeometryReader { panelGeometry in
                 if isPanelOpen {
                     ScrollView {
-            if let captionID = editingCaption {
-                CaptionQuickPanel(
-                    model: model,
-                    captionID: captionID,
-                    onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
-                    onOpenAll: {
-                        editingCaption = nil
-                        onCaptions()
-                    },
-                    onSwitch: { editingCaption = $0 }
-                )
-            } else if let clip = model.selectedAudioClip {
-                audioPanel(clip)
-            } else if let effect = model.selectedEffectValue {
-                EffectInspector(model: model, effect: effect) {
-                    withAnimation(DS.Motion.settle) { model.select(effect: nil) }
-                }
-            } else if let overlay = model.selectedOverlayValue {
-                OverlayInspector(model: model, overlay: overlay) {
-                    withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
-                }
-            } else if let id = model.inspectedSegment,
-                      let index = model.project.segments.firstIndex(where: { $0.id == id }) {
-                inspector(at: index)
-            }
+                        if let captionID = editingCaption {
+                            CaptionQuickPanel(
+                                model: model,
+                                captionID: captionID,
+                                onClose: { withAnimation(DS.Motion.settle) { editingCaption = nil } },
+                                onOpenAll: {
+                                    editingCaption = nil
+                                    onCaptions()
+                                },
+                                onSwitch: { editingCaption = $0 }
+                            )
+                        } else if let clip = model.selectedAudioClip {
+                            audioPanel(clip)
+                        } else if let effect = model.selectedEffectValue {
+                            EffectInspector(model: model, effect: effect) {
+                                withAnimation(DS.Motion.settle) { model.select(effect: nil) }
+                            }
+                        } else if let overlay = model.selectedOverlayValue {
+                            OverlayInspector(model: model, overlay: overlay) {
+                                withAnimation(DS.Motion.settle) { model.select(overlay: nil) }
+                            }
+                        } else if let id = model.inspectedSegment,
+                                  let index = model.project.segments.firstIndex(where: { $0.id == id }) {
+                            inspector(at: index)
+                        }
                     }
                     .scrollBounceBehavior(.basedOnSize)
                     .frame(maxHeight: max(180, panelGeometry.size.height * 0.62))

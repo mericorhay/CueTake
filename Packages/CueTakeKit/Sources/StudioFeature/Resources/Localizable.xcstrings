@@ -1,6 +1,23 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "complete.chooseSegment": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which segment would you like to record again?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hangi bölümü tekrar çekmek istiyorsun?"
+          }
+        }
+      }
+    },
     "complete.done": {
       "extractionState": "manual",
       "localizations": {
@@ -35,6 +52,23 @@
         }
       }
     },
+    "complete.export": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dışa aktar"
+          }
+        }
+      }
+    },
     "complete.kicker %@": {
       "comment": "The argument is the take's duration, e.g. 0:30.",
       "extractionState": "manual",
@@ -53,6 +87,69 @@
         }
       }
     },
+    "complete.notRecorded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not recorded"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekilmedi"
+          }
+        }
+      }
+    },
+    "complete.ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "READY TO REVIEW"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İZLEMEYE HAZIR"
+          }
+        }
+      }
+    },
+    "complete.recorded %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%1$lld segment\nready to edit."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%1$lld segments\nready to edit."
+                }
+              }
+            }
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld bölüm\nkurguya hazır."
+          }
+        }
+      }
+    },
     "complete.retake": {
       "extractionState": "manual",
       "localizations": {
@@ -66,6 +163,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tekrar çek"
+          }
+        }
+      }
+    },
+    "complete.review": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review and edit"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İzle ve düzenle"
           }
         }
       }
@@ -158,6 +272,23 @@
         }
       }
     },
+    "retake.noPrevious": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not recorded yet"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz çekilmedi"
+          }
+        }
+      }
+    },
     "retake.note": {
       "extractionState": "manual",
       "localizations": {
@@ -171,6 +302,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sadece bu segment yeniden çekilir. Kurgunun geri kalanına dokunulmaz."
+          }
+        }
+      }
+    },
+    "retake.preview.audio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview audio could not start. Try opening the preview again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önizleme sesi başlatılamadı. Önizlemeyi tekrar açmayı dene."
+          }
+        }
+      }
+    },
+    "retake.preview.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview is unavailable for this take."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu çekimin önizlemesi açılamıyor."
           }
         }
       }
@@ -215,30 +380,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "TAKE 2 · NEW"
+            "value": "NEW"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ÇEKİM 2 · YENİ"
-          }
-        }
-      }
-    },
-    "retake.take.new.meta": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:10 · no stumbles"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:10 · takılma yok"
+            "value": "YENİ"
           }
         }
       }
@@ -249,13 +397,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cleaner energy"
+            "value": "New take"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daha temiz enerji"
+            "value": "Yeni çekim"
           }
         }
       }
@@ -266,30 +414,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "TAKE 1 · OLD"
+            "value": "PREVIOUS"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ÇEKİM 1 · ESKİ"
-          }
-        }
-      }
-    },
-    "retake.take.old.meta": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:11 · 2 stumbles"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:11 · 2 takılma"
+            "value": "ÖNCEKİ"
           }
         }
       }
@@ -300,13 +431,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Flat delivery"
+            "value": "Previous take"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Düz anlatım"
+            "value": "Önceki çekim"
           }
         }
       }

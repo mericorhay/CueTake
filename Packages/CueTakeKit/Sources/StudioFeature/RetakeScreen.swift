@@ -1,9 +1,14 @@
 import CaptureEngine
+import AVKit
+import AVFoundation
+import AVFAudio
+import Foundation
 import DesignSystem
 import Domain
 import Observation
 import SpeechEngine
 import SwiftUI
+import UIKit
 
 /// Re-records exactly one segment. The rest of the cut is never touched — that is the whole point
 /// of the Segment → Take model, and this screen is where the user sees it.
@@ -55,15 +60,19 @@ public final class RetakeModel {
     public private(set) var isSaving = false
     public private(set) var isStarting = false
     public var captureError: String?
+    public private(set) var needsCapturePermissions = false
+    public var originalRecordingURL: URL?
 
     public func prepareCapture() async -> Bool {
         guard !isStarting, !isSaving, state == .ready else { return false }
         isStarting = true
         captureError = nil
+        needsCapturePermissions = false
         let status = await CameraSession.requestAuthorization(includingMicrophone: true)
         guard isStarting else { return false }
         cameraAuthorization = status.camera
         guard status.camera == .authorized, status.microphone == .authorized else {
+            needsCapturePermissions = true
             failCapture("studio.capture.permissions")
             return false
         }
@@ -115,6 +124,7 @@ public final class RetakeModel {
 
     private func didStart(to url: URL) {
         state = .rolling
+        choice = .new
         wordIndex = 0
         lastCapture = nil
 
@@ -174,6 +184,7 @@ public final class RetakeModel {
 
 public struct RetakeScreen: View {
     @Environment(\.scenePhase) private var scenePhase
+    @State private var previewPlayer: AVPlayer?
     @Bindable private var model: RetakeModel
     private let camera: CameraPosition
     /// Same arrangement as the studio: the screen asks, the project's owner answers with a path.
@@ -229,13 +240,33 @@ public struct RetakeScreen: View {
             .dsScreenLayout(scrolls: true)
         }
         .task { await model.startCamera(position: camera) }
-        .onDisappear { model.stopTimers(); model.stopCamera() }
+        .onDisappear { previewPlayer?.pause(); model.stopTimers(); model.stopCamera() }
+        .onChange(of: model.state) { _, state in
+            if state == .compare {
+                if !model.isSaving { model.stopCamera() }
+                preparePreview()
+            } else if state == .ready {
+                previewPlayer?.pause()
+                previewPlayer = nil
+                Task { await model.startCamera(position: camera) }
+            }
+        }
+        .onChange(of: model.choice) { _, _ in preparePreview() }
+        .onChange(of: model.isSaving) { _, saving in
+            if !saving, model.state == .compare { model.stopCamera(); preparePreview() }
+        }
+        .onChange(of: model.originalRecordingURL) { _, _ in preparePreview() }
         .onChange(of: scenePhase) { _, phase in if phase == .background { model.stopTimers() } }
         .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
             get: { model.captureError != nil },
             set: { if !$0 { model.captureError = nil } }
         )) {
             Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
+            if model.needsCapturePermissions {
+                Button(String(localized: "studio.settings.open", bundle: .module)) {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                }
+            }
         } message: { Text(model.captureError ?? "") }
         .dsEnter(.screen())
     }
@@ -359,18 +390,31 @@ public struct RetakeScreen: View {
                     .tint(DS.Palette.ink)
                     .padding(.bottom, 14)
             }
+            if let previewPlayer {
+                VideoPlayer(player: previewPlayer)
+                    .frame(height: 210)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .padding(.bottom, 14)
+            } else if !model.isSaving {
+                Text("retake.preview.unavailable", bundle: .module)
+                    .dsFont(.sans, .regular, 13)
+                    .foregroundStyle(DS.Palette.ink(0.7))
+                    .padding(.bottom, 14)
+            }
             HStack(spacing: 8) {
                 takeCard(
                     .old,
                     kicker: String(localized: "retake.take.old.kicker", bundle: .module),
                     title: String(localized: "retake.take.old.title", bundle: .module),
-                    meta: String(localized: "retake.take.old.meta", bundle: .module)
+                    meta: model.segment.selectedTake?.sourceRange.duration.preciseTimecode
+                        ?? String(localized: "retake.noPrevious", bundle: .module)
                 )
                 takeCard(
                     .new,
                     kicker: String(localized: "retake.take.new.kicker", bundle: .module),
                     title: String(localized: "retake.take.new.title", bundle: .module),
-                    meta: String(localized: "retake.take.new.meta", bundle: .module)
+                    meta: model.lastCapture.map { MediaTime(seconds: $0.duration).preciseTimecode }
+                        ?? String(localized: "studio.saving", bundle: .module)
                 )
             }
             .padding(.bottom, 14)
@@ -400,6 +444,29 @@ public struct RetakeScreen: View {
             }
         }
         .dsEnter(.rise(duration: 0.4))
+    }
+
+    /// Preview only the source range being replaced, rather than the rest of its recording.
+    private func preparePreview() {
+        previewPlayer?.pause()
+        previewPlayer = nil
+        guard model.state == .compare, !model.isSaving else { return }
+        let url = model.choice == .old ? model.originalRecordingURL : model.lastCapture?.url
+        guard let url else { return }
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            model.captureError = String(localized: "retake.preview.audio", bundle: .module)
+        }
+        let item = AVPlayerItem(url: url)
+        let player = AVPlayer(playerItem: item)
+        if model.choice == .old, let range = model.segment.selectedTake?.sourceRange {
+            item.forwardPlaybackEndTime = CMTime(seconds: range.end.seconds, preferredTimescale: 600)
+            item.reversePlaybackEndTime = CMTime(seconds: range.start.seconds, preferredTimescale: 600)
+            player.seek(to: CMTime(seconds: range.start.seconds, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        previewPlayer = player
     }
 
     private func takeCard(
@@ -435,5 +502,7 @@ public struct RetakeScreen: View {
             )
         }
         .buttonStyle(.dsPress)
+        .disabled(choice == .old && model.segment.selectedTake == nil)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 }

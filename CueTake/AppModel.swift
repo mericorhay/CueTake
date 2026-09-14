@@ -1001,6 +1001,14 @@ final class AppModel {
         // Matched to the rest of the project, or the retake comes back a different shape from the
         // shot it is replacing.
         retakeModel?.format = project.format
+        if let retake = retakeModel, let take = segment.selectedTake,
+           let recording = project.recordings.first(where: { $0.id == take.recordingID }) {
+            let projectID = project.id
+            Task {
+                guard let directory = try? await dependencies.projectStore.mediaDirectory(for: projectID) else { return }
+                retake.originalRecordingURL = directory.deletingLastPathComponent().appending(path: recording.relativePath)
+            }
+        }
         go(to: .retake)
     }
 
@@ -1016,7 +1024,7 @@ final class AppModel {
     /// Which is the point of the whole model: a retake appends to one segment's takes and moves
     /// its selection. No other segment's range shifts, because no absolute time was ever stored.
     func keepRetake() {
-        if let retakeModel,
+        if let retakeModel, retakeModel.choice == .new,
            let capture = retakeModel.lastCapture,
            let index = project.segments.firstIndex(where: { $0.id == retakeModel.segment.id }) {
             let recording = Recording(

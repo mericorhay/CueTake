@@ -1,5 +1,6 @@
 import CaptureEngine
 import Domain
+import Foundation
 import Observation
 import SpeechEngine
 import SwiftUI
@@ -34,6 +35,7 @@ public final class StudioModel {
     /// Seconds since recording began.
     public private(set) var elapsed: Double = 0
     public var captureError: String?
+    public private(set) var needsCapturePermissions = false
 
     public var hasScript: Bool {
         project.segments.contains { !$0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -46,10 +48,12 @@ public final class StudioModel {
         guard phase == .idle || phase == .complete else { return false }
         phase = .preparing
         captureError = nil
+        needsCapturePermissions = false
         let status = await CameraSession.requestAuthorization(includingMicrophone: true)
         guard phase == .preparing else { return false }
         cameraAuthorization = status.camera
         guard status.camera == .authorized, status.microphone == .authorized else {
+            needsCapturePermissions = true
             failCapture("studio.capture.permissions")
             return false
         }
@@ -107,9 +111,8 @@ public final class StudioModel {
 
     /// Keeps the prompter's preset tables in step with the studio's orientation.
     ///
-    /// The design file has a rotate button because a browser cannot be turned on its side. A phone
-    /// can, so the real signal is the window's shape — the button stays, but rotating the device
-    /// is what normally drives this.
+    /// The window's shape is the signal. Changing only the controls would leave the camera and
+    /// the prompter using different orientations.
     public func setLandscape(_ landscape: Bool) {
         guard landscape != isLandscape else { return }
         isLandscape = landscape
@@ -238,6 +241,7 @@ public final class StudioModel {
         wordIndex = 0
         elapsed = 0
         lastCapture = nil
+        teleprompter.isPaused = false
         teleprompter.isSettingsOpen = false
         publishPosition()
 
