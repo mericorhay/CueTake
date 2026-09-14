@@ -9,6 +9,8 @@ import SwiftUI
 /// the arithmetic happens to put it.
 struct EditorTimeline: View {
     @Bindable var model: EditorModel
+    /// Opens a caption for editing on the picture.
+    var onEditCaption: (CaptionCue.ID) -> Void = { _ in }
 
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
@@ -30,7 +32,12 @@ struct EditorTimeline: View {
             ? CGFloat(rows) * AudioLane.rowHeight + CGFloat(rows - 1) * AudioLane.rowSpacing + 7
             : 0
         let overlays = model.project.overlays.isEmpty ? 0 : OverlayLane.height(for: model.project.overlays) + 7
-        return audio + overlays
+        let captions = hasCaptions ? CaptionLane.height + 7 : 0
+        return audio + overlays + captions
+    }
+
+    private var hasCaptions: Bool {
+        model.project.segments.contains { !$0.captions.isEmpty }
     }
 
     /// Where the scroll view is, and whether a finger is moving it.
@@ -112,6 +119,19 @@ struct EditorTimeline: View {
                     OverlayLane(model: model, scale: scale)
                 }
                 clipRow
+                if hasCaptions {
+                    CaptionLane(
+                        model: model,
+                        scale: scale,
+                        onSeek: { jump(to: $0) },
+                        onEdit: { id in
+                            if let cue = model.project.captionCues.first(where: { $0.id == id }) {
+                                jump(to: cue.range.start.seconds + 0.01)
+                            }
+                            onEditCaption(id)
+                        }
+                    )
+                }
                 if model.audioRowCount > 0 {
                     AudioLane(model: model, scale: scale)
                 }

@@ -450,6 +450,12 @@ public struct EditorScreen: View {
         // them in with a layer tool the preview player cannot run, so the preview draws its own
         // from the same numbers — see `CaptionOverlay`.
         .overlay {
+            // Inside the video's own rectangle, sized from its height — the same numbers the
+            // export uses. Laid out against the whole preview box, captions slid about whenever
+            // the box changed shape: a bigger preview, a panel opening, the phone turning.
+            GeometryReader { box in
+                let frame = OverlayCanvas.videoRect(in: box.size, render: model.project.format.renderSize)
+                ZStack {
             if let cue = model.project.caption(at: model.playhead) {
                 CaptionOverlay(
                     cue: cue,
@@ -481,12 +487,36 @@ public struct EditorScreen: View {
                 .id(cue.id)
                 .transition(CaptionOverlay.transition(for: model.project.captionStyle))
             }
+                }
+                .frame(width: frame.width, height: frame.height)
+                .position(x: frame.midX, y: frame.midY)
+            }
         }
         // Pictures and text, over the captions, moved with the fingers.
         .overlay { OverlayCanvas(model: model) }
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .aiGlow(model.aiBeat, in: RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
         .allowsHitTesting(!model.isAIDriving)
+        .overlay(alignment: .topLeading) {
+            if let progress = model.backgroundProgress {
+                HStack(spacing: 7) {
+                    ProgressView(value: progress)
+                        .progressViewStyle(.linear)
+                        .tint(DS.Palette.lime)
+                        .frame(width: 54)
+                    Text("editor.background.progress \(Int(progress * 100))", bundle: .module)
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink)
+                        .contentTransition(.numericText())
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(DS.Palette.inkInverse(0.6)))
+                .padding(10)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(DS.Motion.settle, value: model.backgroundProgress == nil)
         .overlay(alignment: .topTrailing) {
             // Discoverable rather than a secret tap. The whole picture is the target, but nobody
             // taps a video expecting it to grow unless something says it will.
@@ -596,48 +626,20 @@ public struct EditorScreen: View {
             DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
                 .padding(.bottom, 6)
 
-            EditorTimeline(model: model)
-
-            captionStrip
-                .padding(.top, 7)
+            EditorTimeline(model: model) { id in
+                model.pause()
+                withAnimation(DS.Motion.settle) {
+                    model.inspectedSegment = nil
+                    model.selectedAudio = nil
+                    model.select(overlay: nil)
+                    dockPanel = nil
+                    editingCaption = id
+                }
+            }
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .allowsHitTesting(!model.isAIDriving)
-    }
-
-    private var captionStrip: some View {
-        GeometryReader { proxy in
-            let weights = model.project.segments.map(\.barWeight)
-            let total = max(1, weights.reduce(0, +))
-            let gaps = CGFloat(max(0, weights.count - 1)) * 4
-            let usable = proxy.size.width - gaps
-
-            HStack(spacing: 4) {
-                ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
-                    Text(segment.captionPreview)
-                        .dsFont(.sans, .regular, 9)
-                        .foregroundStyle(DS.Palette.ink(0.4))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .padding(.horizontal, 7)
-                        .frame(width: usable * (weights[index] / total), height: 22, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous)
-                                .fill(DS.Palette.hairline(0.05))
-                        )
-                        .overlay {
-                            RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous)
-                                .stroke(DS.Palette.hairline(0.07), lineWidth: 1)
-                        }
-                        .aiGlow(
-                            model.glowToken(.captions(segment.id)) + model.glowToken(.captionStyle),
-                            in: RoundedRectangle(cornerRadius: DS.Radius.xs, style: .continuous)
-                        )
-                }
-            }
-        }
-        .frame(height: 22)
     }
 
     // MARK: - Inspector

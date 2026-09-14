@@ -87,6 +87,12 @@ public final class EditorModel {
     /// What the current player was built from. A request to build the same thing again is ignored:
     /// replacing a working player with an identical one only blinks the picture.
     @ObservationIgnored private var builtSignature: [String]?
+    /// 0…1 while clips' backgrounds are being replaced, nil otherwise.
+    public internal(set) var backgroundProgress: Double?
+    /// Background replacements that have been written, by file name.
+    public internal(set) var readyBackgrounds: Set<String> = []
+    @ObservationIgnored var backgroundJob: Task<Void, Never>?
+    @ObservationIgnored var backgroundJobKey = ""
     private var timeObserver: Any?
 
     public init(project: Project) {
@@ -102,6 +108,7 @@ public final class EditorModel {
     public func loadPlayback(mediaDirectory: URL) async {
         self.mediaDirectory = mediaDirectory
         loadOverlayImages()
+        prepareBackgrounds()
         guard project.segments.contains(where: { $0.selectedTake != nil }) else {
             teardownPlayer()
             return
@@ -112,7 +119,7 @@ public final class EditorModel {
         let generation = playbackGeneration
         let assembled: VideoComposer.Assembled
         do {
-            assembled = try await VideoComposer().compose(project: project, mediaDirectory: mediaDirectory)
+            assembled = try await VideoComposer().compose(project: project, mediaDirectory: mediaDirectory, renderBackgrounds: false)
         } catch {
             // A build that was superseded or cancelled keeps the picture that is there. Only a real
             // failure with nothing else to show says so — a black frame explained nothing.
@@ -162,6 +169,14 @@ public final class EditorModel {
         playhead = min(playhead, duration)
         player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
         if wasPlaying { player.play() }
+        // A reversed clip's copy may have just been written; its background can start now.
+        prepareBackgrounds()
+    }
+
+    /// A clip's background as the preview sees it: none, waiting for its render, or ready.
+    private func backgroundState(of segment: Segment) -> String {
+        guard let name = backgroundCacheName(for: segment) else { return "-" }
+        return readyBackgrounds.contains(name) ? "ready:\(name)" : "pending:\(name)"
     }
 
     /// Everything that changes what the preview plays: which footage, which part of it, in what
@@ -174,7 +189,7 @@ public final class EditorModel {
             let take = segment.selectedTake
             let range = take.map { "\($0.id.uuidString):\($0.sourceRange.start.seconds):\($0.sourceRange.duration.seconds)" } ?? "-"
             let playback = segment.playback
-            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)|\(segment.background?.token ?? "-")"
+            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)|\(backgroundState(of: segment))"
         } + [
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",

@@ -45,7 +45,9 @@ public struct VideoComposer: Sendable {
     ///
     /// - Parameter mediaDirectory: where `Recording.relativePath` resolves against. The document
     ///   stores paths relative to the project because the container path changes between installs.
-    public func compose(project: Project, mediaDirectory: URL) async throws -> Assembled {
+    /// - Parameter renderBackgrounds: render any missing background replacement first (export).
+    ///   The preview passes false and plays those clips as shot until the editor's own render is done.
+    public func compose(project: Project, mediaDirectory: URL, renderBackgrounds: Bool = true) async throws -> Assembled {
         let composition = AVMutableComposition()
         guard
             let videoTrack = composition.addMutableTrack(
@@ -116,21 +118,24 @@ public struct VideoComposer: Sendable {
             }
 
             // Everything behind the person replaced, from whichever picture this clip plays.
-            if let background = segment.background,
-               let processed = await BackgroundRemover().processedClip(
-                   source: url,
-                   range: CMTimeRange(start: sourceStart, duration: sourceLength),
-                   background: background,
-                   destination: BackgroundRemover.cachedURL(
-                       take: take,
-                       reversed: pictureReplaced,
-                       background: background,
-                       in: mediaDirectory
-                   )
-               ) {
-                url = processed
-                sourceStart = .zero
-                pictureReplaced = true
+            if let background = segment.background {
+                let destination = BackgroundRemover.cachedURL(take: take, reversed: pictureReplaced, background: background, in: mediaDirectory)
+                var processed: URL?
+                if FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) {
+                    processed = destination
+                } else if renderBackgrounds {
+                    processed = await BackgroundRemover().render(
+                        source: url,
+                        range: CMTimeRange(start: sourceStart, duration: sourceLength),
+                        background: background,
+                        destination: destination
+                    )
+                }
+                if let processed {
+                    url = processed
+                    sourceStart = .zero
+                    pictureReplaced = true
+                }
             }
 
             let asset = AVURLAsset(url: url)

@@ -2404,13 +2404,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The person is cut out on this iPhone, frame by frame. The first time takes a little while; after that it is instant."
+            "value": "The person is cut out on this iPhone. It is prepared in the background while you keep editing; the clip plays as shot until it is ready."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kişi bu iPhone'da kare kare ayrılır. İlk seferde biraz sürer, sonra anında açılır."
+            "value": "Kişi bu iPhone'da ayrılır. Sen düzenlemeye devam ederken arka planda hazırlanır; hazır olana kadar klip orijinal haliyle oynar."
+          }
+        }
+      }
+    },
+    "editor.background.progress %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background %lld%%"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arka plan %%%lld"
           }
         }
       }
