@@ -58,6 +58,22 @@ public struct VideoKeyframe: Hashable, Sendable, Codable, Identifiable {
     public init(time: Double, placement: VideoPlacement) { self.time = time; self.placement = placement }
 }
 
+/// A crop target inside the source picture. Kept separate from placement animation so tracking a
+/// face can never move or resize the rectangle the editor positioned on the canvas.
+public struct VideoFocusKeyframe: Hashable, Sendable, Codable, Identifiable {
+    public var id: UUID = UUID()
+    /// Seconds from the start of the source range.
+    public var time: Double
+    public var x: Double
+    public var y: Double
+
+    public init(time: Double, x: Double, y: Double) {
+        self.time = time
+        self.x = x
+        self.y = y
+    }
+}
+
 /// Another movie playing at the same time as the primary cut. The original file stays untouched.
 public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
     public static let maximumAdditionalLayers = 3
@@ -72,6 +88,8 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
     public var isHidden = false
     public var isLocked = false
     public var keyframes: [VideoKeyframe] = []
+    /// Optional keeps documents written before build 55 source-compatible with synthesized Codable.
+    public var focusKeyframes: [VideoFocusKeyframe]? = nil
 
     public init(id: UUID = UUID(), recordingID: Recording.ID, title: String, start: MediaTime = .zero, sourceRange: MediaTimeRange, placement: VideoPlacement = .inset) {
         self.id = id; self.recordingID = recordingID; self.title = title
@@ -85,16 +103,72 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
             .sorted { $0.time < $1.time }
     }
 
+    public var orderedFocusKeyframes: [VideoFocusKeyframe] {
+        (focusKeyframes ?? []).filter { $0.time.isFinite && $0.time >= 0 && $0.time <= duration }
+            .sorted { $0.time < $1.time }
+    }
+
     public func placement(at timelineTime: Double) -> VideoPlacement {
         let time = max(0, timelineTime - start.seconds)
         var previous = VideoKeyframe(time: 0, placement: placement)
+        var result = placement
         for frame in orderedKeyframes {
             if time < frame.time {
-                return previous.placement.interpolated(to: frame.placement, fraction: (time - previous.time) / max(0.001, frame.time - previous.time))
+                result = previous.placement.interpolated(to: frame.placement, fraction: (time - previous.time) / max(0.001, frame.time - previous.time))
+                return applyingFocus(to: result, at: time)
             }
             previous = frame
         }
-        return previous.placement.bounded
+        return applyingFocus(to: previous.placement.bounded, at: time)
+    }
+
+    private func applyingFocus(to placement: VideoPlacement, at time: Double) -> VideoPlacement {
+        let frames = orderedFocusKeyframes
+        guard var previous = frames.first else { return placement }
+        var focus = previous
+        for frame in frames.dropFirst() {
+            if time < frame.time {
+                let fraction = min(max((time - previous.time) / max(0.001, frame.time - previous.time), 0), 1)
+                focus = VideoFocusKeyframe(
+                    time: time,
+                    x: previous.x + (frame.x - previous.x) * fraction,
+                    y: previous.y + (frame.y - previous.y) * fraction
+                )
+                break
+            }
+            previous = frame
+            focus = frame
+        }
+        var result = placement
+        result.focusX = min(max(focus.x, 0), 1)
+        result.focusY = min(max(focus.y, 0), 1)
+        return result.bounded
+    }
+
+    /// Build 54 stored tracking points as placement animation. Move those points to their own
+    /// channel before the user edits the rectangle, otherwise it springs back during playback.
+    public mutating func separateLegacyTracking() {
+        guard focusKeyframes == nil, placement.focusX != nil || keyframes.contains(where: { $0.placement.focusX != nil }) else { return }
+        let baseFocus = VideoFocusKeyframe(time: 0, x: placement.focusX ?? 0.5, y: placement.focusY ?? 0.5)
+        focusKeyframes = [baseFocus] + keyframes.compactMap { frame in
+            guard frame.placement.focusX != nil || frame.placement.focusY != nil else { return nil }
+            return VideoFocusKeyframe(time: frame.time, x: frame.placement.focusX ?? 0.5, y: frame.placement.focusY ?? 0.5)
+        }
+        func stripped(_ value: VideoPlacement) -> VideoPlacement {
+            var value = value
+            value.focusX = nil
+            value.focusY = nil
+            return value
+        }
+        placement = stripped(placement)
+        keyframes = keyframes.map { frame in
+            var frame = frame
+            frame.placement = stripped(frame.placement)
+            return frame
+        }
+        // Smart reframe generated identical layout frames. They are crop samples, not intentional
+        // motion, so remove them while preserving genuine position/size animation.
+        if keyframes.allSatisfy({ stripped($0.placement) == placement }) { keyframes = [] }
     }
 
     /// Trimming rebases motion too: the first retained frame must not jump to the old position.
@@ -106,6 +180,9 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
         start = start + MediaTime(seconds: amount)
         placement = newPlacement
         keyframes = keyframes.filter { $0.time > amount }.map {
+            var frame = $0; frame.time -= amount; return frame
+        }
+        focusKeyframes = orderedFocusKeyframes.filter { $0.time > amount }.map {
             var frame = $0; frame.time -= amount; return frame
         }
     }

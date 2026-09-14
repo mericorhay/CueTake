@@ -834,6 +834,23 @@
         }
       }
     },
+    "editor.ai.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI editing is off. Allow cloud AI in Settings → Privacy & AI to use it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI kurgu kapalı. Kullanmak için Ayarlar → Gizlilik ve AI bölümünde bulut AI'a izin ver."
+          }
+        }
+      }
+    },
     "editor.ai.applied %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -7463,6 +7480,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Katmanı oynatmadan yüzü kadrajda tut"
+          }
+        }
+      }
+    },
+    "editor.video.smartReframe.mainHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep faces framed across the primary video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ana videonun tamamında yüzleri kadrajda tut"
           }
         }
       }

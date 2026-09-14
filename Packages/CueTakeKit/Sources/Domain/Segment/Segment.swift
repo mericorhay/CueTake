@@ -24,6 +24,8 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     public var playback: ClipPlayback
     /// Everything behind the person replaced, or nil for the footage as shot.
     public var background: ClipBackground? = nil
+    /// Crop targets for the selected take, in seconds from the take's source-range start.
+    public var smartReframe: [VideoFocusKeyframe] = []
     public var metadata: [String: String]
 
     public init(
@@ -67,6 +69,7 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         captions = try container.decodeIfPresent([CaptionCue].self, forKey: .captions) ?? []
         playback = try container.decodeIfPresent(ClipPlayback.self, forKey: .playback) ?? .normal
         background = try? container.decodeIfPresent(ClipBackground.self, forKey: .background)
+        smartReframe = try container.decodeIfPresent([VideoFocusKeyframe].self, forKey: .smartReframe) ?? []
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 
@@ -163,6 +166,7 @@ extension Segment {
             metadata: metadata
         )
         copy.background = background
+        copy.smartReframe = smartReframe
         return copy
     }
 

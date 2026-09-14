@@ -19,4 +19,40 @@ struct VideoPlacementTests {
         #expect(abs((middle.focusX ?? 0) - 0.55) < 0.001)
         #expect(abs((middle.focusY ?? 0) - 0.1) < 0.001)
     }
+
+    @Test func trackingDoesNotAnimateTheLayerRectangle() {
+        var layer = VideoLayer(
+            recordingID: UUID(),
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
+            placement: VideoPlacement(x: 0.1, y: 0.2, width: 0.4, height: 0.3, fillsFrame: true)
+        )
+        layer.focusKeyframes = [
+            VideoFocusKeyframe(time: 0, x: 0.2, y: 0.5),
+            VideoFocusKeyframe(time: 10, x: 0.8, y: 0.5),
+        ]
+
+        let middle = layer.placement(at: 5)
+        #expect(abs(middle.x - 0.1) < 0.001)
+        #expect(abs(middle.y - 0.2) < 0.001)
+        #expect(abs(middle.width - 0.4) < 0.001)
+        #expect(abs((middle.focusX ?? 0) - 0.5) < 0.001)
+    }
+
+    @Test func build54TrackingMigratesAwayFromPlacementAnimation() {
+        var layer = VideoLayer(
+            recordingID: UUID(),
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
+            placement: VideoPlacement(x: 0.1, y: 0.2, width: 0.4, height: 0.3, fillsFrame: true, focusX: 0.2, focusY: 0.5)
+        )
+        layer.keyframes = [
+            VideoKeyframe(time: 5, placement: VideoPlacement(x: 0.1, y: 0.2, width: 0.4, height: 0.3, fillsFrame: true, focusX: 0.8, focusY: 0.5)),
+        ]
+
+        layer.separateLegacyTracking()
+
+        #expect(layer.keyframes.isEmpty)
+        #expect(layer.focusKeyframes?.count == 2)
+        #expect(layer.placement.focusX == nil)
+        #expect(abs(layer.placement(at: 5).x - 0.1) < 0.001)
+    }
 }

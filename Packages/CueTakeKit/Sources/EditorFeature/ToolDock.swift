@@ -18,11 +18,11 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, split, reframe, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .ai, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .ai, .reframe, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -81,15 +81,14 @@ struct ToolDock: View {
         .scrollClipDisabled()
     }
 
-    private var visibleItems: [Item] {
-        Item.allCases.filter { $0 != .ai || aiRequest != nil }
-    }
+    private var visibleItems: [Item] { Item.allCases }
 
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
         case .split: model.canSplitAtPlayhead || (model.selectedVideoLayer.map(model.canSplitVideoLayer) ?? false)
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .background: index != nil
+        case .reframe: model.project.segments.contains { $0.selectedTake != nil }
         case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .text, .image: true
@@ -154,7 +153,7 @@ struct ToolDock: View {
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
-        case .background: glyph.symbolEffect(.bounce, value: count)
+        case .background, .reframe: glyph.symbolEffect(.bounce, value: count)
         case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .filter: glyph.symbolEffect(.bounce, value: count)
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
@@ -166,6 +165,7 @@ struct ToolDock: View {
         switch item {
         case .ai: "sparkles"
         case .background: "person.crop.rectangle"
+        case .reframe: "viewfinder"
         case .text: "textformat"
         case .image: "photo.badge.plus"
         case .video: "rectangle.split.2x1"
@@ -185,6 +185,7 @@ struct ToolDock: View {
         switch item {
         case .ai: String(localized: "editor.dock.ai", bundle: .module)
         case .background: String(localized: "editor.dock.background", bundle: .module)
+        case .reframe: String(localized: "editor.video.smartReframe", bundle: .module)
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
         case .video: String(localized: "editor.dock.video", bundle: .module)
@@ -248,7 +249,7 @@ struct ToolDock: View {
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
-        case .trim, .speed, .ai, .background, .filter, .sound: break
+        case .trim, .speed, .ai, .reframe, .background, .filter, .sound: break
         }
     }
 
@@ -283,16 +284,29 @@ struct ToolDock: View {
             }
 
             Group {
-                if item == .ai, let aiRequest {
-                    AIEditPanel(
-                        model: model,
-                        request: aiRequest,
-                        onStart: { open = nil },
-                        onShowChanges: {
-                            open = nil
-                            onShowAIChanges()
+                if item == .ai {
+                    if let aiRequest {
+                        AIEditPanel(
+                            model: model,
+                            request: aiRequest,
+                            onStart: { open = nil },
+                            onShowChanges: {
+                                open = nil
+                                onShowAIChanges()
+                            }
+                        )
+                    } else {
+                        Label {
+                            Text("editor.ai.unavailable", bundle: .module)
+                                .dsFont(.sans, .regular, 12, lineHeight: 1.4)
+                        } icon: {
+                            Image(systemName: "lock.shield")
+                                .foregroundStyle(DS.Palette.accentWarm)
                         }
-                    )
+                        .foregroundStyle(DS.Palette.ink(0.65))
+                    }
+                } else if item == .reframe {
+                    mainReframePanel
                 } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)
@@ -300,6 +314,7 @@ struct ToolDock: View {
                     case .background: backgroundPanel(at: index)
                     case .filter: filterPanel(at: index)
                     case .sound: soundPanel(at: index)
+                    case .reframe: mainReframePanel
                     default: EmptyView()
                     }
                 }
@@ -313,6 +328,63 @@ struct ToolDock: View {
             in: RoundedRectangle(cornerRadius: 22, style: .continuous),
             border: DS.Palette.accent(0.35)
         )
+    }
+
+    private var mainReframePanel: some View {
+        let analyzing: Bool = {
+            if case .analyzing = model.mainSubjectTracking { return true }
+            return false
+        }()
+        return Button {
+            Task { await model.smartReframeMainVideo() }
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(VideoLayerLane.tint.opacity(0.16))
+                    Image(systemName: "viewfinder")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(VideoLayerLane.tint)
+                        .symbolEffect(.breathe, options: .repeating, isActive: analyzing)
+                }
+                .frame(width: 42, height: 42)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("editor.video.smartReframe", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                    Text(mainTrackingDetail)
+                        .dsFont(.sans, .regular, 10)
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                        .contentTransition(.numericText())
+                }
+                Spacer(minLength: 8)
+                switch model.mainSubjectTracking {
+                case .analyzing(let progress):
+                    ProgressView(value: progress).progressViewStyle(.circular).tint(VideoLayerLane.tint)
+                case .applied:
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(VideoLayerLane.tint)
+                        .symbolEffect(.bounce, value: model.mainSubjectTracking)
+                case .failed, .noFace:
+                    Image(systemName: "arrow.clockwise").foregroundStyle(DS.Palette.accentWarm)
+                case .idle:
+                    Image(systemName: "chevron.right").foregroundStyle(DS.Palette.ink(0.35))
+                }
+            }
+            .padding(11)
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 16))
+        .disabled(analyzing)
+        .animation(DS.Motion.snap, value: model.mainSubjectTracking)
+    }
+
+    private var mainTrackingDetail: String {
+        switch model.mainSubjectTracking {
+        case .idle: String(localized: "editor.video.smartReframe.mainHint", bundle: .module)
+        case .analyzing(let progress): String(localized: "editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
+        case .applied(let points): String(localized: "editor.video.smartReframe.done \(points)", bundle: .module)
+        case .noFace: String(localized: "editor.video.smartReframe.noFace", bundle: .module)
+        case .failed: String(localized: "editor.video.smartReframe.failed", bundle: .module)
+        }
     }
 
     private func trimPanel(at index: Int) -> some View {

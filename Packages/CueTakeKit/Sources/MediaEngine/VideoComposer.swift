@@ -234,9 +234,40 @@ public struct VideoComposer: Sendable {
                 }
 
                 let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
-                let geometry = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: project.mainVideoPlacement, render: renderSize)
-                layer.setTransform(geometry.transform, at: pieceCursor)
-                layer.setCropRectangle(geometry.crop, at: pieceCursor)
+                let pieceTimelineStart = (pieceCursor - cursor).seconds
+                let pieceTimelineEnd = pieceTimelineStart + pieceTarget.seconds
+                let internalTimes = segment.smartReframe.compactMap { frame -> Double? in
+                    let sourceOffset = playback.isReversed
+                        ? max(0, take.sourceRange.duration.seconds - frame.time)
+                        : frame.time
+                    let time = playback.timelineSeconds(forSource: sourceOffset)
+                    return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
+                }
+                let geometryTimes = ([pieceTimelineStart] + internalTimes + [pieceTimelineEnd]).sorted()
+                for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where to > from {
+                    let firstPlacement = Self.mainPlacement(
+                        project.mainVideoPlacement,
+                        focuses: segment.smartReframe,
+                        sourceDuration: take.sourceRange.duration.seconds,
+                        playback: playback,
+                        timelineTime: from
+                    )
+                    let lastPlacement = Self.mainPlacement(
+                        project.mainVideoPlacement,
+                        focuses: segment.smartReframe,
+                        sourceDuration: take.sourceRange.duration.seconds,
+                        playback: playback,
+                        timelineTime: to
+                    )
+                    let first = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: firstPlacement, render: renderSize)
+                    let last = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: lastPlacement, render: renderSize)
+                    let ramp = CMTimeRange(
+                        start: cursor + CMTime(seconds: from, preferredTimescale: 600),
+                        end: cursor + CMTime(seconds: to, preferredTimescale: 600)
+                    )
+                    layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: ramp)
+                    layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: ramp)
+                }
                 layer.setOpacity(Float(project.mainVideoPlacement.bounded.opacity), at: pieceCursor)
                 let instruction = AVMutableVideoCompositionInstruction()
                 instruction.timeRange = CMTimeRange(start: pieceCursor, duration: pieceTarget)
@@ -371,6 +402,42 @@ public struct VideoComposer: Sendable {
             overlays: project.overlays,
             mediaDirectory: mediaDirectory
         )
+    }
+
+    /// The face point at a primary clip's timeline moment. Focus uses source time so changing speed
+    /// keeps it attached to the same frame; reverse simply reads the source track backwards.
+    private static func mainPlacement(
+        _ base: VideoPlacement,
+        focuses: [VideoFocusKeyframe],
+        sourceDuration: Double,
+        playback: ClipPlayback,
+        timelineTime: Double
+    ) -> VideoPlacement {
+        guard !focuses.isEmpty else { return base }
+        let sourceTime = playback.isReversed
+            ? max(0, sourceDuration - playback.sourceSeconds(forTimeline: timelineTime))
+            : playback.sourceSeconds(forTimeline: timelineTime)
+        let ordered = focuses.sorted { $0.time < $1.time }
+        var previous = ordered[0]
+        var focus = previous
+        for frame in ordered.dropFirst() {
+            if sourceTime < frame.time {
+                let fraction = min(max((sourceTime - previous.time) / max(0.001, frame.time - previous.time), 0), 1)
+                focus = VideoFocusKeyframe(
+                    time: sourceTime,
+                    x: previous.x + (frame.x - previous.x) * fraction,
+                    y: previous.y + (frame.y - previous.y) * fraction
+                )
+                break
+            }
+            previous = frame
+            focus = frame
+        }
+        var placement = base
+        placement.fillsFrame = true
+        placement.focusX = focus.x
+        placement.focusY = focus.y
+        return placement.bounded
     }
 
     // MARK: - Audio

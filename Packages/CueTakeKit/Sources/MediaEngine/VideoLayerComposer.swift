@@ -96,6 +96,7 @@ extension VideoComposer {
         for item in tracks {
             boundaries += [item.layer.start.seconds, min(item.layer.end, end)]
             boundaries += item.layer.orderedKeyframes.map { item.layer.start.seconds + $0.time }
+            boundaries += item.layer.orderedFocusKeyframes.map { item.layer.start.seconds + $0.time }
         }
         // Quantise once. Adjacent instructions share the same tick and cannot overlap by rounding.
         let ticks = Set(boundaries.filter { $0.isFinite && $0 >= 0 && $0 <= end }.map { Int64(($0 * 600).rounded()) }).sorted()

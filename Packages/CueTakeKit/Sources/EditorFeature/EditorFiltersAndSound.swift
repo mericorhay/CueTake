@@ -47,6 +47,12 @@ extension EditorModel {
         liveFilters.update(project.effects)
         guard let player, !isPlaying else { return }
         let time = player.currentTime()
+        // AVPlayer may serve its cached paused frame after the live settings change. Reassigning
+        // the composition invalidates that frame so choosing a look has an immediate visible
+        // answer; the underlying composition and playhead stay unchanged.
+        if let item = player.currentItem, let composition = item.videoComposition {
+            item.videoComposition = composition
+        }
         player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
     }
 }
