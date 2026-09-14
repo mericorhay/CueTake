@@ -241,18 +241,6 @@ struct ToolBrowser: View {
                 },
 
                 Item(
-                    id: "freeze",
-                    symbol: "snowflake",
-                    title: "editor.timing.freeze",
-                    note: "editor.tools.freeze.note",
-                    enabled: index != nil,
-                    tint: DS.Palette.lime
-                ) {
-                    if let index { model.toggleFreeze(at: index) }
-                    open(.timing)
-                },
-
-                Item(
                     id: "trim",
                     symbol: "arrow.left.and.right",
                     title: "editor.timing.duration",

@@ -210,16 +210,6 @@ struct SegmentInspector: View {
                 ) {
                     model.updatePlayback(at: index) { $0.isReversed.toggle() }
                 }
-
-                toggle(
-                    "editor.timing.freeze",
-                    symbol: "snowflake",
-                    isOn: segment.playback.freeze != nil,
-                    enabled: true
-                ) {
-                    // The frame under the playhead, held as a clip of its own.
-                    model.toggleFreeze(at: index)
-                }
             }
 
             if let note = SegmentInspector.note(for: segment.playback) {

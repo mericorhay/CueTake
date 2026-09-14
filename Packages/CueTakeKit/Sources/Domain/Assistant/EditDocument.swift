@@ -331,7 +331,7 @@ extension EditDocument {
                     footage: r2(segment.sourceSeconds),
                     speed: abs(playback.speed - 1) > 0.001 ? playback.speed : nil,
                     reversed: playback.isReversed ? true : nil,
-                    freeze: playback.freeze.map { r2($0.seconds) },
+                    freeze: nil,
                     title: segment.title.isEmpty ? nil : segment.title,
                     script: words.isEmpty && !segment.script.isEmpty ? String(segment.script.prefix(400)) : nil,
                     words: words.map { Word(text: $0.text, start: r2($0.range.start.seconds), end: r2($0.range.end.seconds)) },

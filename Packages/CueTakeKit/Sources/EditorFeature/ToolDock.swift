@@ -464,10 +464,6 @@ struct ToolDock: View {
                 toggle("editor.dock.reverse", symbol: "backward.fill", isOn: playback.isReversed, enabled: playback.freeze == nil) {
                     applyPlayback(at: index) { $0.isReversed.toggle() }
                 }
-                toggle("editor.dock.freeze", symbol: "snowflake", isOn: playback.freeze != nil, enabled: true) {
-                    model.pulse(.speed)
-                    withAnimation(DS.Motion.settle) { model.toggleFreeze(at: index) }
-                }
             }
         }
     }

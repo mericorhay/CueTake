@@ -93,24 +93,6 @@ struct TranscriptEditingTests {
         #expect(model.project.segments[1].selectedTake?.transcript?.words.map(\.text) == ["point"])
     }
 
-    @Test func freezingHoldsTheFrameUnderThePlayhead() {
-        let model = model()
-        model.seek(to: 4)
-        model.freezeFrameAtPlayhead(seconds: 2)
-        let segments = model.project.segments
-        #expect(segments.count == 3)
-        #expect(segments[1].playback.freeze?.seconds == 2)
-        // The held frame is the one at four seconds into the take, which starts three into the file.
-        #expect(abs((segments[1].selectedTake?.sourceRange.start.seconds ?? 0) - 7) < 0.01)
-        #expect(abs(model.duration - 12) < 0.01)
-        // One step back, and toggling it off removes the held frame.
-        model.toggleFreeze(at: 1)
-        #expect(model.project.segments.count == 2)
-        model.undo()
-        model.undo()
-        #expect(model.project.segments.count == 1)
-    }
-
     @Test func oneEditCanBeTakenBackWithoutTheOnesAfterIt() {
         let model = model()
         model.addTextOverlay()

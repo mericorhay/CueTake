@@ -98,6 +98,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
         // Backgrounds used to be a setting of the whole clip.
         adoptClipBackgrounds()
+        // Freeze is gone from the app: held frames it made are removed, frozen clips play.
+        removeFreezes()
     }
 
     public var locale: Locale { Locale(identifier: localeIdentifier) }
@@ -185,5 +187,19 @@ extension Project {
     public mutating func removeAudio(id: AudioClip.ID) {
         audio.removeAll { $0.id == id }
         updatedAt = .now
+    }
+}
+
+extension Project {
+    /// Takes out every freeze: clips that were only a held frame, and the hold on any other clip.
+    mutating func removeFreezes() {
+        if segments.count > 1 {
+            let kept = segments.filter { $0.metadata["freezeFrame"] != "1" }
+            if !kept.isEmpty { segments = kept }
+        }
+        for index in segments.indices where segments[index].playback.freeze != nil {
+            segments[index].playback.freeze = nil
+            segments[index].metadata["freezeFrame"] = nil
+        }
     }
 }

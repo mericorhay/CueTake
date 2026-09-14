@@ -867,7 +867,7 @@ extension EditorModel {
             }
         }
 
-        // Speed, direction, freeze — for every piece of the clip
+        // Speed and direction — for every piece of the clip
         for op in ops {
             let clip: String
             let symbol: String
@@ -875,13 +875,10 @@ extension EditorModel {
             switch op {
             case .setSpeed(let id, let speed):
                 clip = id; symbol = "gauge.with.dots.needle.67percent"
-                change = { $0.speed = speed; $0.freeze = nil }
+                change = { $0.speed = speed }
             case .reverse(let id, let on):
                 clip = id; symbol = "backward.fill"
                 change = { $0.isReversed = on }
-            case .freeze(let id, let seconds):
-                clip = id; symbol = "snowflake"
-                change = { $0.freeze = seconds.map { MediaTime(seconds: $0) } }
             default:
                 continue
             }
@@ -1322,40 +1319,6 @@ extension EditorModel {
             }
         }
 
-        // Held frames, last: they add clips, which would move every later time the plan names. The
-        // moment is turned into a clip and a second of its footage while the document's times still
-        // hold, then found again through the pieces cuts made of that clip.
-        for op in ops {
-            guard case .freezeFrame(let at, let seconds) = op else { continue }
-            var anchor: (clip: String, footage: Double)?
-            var running = 0.0
-            for segment in project.segments {
-                if at >= running, at < running + segment.barWeight, segment.playback.freeze == nil {
-                    anchor = (segment.id.uuidString, segment.playback.sourceSeconds(forTimeline: at - running))
-                    break
-                }
-                running += segment.barWeight
-            }
-            guard let anchor else { skipped.append(op.type); continue }
-            add("snowflake", describe(op), op, locate: { m in
-                guard let i = m.index(ofClip: anchor.clip) else { return (nil, nil) }
-                return (m.timelineSeconds(clip: i, footage: anchor.footage), nil)
-            }) { m in
-                let pieces = splits.pieces(of: anchor.clip)
-                guard let p = pieces.lastIndex(where: { $0.offset <= anchor.footage }),
-                      let i = m.index(ofClip: pieces[p].id)
-                else { return nil }
-                let segment = m.project.segments[i]
-                let local = anchor.footage - pieces[p].offset
-                guard local >= 0, local <= segment.sourceSeconds else { return nil }
-                let count = m.project.segments.count
-                m.seek(to: m.start(at: i) + segment.playback.timelineSeconds(forSource: local))
-                m.freezeFrameAtPlayhead(seconds: min(max(seconds ?? 2, 0.3), 10))
-                guard m.project.segments.count > count, let held = m.inspectedSegment else { return nil }
-                return [.clipOrder, .clip(held)] + m.project.segments.map { .clip($0.id) }
-            }
-        }
-
         return (steps, skipped)
     }
 
@@ -1486,7 +1449,6 @@ extension EditorModel {
         case .trimPauses: "waveform.badge.minus"
         case .setSpeed: "gauge.with.dots.needle.67percent"
         case .reverse: "backward.fill"
-        case .freeze: "snowflake"
         case .duplicateClip: "plus.square.on.square"
         case .deleteClip: "trash"
         case .reorder: "arrow.left.arrow.right"
@@ -1507,7 +1469,6 @@ extension EditorModel {
         case .setSound: "waveform"
         case .retimeEffect: "arrow.left.and.right"
         case .splitEffect, .splitVideo, .splitOverlay: "scissors"
-        case .freezeFrame: "snowflake"
         case .updateVideo, .layoutVideos: "rectangle.inset.filled"
         case .keyframeVideo: "diamond"
         case .removeVideo: "trash"
@@ -1535,8 +1496,6 @@ extension EditorModel {
             L("editor.ai.op.speed \(clipNumber(clip)) \(String(format: "%.2g", speed))")
         case .reverse(let clip, _):
             L("editor.ai.op.reverse \(clipNumber(clip))")
-        case .freeze(let clip, _):
-            L("editor.ai.op.freeze \(clipNumber(clip))")
         case .deleteClip(let clip):
             L("editor.ai.op.delete \(clipNumber(clip))")
         case .reorder:
@@ -1603,8 +1562,6 @@ extension EditorModel {
             L("editor.ai.op.retimeEffect")
         case .splitEffect(_, let at), .splitVideo(_, let at), .splitOverlay(_, let at):
             L("editor.ai.op.splitAt \(Self.seconds(at))")
-        case .freezeFrame(let at, let seconds):
-            L("editor.ai.op.freezeFrame \(Self.seconds(at)) \(Self.seconds(seconds ?? 2))")
         case .updateVideo:
             L("editor.ai.op.video")
         case .keyframeVideo(_, let at, _):

@@ -40,7 +40,6 @@ public struct EditPlan: Codable, Sendable, Equatable {
         // Playback
         case setSpeed(clip: String, speed: Double)
         case reverse(clip: String, on: Bool)
-        case freeze(clip: String, seconds: Double?)
 
         // Captions
         case setCaptionText(caption: String, text: String)
@@ -93,8 +92,6 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case retimeEffect(effect: String, from: Double?, to: Double?)
         /// Cuts an effect in two at a moment of the finished video.
         case splitEffect(effect: String, at: Double)
-        /// Holds the frame at a moment of the finished video for `seconds`.
-        case freezeFrame(at: Double, seconds: Double?)
         /// Changes an added video: when, which part, where, how loud.
         case updateVideo(video: String, patch: VideoPatch)
         /// Makes an added video move: its place at a moment of the finished video.
@@ -124,7 +121,6 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .reorder: "reorder"
             case .setSpeed: "setSpeed"
             case .reverse: "reverse"
-            case .freeze: "freeze"
             case .setCaptionText: "setCaptionText"
             case .captionTiming: "captionTiming"
             case .splitCaption: "splitCaption"
@@ -153,7 +149,6 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .setSound: "setSound"
             case .retimeEffect: "retimeEffect"
             case .splitEffect: "splitEffect"
-            case .freezeFrame: "freezeFrame"
             case .updateVideo: "updateVideo"
             case .keyframeVideo: "keyframeVideo"
             case .layoutVideos: "layoutVideos"
@@ -383,9 +378,6 @@ extension EditPlan.Operation: Codable {
         case "reverse":
             guard let clip = f.string("clip") else { self = unknown; return }
             self = .reverse(clip: clip, on: f.flag("on") ?? true)
-        case "freeze":
-            guard let clip = f.string("clip") else { self = unknown; return }
-            self = .freeze(clip: clip, seconds: f.number("seconds"))
         case "setCaptionText":
             guard let caption = f.string("caption"), let text = f.string("text") else { self = unknown; return }
             self = .setCaptionText(caption: caption, text: text)
@@ -515,9 +507,6 @@ extension EditPlan.Operation: Codable {
         case "splitEffect":
             guard let effect = f.string("effect"), let at = f.number("at") else { self = unknown; return }
             self = .splitEffect(effect: effect, at: at)
-        case "freezeFrame":
-            guard let at = f.number("at") else { self = unknown; return }
-            self = .freezeFrame(at: at, seconds: f.number("seconds"))
         case "updateVideo":
             guard let video = f.string("video") else { self = unknown; return }
             let patch = Self.videoPatch(f)
@@ -614,8 +603,6 @@ extension EditPlan.Operation: Codable {
             try put("clip", clip); try put("speed", speed)
         case .reverse(let clip, let on):
             try put("clip", clip); try put("on", on)
-        case .freeze(let clip, let seconds):
-            try put("clip", clip); try put("seconds", seconds)
         case .setCaptionText(let caption, let text):
             try put("caption", caption); try put("text", text)
         case .captionTiming(let caption, let start, let end):
@@ -679,8 +666,6 @@ extension EditPlan.Operation: Codable {
             try put("effect", effect); try put("from", from); try put("to", to)
         case .splitEffect(let effect, let at):
             try put("effect", effect); try put("at", at)
-        case .freezeFrame(let at, let seconds):
-            try put("at", at); try put("seconds", seconds)
         case .updateVideo(let video, let p), .keyframeVideo(let video, _, let p):
             try put("video", video)
             if case .keyframeVideo(_, let at, _) = self { try put("at", at) }
@@ -724,7 +709,6 @@ extension EditPlan {
             case .reorder(let clips): .reorder(clips: clips.map(refs.clip))
             case .setSpeed(let clip, let speed): .setSpeed(clip: refs.clip(clip), speed: speed)
             case .reverse(let clip, let on): .reverse(clip: refs.clip(clip), on: on)
-            case .freeze(let clip, let seconds): .freeze(clip: refs.clip(clip), seconds: seconds)
             case .setCaptionText(let caption, let text): .setCaptionText(caption: refs.caption(caption), text: text)
             case .captionTiming(let caption, let start, let end): .captionTiming(caption: refs.caption(caption), start: start, end: end)
             case .splitCaption(let caption): .splitCaption(caption: refs.caption(caption))
@@ -756,7 +740,7 @@ extension EditPlan {
             case .splitVideo(let video, let at): .splitVideo(video: refs.video(video), at: at)
             case .splitOverlay(let overlay, let at): .splitOverlay(overlay: refs.overlay(overlay), at: at)
             case .useTranscript(let clip, let source): .useTranscript(clip: clip.map(refs.clip), source: source)
-            case .freezeFrame, .layoutVideos, .mainVolume: op
+            case .layoutVideos, .mainVolume: op
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }
         })

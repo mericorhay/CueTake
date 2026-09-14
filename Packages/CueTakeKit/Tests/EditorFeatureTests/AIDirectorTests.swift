@@ -42,7 +42,7 @@ struct AIDirectorTests {
         return false
     }
 
-    @Test func theAIUsesFiltersSoundEffectsAndHeldFrames() throws {
+    @Test func theAIUsesFiltersAndSoundEffects() throws {
         let model = model()
         let text = """
         {"summary":"s","operations":[
@@ -55,14 +55,15 @@ struct AIDirectorTests {
         let plan = try EditPlan.decode(from: text)
         #expect(plan.operations.count == 4)
         let outcome = model.apply(plan)
-        #expect(outcome.skipped.isEmpty)
+        // Freezing is not a tool any more: asked for, it is skipped.
+        #expect(outcome.skipped == ["freezeFrame"])
         let filter = model.project.effects.first { $0.filter != nil }
         #expect(filter?.filter?.look == .cinematic)
         #expect(abs((filter?.filter?.intensity ?? 0) - 0.7) < 0.001)
         #expect(abs((filter?.end ?? 0) - 4) < 0.01)
         let sound = model.project.effects.first { $0.sound != nil }
         #expect(sound?.sound?.preset == .echo && sound?.sound?.volume == -3)
-        #expect(model.project.segments.contains { $0.playback.freeze?.seconds == 1.5 })
+        #expect(!model.project.segments.contains { $0.playback.freeze != nil })
         #expect(model.project.mainVideoVolume == 0.8)
         // One undo takes the whole run back.
         model.undo()
