@@ -236,6 +236,14 @@ public struct VideoComposer: Sendable {
                 let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
                 let pieceTimelineStart = (pieceCursor - cursor).seconds
                 let pieceTimelineEnd = pieceTimelineStart + pieceTarget.seconds
+                if segment.smartReframe.isEmpty {
+                    // Keep the long-standing static instruction for ordinary clips. A ramp with
+                    // identical endpoints is needlessly rejected by some iOS AVFoundation builds
+                    // when the source has been time-scaled.
+                    let geometry = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: project.mainVideoPlacement, render: renderSize)
+                    layer.setTransform(geometry.transform, at: pieceCursor)
+                    layer.setCropRectangle(geometry.crop, at: pieceCursor)
+                }
                 let internalTimes = segment.smartReframe.compactMap { frame -> Double? in
                     let sourceOffset = playback.isReversed
                         ? max(0, take.sourceRange.duration.seconds - frame.time)
@@ -244,7 +252,7 @@ public struct VideoComposer: Sendable {
                     return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
                 }
                 let geometryTimes = ([pieceTimelineStart] + internalTimes + [pieceTimelineEnd]).sorted()
-                for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where to > from {
+                for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where !segment.smartReframe.isEmpty && to > from {
                     let firstPlacement = Self.mainPlacement(
                         project.mainVideoPlacement,
                         focuses: segment.smartReframe,
