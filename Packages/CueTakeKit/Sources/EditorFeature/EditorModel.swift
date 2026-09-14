@@ -131,7 +131,7 @@ public final class EditorModel {
         self.player = player
         // The new player starts where the playhead is, not at zero, and keeps playing if it was.
         playhead = min(playhead, duration)
-        player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
+        player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
         if wasPlaying { player.play() }
     }
 
