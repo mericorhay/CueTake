@@ -460,7 +460,8 @@ public struct VideoComposer: Sendable {
                             : (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
                         confidence: previous.confidence == nil && frame.confidence == nil
                             ? nil
-                            : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
+                            : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction,
+                        trackingState: fraction < 0.5 ? previous.trackingState : frame.trackingState
                     )
                     break
                 }

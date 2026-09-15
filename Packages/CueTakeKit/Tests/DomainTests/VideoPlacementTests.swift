@@ -61,6 +61,23 @@ struct VideoPlacementTests {
 
         #expect(frame.confidence == nil)
         #expect(frame.zoom == nil)
+        #expect(frame.trackingState == nil)
+    }
+
+    @Test func focusRecoveryStateSurvivesProjectPersistence() throws {
+        let original = VideoFocusKeyframe(
+            time: 2.4,
+            x: 0.42,
+            y: 0.58,
+            confidence: 0.71,
+            trackingState: .reacquired
+        )
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(VideoFocusKeyframe.self, from: data)
+
+        #expect(decoded.trackingState == .reacquired)
+        #expect(decoded.confidence == 0.71)
     }
 
     @Test func build54TrackingMigratesAwayFromPlacementAnimation() {

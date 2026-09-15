@@ -222,7 +222,8 @@ extension Project {
                     x: $0.x,
                     y: $0.y,
                     zoom: $0.zoom,
-                    confidence: $0.confidence
+                    confidence: $0.confidence,
+                    trackingState: $0.trackingState
                 )
             }
             let kept = (recordings[recording].reframe ?? []).filter {

@@ -400,7 +400,7 @@ private struct SubjectTrackConfidenceSpine: View {
     let onSelect: (SubjectTrackReviewPoint) -> Void
 
     private var weakPoints: [SubjectTrackReviewPoint] {
-        points.filter { $0.confidence < 0.6 }
+        points.filter(\.needsReview)
     }
 
     var body: some View {
@@ -429,7 +429,7 @@ private struct SubjectTrackConfidenceSpine: View {
                             let rect = CGRect(x: x - 1.5, y: (size.height - height) / 2, width: 3, height: height)
                             context.fill(
                                 Capsule().path(in: rect),
-                                with: .color(point.confidence < 0.6 ? DS.Palette.accentWarm : DS.Palette.lime)
+                                with: .color(point.needsReview ? DS.Palette.accentWarm : DS.Palette.lime)
                             )
                         }
                     }

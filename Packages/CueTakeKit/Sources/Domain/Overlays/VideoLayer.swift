@@ -64,6 +64,12 @@ public struct VideoKeyframe: Hashable, Sendable, Codable, Identifiable {
     public init(time: Double, placement: VideoPlacement) { self.time = time; self.placement = placement }
 }
 
+public enum VideoFocusTrackingState: String, Hashable, Sendable, Codable {
+    case tracking
+    case searching
+    case reacquired
+}
+
 /// A crop target inside the source picture. Kept separate from placement animation so tracking a
 /// face can never move or resize the rectangle the editor positioned on the canvas.
 public struct VideoFocusKeyframe: Hashable, Sendable, Codable, Identifiable {
@@ -76,13 +82,24 @@ public struct VideoFocusKeyframe: Hashable, Sendable, Codable, Identifiable {
     public var zoom: Double?
     /// Vision's confidence at this source frame. Nil means the project predates confidence review.
     public var confidence: Double?
+    /// Optional keeps build 68 projects source-compatible. Searching/reacquired points make a
+    /// temporary occlusion visible without changing how old tracks render.
+    public var trackingState: VideoFocusTrackingState?
 
-    public init(time: Double, x: Double, y: Double, zoom: Double? = nil, confidence: Double? = nil) {
+    public init(
+        time: Double,
+        x: Double,
+        y: Double,
+        zoom: Double? = nil,
+        confidence: Double? = nil,
+        trackingState: VideoFocusTrackingState? = nil
+    ) {
         self.time = time
         self.x = x
         self.y = y
         self.zoom = zoom
         self.confidence = confidence
+        self.trackingState = trackingState
     }
 }
 
@@ -150,7 +167,8 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
                         : (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
                     confidence: previous.confidence == nil && frame.confidence == nil
                         ? nil
-                        : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
+                        : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction,
+                    trackingState: fraction < 0.5 ? previous.trackingState : frame.trackingState
                 )
                 break
             }

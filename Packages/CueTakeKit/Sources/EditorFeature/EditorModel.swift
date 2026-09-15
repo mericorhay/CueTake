@@ -19,12 +19,34 @@ public struct SubjectTrackReviewPoint: Identifiable, Hashable, Sendable {
     public var timelineTime: Double
     public var confidence: Double
     public var progress: Double
+    public var trackingState: VideoFocusTrackingState?
 
-    public init(id: UUID, timelineTime: Double, confidence: Double, progress: Double) {
+    public init(
+        id: UUID,
+        timelineTime: Double,
+        confidence: Double,
+        progress: Double,
+        trackingState: VideoFocusTrackingState? = nil
+    ) {
         self.id = id
         self.timelineTime = timelineTime
         self.confidence = confidence
         self.progress = progress
+        self.trackingState = trackingState
+    }
+
+    public var needsReview: Bool {
+        confidence < 0.6 || trackingState == .searching
+    }
+}
+
+private extension SubjectFocusState {
+    var domainValue: VideoFocusTrackingState {
+        switch self {
+        case .tracking: .tracking
+        case .searching: .searching
+        case .reacquired: .reacquired
+        }
     }
 }
 
@@ -1117,7 +1139,13 @@ extension EditorModel {
                 return frame
             }
             project.videoLayers[index].focusKeyframes = focuses.map {
-                VideoFocusKeyframe(time: $0.time, x: mirrored ? 1 - $0.x : $0.x, y: $0.y, confidence: $0.confidence)
+                VideoFocusKeyframe(
+                    time: $0.time,
+                    x: mirrored ? 1 - $0.x : $0.x,
+                    y: $0.y,
+                    confidence: $0.confidence,
+                    trackingState: $0.state.domainValue
+                )
             }
             project.updatedAt = .now
             subjectTracking = .applied(focuses.count)
@@ -1210,7 +1238,8 @@ extension EditorModel {
                     x: $0.x,
                     y: $0.y,
                     zoom: min(max(zoom, 1.1), 1.2),
-                    confidence: $0.confidence
+                    confidence: $0.confidence,
+                    trackingState: $0.state.domainValue
                 )
             }
             // A local correction only replaces the span Vision actually recovered. If tracking
@@ -1255,7 +1284,8 @@ extension EditorModel {
                 id: frame.id,
                 timelineTime: timelineStart + localTime,
                 confidence: min(max(frame.confidence ?? 1, 0), 1),
-                progress: min(max(localTime / max(segment.barWeight, 0.001), 0), 1)
+                progress: min(max(localTime / max(segment.barWeight, 0.001), 0), 1),
+                trackingState: frame.trackingState
             )
         }.sorted { $0.progress < $1.progress }
     }
@@ -1449,7 +1479,13 @@ extension EditorModel {
                         self?.mainSubjectTracking = .analyzing((Double(done) + local) / Double(spans.count))
                     }
                     tracks[span.recording.id] = focuses.map {
-                        VideoFocusKeyframe(time: span.start + $0.time, x: $0.x, y: $0.y, confidence: $0.confidence)
+                        VideoFocusKeyframe(
+                            time: span.start + $0.time,
+                            x: $0.x,
+                            y: $0.y,
+                            confidence: $0.confidence,
+                            trackingState: $0.state.domainValue
+                        )
                     }
                 } catch SubjectTrackingError.noFace {
                     continue
