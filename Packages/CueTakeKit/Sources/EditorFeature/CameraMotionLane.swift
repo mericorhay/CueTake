@@ -2,55 +2,148 @@ import DesignSystem
 import Domain
 import SwiftUI
 
-/// A compact camera ribbon. It makes automatic movement visible without exposing a graph editor or
-/// stealing height from the picture. The lane is informational in this first slice; editing stays
-/// in the Zoom panel directly above it.
+/// A compact camera ribbon. Tap opens the move in the Zoom panel; once selected, the body moves it
+/// and either edge changes its range. The visible bar stays slim while its interaction row is 44pt.
 struct CameraMotionLane: View {
     @Bindable var model: EditorModel
     let scale: Double
+    var onOpen: (Double) -> Void = { _ in }
 
-    static let height: CGFloat = 28
+    static let height: CGFloat = 44
+    private static let space = "cameraMotionLane"
+    @State private var selectedMove: String?
 
     private struct DisplayMove: Identifiable {
         var id: String
+        var recipeID: CameraMotionRecipe.ID
+        var recordingID: Recording.ID
         var start: Double
         var duration: Double
         var kind: CameraMotionRecipe.Kind
+        var segmentStart: Double
+        var segmentEnd: Double
+        var takeStart: Double
+        var takeLength: Double
+        var playback: ClipPlayback
+        var editable: Bool
+
+        var end: Double { start + duration }
+        var middle: Double { start + duration / 2 }
+
+        func sourceTime(at timelineTime: Double) -> Double {
+            let local = min(max(timelineTime - segmentStart, 0), segmentEnd - segmentStart)
+            return takeStart + playback.sourceOffset(forTimeline: local, sourceLength: takeLength)
+        }
     }
 
     var body: some View {
         ZStack(alignment: .leading) {
             Capsule()
                 .fill(DS.Palette.hairline(0.045))
+                .frame(height: 28)
                 .frame(height: Self.height)
 
             ForEach(moves) { move in
-                HStack(spacing: 5) {
-                    Image(systemName: symbol(move.kind))
-                        .font(.system(size: 9, weight: .bold))
-                    if move.duration * scale > 72 {
-                        Text(title(move.kind), bundle: .module)
-                            .dsFont(.sans, .semibold, 9)
-                            .lineLimit(1)
-                    }
-                }
-                .foregroundStyle(DS.Palette.inkInverse)
-                .padding(.horizontal, 8)
-                .frame(width: max(CGFloat(move.duration * scale) - 2, 24), height: Self.height - 4, alignment: .leading)
-                .background(
-                    Capsule().fill(
-                        DS.gradient(100, [DS.Palette.lime, DS.Palette.accentWarm])
-                    )
-                )
+                moveBar(move)
+                .frame(width: max(CGFloat(move.duration * scale) - 2, 24), height: Self.height)
                 .offset(x: CGFloat(move.start * scale))
+                .zIndex(selectedMove == move.id ? 1 : 0)
                 .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
             }
         }
         .frame(height: Self.height)
-        .allowsHitTesting(false)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("editor.cameraLane.accessibility \(moves.count)", bundle: .module))
+        .coordinateSpace(.named(Self.space))
         .animation(DS.Motion.settle, value: moves.map(\.id))
+        .onChange(of: moves.map(\.id)) { _, ids in
+            if let selectedMove, !ids.contains(selectedMove) { self.selectedMove = nil }
+        }
+    }
+
+    @ViewBuilder
+    private func moveBar(_ move: DisplayMove) -> some View {
+        let selected = selectedMove == move.id
+        let bar = HStack(spacing: 5) {
+            Image(systemName: symbol(move.kind))
+                .font(.system(size: 9, weight: .bold))
+            if move.duration * scale > 72 {
+                Text(title(move.kind), bundle: .module)
+                    .dsFont(.sans, .semibold, 9)
+                    .lineLimit(1)
+            }
+        }
+        .foregroundStyle(DS.Palette.inkInverse)
+        .padding(.horizontal, selected ? 12 : 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 28)
+        .background(Capsule().fill(DS.gradient(100, [DS.Palette.lime, DS.Palette.accentWarm])))
+        .overlay { Capsule().stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0) }
+        .frame(height: Self.height)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+
+        if move.editable {
+            bar.timelineBarEditing(
+                model: model,
+                isSelected: selected,
+                start: move.start,
+                end: move.end,
+                scale: scale,
+                space: Self.space,
+                edits: TimelineBarEdits(
+                    move: { start in moveRecipe(move, to: start) },
+                    trimStart: { start in trim(move, visibleStart: start) },
+                    trimEnd: { end in trim(move, visibleEnd: end) }
+                ),
+                onTap: { select(move) }
+            )
+            .accessibilityHint(Text("editor.cameraLane.editHint", bundle: .module))
+        } else {
+            bar
+                .contentShape(Rectangle())
+                .onTapGesture { select(move) }
+        }
+    }
+
+    private func select(_ move: DisplayMove) {
+        withAnimation(DS.Motion.snap) { selectedMove = move.id }
+        onOpen(move.middle)
+    }
+
+    private func moveRecipe(_ move: DisplayMove, to proposedStart: Double) {
+        let start = min(max(proposedStart, move.segmentStart), max(move.segmentStart, move.segmentEnd - move.duration))
+        let first = move.sourceTime(at: start)
+        let last = move.sourceTime(at: start + move.duration)
+        model.setCameraMotionRange(
+            recordingID: move.recordingID,
+            motionID: move.recipeID,
+            sourceStart: min(first, last),
+            sourceEnd: max(first, last),
+            coalescing: "move"
+        )
+    }
+
+    private func trim(_ move: DisplayMove, visibleStart: Double) {
+        let edge = min(max(visibleStart, move.segmentStart), move.end - 0.1)
+        let source = move.sourceTime(at: edge)
+        model.setCameraMotionEdge(
+            recordingID: move.recordingID,
+            motionID: move.recipeID,
+            sourceStart: move.playback.isReversed ? nil : source,
+            sourceEnd: move.playback.isReversed ? source : nil,
+            coalescing: "start"
+        )
+    }
+
+    private func trim(_ move: DisplayMove, visibleEnd: Double) {
+        let edge = max(min(visibleEnd, move.segmentEnd), move.start + 0.1)
+        let source = move.sourceTime(at: edge)
+        model.setCameraMotionEdge(
+            recordingID: move.recordingID,
+            motionID: move.recipeID,
+            sourceStart: move.playback.isReversed ? source : nil,
+            sourceEnd: move.playback.isReversed ? nil : source,
+            coalescing: "end"
+        )
     }
 
     private var moves: [DisplayMove] {
@@ -76,9 +169,19 @@ struct CameraMotionLane: View {
                 guard let first = localTimeline(sourceStart), let last = localTimeline(sourceEnd) else { continue }
                 result.append(DisplayMove(
                     id: "\(segment.id.uuidString)-\(recipe.id.uuidString)",
+                    recipeID: recipe.id,
+                    recordingID: recording.id,
                     start: timelineStart + min(first, last),
                     duration: abs(last - first),
-                    kind: recipe.kind.facingTimeline(isReversed: segment.playback.isReversed)
+                    kind: recipe.kind.facingTimeline(isReversed: segment.playback.isReversed),
+                    segmentStart: timelineStart,
+                    segmentEnd: timelineStart + segment.barWeight,
+                    takeStart: takeStart,
+                    takeLength: takeLength,
+                    playback: segment.playback,
+                    // A recipe crossing a split appears as two clipped ribbons. It remains
+                    // selectable, but neither fragment pretends it can move the whole range.
+                    editable: recipe.start >= takeStart - 0.0001 && recipe.end <= takeEnd + 0.0001
                 ))
             }
         }

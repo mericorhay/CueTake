@@ -51,4 +51,64 @@ struct CameraMotionEditorTests {
         #expect(abs(recipe.sourceRange.duration.seconds - 10) < 0.001)
         #expect(model.project.mainVideoPlacement.zoom == nil)
     }
+
+    @Test func cameraRangeDragIsOneUndoableSourceTimeEdit() throws {
+        let model = model()
+        model.seek(to: 2)
+        model.applyCameraMotion(.pushIn, amount: 0.15)
+        let recording = try #require(model.project.recordings.first)
+        let recipe = try #require(recording.cameraMotions?.first)
+        model.past.removeAll()
+
+        model.setCameraMotionRange(
+            recordingID: recording.id,
+            motionID: recipe.id,
+            sourceStart: 5,
+            sourceEnd: 9,
+            coalescing: "move"
+        )
+        model.setCameraMotionRange(
+            recordingID: recording.id,
+            motionID: recipe.id,
+            sourceStart: 6,
+            sourceEnd: 10,
+            coalescing: "move"
+        )
+
+        let moved = try #require(model.project.recordings.first?.cameraMotions?.first)
+        #expect(abs(moved.start - 6) < 0.001)
+        #expect(abs(moved.end - 10) < 0.001)
+        #expect(model.changes.count == 1)
+
+        model.undo()
+        let restored = try #require(model.project.recordings.first?.cameraMotions?.first)
+        #expect(abs(restored.start - 3) < 0.001)
+        #expect(abs(restored.end - 13) < 0.001)
+    }
+
+    @Test func changingSelectedMoveKeepsItsAuthoredRange() throws {
+        let model = model()
+        model.seek(to: 2)
+        model.applyCameraMotion(.pushIn, amount: 0.15)
+        let recording = try #require(model.project.recordings.first)
+        let recipe = try #require(recording.cameraMotions?.first)
+        model.setCameraMotionRange(
+            recordingID: recording.id,
+            motionID: recipe.id,
+            sourceStart: 5,
+            sourceEnd: 9
+        )
+
+        // Timeline second 3 points at source second 6 for this take.
+        model.seek(to: 3)
+        model.applyCameraMotion(.punch, amount: 0.2)
+        model.setCameraMotionFeel(.calm)
+
+        let changed = try #require(model.project.recordings.first?.cameraMotions?.first)
+        #expect(changed.id == recipe.id)
+        #expect(changed.kind == .punch)
+        #expect(changed.feel == .calm)
+        #expect(abs(changed.start - 5) < 0.001)
+        #expect(abs(changed.end - 9) < 0.001)
+    }
 }

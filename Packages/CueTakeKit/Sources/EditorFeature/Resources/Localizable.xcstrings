@@ -8113,6 +8113,57 @@
         }
       }
     },
+    "editor.cameraLane.editHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to move. Pull either edge to change the range."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşımak için sürükle. Aralığı değiştirmek için iki uçtan birini çek."
+          }
+        }
+      }
+    },
+    "editor.change.zoomFeel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera movement changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi değişti"
+          }
+        }
+      }
+    },
+    "editor.change.zoomRange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera move timing changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi zamanlandı"
+          }
+        }
+      }
+    },
     "editor.change.zoomRecipe": {
       "extractionState": "manual",
       "localizations": {
@@ -8143,6 +8194,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kamera hareketi kaldırıldı"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FEEL"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HİS"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.calm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calm"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakin"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.energetic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energetic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.natural": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Natural"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doğal"
           }
         }
       }

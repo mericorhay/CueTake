@@ -1358,13 +1358,27 @@ extension EditorModel {
         record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
         let range = target.take.sourceRange
         let reversed = segmentAtPlayhead.map { project.segments[$0.index].playback.isReversed } ?? false
+        let sourceKind = kind.facingTimeline(isReversed: reversed)
+        if let selected = project.recordings[recordingIndex].cameraMotions?.lastIndex(where: {
+            target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
+        }) {
+            // Changing the move from its inspector edits the ribbon the user selected. Replacing
+            // it with a whole-take recipe made a carefully trimmed camera move expand again.
+            project.recordings[recordingIndex].cameraMotions?[selected].kind = sourceKind
+            project.recordings[recordingIndex].cameraMotions?[selected].amount = min(max(amount, 0.02), 1)
+            project.recordings[recordingIndex].cameraMotions?[selected].feel = feel
+            project.mainVideoPlacement.zoom = nil
+            project.mainVideoPlacement.fillsFrame = true
+            project.updatedAt = .now
+            return
+        }
         let existing = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
             $0.end <= range.start.seconds || $0.start >= range.end.seconds
         }
         let recipe = CameraMotionRecipe(
             sourceRange: range,
             amount: amount,
-            kind: kind.facingTimeline(isReversed: reversed),
+            kind: sourceKind,
             feel: feel
         )
         project.recordings[recordingIndex].cameraMotions = (existing + [recipe]).sorted { $0.start < $1.start }
@@ -1372,6 +1386,72 @@ extension EditorModel {
         // visible on the timeline, so choosing it intentionally replaces the hidden static value.
         project.mainVideoPlacement.zoom = nil
         project.mainVideoPlacement.fillsFrame = true
+        project.updatedAt = .now
+    }
+
+    /// Moves or resizes one camera ribbon in the recording's clock. Timeline lanes convert their
+    /// visible seconds back to source seconds before calling this, so speed, reverse, split and
+    /// reorder cannot detach the move from its frames.
+    public func setCameraMotionRange(
+        recordingID: Recording.ID,
+        motionID: CameraMotionRecipe.ID,
+        sourceStart: Double,
+        sourceEnd: Double,
+        coalescing key: String = "range"
+    ) {
+        guard let recordingIndex = project.recordings.firstIndex(where: { $0.id == recordingID }),
+              let motionIndex = project.recordings[recordingIndex].cameraMotions?.firstIndex(where: { $0.id == motionID })
+        else { return }
+        let fileEnd = max(0.1, project.recordings[recordingIndex].duration.seconds)
+        let minimum = min(0.1, fileEnd)
+        let lower = min(max(0, min(sourceStart, sourceEnd)), max(0, fileEnd - minimum))
+        let upper = min(fileEnd, max(max(sourceStart, sourceEnd), lower + minimum))
+        let old = project.recordings[recordingIndex].cameraMotions?[motionIndex].sourceRange
+        let range = MediaTimeRange(
+            start: MediaTime(seconds: lower),
+            duration: MediaTime(seconds: upper - lower)
+        )
+        guard old != range else { return }
+        record("editor.change.zoomRange", symbol: "arrow.left.and.right", coalescing: "camera-motion-\(motionID)-\(key)")
+        project.recordings[recordingIndex].cameraMotions?[motionIndex].sourceRange = range
+        project.recordings[recordingIndex].cameraMotions?.sort { $0.start < $1.start }
+        project.updatedAt = .now
+    }
+
+    /// Pulls one source edge while keeping the opposite edge fixed.
+    public func setCameraMotionEdge(
+        recordingID: Recording.ID,
+        motionID: CameraMotionRecipe.ID,
+        sourceStart: Double? = nil,
+        sourceEnd: Double? = nil,
+        coalescing key: String
+    ) {
+        guard let recording = project.recording(id: recordingID),
+              let recipe = recording.cameraMotions?.first(where: { $0.id == motionID })
+        else { return }
+        let minimum = 0.1
+        let start = sourceStart.map { min($0, recipe.end - minimum) } ?? recipe.start
+        let end = sourceEnd.map { max($0, recipe.start + minimum) } ?? recipe.end
+        setCameraMotionRange(
+            recordingID: recordingID,
+            motionID: motionID,
+            sourceStart: start,
+            sourceEnd: end,
+            coalescing: key
+        )
+    }
+
+    public func setCameraMotionFeel(_ feel: CameraMotionRecipe.Feel) {
+        guard let target = cameraMotionTarget(),
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
+              let motionIndex = project.recordings[recordingIndex].cameraMotions?.lastIndex(where: {
+                  target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
+              }),
+              project.recordings[recordingIndex].cameraMotions?[motionIndex].feel != feel
+        else { return }
+        let motionID = project.recordings[recordingIndex].cameraMotions?[motionIndex].id
+        record("editor.change.zoomFeel", symbol: "waveform.path", coalescing: "camera-motion-feel-\(motionID?.uuidString ?? "selected")")
+        project.recordings[recordingIndex].cameraMotions?[motionIndex].feel = feel
         project.updatedAt = .now
     }
 

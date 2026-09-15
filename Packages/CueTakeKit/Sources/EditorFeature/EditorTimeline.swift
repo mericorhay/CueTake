@@ -13,6 +13,8 @@ struct EditorTimeline: View {
     var onEditCaption: (CaptionCue.ID) -> Void = { _ in }
     /// Opens a clip's speed, reverse and freeze.
     var onOpenPlayback: (Segment.ID) -> Void = { _ in }
+    /// Opens the camera move under a tapped Camera Lane ribbon.
+    var onOpenCameraMotion: (Double) -> Void = { _ in }
     /// The caption open for editing, retimed on its lane.
     var editingCaption: CaptionCue.ID? = nil
 
@@ -182,7 +184,7 @@ struct EditorTimeline: View {
                     OverlayLane(model: model, scale: scale)
                 }
                 if CameraMotionLane.hasVisibleMoves(in: model.project) {
-                    CameraMotionLane(model: model, scale: scale)
+                    CameraMotionLane(model: model, scale: scale, onOpen: onOpenCameraMotion)
                 }
                 clipRow
                 if !model.project.videoLayers.isEmpty {

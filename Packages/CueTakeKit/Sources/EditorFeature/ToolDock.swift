@@ -349,25 +349,50 @@ struct ToolDock: View {
             }
 
             if let recipe = model.cameraMotionAtPlayhead {
-                HStack(spacing: 8) {
-                    Image(systemName: "waveform.path")
-                        .foregroundStyle(DS.Palette.lime)
-                    Text(zoomRecipeTitle(recipe.kind), bundle: .module)
-                        .dsFont(.sans, .semibold, 11)
-                        .foregroundStyle(DS.Palette.ink(0.75))
-                    Spacer(minLength: 0)
-                    Button {
-                        withAnimation(DS.Motion.settle) { model.removeCameraMotionAtPlayhead() }
-                    } label: {
-                        Label(String(localized: "editor.zoom.remove", bundle: .module), systemImage: "xmark")
-                            .dsFont(.sans, .semibold, 10)
-                            .foregroundStyle(DS.Palette.ink(0.55))
-                            .frame(height: 36)
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "waveform.path")
+                            .foregroundStyle(DS.Palette.lime)
+                        Text(zoomRecipeTitle(recipe.kind), bundle: .module)
+                            .dsFont(.sans, .semibold, 11)
+                            .foregroundStyle(DS.Palette.ink(0.75))
+                        Spacer(minLength: 0)
+                        Button {
+                            withAnimation(DS.Motion.settle) { model.removeCameraMotionAtPlayhead() }
+                        } label: {
+                            Label(String(localized: "editor.zoom.remove", bundle: .module), systemImage: "xmark")
+                                .dsFont(.sans, .semibold, 10)
+                                .foregroundStyle(DS.Palette.ink(0.55))
+                                .frame(height: 36)
+                        }
+                        .buttonStyle(.dsPress(radius: 18))
                     }
-                    .buttonStyle(.dsPress(radius: 18))
+
+                    HStack(spacing: 6) {
+                        Text("editor.zoom.feel", bundle: .module)
+                            .dsFont(.sans, .medium, 10)
+                            .foregroundStyle(DS.Palette.ink(0.46))
+                        Spacer(minLength: 4)
+                        ForEach(CameraMotionRecipe.Feel.allCases, id: \.self) { feel in
+                            let active = recipe.feel == feel
+                            Button {
+                                withAnimation(DS.Motion.snap) { model.setCameraMotionFeel(feel) }
+                            } label: {
+                                Text(zoomFeelTitle(feel), bundle: .module)
+                                    .dsFont(.sans, .semibold, 10)
+                                    .foregroundStyle(active ? DS.Palette.inkInverse : DS.Palette.ink(0.62))
+                                    .padding(.horizontal, 10)
+                                    .frame(height: 32)
+                                    .background(Capsule().fill(active ? DS.Palette.lime : DS.Palette.hairline(0.06)))
+                            }
+                            .buttonStyle(.dsPress(radius: 16))
+                            .accessibilityAddTraits(active ? .isSelected : [])
+                        }
+                    }
                 }
                 .padding(.horizontal, 11)
-                .background(Capsule().fill(DS.Palette.lime(0.08)))
+                .padding(.vertical, 4)
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(DS.Palette.lime(0.08)))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
@@ -455,6 +480,14 @@ struct ToolDock: View {
         case .pushIn: "editor.zoom.push"
         case .pullOut: "editor.zoom.pull"
         case .punch: "editor.zoom.punch"
+        }
+    }
+
+    private func zoomFeelTitle(_ feel: CameraMotionRecipe.Feel) -> LocalizedStringKey {
+        switch feel {
+        case .calm: "editor.zoom.feel.calm"
+        case .natural: "editor.zoom.feel.natural"
+        case .energetic: "editor.zoom.feel.energetic"
         }
     }
 

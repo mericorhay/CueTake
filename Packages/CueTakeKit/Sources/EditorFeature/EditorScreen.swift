@@ -851,6 +851,19 @@ public struct EditorScreen: View {
                     dockPanel = .speed
                 }
             },
+            onOpenCameraMotion: { time in
+                model.pause()
+                withAnimation(DS.Motion.settle) {
+                    editingCaption = nil
+                    model.inspectedSegment = nil
+                    model.selectedAudio = nil
+                    model.select(overlay: nil)
+                    model.select(effect: nil)
+                    model.select(videoLayer: nil)
+                    model.seek(to: time)
+                    dockPanel = .zoom
+                }
+            },
             editingCaption: editingCaption
         )
     }
