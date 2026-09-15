@@ -73,6 +73,7 @@ public struct EditorScreen: View {
     @State private var previewExpanded = false
     @State private var showsTranscript = false
     @State private var showsVideoPlacementEditor = false
+    @State private var showsSubjectTrackingEditor = false
     /// Where typing goes while the keyboard is up.
     @State private var typing: TextEntryTarget?
 
@@ -291,6 +292,11 @@ public struct EditorScreen: View {
         .fullScreenCover(isPresented: $showsVideoPlacementEditor) {
             VideoLayerPlacementEditor(model: model) {
                 showsVideoPlacementEditor = false
+            }
+        }
+        .fullScreenCover(isPresented: $showsSubjectTrackingEditor) {
+            SubjectTrackingEditor(model: model) {
+                showsSubjectTrackingEditor = false
             }
         }
         .task { await onPrepare() }
@@ -795,6 +801,11 @@ public struct EditorScreen: View {
                     onAllowCloudAI: onAllowCloudAI,
                     onAddImage: { pickingImage = true },
                     onShowAIChanges: { showsAIChanges = true },
+                    onTrack: {
+                        model.pause()
+                        dockPanel = nil
+                        showsSubjectTrackingEditor = true
+                    },
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)

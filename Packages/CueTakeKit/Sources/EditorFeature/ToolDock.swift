@@ -18,13 +18,15 @@ struct ToolDock: View {
     var onAllowCloudAI: (() -> Void)? = nil
     var onAddImage: () -> Void = {}
     var onShowAIChanges: () -> Void = {}
+    /// Opens the direct-on-picture subject picker owned by the editor screen.
+    var onTrack: () -> Void = {}
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, reframe, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, split, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .ai, .reframe, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .ai, .zoom, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -90,7 +92,7 @@ struct ToolDock: View {
         case .split: model.canSplitAtPlayhead || (model.selectedVideoLayer.map(model.canSplitVideoLayer) ?? false)
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .background: index != nil
-        case .reframe: model.project.segments.contains { $0.selectedTake != nil }
+        case .reframe, .zoom: model.project.segments.contains { $0.selectedTake != nil }
         case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .text, .image: true
@@ -155,7 +157,7 @@ struct ToolDock: View {
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
-        case .background, .reframe: glyph.symbolEffect(.bounce, value: count)
+        case .background, .reframe, .zoom: glyph.symbolEffect(.bounce, value: count)
         case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .filter: glyph.symbolEffect(.bounce, value: count)
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
@@ -168,6 +170,7 @@ struct ToolDock: View {
         case .ai: "sparkles"
         case .background: "person.crop.rectangle"
         case .reframe: "viewfinder"
+        case .zoom: "plus.magnifyingglass"
         case .text: "textformat"
         case .image: "photo.badge.plus"
         case .video: "rectangle.split.2x1"
@@ -187,7 +190,8 @@ struct ToolDock: View {
         switch item {
         case .ai: String(localized: "editor.dock.ai", bundle: .module)
         case .background: String(localized: "editor.dock.background", bundle: .module)
-        case .reframe: String(localized: "editor.video.smartReframe", bundle: .module)
+        case .reframe: String(localized: "editor.track.title", bundle: .module)
+        case .zoom: String(localized: "editor.zoom.title", bundle: .module)
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
         case .video: String(localized: "editor.dock.video", bundle: .module)
@@ -251,7 +255,8 @@ struct ToolDock: View {
         case .captions: onCaptions()
         case .audio: onAddAudio()
         case .more: onMore()
-        case .trim, .speed, .ai, .reframe, .background, .filter, .sound: break
+        case .reframe: onTrack()
+        case .trim, .speed, .ai, .zoom, .background, .filter, .sound: break
         }
     }
 
@@ -302,6 +307,8 @@ struct ToolDock: View {
                     }
                 } else if item == .reframe {
                     mainReframePanel
+                } else if item == .zoom {
+                    zoomPanel
                 } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)
@@ -322,6 +329,56 @@ struct ToolDock: View {
             in: RoundedRectangle(cornerRadius: 22, style: .continuous),
             border: DS.Palette.accent(0.35)
         )
+    }
+
+    private var zoomPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("editor.zoom.hint", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.58))
+
+            HStack(spacing: 7) {
+                ForEach([1.0, 1.10, 1.15, 1.20], id: \.self) { value in
+                    let active = abs(model.mainVideoZoom - value) < 0.006
+                    Button {
+                        withAnimation(DS.Motion.settle) { model.setMainVideoZoom(value) }
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: value == 1 ? "arrow.counterclockwise" : "viewfinder.circle")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text(verbatim: value == 1 ? "1×" : "+%\(Int(((value - 1) * 100).rounded()))")
+                                .dsFont(.mono, .medium, 10)
+                        }
+                        .foregroundStyle(active ? DS.Palette.inkInverse : DS.Palette.ink(0.76))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(active ? DS.Palette.lime : DS.Palette.hairline(0.07))
+                        )
+                    }
+                    .buttonStyle(.dsPress(radius: 14))
+                    .accessibilityLabel(Text("editor.zoom.amount \(Int((value * 100).rounded()))", bundle: .module))
+                }
+            }
+
+            HStack(spacing: 10) {
+                Image(systemName: "minus.magnifyingglass")
+                    .foregroundStyle(DS.Palette.ink(0.45))
+                Slider(
+                    value: Binding(
+                        get: { model.mainVideoZoom },
+                        set: { model.setMainVideoZoom($0) }
+                    ),
+                    in: 1...1.5
+                )
+                .tint(DS.Palette.lime)
+                Text(verbatim: "%\(Int((model.mainVideoZoom * 100).rounded()))")
+                    .dsFont(.mono, .medium, 11)
+                    .foregroundStyle(DS.Palette.ink(0.75))
+                    .frame(width: 42, alignment: .trailing)
+            }
+        }
     }
 
     /// AI sends the video's words and structure to the server. Off by default, so the panel asks

@@ -9,14 +9,18 @@ public struct VideoPlacement: Hashable, Sendable, Codable {
     public var fillsFrame: Bool = false
     public var isMirrored: Bool = false
     public var opacity: Double = 1
+    /// Extra camera magnification inside this placement. Optional keeps projects written before
+    /// the Zoom Engine source-compatible; nil is exactly the old 1x geometry.
+    public var zoom: Double?
     /// Point in the upright source that stays at the centre when the frame is filled. Nil is the
     /// ordinary centre crop; smart reframe writes these without changing the layer's rectangle.
     public var focusX: Double?
     public var focusY: Double?
 
-    public init(x: Double = 0, y: Double = 0, width: Double = 1, height: Double = 1, fillsFrame: Bool = false, isMirrored: Bool = false, opacity: Double = 1, focusX: Double? = nil, focusY: Double? = nil) {
+    public init(x: Double = 0, y: Double = 0, width: Double = 1, height: Double = 1, fillsFrame: Bool = false, isMirrored: Bool = false, opacity: Double = 1, zoom: Double? = nil, focusX: Double? = nil, focusY: Double? = nil) {
         self.x = x; self.y = y; self.width = width; self.height = height
         self.fillsFrame = fillsFrame; self.isMirrored = isMirrored; self.opacity = opacity
+        self.zoom = zoom
         self.focusX = focusX; self.focusY = focusY
     }
 
@@ -30,6 +34,7 @@ public struct VideoPlacement: Hashable, Sendable, Codable {
         value.x = x.isFinite ? min(max(x, 0), 1 - value.width) : 0
         value.y = y.isFinite ? min(max(y, 0), 1 - value.height) : 0
         value.opacity = opacity.isFinite ? min(max(opacity, 0), 1) : 1
+        value.zoom = zoom.map { $0.isFinite ? min(max($0, 1), 3) : 1 }
         value.focusX = focusX.map { $0.isFinite ? min(max($0, 0), 1) : 0.5 }
         value.focusY = focusY.map { $0.isFinite ? min(max($0, 0), 1) : 0.5 }
         return value
@@ -44,6 +49,7 @@ public struct VideoPlacement: Hashable, Sendable, Codable {
             width: blend(a.width, b.width), height: blend(a.height, b.height),
             fillsFrame: a.fillsFrame, isMirrored: a.isMirrored,
             opacity: blend(a.opacity, b.opacity),
+            zoom: blend(a.zoom ?? 1, b.zoom ?? 1),
             focusX: blend(a.focusX ?? 0.5, b.focusX ?? 0.5),
             focusY: blend(a.focusY ?? 0.5, b.focusY ?? 0.5)
         ).bounded

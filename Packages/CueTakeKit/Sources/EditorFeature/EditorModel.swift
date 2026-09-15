@@ -1145,6 +1145,97 @@ extension EditorModel {
         mainSubjectTracking = .idle
     }
 
+    /// The still shown by the subject picker is the source frame, not the already-cropped player.
+    /// That makes a stroke's normalised coordinates the same coordinates Vision receives.
+    public func subjectSelectionFrame() async -> UIImage? {
+        guard let target = subjectTrackingTarget() else { return nil }
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: target.url))
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 1440, height: 1440)
+        guard let (image, _) = try? await generator.image(
+            at: CMTime(seconds: target.reference, preferredTimescale: 600)
+        ) else { return nil }
+        return UIImage(cgImage: image)
+    }
+
+    /// Turns one direct manipulation on the picture into a source-space motion track. Zoom is a
+    /// separate camera channel: changing it never rewrites the selected subject's path.
+    public func trackSelectedSubject(in bounds: CGRect, zoom: Double) async {
+        if case .analyzing = mainSubjectTracking { return }
+        guard let target = subjectTrackingTarget() else { mainSubjectTracking = .failed; return }
+        pause()
+        mainSubjectTracking = .analyzing(0)
+        do {
+            let focuses = try await SubjectTracker().objectFocus(
+                in: target.url,
+                sourceStart: target.take.sourceRange.start.seconds,
+                duration: target.take.sourceRange.duration.seconds,
+                referenceTime: target.reference,
+                initialBounds: bounds
+            ) { [weak self] progress in
+                self?.mainSubjectTracking = .analyzing(progress)
+            }
+            guard !focuses.isEmpty,
+                  let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
+            else { mainSubjectTracking = .failed; return }
+
+            record("editor.change.subjectTrack", symbol: "scope")
+            let replacement = focuses.map {
+                VideoFocusKeyframe(time: target.take.sourceRange.start.seconds + $0.time, x: $0.x, y: $0.y)
+            }
+            let range = target.take.sourceRange.start.seconds...target.take.sourceRange.end.seconds
+            let kept = (project.recordings[recordingIndex].reframe ?? []).filter { !range.contains($0.time) }
+            project.recordings[recordingIndex].reframe = (kept + replacement).sorted { $0.time < $1.time }
+            project.mainVideoPlacement.fillsFrame = true
+            project.mainVideoPlacement.zoom = min(max(zoom, 1.1), 1.2)
+            project.updatedAt = .now
+            mainSubjectTracking = .applied(focuses.count)
+        } catch is CancellationError {
+            mainSubjectTracking = .idle
+        } catch {
+            mainSubjectTracking = .failed
+        }
+    }
+
+    public var mainVideoZoom: Double { project.mainVideoPlacement.zoom ?? 1 }
+
+    public func setMainVideoZoom(_ value: Double) {
+        let zoom = min(max(value, 1), 3)
+        guard abs(mainVideoZoom - zoom) > 0.0001 else { return }
+        record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "main-video-zoom")
+        project.mainVideoPlacement.fillsFrame = true
+        project.mainVideoPlacement.zoom = abs(zoom - 1) < 0.001 ? nil : zoom
+        project.updatedAt = .now
+    }
+
+    private struct SubjectTrackingTarget {
+        var url: URL
+        var take: Take
+        var recordingID: Recording.ID
+        var reference: Double
+    }
+
+    private func subjectTrackingTarget() -> SubjectTrackingTarget? {
+        guard let mediaDirectory,
+              let (index, offset) = segmentAtPlayhead,
+              let take = project.segments[index].selectedTake,
+              let recording = project.recording(id: take.recordingID)
+        else { return nil }
+        let sourceOffset = min(
+            take.sourceRange.duration.seconds,
+            project.segments[index].playback.sourceSeconds(forTimeline: offset)
+        )
+        let resolvedOffset = project.segments[index].playback.isReversed
+            ? take.sourceRange.duration.seconds - sourceOffset
+            : sourceOffset
+        let reference = take.sourceRange.start.seconds + min(max(resolvedOffset, 0), take.sourceRange.duration.seconds - 0.02)
+        let url = mediaDirectory.appending(
+            path: (recording.relativePath as NSString).lastPathComponent,
+            directoryHint: .notDirectory
+        )
+        return SubjectTrackingTarget(url: url, take: take, recordingID: recording.id, reference: reference)
+    }
+
     /// Reframes the primary cut. Faces are found once per recording file, across the part of it
     /// the clips use, and kept in the file's own seconds — so splitting, trimming, speed and
     /// choosing another take all stay on the face. Edits made while it reads are kept: only the

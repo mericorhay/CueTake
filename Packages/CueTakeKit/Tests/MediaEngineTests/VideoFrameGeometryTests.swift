@@ -42,4 +42,25 @@ struct VideoFrameGeometryTests {
 
         #expect(reduced.map(\.time) == [0, 1, 1.5])
     }
+
+    @Test func zoomKeepsTheFocusButConsumesMoreOfTheSource() {
+        let size = CGSize(width: 1920, height: 1080)
+        let render = CGSize(width: 1080, height: 1920)
+        let regular = VideoFrameGeometry(
+            natural: size,
+            preferred: .identity,
+            placement: VideoPlacement(fillsFrame: true, focusX: 0.65, focusY: 0.5),
+            render: render
+        )
+        let zoomed = VideoFrameGeometry(
+            natural: size,
+            preferred: .identity,
+            placement: VideoPlacement(fillsFrame: true, zoom: 1.2, focusX: 0.65, focusY: 0.5),
+            render: render
+        )
+
+        #expect(zoomed.crop.width < regular.crop.width)
+        #expect(zoomed.crop.height < regular.crop.height)
+        #expect(zoomed.crop.midX > regular.crop.midX - 1)
+    }
 }

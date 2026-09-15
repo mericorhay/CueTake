@@ -20,6 +20,7 @@ public struct SubjectFocus: Hashable, Sendable {
 
 public enum SubjectTrackingError: Error, Hashable, Sendable {
     case noFace
+    case lostSubject
     case emptyRange
 }
 
@@ -92,6 +93,97 @@ public struct SubjectTracker: Sendable {
             detected.append(SubjectFocus(time: duration, x: last.x, y: last.y, confidence: last.confidence))
         }
         return Self.reduce(detected)
+    }
+
+    /// Tracks a user-selected object. `initialBounds` uses the upright frame's top-left coordinate
+    /// system, matching the editor canvas. Vision uses bottom-left coordinates internally.
+    /// Analysis starts at the chosen frame and walks both ways so the user can point at the clearest
+    /// view of an object instead of hunting for its first appearance.
+    @concurrent
+    public func objectFocus(
+        in url: URL,
+        sourceStart: Double,
+        duration: Double,
+        referenceTime: Double,
+        initialBounds: CGRect,
+        progress: @escaping @MainActor @Sendable (Double) -> Void = { _ in }
+    ) async throws -> [SubjectFocus] {
+        guard duration.isFinite, duration > 0.05 else { throw SubjectTrackingError.emptyRange }
+        let bounds = initialBounds.standardized.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard bounds.width >= 0.025, bounds.height >= 0.025 else { throw SubjectTrackingError.lostSubject }
+
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 960, height: 960)
+        let tolerance = CMTime(seconds: 0.035, preferredTimescale: 600)
+        generator.requestedTimeToleranceBefore = tolerance
+        generator.requestedTimeToleranceAfter = tolerance
+
+        let step = max(0.08, duration / 240)
+        let reference = min(max(referenceTime, sourceStart), sourceStart + duration - 0.02)
+        let before = stride(from: reference - step, through: sourceStart, by: -step).map { $0 }
+        let after = stride(from: reference + step, through: sourceStart + duration - 0.02, by: step).map { $0 }
+        let total = max(1, before.count + after.count + 1)
+        var completed = 0
+
+        let seed = SubjectFocus(
+            time: reference - sourceStart,
+            x: Double(bounds.midX),
+            y: Double(bounds.midY),
+            confidence: 1
+        )
+        var result = [seed]
+
+        for times in [before, after] {
+            try Task.checkCancellation()
+            var visionBounds = CGRect(
+                x: bounds.minX,
+                y: 1 - bounds.maxY,
+                width: bounds.width,
+                height: bounds.height
+            )
+            let sequence = VNSequenceRequestHandler()
+            for sourceTime in times {
+                try Task.checkCancellation()
+                guard let (image, _) = try? await generator.image(
+                    at: CMTime(seconds: sourceTime, preferredTimescale: 600)
+                ) else { continue }
+
+                let observation = VNDetectedObjectObservation(boundingBox: visionBounds)
+                let request = VNTrackObjectRequest(detectedObjectObservation: observation)
+                request.trackingLevel = .accurate
+                try sequence.perform([request], on: image)
+                guard let tracked = request.results?.first as? VNDetectedObjectObservation,
+                      tracked.confidence >= 0.25
+                else { break }
+                visionBounds = tracked.boundingBox
+                result.append(SubjectFocus(
+                    time: sourceTime - sourceStart,
+                    x: Double(visionBounds.midX),
+                    y: Double(1 - visionBounds.midY),
+                    confidence: Double(tracked.confidence)
+                ))
+                completed += 1
+                await progress(Double(completed) / Double(total))
+            }
+        }
+
+        guard result.count > 1 else { throw SubjectTrackingError.lostSubject }
+        result.sort { $0.time < $1.time }
+        // Keep the camera calm without erasing deliberate motion.
+        var smoothed: [SubjectFocus] = []
+        for var value in result {
+            if let previous = smoothed.last {
+                let distance = hypot(value.x - previous.x, value.y - previous.y)
+                let response = min(max(distance * 5, 0.28), 0.72)
+                value.x = previous.x + (value.x - previous.x) * response
+                value.y = previous.y + (value.y - previous.y) * response
+            }
+            smoothed.append(value)
+        }
+        await progress(1)
+        return Self.reduce(smoothed)
     }
 
     private static func principalFace(in image: CGImage, near previous: CGPoint?) -> VNFaceObservation? {

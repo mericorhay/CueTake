@@ -15,7 +15,8 @@ struct VideoFrameGeometry {
         let oriented = source.applying(preferred)
         let width = max(1, abs(oriented.width)), height = max(1, abs(oriented.height))
         let target = CGRect(x: placement.x * render.width, y: placement.y * render.height, width: placement.width * render.width, height: placement.height * render.height)
-        let factor = placement.fillsFrame ? max(target.width / width, target.height / height) : min(target.width / width, target.height / height)
+        let fit = placement.fillsFrame ? max(target.width / width, target.height / height) : min(target.width / width, target.height / height)
+        let factor = fit * (placement.zoom ?? 1)
         var transform = preferred.concatenating(CGAffineTransform(translationX: -oriented.minX, y: -oriented.minY))
         if placement.isMirrored {
             transform = transform.concatenating(CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: width, ty: 0))
