@@ -1,6 +1,6 @@
 # CueTake Feature Gap Report
 
-> Masaüstü–mobil karşılaştırması, önerilen ürün kapsamı ve mevcut kod durumu  
+> Masaüstü–mobil karşılaştırması, önerilen ürün kapsamı ve mevcut kod durumu
 > Güncelleme: 15 Eylül 2026
 
 Bu rapor, gönderilen masaüstü video düzenleyici araştırmasını ürün kararına çevirir. AI’ın çağıracağı araçların ayrıntılı sözleşmesi [AI_TOOL_LIST_ROADMAP.md](AI_TOOL_LIST_ROADMAP.md) içindedir. Görsel takip ve zoom’un UX/engine planları ise [SUBJECT_TRACKING_ENGINE_PLAN.md](SUBJECT_TRACKING_ENGINE_PLAN.md) ve [ZOOM_ENGINE_PLAN.md](ZOOM_ENGINE_PLAN.md) içindedir.
@@ -94,40 +94,46 @@ Stabilizasyon bağımsız bir correction channel olmalı; Subject Follow ve kull
 
 ## Mevcut kodda tam olarak nerede kaldık
 
-### Tamamlanan son kod turu — build 66
+### Tamamlanan son kod turu — build 68
 
-Son kod commit’i `06d1568 feat(editor): add source-time zoom recipes and camera lane`. Önceki takip dikey dilimi `a754552 feat(editor): add direct subject tracking and zoom` commit’indedir.
+Build 67’de takip güveni ve lokal düzeltme, build 68’de build 63 sonrasındaki Studio akışının geniş güvenlik taraması tamamlandı. Son düzeltmeler `c8241fb`, `aefab8b` ve `a6209e3` commit’lerindedir.
 
 - `SubjectTrackingEditor.swift`: oynatıcıdan açılan tam ekran seçim yüzeyi; çember/boya gesture’ı, kaynak kare, `%10/%15/%20` yakınlık ve analiz durumu.
 - `SubjectTracker.objectFocus`: seçilen bounds’tan Vision `VNTrackObjectRequest` ile ileri/geri genel nesne takibi; yüzle sınırlı değil.
 - `EditorModel.trackSelectedSubject`: takip sonucunu recording’in source-time `reframe` verisine ekliyor; mevcut aralık dışındaki track noktalarını koruyor.
+- Takip güveni `VideoFocusKeyframe.confidence` içinde kalıcı; tam ekran editörde confidence spine, zayıf nokta seçimi ve gerçek başarı aralığını değiştiren lokal ±2 saniye düzeltme var.
 - `VideoPlacement.zoom`: eski projeler için optional, geriye dönük uyumlu zoom kanalı.
 - `VideoFrameGeometry`: placement zoom’unu crop/focus hesabına katıyor; preview/export aynı geometriden geçiyor.
 - `ToolDock`: `Takip` ve `Zoom` girişleri; zoom panelinde 1×, +%10, +%15, +%20 ve slider.
 - `Localizable.xcstrings`: takip/zoom UX metinleri Türkçe ve İngilizce.
 - `VideoFrameGeometryTests`: zoom’un crop alanını küçülttüğünü doğrulayan test.
-- `CameraMotionRecipe`: `Yaklaş`, `Vurgu` ve `Geri açıl` hareketlerini recording source-time aralığında saklıyor.
+- `CameraMotionRecipe`: sabit kadraj, `Yaklaş`, `Vurgu` ve `Geri açıl` hareketlerini recording source-time aralığında saklıyor.
 - `CameraMotionEvaluator`: calm/natural/energetic eğrilerini preview, export ve timeline için tek noktada hesaplıyor.
-- `VideoComposer`: focus track ile zoom recipe’yi aynı geometry pipeline’ında birleştiriyor; çakışan zoom değerlerini çarpmıyor.
+- `VideoComposer`: focus track ile zoom recipe’yi aynı geometry pipeline’ında birleştiriyor; hareket mesafesini takibin güvenli crop değerine ekliyor, sabit kadrajı minimum crop olarak uyguluyor.
 - `CameraMotionLane`: timeline’da uygulanan kamera hareketini ince lime–coral ribbon olarak gösteriyor.
 - Zoom paneli: hareket tarifini uygula/kaldır ve ayrı sabit kadraj kontrolleri.
-- `CameraMotionTests`: push, punch, source-range sınırı ve başlangıç/bitiş değerlerini doğruluyor.
+- Reverse ve freeze kliplerde source-time dönüşümü ortak `ClipPlayback` yardımcılarıyla yapılıyor; donmuş kare takip/zoom animasyonunu ilerletmiyor.
+- Aynı recording’den farklı trim’ler birbirinin takip ve kamera verisini kullanmıyor; boş veya alakasız Camera Lane oluşmuyor.
+- Push/pull yönü ters oynatılan kliplerde timeline yönüne göre adlandırılıyor ve render’da aynı anlamı koruyor.
+- Takip ekranı kapanınca Vision görevleri iptal ediliyor; eski sonuç artık projeyi arka planda değiştiremiyor.
+- Track/Zoom yalnız eylem uygulanabilecek klipte etkin; Track seçilen klibe gider ve yükleme sırasında kamera metadata dokunuşları kaybolmaz.
+- Eski `zoom == nil` takip kareleri authored zoom’u 1×’e çekmiyor; ara karelerde zoom kanalı korunuyor.
+- Domain, MediaEngine ve EditorFeature regresyon testleri source-time, reverse/freeze, confidence, birleşik zoom ve yükleme sırasındaki kamera düzenlemesini kapsıyor.
 
-Build numarası `Config/CueTake.xcconfig` içinde **66**, marketing version **0.5.0**. Build 65 ve build 66 için macOS CI’da uygulama derlemesi ve bütün package testleri geçti. Build 66 CI run’ı `34996421137`.
+Build numarası `Config/CueTake.xcconfig` içinde **68**, marketing version **0.5.0**. Build 67 ve build 68 ara kapıları macOS CI’da geçti. Build 68’in son commit’i için uygulama derlemesi ve bütün package testlerini çalıştıran CI run’ı `35006624862` başarıyla tamamlandı.
 
 ### Henüz tamamlanmayanlar
 
-- Vision tracker gerçek cihaz benchmark’ı yapılmadı; low texture, occlusion, benzer nesne, kadrajdan çıkma ve düşük ışık seti gerekiyor.
+- Vision tracker gerçek cihaz benchmark’ı yapılmadı; low texture, occlusion, benzer nesne, kadrajdan çıkma ve düşük ışık seti gerekiyor. Confidence ve lokal düzeltme hazır, ancak otomatik occlusion/re-entry politikası henüz yok.
 - Vuruş/ayak basma/beat event motoru henüz kodlanmadı.
 - Zoom recipe ve Camera Lane’in ilk sürümü var; recipe aralığını timeline’da elle uzatma/taşıma, gelişmiş feel kontrolü, subject binding, transition ve event mix henüz yok.
-- Track confidence değeri kalıcı domain verisine yazılmıyor; confidence ribbon ve tek kareden lokal yeniden işaretleme henüz yok.
 - AI registry’ye tracking/zoom tool’ları henüz bağlanmadı.
 - Multicam, proxy, renk/HDR, chroma key, ses stem ve batch render bu raporun sonraki feature fazlarıdır.
 - TestFlight otomasyonu daha önce iptal edildi; bu doküman güncellemesi TestFlight çalıştırmaz.
 
 ## Önerilen uygulama sırası
 
-1. Track confidence değerini domain’e taşı; confidence ribbon, tek kare correction, occlusion/re-entry ve yanlış özneye atlamama davranışını tamamla.
+1. Occlusion/re-entry ve yanlış özneye atlamama politikasını gerçek cihaz benchmark’ıyla tamamla.
 2. Zoom recipe aralığı düzenleme, subject binding ve Camera Lane seçim UX’ini tamamla.
 3. Görsel impact, ayak basma ve beat event’lerini ortak doğal shake/zoom impulse kanalına bağla.
 4. AI registry ve validator’ları bu iki motorla bağla.
