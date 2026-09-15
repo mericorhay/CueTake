@@ -237,9 +237,10 @@ public struct VideoComposer: Sendable {
                 let pieceTimelineStart = (pieceCursor - cursor).seconds
                 let pieceTimelineEnd = pieceTimelineStart + pieceTarget.seconds
                 let focuses = recording.reframe ?? []
+                let cameraMotions = recording.cameraMotions ?? []
                 let takeStart = take.sourceRange.start.seconds
                 let takeLength = take.sourceRange.duration.seconds
-                if focuses.isEmpty {
+                if focuses.isEmpty && cameraMotions.isEmpty {
                     // Keep the long-standing static instruction for ordinary clips. A ramp with
                     // identical endpoints is needlessly rejected by some iOS AVFoundation builds
                     // when the source has been time-scaled.
@@ -253,11 +254,18 @@ public struct VideoComposer: Sendable {
                         let time = playback.timelineSeconds(forSource: playback.isReversed ? takeLength - offset : offset)
                         return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
                     }
-                    let geometryTimes = ([pieceTimelineStart] + internalTimes + [pieceTimelineEnd]).sorted()
+                    let motionTimes = cameraMotions.flatMap { CameraMotionEvaluator.sampleTimes(for: $0) }.compactMap { sourceTime -> Double? in
+                        let offset = sourceTime - takeStart
+                        guard offset >= 0, offset <= takeLength else { return nil }
+                        let time = playback.timelineSeconds(forSource: playback.isReversed ? takeLength - offset : offset)
+                        return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
+                    }
+                    let geometryTimes = Array(Set([pieceTimelineStart] + internalTimes + motionTimes + [pieceTimelineEnd])).sorted()
                     func geometry(at time: Double) -> VideoFrameGeometry {
                         let placement = Self.mainPlacement(
                             project.mainVideoPlacement,
                             focuses: focuses,
+                            cameraMotions: cameraMotions,
                             takeStart: takeStart,
                             takeLength: takeLength,
                             playback: playback,
@@ -421,34 +429,45 @@ public struct VideoComposer: Sendable {
     private static func mainPlacement(
         _ base: VideoPlacement,
         focuses: [VideoFocusKeyframe],
+        cameraMotions: [CameraMotionRecipe],
         takeStart: Double,
         takeLength: Double,
         playback: ClipPlayback,
         timelineTime: Double
     ) -> VideoPlacement {
-        guard !focuses.isEmpty else { return base }
         let offset = min(max(playback.sourceSeconds(forTimeline: timelineTime), 0), takeLength)
         let sourceTime = takeStart + (playback.isReversed ? takeLength - offset : offset)
-        let ordered = focuses.sorted { $0.time < $1.time }
-        var previous = ordered[0]
-        var focus = previous
-        for frame in ordered.dropFirst() {
-            if sourceTime < frame.time {
-                let fraction = min(max((sourceTime - previous.time) / max(0.001, frame.time - previous.time), 0), 1)
-                focus = VideoFocusKeyframe(
-                    time: sourceTime,
-                    x: previous.x + (frame.x - previous.x) * fraction,
-                    y: previous.y + (frame.y - previous.y) * fraction
-                )
-                break
-            }
-            previous = frame
-            focus = frame
-        }
         var placement = base
-        placement.fillsFrame = true
-        placement.focusX = focus.x
-        placement.focusY = focus.y
+        if !focuses.isEmpty {
+            let ordered = focuses.sorted { $0.time < $1.time }
+            var previous = ordered[0]
+            var focus = previous
+            for frame in ordered.dropFirst() {
+                if sourceTime < frame.time {
+                    let fraction = min(max((sourceTime - previous.time) / max(0.001, frame.time - previous.time), 0), 1)
+                    focus = VideoFocusKeyframe(
+                        time: sourceTime,
+                        x: previous.x + (frame.x - previous.x) * fraction,
+                        y: previous.y + (frame.y - previous.y) * fraction,
+                        zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction
+                    )
+                    break
+                }
+                previous = frame
+                focus = frame
+            }
+            placement.fillsFrame = true
+            placement.focusX = focus.x
+            placement.focusY = focus.y
+            if let zoom = focus.zoom { placement.zoom = zoom }
+        }
+        let authoredZoom = CameraMotionEvaluator.zoom(at: sourceTime, recipes: cameraMotions)
+        if authoredZoom > 1.0001 {
+            placement.fillsFrame = true
+            // Base framing and an authored move are two requests for camera distance. Taking the
+            // stronger one prevents stacked tools from multiplying into an accidental crash zoom.
+            placement.zoom = max(placement.zoom ?? 1, authoredZoom)
+        }
         return placement.bounded
     }
 

@@ -338,6 +338,37 @@ struct ToolDock: View {
                 .foregroundStyle(DS.Palette.ink(0.58))
 
             HStack(spacing: 7) {
+                zoomRecipeButton(.pushIn, title: "editor.zoom.push", symbol: "arrow.down.right")
+                zoomRecipeButton(.punch, title: "editor.zoom.punch", symbol: "bolt.fill")
+                zoomRecipeButton(.pullOut, title: "editor.zoom.pull", symbol: "arrow.up.left")
+            }
+
+            if let recipe = model.cameraMotionAtPlayhead {
+                HStack(spacing: 8) {
+                    Image(systemName: "waveform.path")
+                        .foregroundStyle(DS.Palette.lime)
+                    Text(zoomRecipeTitle(recipe.kind), bundle: .module)
+                        .dsFont(.sans, .semibold, 11)
+                        .foregroundStyle(DS.Palette.ink(0.75))
+                    Spacer(minLength: 0)
+                    Button {
+                        withAnimation(DS.Motion.settle) { model.removeCameraMotionAtPlayhead() }
+                    } label: {
+                        Label(String(localized: "editor.zoom.remove", bundle: .module), systemImage: "xmark")
+                            .dsFont(.sans, .semibold, 10)
+                            .foregroundStyle(DS.Palette.ink(0.55))
+                            .frame(height: 36)
+                    }
+                    .buttonStyle(.dsPress(radius: 18))
+                }
+                .padding(.horizontal, 11)
+                .background(Capsule().fill(DS.Palette.lime(0.08)))
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            DSKicker(String(localized: "editor.zoom.static", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+
+            HStack(spacing: 7) {
                 ForEach([1.0, 1.10, 1.15, 1.20], id: \.self) { value in
                     let active = abs(model.mainVideoZoom - value) < 0.006
                     Button {
@@ -378,6 +409,44 @@ struct ToolDock: View {
                     .foregroundStyle(DS.Palette.ink(0.75))
                     .frame(width: 42, alignment: .trailing)
             }
+        }
+    }
+
+    private func zoomRecipeButton(
+        _ kind: CameraMotionRecipe.Kind,
+        title: LocalizedStringKey,
+        symbol: String
+    ) -> some View {
+        let active = model.cameraMotionAtPlayhead?.kind == kind
+        return Button {
+            withAnimation(DS.Motion.settle) {
+                model.applyCameraMotion(kind, amount: max(0.15, model.mainVideoZoom - 1))
+            }
+        } label: {
+            VStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(title, bundle: .module)
+                    .dsFont(.sans, .semibold, 10)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(active ? DS.Palette.inkInverse : DS.Palette.ink(0.74))
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(active ? DS.Palette.lime : DS.Palette.hairline(0.07))
+            )
+        }
+        .buttonStyle(.dsPress(radius: 15))
+        .accessibilityAddTraits(active ? .isSelected : [])
+    }
+
+    private func zoomRecipeTitle(_ kind: CameraMotionRecipe.Kind) -> LocalizedStringKey {
+        switch kind {
+        case .pushIn: "editor.zoom.push"
+        case .pullOut: "editor.zoom.pull"
+        case .punch: "editor.zoom.punch"
         }
     }
 

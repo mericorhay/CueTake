@@ -75,7 +75,10 @@ struct EditorTimeline: View {
         let captions = hasCaptions ? CaptionLane.height + 7 : 0
         let effects = EffectLane.rowCount(in: model.project) > 0 ? EffectLane.height(in: model.project) + 7 : 0
         let videoLayers = model.project.videoLayers.isEmpty ? 0 : VideoLayerLane.height(for: model.project.videoLayers) + 7
-        return audio + overlays + captions + effects + videoLayers
+        let camera = model.project.recordings.contains { !($0.cameraMotions ?? []).isEmpty }
+            ? CameraMotionLane.height + 7
+            : 0
+        return audio + overlays + captions + effects + videoLayers + camera
     }
 
     private var hasCaptions: Bool {
@@ -177,6 +180,9 @@ struct EditorTimeline: View {
                     )
                 if !model.project.overlays.isEmpty {
                     OverlayLane(model: model, scale: scale)
+                }
+                if model.project.recordings.contains(where: { !($0.cameraMotions ?? []).isEmpty }) {
+                    CameraMotionLane(model: model, scale: scale)
                 }
                 clipRow
                 if !model.project.videoLayers.isEmpty {

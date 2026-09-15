@@ -72,11 +72,14 @@ public struct VideoFocusKeyframe: Hashable, Sendable, Codable, Identifiable {
     public var time: Double
     public var x: Double
     public var y: Double
+    /// Optional camera distance at this tracked point. Old face tracks remain exactly 1x.
+    public var zoom: Double?
 
-    public init(time: Double, x: Double, y: Double) {
+    public init(time: Double, x: Double, y: Double, zoom: Double? = nil) {
         self.time = time
         self.x = x
         self.y = y
+        self.zoom = zoom
     }
 }
 
@@ -138,7 +141,8 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
                 focus = VideoFocusKeyframe(
                     time: time,
                     x: previous.x + (frame.x - previous.x) * fraction,
-                    y: previous.y + (frame.y - previous.y) * fraction
+                    y: previous.y + (frame.y - previous.y) * fraction,
+                    zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction
                 )
                 break
             }
@@ -148,6 +152,7 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
         var result = placement
         result.focusX = min(max(focus.x, 0), 1)
         result.focusY = min(max(focus.y, 0), 1)
+        if let zoom = focus.zoom { result.zoom = zoom }
         return result.bounded
     }
 

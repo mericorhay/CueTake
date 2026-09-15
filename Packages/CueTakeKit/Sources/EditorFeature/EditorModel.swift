@@ -281,7 +281,7 @@ public final class EditorModel {
             "backgrounds:" + backgroundSignature,
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
-            "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.recordings.map { $0.reframe ?? [] })",
+            "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.recordings.map { ($0.reframe ?? [], $0.cameraMotions ?? []) })",
             "video-layers:" + project.videoLayers.map { layer in
                 "\(layer.id)|\(layer.recordingID)|\(layer.start.seconds)|\(layer.sourceRange.start.seconds)|\(layer.sourceRange.duration.seconds)|\(layer.placement)|\(layer.volume)|\(layer.isMuted)|\(layer.isHidden)|\(layer.keyframes)|\(layer.focusKeyframes ?? [])"
             }.joined(separator: ","),
@@ -1181,13 +1181,17 @@ extension EditorModel {
 
             record("editor.change.subjectTrack", symbol: "scope")
             let replacement = focuses.map {
-                VideoFocusKeyframe(time: target.take.sourceRange.start.seconds + $0.time, x: $0.x, y: $0.y)
+                VideoFocusKeyframe(
+                    time: target.take.sourceRange.start.seconds + $0.time,
+                    x: $0.x,
+                    y: $0.y,
+                    zoom: min(max(zoom, 1.1), 1.2)
+                )
             }
             let range = target.take.sourceRange.start.seconds...target.take.sourceRange.end.seconds
             let kept = (project.recordings[recordingIndex].reframe ?? []).filter { !range.contains($0.time) }
             project.recordings[recordingIndex].reframe = (kept + replacement).sorted { $0.time < $1.time }
             project.mainVideoPlacement.fillsFrame = true
-            project.mainVideoPlacement.zoom = min(max(zoom, 1.1), 1.2)
             project.updatedAt = .now
             mainSubjectTracking = .applied(focuses.count)
         } catch is CancellationError {
@@ -1205,6 +1209,47 @@ extension EditorModel {
         record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "main-video-zoom")
         project.mainVideoPlacement.fillsFrame = true
         project.mainVideoPlacement.zoom = abs(zoom - 1) < 0.001 ? nil : zoom
+        project.updatedAt = .now
+    }
+
+    public func applyCameraMotion(
+        _ kind: CameraMotionRecipe.Kind,
+        amount: Double,
+        feel: CameraMotionRecipe.Feel = .natural
+    ) {
+        guard let target = subjectTrackingTarget(),
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
+        else { return }
+        record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
+        let range = target.take.sourceRange
+        let existing = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
+            $0.end <= range.start.seconds || $0.start >= range.end.seconds
+        }
+        let recipe = CameraMotionRecipe(sourceRange: range, amount: amount, kind: kind, feel: feel)
+        project.recordings[recordingIndex].cameraMotions = (existing + [recipe]).sorted { $0.start < $1.start }
+        // A manual static zoom and a motion recipe describe the same camera channel. The recipe is
+        // visible on the timeline, so choosing it intentionally replaces the hidden static value.
+        project.mainVideoPlacement.zoom = nil
+        project.mainVideoPlacement.fillsFrame = true
+        project.updatedAt = .now
+    }
+
+    public var cameraMotionAtPlayhead: CameraMotionRecipe? {
+        guard let target = subjectTrackingTarget(),
+              let recording = project.recording(id: target.recordingID)
+        else { return nil }
+        return recording.cameraMotions?.last {
+            target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
+        }
+    }
+
+    public func removeCameraMotionAtPlayhead() {
+        guard let target = subjectTrackingTarget(),
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
+              let selected = cameraMotionAtPlayhead
+        else { return }
+        record("editor.change.zoomRecipeRemoved", symbol: "minus.magnifyingglass")
+        project.recordings[recordingIndex].cameraMotions?.removeAll { $0.id == selected.id }
         project.updatedAt = .now
     }
 

@@ -58,6 +58,9 @@ public struct Recording: Identifiable, Hashable, Sendable, Codable {
     /// Where the face is in this file, in seconds of the file itself. Kept on the recording rather
     /// than on a clip so splitting, trimming and choosing another take all read the same track.
     public var reframe: [VideoFocusKeyframe]? = nil
+    /// Camera moves authored against this file. Optional keeps every project written before the
+    /// Zoom Engine source-compatible with the synthesised decoder.
+    public var cameraMotions: [CameraMotionRecipe]? = nil
 
     public init(
         id: UUID = UUID(),
