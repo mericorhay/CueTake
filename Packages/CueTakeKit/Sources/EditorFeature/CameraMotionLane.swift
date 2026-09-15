@@ -78,7 +78,7 @@ struct CameraMotionLane: View {
                     id: "\(segment.id.uuidString)-\(recipe.id.uuidString)",
                     start: timelineStart + min(first, last),
                     duration: abs(last - first),
-                    kind: recipe.kind
+                    kind: recipe.kind.facingTimeline(isReversed: segment.playback.isReversed)
                 ))
             }
         }

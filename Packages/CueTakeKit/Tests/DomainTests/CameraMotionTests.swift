@@ -46,4 +46,10 @@ struct CameraMotionTests {
         #expect(abs(CameraMotionEvaluator.combinedZoom(baseZoom: 1.15, at: 2, recipes: [move]) - 1.15) < 0.0001)
         #expect(abs(CameraMotionEvaluator.combinedZoom(baseZoom: 1.15, at: 6, recipes: [move]) - 1.30) < 0.0001)
     }
+
+    @Test func reversePresentsDirectionalMovesAsTheyActuallyPlay() {
+        #expect(CameraMotionRecipe.Kind.pushIn.facingTimeline(isReversed: true) == .pullOut)
+        #expect(CameraMotionRecipe.Kind.pullOut.facingTimeline(isReversed: true) == .pushIn)
+        #expect(CameraMotionRecipe.Kind.punch.facingTimeline(isReversed: true) == .punch)
+    }
 }

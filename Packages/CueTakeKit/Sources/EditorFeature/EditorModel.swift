@@ -1213,7 +1213,12 @@ extension EditorModel {
                     confidence: $0.confidence
                 )
             }
-            let range = analysisStart...analysisEnd
+            // A local correction only replaces the span Vision actually recovered. If tracking
+            // immediately loses one side, deleting the still-valid old points there makes the fix
+            // worse than the original. A full new track intentionally replaces the whole take.
+            let range = correctionRadius == nil
+                ? takeStart...takeEnd
+                : (replacement.first?.time ?? analysisStart)...(replacement.last?.time ?? analysisEnd)
             let kept = (project.recordings[recordingIndex].reframe ?? []).filter { !range.contains($0.time) }
             project.recordings[recordingIndex].reframe = (kept + replacement).sorted { $0.time < $1.time }
             project.mainVideoPlacement.fillsFrame = true
@@ -1322,10 +1327,16 @@ extension EditorModel {
         else { return }
         record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
         let range = target.take.sourceRange
+        let reversed = segmentAtPlayhead.map { project.segments[$0.index].playback.isReversed } ?? false
         let existing = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
             $0.end <= range.start.seconds || $0.start >= range.end.seconds
         }
-        let recipe = CameraMotionRecipe(sourceRange: range, amount: amount, kind: kind, feel: feel)
+        let recipe = CameraMotionRecipe(
+            sourceRange: range,
+            amount: amount,
+            kind: kind.facingTimeline(isReversed: reversed),
+            feel: feel
+        )
         project.recordings[recordingIndex].cameraMotions = (existing + [recipe]).sorted { $0.start < $1.start }
         // A manual static zoom and a motion recipe describe the same camera channel. The recipe is
         // visible on the timeline, so choosing it intentionally replaces the hidden static value.
@@ -1338,9 +1349,12 @@ extension EditorModel {
         guard let target = subjectTrackingTarget(),
               let recording = project.recording(id: target.recordingID)
         else { return nil }
-        return recording.cameraMotions?.last {
+        guard var recipe = recording.cameraMotions?.last(where: {
             target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
-        }
+        }) else { return nil }
+        let reversed = segmentAtPlayhead.map { project.segments[$0.index].playback.isReversed } ?? false
+        recipe.kind = recipe.kind.facingTimeline(isReversed: reversed)
+        return recipe
     }
 
     public func removeCameraMotionAtPlayhead() {

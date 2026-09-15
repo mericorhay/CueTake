@@ -8,6 +8,16 @@ public struct CameraMotionRecipe: Identifiable, Hashable, Sendable, Codable {
         case pushIn
         case pullOut
         case punch
+
+        /// Push and pull exchange direction when the same source frames play backwards.
+        public func facingTimeline(isReversed: Bool) -> Self {
+            guard isReversed else { return self }
+            return switch self {
+            case .pushIn: .pullOut
+            case .pullOut: .pushIn
+            case .hold, .punch: self
+            }
+        }
     }
 
     public enum Feel: String, CaseIterable, Hashable, Sendable, Codable {

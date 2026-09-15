@@ -39,6 +39,21 @@ struct VideoPlacementTests {
         #expect(abs((middle.focusX ?? 0) - 0.5) < 0.001)
     }
 
+    @Test func legacyFocusTrackDoesNotEraseAuthoredZoomBetweenPoints() {
+        var layer = VideoLayer(
+            recordingID: UUID(),
+            title: "Tracked",
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 10)),
+            placement: VideoPlacement(fillsFrame: true, zoom: 1.3)
+        )
+        layer.focusKeyframes = [
+            VideoFocusKeyframe(time: 0, x: 0.3, y: 0.5),
+            VideoFocusKeyframe(time: 10, x: 0.7, y: 0.5),
+        ]
+
+        #expect(abs((layer.placement(at: 5).zoom ?? 0) - 1.3) < 0.0001)
+    }
+
     @Test func olderFocusFramesDecodeWithoutInventingAWarning() throws {
         let id = UUID()
         let json = #"{"id":"\#(id.uuidString)","time":1.5,"x":0.4,"y":0.6}"#

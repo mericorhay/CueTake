@@ -145,8 +145,12 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
                     time: time,
                     x: previous.x + (frame.x - previous.x) * fraction,
                     y: previous.y + (frame.y - previous.y) * fraction,
-                    zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
-                    confidence: (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
+                    zoom: previous.zoom == nil && frame.zoom == nil
+                        ? nil
+                        : (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
+                    confidence: previous.confidence == nil && frame.confidence == nil
+                        ? nil
+                        : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
                 )
                 break
             }
