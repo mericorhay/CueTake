@@ -188,7 +188,6 @@ public struct EditorScreen: View {
                     VStack(spacing: 0) {
                         topBar
                         preview
-                        transport
                     }
                     .frame(width: min(proxy.size.width * 0.46, 560))
 
@@ -213,7 +212,6 @@ public struct EditorScreen: View {
                     topBar
                     statusStrip
                     preview
-                    transport
                     if hasSelectionPanel {
                         // Something is selected: its panel goes under the timeline, never over
                         // it, so every change can be watched against the timeline and fine-tuned
@@ -656,55 +654,55 @@ public struct EditorScreen: View {
         .animation(DS.Motion.settle, value: previewHeight)
     }
 
-    private var transport: some View {
-        HStack(spacing: 18) {
-            // Given a surface of its own. A bare glyph on a dark background is a target you have
-            // to aim at, and this is the control people reach for most after the playhead.
+    /// Playback lives in the otherwise empty timeline heading instead of consuming a full row
+    /// between the picture and the editor. The chrome is deliberately small; both buttons keep a
+    /// 44-point hit area, so the reclaimed space never becomes an accuracy tax.
+    private var timelineHeader: some View {
+        HStack(spacing: 4) {
+            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+
+            Spacer(minLength: 8)
+
+            ViewThatFits(in: .horizontal) {
+                Text(verbatim: "\(model.playheadLabel) / \(model.durationLabel)")
+                Text(model.playheadLabel)
+            }
+            .dsFont(.mono, .medium, 10)
+            .foregroundStyle(DS.Palette.ink(0.42))
+            .monospacedDigit()
+            .contentTransition(.numericText())
+            .lineLimit(1)
+
             Button(action: model.skipToStart) {
-                // A symbol, not an emoji. Emoji are pictures of things — they carry a colour, a
-                // platform's house style, and a font the rest of the interface does not use. This
-                // one inherits weight and size from the type around it, which is why it sits in a
-                // control instead of on top of one.
                 Image(systemName: "backward.end.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(DS.Palette.ink(0.75))
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(DS.Palette.hairline(0.08)))
-                    .overlay(Circle().stroke(DS.Palette.hairline(0.1), lineWidth: 1))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.68))
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(DS.Palette.hairline(0.07)))
+                    .overlay(Circle().stroke(DS.Palette.hairline(0.09), lineWidth: 1))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.dsPressIcon)
+            .accessibilityLabel(Text("editor.transport.start", bundle: .module))
 
             Button(action: model.togglePlayback) {
                 Image(systemName: model.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(DS.Palette.inkInverse)
-                    // The play triangle sits visually left of centre inside a circle; the pause
-                    // bars do not. Nudging only the triangle is the difference between a button
-                    // that looks centred and one that looks almost centred.
-                    .offset(x: model.isPlaying ? 0 : 2)
-                    .frame(width: 52, height: 52)
+                    .offset(x: model.isPlaying ? 0 : 1)
+                    .frame(width: 34, height: 34)
                     .background(Circle().fill(DS.Palette.ink))
-                    .shadow(color: DS.Palette.ink(0.25), radius: 12, y: 6)
+                    .shadow(color: DS.Palette.ink(0.18), radius: 7, y: 3)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
                     .contentTransition(.symbolEffect(.replace))
-                    .animation(DS.Motion.snap, value: model.isPlaying)
             }
             .buttonStyle(.dsPressIcon)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(model.playheadLabel)
-                    .dsFont(.mono, .medium, 14)
-                    .foregroundStyle(DS.Palette.ink)
-                    .contentTransition(.numericText())
-                Text(model.durationLabel)
-                    .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.38))
-            }
-
-            Spacer(minLength: 0)
+            .accessibilityLabel(Text(model.isPlaying ? "editor.transport.pause" : "editor.transport.play", bundle: .module))
+            .animation(DS.Motion.snap, value: model.isPlaying)
         }
-        .padding(.horizontal, 18)
-        .padding(.top, 14)
-        .padding(.bottom, 6)
+        .frame(height: 44)
     }
 
     // MARK: - Selection
@@ -725,6 +723,7 @@ public struct EditorScreen: View {
                     .padding(.horizontal, -18)
                     .padding(.bottom, 6)
             }
+            timelineHeader
             ScrollView(.vertical) {
                 timeline
             }
@@ -815,8 +814,7 @@ public struct EditorScreen: View {
                     .padding(.bottom, 10)
             }
 
-            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
-                .padding(.bottom, 6)
+            timelineHeader
 
             timeline
         }
