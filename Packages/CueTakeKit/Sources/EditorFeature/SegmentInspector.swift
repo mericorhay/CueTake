@@ -451,15 +451,7 @@ struct SegmentInspector: View {
     }
 
     private func applyAutomaticStructureIfNeeded() {
-        let untouched = model.project.segments.filter { $0.metadata["roleAssignment"] == nil }
-        guard !untouched.isEmpty else { return }
-        let suggestions = SegmentRoleAnalyzer.suggestions(
-            for: model.project.segments,
-            localeIdentifier: model.project.localeIdentifier
-        ).filter { suggestion in
-            model.project.segments.first(where: { $0.id == suggestion.segmentID })?.metadata["roleAssignment"] == nil
-        }
-        model.applyRoleSuggestions(suggestions)
+        model.autoAssignSegmentRoles()
     }
 
     // MARK: - Parts

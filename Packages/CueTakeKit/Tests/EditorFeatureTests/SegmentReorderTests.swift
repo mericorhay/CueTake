@@ -29,4 +29,22 @@ struct SegmentReorderTests {
 
         #expect(model.project.segments.map(\.title) == ["2", "3", "1", "4"])
     }
+
+    @Test func automaticRolesApplyOnceAndRespectManualChoices() {
+        var hook = Segment(role: .mainPoint, title: "1", script: "Bunu herkes yanlış yapıyor. Nedenini şimdi göstereyim.")
+        hook.metadata["roleAssignment"] = "manual"
+        let cta = Segment(role: .mainPoint, title: "2", script: "Devamı için takip et ve kaydet.")
+        let model = EditorModel(
+            project: Project(title: "t", localeIdentifier: "tr", segments: [hook, cta])
+        )
+
+        let changed = model.autoAssignSegmentRoles()
+
+        #expect(changed == 1)
+        #expect(model.project.segments[0].role == .mainPoint)
+        #expect(model.project.segments[1].role == .callToAction)
+        #expect(model.project.segments[1].metadata["roleAssignment"] == "automatic")
+        model.undo()
+        #expect(model.project.segments.map(\.role) == [.mainPoint, .mainPoint])
+    }
 }

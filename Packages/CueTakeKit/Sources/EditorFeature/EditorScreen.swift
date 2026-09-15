@@ -76,6 +76,17 @@ public struct EditorScreen: View {
     /// Where typing goes while the keyboard is up.
     @State private var typing: TextEntryTarget?
 
+    /// Changes when a script is edited, a take is selected, or transcription finishes.
+    private var roleAnalysisInput: [String] {
+        model.project.segments.map { segment in
+            [
+                segment.id.uuidString,
+                segment.script,
+                segment.selectedTake?.transcript?.text ?? "",
+            ].joined(separator: "|")
+        }
+    }
+
     /// Whatever the tools should act on: the inspected clip, or the one under the playhead.
     private var workingIndex: Int? {
         if let inspected = model.inspectedSegment {
@@ -121,6 +132,8 @@ public struct EditorScreen: View {
             }
         }
         .animation(DS.Motion.settle, value: typing)
+        .onAppear { model.autoAssignSegmentRoles() }
+        .onChange(of: roleAnalysisInput) { _, _ in model.autoAssignSegmentRoles() }
     }
 
     private func typingTitle(_ target: TextEntryTarget) -> String {

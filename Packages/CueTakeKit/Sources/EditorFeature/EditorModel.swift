@@ -716,6 +716,23 @@ public final class EditorModel {
         }
         project.updatedAt = .now
     }
+
+    /// Runs whenever the editor gains enough text to understand the video's structure. Manual
+    /// choices are final; earlier automatic choices may improve when a real transcript arrives.
+    @discardableResult
+    public func autoAssignSegmentRoles() -> Int {
+        let suggestions = SegmentRoleAnalyzer.suggestions(
+            for: project.segments,
+            localeIdentifier: project.localeIdentifier
+        ).filter { suggestion in
+            project.segments.first(where: { $0.id == suggestion.segmentID })?.metadata["roleAssignment"] != "manual"
+        }
+        let changed = suggestions.filter { suggestion in
+            project.segments.first(where: { $0.id == suggestion.segmentID })?.role != suggestion.role
+        }.count
+        applyRoleSuggestions(suggestions)
+        return changed
+    }
 }
 
 

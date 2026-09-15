@@ -298,14 +298,17 @@ struct EditorTimeline: View {
     private var clipRow: some View {
         ZStack(alignment: .topLeading) {
             ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
+                let isLifted = lift?.segmentID == segment.id
                 clip(segment, at: index)
                     .frame(width: max(CGFloat(segment.barWeight * scale) - 3, 12), height: 64)
                     .offset(
                         x: clipStart(for: segment, at: index),
                         y: lift?.segmentID == segment.id ? CGFloat(-10 + (lift?.verticalOffset ?? 0)) : 0
                     )
-                    .zIndex(lift?.segmentID == segment.id ? 1 : 0)
-                    .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.76), value: lift?.intent)
+                    .zIndex(isLifted ? 1 : 0)
+                    // Only the row rearranges with a spring. Animating the lifted clip itself
+                    // makes it chase the finger, overshoot and appear to fly away.
+                    .animation(isLifted || reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.82), value: lift?.intent)
             }
         }
         .frame(height: 64, alignment: .topLeading)
@@ -557,22 +560,22 @@ struct EditorTimeline: View {
         DragGesture(minimumDistance: 2)
             .onChanged { drag in
                 guard var activeLift = lift, activeLift.sourceIndex == index else { return }
-                let intent = reorderIntent(from: activeLift.sourceIndex, offset: Double(drag.translation.width))
-                activeLift.offset = Double(drag.translation.width)
+                let offset = clampedReorderOffset(
+                    Double(drag.translation.width),
+                    from: activeLift.sourceIndex
+                )
+                let intent = reorderIntent(from: activeLift.sourceIndex, offset: offset)
+                activeLift.offset = offset
                 // The clip follows the horizontal finger exactly, but carries a little mass in
                 // the other two axes. It is enough to feel picked up without hiding the cut.
                 activeLift.verticalOffset = min(max(Double(drag.translation.height) * 0.12, -4), 5)
                 activeLift.tilt = min(max(Double(drag.translation.height) * 0.16 + Double(drag.translation.width) * 0.025, -6), 6)
                 let didCrossTarget = activeLift.intent != intent
                 activeLift.intent = intent
-                if didCrossTarget {
-                    withAnimation(reduceMotion ? nil : .spring(response: 0.30, dampingFraction: 0.74)) {
-                        lift = activeLift
-                    }
-                    snapCount += 1
-                } else {
-                    lift = activeLift
-                }
+                // The row owns its animation. This state assignment must stay immediate so the
+                // picked-up clip remains exactly under the finger.
+                lift = activeLift
+                if didCrossTarget { snapCount += 1 }
             }
             .onEnded { _ in
                 guard let lift, lift.sourceIndex == index else { return }
@@ -607,6 +610,16 @@ struct EditorTimeline: View {
             }
         }
         return .insert(destinationIndex(from: index, centre: centre))
+    }
+
+    /// Keeps a clip inside the timeline while it is held. A fast swipe can report a translation
+    /// far beyond the surface; rendering that raw value is what made clips disappear off-screen.
+    private func clampedReorderOffset(_ offset: Double, from index: Int) -> Double {
+        guard model.project.segments.indices.contains(index) else { return 0 }
+        let start = model.start(at: index) * scale
+        let width = model.project.segments[index].barWeight * scale
+        let lastStart = max(model.timelineDuration * scale - width, 0)
+        return min(max(offset, -start), lastStart - start)
     }
 
     /// Where an inserted clip would land, by how far its centre has travelled past its neighbours.
