@@ -711,6 +711,7 @@ public final class EditorModel {
         for index in project.segments.indices {
             if let role = byID[project.segments[index].id] {
                 project.segments[index].role = role
+                project.segments[index].metadata["roleAssignment"] = "automatic"
             }
         }
         project.updatedAt = .now

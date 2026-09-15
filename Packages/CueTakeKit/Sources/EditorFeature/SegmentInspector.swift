@@ -35,15 +35,18 @@ struct SegmentInspector: View {
     }
 
     var body: some View {
-        if model.project.segments.contains(where: { $0.id == segmentID }) {
-            switch model.inspectorTab {
-            case .script: script
-            case .caption: captions
-            case .timing: timing
-            case .take: takes
-            case .style: style
+        Group {
+            if model.project.segments.contains(where: { $0.id == segmentID }) {
+                switch model.inspectorTab {
+                case .script: script
+                case .caption: captions
+                case .timing: timing
+                case .take: takes
+                case .style: style
+                }
             }
         }
+        .onAppear { applyAutomaticStructureIfNeeded() }
     }
 
     // MARK: - Script
@@ -295,7 +298,10 @@ struct SegmentInspector: View {
                 FlowLayout(horizontalSpacing: 5, verticalSpacing: 5) {
                     ForEach(SegmentInspector.roles, id: \.self) { role in
                         chip(role.displayLabel, isOn: segment.role == role) {
-                            model.updateSegment(at: index) { $0.role = role }
+                            model.updateSegment(at: index) {
+                                $0.role = role
+                                $0.metadata["roleAssignment"] = "manual"
+                            }
                         }
                     }
                 }
@@ -442,6 +448,18 @@ struct SegmentInspector: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
         }
+    }
+
+    private func applyAutomaticStructureIfNeeded() {
+        let untouched = model.project.segments.filter { $0.metadata["roleAssignment"] == nil }
+        guard !untouched.isEmpty else { return }
+        let suggestions = SegmentRoleAnalyzer.suggestions(
+            for: model.project.segments,
+            localeIdentifier: model.project.localeIdentifier
+        ).filter { suggestion in
+            model.project.segments.first(where: { $0.id == suggestion.segmentID })?.metadata["roleAssignment"] == nil
+        }
+        model.applyRoleSuggestions(suggestions)
     }
 
     // MARK: - Parts

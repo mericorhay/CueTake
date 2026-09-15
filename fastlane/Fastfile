@@ -77,7 +77,9 @@ platform :ios do
       version: version,
       initial_build_number: 0,
     ).to_i
-    configured_floor = (ENV["BUILD_NUMBER_FLOOR"] || "0").to_i
+    # The version lives in an xcconfig, not the pbxproj. Read that same source of truth so a
+    # TestFlight archive cannot quietly fall back to Apple's previous build number.
+    configured_floor = (ENV["BUILD_NUMBER_FLOOR"] || File.read("Config/CueTake.xcconfig")[/CURRENT_PROJECT_VERSION\s*=\s*(\d+)/, 1] || "0").to_i
     build_number = [uploaded_build + 1, configured_floor].max
     UI.success("Building CueTake #{version} (#{build_number}); latest TestFlight build is #{uploaded_build}")
 
