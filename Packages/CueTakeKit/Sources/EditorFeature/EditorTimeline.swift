@@ -424,20 +424,7 @@ struct EditorTimeline: View {
                 model.inspectorTab = .script
             }
         }
-        .onLongPressGesture(minimumDuration: 0.35) {
-            withAnimation(DS.Motion.bloom) {
-                lift = LiftState(
-                    segmentID: segment.id,
-                    sourceIndex: index,
-                    offset: 0,
-                    verticalOffset: 0,
-                    tilt: 0,
-                    intent: nil
-                )
-            }
-            snapCount += 1
-        }
-        .gesture(reorderDrag(at: index), including: isLifted ? .all : .subviews)
+        .simultaneousGesture(reorderGesture(for: segment, at: index))
         // How long the clip is, over it, while either end is pulled.
         .overlay(alignment: .top) {
             if trim?.index == index || leadTrim?.index == index {
@@ -550,51 +537,73 @@ struct EditorTimeline: View {
             }
     }
 
-    /// Long press picks a clip up; dragging it then moves it past its neighbours.
-    ///
-    /// Two steps rather than one gesture. A long press chained into a drag, attached to every clip,
-    /// claimed each touch on the clips before the scroll view could see it — which is why the ruler
-    /// scrolled and the clips did not. The drag is only attached to a clip that has been lifted, so
-    /// every other touch on the timeline belongs to scrolling.
-    private func reorderDrag(at index: Int) -> some Gesture {
-        DragGesture(minimumDistance: 2)
-            .onChanged { drag in
-                guard var activeLift = lift, activeLift.sourceIndex == index else { return }
-                let offset = clampedReorderOffset(
-                    Double(drag.translation.width),
-                    from: activeLift.sourceIndex
-                )
-                let intent = reorderIntent(from: activeLift.sourceIndex, offset: offset)
-                activeLift.offset = offset
-                // The clip follows the horizontal finger exactly, but carries a little mass in
-                // the other two axes. It is enough to feel picked up without hiding the cut.
-                activeLift.verticalOffset = min(max(Double(drag.translation.height) * 0.12, -4), 5)
-                activeLift.tilt = min(max(Double(drag.translation.height) * 0.16 + Double(drag.translation.width) * 0.025, -6), 6)
-                let didCrossTarget = activeLift.intent != intent
-                activeLift.intent = intent
-                // The row owns its animation. This state assignment must stay immediate so the
-                // picked-up clip remains exactly under the finger.
-                lift = activeLift
-                if didCrossTarget { snapCount += 1 }
-            }
-            .onEnded { _ in
-                guard let lift, lift.sourceIndex == index else { return }
-                switch lift.intent {
-                case .swap(let destination) where destination != lift.sourceIndex:
-                    withAnimation(DS.Motion.settle) {
-                        model.swapSegments(at: lift.sourceIndex, with: destination)
-                    }
-                    snapCount += 1
-                case .insert(let destination) where destination != lift.sourceIndex:
-                    withAnimation(DS.Motion.settle) {
-                        model.move(segmentAt: lift.sourceIndex, to: destination)
-                    }
-                    snapCount += 1
+    /// One continuous hold-and-drag gesture. Running it simultaneously with the scroll view lets a
+    /// normal swipe keep scrubbing; once the short hold succeeds, the same touch lifts the clip and
+    /// immediately becomes its drag. There is no second grab and no gesture hand-off to lose.
+    private func reorderGesture(for segment: Segment, at index: Int) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.18, maximumDistance: 18)
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .global))
+            .onChanged { phase in
+                switch phase {
+                case .first(true):
+                    beginReorder(segment, at: index)
+                case .second(true, let drag):
+                    beginReorder(segment, at: index)
+                    if let drag { updateReorder(with: drag, at: index) }
                 default:
                     break
                 }
-                withAnimation(DS.Motion.settle) { self.lift = nil }
             }
+            .onEnded { phase in
+                if case .second(true, let drag) = phase, let drag {
+                    updateReorder(with: drag, at: index)
+                    commitReorder(at: index)
+                } else {
+                    withAnimation(DS.Motion.settle) { lift = nil }
+                }
+            }
+    }
+
+    private func beginReorder(_ segment: Segment, at index: Int) {
+        guard lift == nil else { return }
+        model.pause()
+        lift = LiftState(
+            segmentID: segment.id,
+            sourceIndex: index,
+            offset: 0,
+            verticalOffset: 0,
+            tilt: 0,
+            intent: nil
+        )
+        snapCount += 1
+    }
+
+    private func updateReorder(with drag: DragGesture.Value, at index: Int) {
+        guard var activeLift = lift, activeLift.sourceIndex == index else { return }
+        let offset = clampedReorderOffset(Double(drag.translation.width), from: index)
+        let intent = reorderIntent(from: index, offset: offset)
+        activeLift.offset = offset
+        activeLift.verticalOffset = min(max(Double(drag.translation.height) * 0.10, -3), 4)
+        activeLift.tilt = min(max(Double(drag.translation.height) * 0.12, -4), 4)
+        let didCrossTarget = activeLift.intent != intent
+        activeLift.intent = intent
+        lift = activeLift
+        if didCrossTarget { snapCount += 1 }
+    }
+
+    private func commitReorder(at index: Int) {
+        guard let lift, lift.sourceIndex == index else { return }
+        switch lift.intent {
+        case .swap(let destination) where destination != index:
+            model.swapSegments(at: index, with: destination)
+            snapCount += 1
+        case .insert(let destination) where destination != index:
+            model.move(segmentAt: index, to: destination)
+            snapCount += 1
+        default:
+            break
+        }
+        withAnimation(DS.Motion.settle) { self.lift = nil }
     }
 
     /// A clip body means "swap"; the breathing room either side means "insert". The split is
@@ -602,14 +611,36 @@ struct EditorTimeline: View {
     private func reorderIntent(from index: Int, offset: Double) -> ReorderIntent? {
         guard model.project.segments.indices.contains(index) else { return nil }
         let centre = model.start(at: index) + model.project.segments[index].barWeight / 2 + offset / scale
+
+        // Once a swap target is acquired, keep it through a small halo. Touch coordinates vary by
+        // fractions of a point even under a still finger; without hysteresis that noise alternates
+        // swap/insert every frame and makes the whole row shake left and right.
+        if case .swap(let current)? = lift?.intent,
+           model.project.segments.indices.contains(current) {
+            let segment = model.project.segments[current]
+            let start = model.start(at: current)
+            let inset = min(segment.barWeight * 0.30, 0.55)
+            let halo = min(segment.barWeight * 0.10, 0.22)
+            if centre >= start + inset - halo, centre <= start + segment.barWeight - inset + halo {
+                return .swap(current)
+            }
+        }
+
         for (candidate, segment) in model.project.segments.enumerated() where candidate != index {
             let start = model.start(at: candidate)
-            let inset = min(segment.barWeight * 0.24, 0.5)
+            let inset = min(segment.barWeight * 0.30, 0.55)
             if centre >= start + inset, centre <= start + segment.barWeight - inset {
                 return .swap(candidate)
             }
         }
-        return .insert(destinationIndex(from: index, centre: centre))
+        let proposed = destinationIndex(from: index, centre: centre)
+        if case .insert(let current)? = lift?.intent,
+           current != proposed,
+           model.project.segments.indices.contains(current) {
+            let currentMidpoint = model.start(at: current) + model.project.segments[current].barWeight / 2
+            if abs(centre - currentMidpoint) < 0.16 { return .insert(current) }
+        }
+        return .insert(proposed)
     }
 
     /// Keeps a clip inside the timeline while it is held. A fast swipe can report a translation
