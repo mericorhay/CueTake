@@ -112,6 +112,11 @@ private extension SegmentRoleAnalyzer {
             var score = min(Double(actionHits) * 0.26, 0.62)
             if position >= 0.60 { score += 0.20 }
             if directed { score += 0.10 }
+            // "Follow for more" and "takip et" are complete closing requests even without a
+            // second action word. Treat the phrase as evidence, not the clip's final position.
+            if containsAny(["takip et", "abone ol", "follow for", "follow me", "subscribe for", "comment below"]) {
+                score += 0.16
+            }
             if normalized.contains("!") { score += 0.05 }
             return Score(score: min(max(score, 0), 1), hasExplicitAction: actionHits > 0)
         }
