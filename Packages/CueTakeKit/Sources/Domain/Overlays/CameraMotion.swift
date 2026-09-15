@@ -4,6 +4,7 @@ import Foundation
 /// changes where the move is displayed, never which frames it belongs to.
 public struct CameraMotionRecipe: Identifiable, Hashable, Sendable, Codable {
     public enum Kind: String, CaseIterable, Hashable, Sendable, Codable {
+        case hold
         case pushIn
         case pullOut
         case punch
@@ -43,14 +44,14 @@ public struct CameraMotionRecipe: Identifiable, Hashable, Sendable, Codable {
 /// Pure and deterministic so preview, export and the timeline thumbnail all show the same move.
 public enum CameraMotionEvaluator {
     public static func zoom(at sourceTime: Double, recipes: [CameraMotionRecipe]) -> Double {
-        guard let recipe = recipes.last(where: {
-            sourceTime >= $0.start - 0.0001 && sourceTime <= $0.end + 0.0001
-        }) else { return 1 }
+        guard let recipe = activeRecipe(at: sourceTime, recipes: recipes) else { return 1 }
         let length = max(0.001, recipe.sourceRange.duration.seconds)
         let progress = min(max((sourceTime - recipe.start) / length, 0), 1)
         let amount = min(max(recipe.amount, 0.02), 1)
 
         switch recipe.kind {
+        case .hold:
+            return 1 + amount
         case .pushIn:
             return 1 + amount * curve(progress, feel: recipe.feel)
         case .pullOut:
@@ -70,10 +71,34 @@ public enum CameraMotionEvaluator {
 
     /// Sample points that keep AVFoundation's linear ramps visually close to the authored curve.
     public static func sampleTimes(for recipe: CameraMotionRecipe) -> [Double] {
-        let count = recipe.kind == .punch ? 12 : 8
+        let count = switch recipe.kind {
+        case .hold: 1
+        case .punch: 12
+        case .pushIn, .pullOut: 8
+        }
         return (0...count).map {
             recipe.start + recipe.sourceRange.duration.seconds * Double($0) / Double(count)
         }
+    }
+
+    public static func activeRecipe(at sourceTime: Double, recipes: [CameraMotionRecipe]) -> CameraMotionRecipe? {
+        recipes.last {
+            sourceTime >= $0.start - 0.0001 && sourceTime <= $0.end + 0.0001
+        }
+    }
+
+    /// Combines subject-safe framing with authored camera travel. A hold is an absolute minimum
+    /// crop, while a move travels from whatever crop tracking already needs.
+    public static func combinedZoom(
+        baseZoom: Double,
+        at sourceTime: Double,
+        recipes: [CameraMotionRecipe]
+    ) -> Double {
+        let base = min(max(baseZoom.isFinite ? baseZoom : 1, 1), 3)
+        guard let recipe = activeRecipe(at: sourceTime, recipes: recipes) else { return base }
+        let authored = zoom(at: sourceTime, recipes: recipes)
+        if recipe.kind == .hold { return max(base, authored) }
+        return min(3, base + authored - 1)
     }
 
     private static func curve(_ value: Double, feel: CameraMotionRecipe.Feel) -> Double {

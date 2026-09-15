@@ -1176,7 +1176,10 @@ extension EditorModel {
     /// separate camera channel: changing it never rewrites the selected subject's path.
     public func trackSelectedSubject(in bounds: CGRect, zoom: Double, correctionRadius: Double? = nil) async {
         if case .analyzing = mainSubjectTracking { return }
-        guard let target = subjectTrackingTarget() else { mainSubjectTracking = .failed; return }
+        guard canApplySubjectTracking, let target = subjectTrackingTarget() else {
+            mainSubjectTracking = .failed
+            return
+        }
         let takeStart = target.take.sourceRange.start.seconds
         let takeEnd = target.take.sourceRange.end.seconds
         let analysisStart = correctionRadius.map { max(takeStart, target.reference - max(0.5, $0)) } ?? takeStart
@@ -1194,7 +1197,10 @@ extension EditorModel {
                 self?.mainSubjectTracking = .analyzing(progress)
             }
             guard !focuses.isEmpty,
-                  let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
+                  let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
+                  project.segments.contains(where: {
+                      $0.selectedTake?.id == target.take.id && $0.selectedTake?.sourceRange == target.take.sourceRange
+                  })
             else { mainSubjectTracking = .failed; return }
 
             record(correctionRadius == nil ? "editor.change.subjectTrack" : "editor.change.subjectTrackCorrection", symbol: "scope")
@@ -1212,7 +1218,10 @@ extension EditorModel {
             project.recordings[recordingIndex].reframe = (kept + replacement).sorted { $0.time < $1.time }
             project.mainVideoPlacement.fillsFrame = true
             project.updatedAt = .now
-            mainSubjectTracking = .applied(focuses.count)
+            let total = (project.recordings[recordingIndex].reframe ?? []).filter {
+                $0.time >= takeStart - 0.0001 && $0.time <= takeEnd + 0.0001
+            }.count
+            mainSubjectTracking = .applied(total)
         } catch is CancellationError {
             mainSubjectTracking = .idle
         } catch {
@@ -1233,9 +1242,10 @@ extension EditorModel {
         let timelineStart = start(at: index)
         return (recording.reframe ?? []).compactMap { frame in
             let sourceOffset = frame.time - takeStart
-            guard sourceOffset >= -0.0001, sourceOffset <= takeLength + 0.0001 else { return nil }
-            let playbackSource = segment.playback.isReversed ? takeLength - sourceOffset : sourceOffset
-            let localTime = segment.playback.timelineSeconds(forSource: min(max(playbackSource, 0), takeLength))
+            guard let localTime = segment.playback.timelineOffset(
+                forSourceOffset: sourceOffset,
+                sourceLength: takeLength
+            ) else { return nil }
             return SubjectTrackReviewPoint(
                 id: frame.id,
                 timelineTime: timelineStart + localTime,
@@ -1251,14 +1261,53 @@ extension EditorModel {
         mainSubjectTracking = .idle
     }
 
-    public var mainVideoZoom: Double { project.mainVideoPlacement.zoom ?? 1 }
+    public var mainVideoZoom: Double {
+        if let recipe = cameraMotionAtPlayhead, recipe.kind == .hold {
+            return 1 + recipe.amount
+        }
+        return project.mainVideoPlacement.zoom ?? 1
+    }
+
+    public var canApplySubjectTracking: Bool {
+        guard let (index, _) = segmentAtPlayhead else { return false }
+        return project.segments[index].selectedTake != nil && project.segments[index].playback.freeze == nil
+    }
+
+    public var canApplyCameraMotion: Bool { canApplySubjectTracking }
 
     public func setMainVideoZoom(_ value: Double) {
         let zoom = min(max(value, 1), 3)
-        guard abs(mainVideoZoom - zoom) > 0.0001 else { return }
-        record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "main-video-zoom")
+        guard let target = subjectTrackingTarget(),
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
+        else { return }
+        let range = target.take.sourceRange
+        let overlapping = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
+            $0.end > range.start.seconds + 0.0001 && $0.start < range.end.seconds - 0.0001
+        }
+        let sameHold = overlapping.count == 1
+            && overlapping[0].kind == .hold
+            && abs(1 + overlapping[0].amount - zoom) < 0.0001
+            && project.mainVideoPlacement.zoom == nil
+        guard !sameHold else { return }
+        record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "main-video-zoom-\(target.take.id)")
+        let kept = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
+            $0.end <= range.start.seconds + 0.0001 || $0.start >= range.end.seconds - 0.0001
+        }
+        if zoom > 1.005 {
+            let priorHold = overlapping.last { $0.kind == .hold }
+            let hold = CameraMotionRecipe(
+                id: priorHold?.id ?? UUID(),
+                sourceRange: range,
+                amount: zoom - 1,
+                kind: .hold
+            )
+            project.recordings[recordingIndex].cameraMotions = (kept + [hold]).sorted { $0.start < $1.start }
+        } else {
+            project.recordings[recordingIndex].cameraMotions = kept
+        }
         project.mainVideoPlacement.fillsFrame = true
-        project.mainVideoPlacement.zoom = abs(zoom - 1) < 0.001 ? nil : zoom
+        // Build 66 stored this globally. The first intentional edit migrates it to this source clip.
+        project.mainVideoPlacement.zoom = nil
         project.updatedAt = .now
     }
 
@@ -1267,7 +1316,8 @@ extension EditorModel {
         amount: Double,
         feel: CameraMotionRecipe.Feel = .natural
     ) {
-        guard let target = subjectTrackingTarget(),
+        guard canApplyCameraMotion,
+              let target = subjectTrackingTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
         else { return }
         record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
@@ -1316,13 +1366,10 @@ extension EditorModel {
               let take = project.segments[index].selectedTake,
               let recording = project.recording(id: take.recordingID)
         else { return nil }
-        let sourceOffset = min(
-            take.sourceRange.duration.seconds,
-            project.segments[index].playback.sourceSeconds(forTimeline: offset)
+        let resolvedOffset = project.segments[index].playback.sourceOffset(
+            forTimeline: offset,
+            sourceLength: take.sourceRange.duration.seconds
         )
-        let resolvedOffset = project.segments[index].playback.isReversed
-            ? take.sourceRange.duration.seconds - sourceOffset
-            : sourceOffset
         let reference = take.sourceRange.start.seconds + min(max(resolvedOffset, 0), take.sourceRange.duration.seconds - 0.02)
         let url = mediaDirectory.appending(
             path: (recording.relativePath as NSString).lastPathComponent,

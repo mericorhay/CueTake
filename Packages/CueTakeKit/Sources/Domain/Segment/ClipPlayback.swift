@@ -49,6 +49,24 @@ public struct ClipPlayback: Hashable, Sendable, Codable {
         timeline * min(max(speed, 0.1), 8)
     }
 
+    /// The source offset displayed at a timeline moment. This is the shared clock conversion for
+    /// preview geometry, tracking and camera lanes; a held frame always stays on its first frame.
+    public func sourceOffset(forTimeline timeline: Double, sourceLength: Double) -> Double {
+        let length = max(0, sourceLength)
+        guard freeze == nil else { return 0 }
+        let forward = min(max(sourceSeconds(forTimeline: timeline), 0), length)
+        return isReversed ? length - forward : forward
+    }
+
+    /// Converts a source point back to the visible timeline. A freeze has no moving source clock,
+    /// so authored motion has no meaningful lane position while it is held.
+    public func timelineOffset(forSourceOffset source: Double, sourceLength: Double) -> Double? {
+        let length = max(0, sourceLength)
+        guard freeze == nil, source >= -0.0001, source <= length + 0.0001 else { return nil }
+        let played = isReversed ? length - source : source
+        return timelineSeconds(forSource: min(max(played, 0), length))
+    }
+
     /// A short label for the badge on the clip. Nil when there is nothing worth saying.
     public var badge: String? {
         if freeze != nil { return "FREEZE" }

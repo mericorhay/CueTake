@@ -236,10 +236,17 @@ public struct VideoComposer: Sendable {
                 let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
                 let pieceTimelineStart = (pieceCursor - cursor).seconds
                 let pieceTimelineEnd = pieceTimelineStart + pieceTarget.seconds
-                let focuses = recording.reframe ?? []
-                let cameraMotions = recording.cameraMotions ?? []
                 let takeStart = take.sourceRange.start.seconds
                 let takeLength = take.sourceRange.duration.seconds
+                let takeEnd = takeStart + takeLength
+                // Recording-level tracks may belong to another trim of the same source. Applying
+                // the nearest point outside this take made an unrelated clip inherit its zoom.
+                let focuses = (recording.reframe ?? []).filter {
+                    $0.time >= takeStart - 0.0001 && $0.time <= takeEnd + 0.0001
+                }
+                let cameraMotions = (recording.cameraMotions ?? []).filter {
+                    $0.end > takeStart + 0.0001 && $0.start < takeEnd - 0.0001
+                }
                 if focuses.isEmpty && cameraMotions.isEmpty {
                     // Keep the long-standing static instruction for ordinary clips. A ramp with
                     // identical endpoints is needlessly rejected by some iOS AVFoundation builds
@@ -251,13 +258,13 @@ public struct VideoComposer: Sendable {
                     let internalTimes = focuses.compactMap { frame -> Double? in
                         let offset = frame.time - takeStart
                         guard offset >= 0, offset <= takeLength else { return nil }
-                        let time = playback.timelineSeconds(forSource: playback.isReversed ? takeLength - offset : offset)
+                        guard let time = playback.timelineOffset(forSourceOffset: offset, sourceLength: takeLength) else { return nil }
                         return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
                     }
                     let motionTimes = cameraMotions.flatMap { CameraMotionEvaluator.sampleTimes(for: $0) }.compactMap { sourceTime -> Double? in
                         let offset = sourceTime - takeStart
                         guard offset >= 0, offset <= takeLength else { return nil }
-                        let time = playback.timelineSeconds(forSource: playback.isReversed ? takeLength - offset : offset)
+                        guard let time = playback.timelineOffset(forSourceOffset: offset, sourceLength: takeLength) else { return nil }
                         return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
                     }
                     let geometryTimes = Array(Set([pieceTimelineStart] + internalTimes + motionTimes + [pieceTimelineEnd])).sorted()
@@ -435,8 +442,7 @@ public struct VideoComposer: Sendable {
         playback: ClipPlayback,
         timelineTime: Double
     ) -> VideoPlacement {
-        let offset = min(max(playback.sourceSeconds(forTimeline: timelineTime), 0), takeLength)
-        let sourceTime = takeStart + (playback.isReversed ? takeLength - offset : offset)
+        let sourceTime = takeStart + playback.sourceOffset(forTimeline: timelineTime, sourceLength: takeLength)
         var placement = base
         if !focuses.isEmpty {
             let ordered = focuses.sorted { $0.time < $1.time }
@@ -463,11 +469,16 @@ public struct VideoComposer: Sendable {
             if let zoom = focus.zoom { placement.zoom = zoom }
         }
         let authoredZoom = CameraMotionEvaluator.zoom(at: sourceTime, recipes: cameraMotions)
-        if authoredZoom > 1.0001 {
+        if CameraMotionEvaluator.activeRecipe(at: sourceTime, recipes: cameraMotions) != nil,
+           authoredZoom > 1.0001 {
             placement.fillsFrame = true
-            // Base framing and an authored move are two requests for camera distance. Taking the
-            // stronger one prevents stacked tools from multiplying into an accidental crash zoom.
-            placement.zoom = max(placement.zoom ?? 1, authoredZoom)
+            // Tracking supplies the safe base crop; a move adds camera travel to that base.
+            // Taking only the stronger value made equal 15% settings produce no motion at all.
+            placement.zoom = CameraMotionEvaluator.combinedZoom(
+                baseZoom: placement.zoom ?? 1,
+                at: sourceTime,
+                recipes: cameraMotions
+            )
         }
         return placement.bounded
     }

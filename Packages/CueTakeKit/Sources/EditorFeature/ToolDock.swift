@@ -92,7 +92,10 @@ struct ToolDock: View {
         case .split: model.canSplitAtPlayhead || (model.selectedVideoLayer.map(model.canSplitVideoLayer) ?? false)
         case .trim: index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
         case .speed, .background: index != nil
-        case .reframe, .zoom: model.project.segments.contains { $0.selectedTake != nil }
+        case .reframe:
+            index.map { model.project.segments[$0].selectedTake != nil && model.project.segments[$0].playback.freeze == nil } ?? false
+        case .zoom:
+            index.map { model.project.segments[$0].selectedTake != nil } ?? false
         case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index != nil && model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .text, .image: true
@@ -209,11 +212,13 @@ struct ToolDock: View {
 
     private func activate(_ item: Item) {
         model.pause()
-        if item.opensPanel {
+        if item.opensPanel || item == .reframe {
             // Preserve the chosen clip by moving the playhead before dismissing its inspector.
             if let index, model.inspectedSegment != nil {
                 model.seek(to: model.start(at: index) + 0.01)
             }
+        }
+        if item.opensPanel {
             model.inspectedSegment = nil
             model.selectedAudio = nil
             model.select(overlay: nil)
@@ -404,7 +409,7 @@ struct ToolDock: View {
                     in: 1...1.5
                 )
                 .tint(DS.Palette.lime)
-                Text(verbatim: "%\(Int((model.mainVideoZoom * 100).rounded()))")
+                Text(verbatim: String(format: "%.2f×", model.mainVideoZoom))
                     .dsFont(.mono, .medium, 11)
                     .foregroundStyle(DS.Palette.ink(0.75))
                     .frame(width: 42, alignment: .trailing)
@@ -439,11 +444,14 @@ struct ToolDock: View {
             )
         }
         .buttonStyle(.dsPress(radius: 15))
+        .disabled(!model.canApplyCameraMotion)
+        .opacity(model.canApplyCameraMotion ? 1 : 0.4)
         .accessibilityAddTraits(active ? .isSelected : [])
     }
 
     private func zoomRecipeTitle(_ kind: CameraMotionRecipe.Kind) -> LocalizedStringKey {
         switch kind {
+        case .hold: "editor.zoom.static"
         case .pushIn: "editor.zoom.push"
         case .pullOut: "editor.zoom.pull"
         case .punch: "editor.zoom.punch"

@@ -59,7 +59,8 @@ struct CameraMotionLane: View {
         for segment in model.project.segments {
             defer { timelineStart += segment.barWeight }
             guard let take = segment.selectedTake,
-                  let recording = model.project.recording(id: take.recordingID)
+                  let recording = model.project.recording(id: take.recordingID),
+                  segment.playback.freeze == nil
             else { continue }
             let takeStart = take.sourceRange.start.seconds
             let takeEnd = take.sourceRange.end.seconds
@@ -68,13 +69,11 @@ struct CameraMotionLane: View {
                 let sourceStart = max(recipe.start, takeStart)
                 let sourceEnd = min(recipe.end, takeEnd)
                 guard sourceEnd - sourceStart > 0.01 else { continue }
-                func localTimeline(_ source: Double) -> Double {
+                func localTimeline(_ source: Double) -> Double? {
                     let offset = source - takeStart
-                    let played = segment.playback.isReversed ? takeLength - offset : offset
-                    return segment.playback.timelineSeconds(forSource: played)
+                    return segment.playback.timelineOffset(forSourceOffset: offset, sourceLength: takeLength)
                 }
-                let first = localTimeline(sourceStart)
-                let last = localTimeline(sourceEnd)
+                guard let first = localTimeline(sourceStart), let last = localTimeline(sourceEnd) else { continue }
                 result.append(DisplayMove(
                     id: "\(segment.id.uuidString)-\(recipe.id.uuidString)",
                     start: timelineStart + min(first, last),
@@ -86,8 +85,22 @@ struct CameraMotionLane: View {
         return result
     }
 
+    static func hasVisibleMoves(in project: Project) -> Bool {
+        project.segments.contains { segment in
+            guard segment.playback.freeze == nil,
+                  let take = segment.selectedTake,
+                  let recording = project.recording(id: take.recordingID)
+            else { return false }
+            return (recording.cameraMotions ?? []).contains {
+                $0.end > take.sourceRange.start.seconds + 0.0001
+                    && $0.start < take.sourceRange.end.seconds - 0.0001
+            }
+        }
+    }
+
     private func symbol(_ kind: CameraMotionRecipe.Kind) -> String {
         switch kind {
+        case .hold: "viewfinder.circle"
         case .pushIn: "arrow.down.right"
         case .pullOut: "arrow.up.left"
         case .punch: "bolt.fill"
@@ -96,6 +109,7 @@ struct CameraMotionLane: View {
 
     private func title(_ kind: CameraMotionRecipe.Kind) -> LocalizedStringKey {
         switch kind {
+        case .hold: "editor.zoom.static"
         case .pushIn: "editor.zoom.push"
         case .pullOut: "editor.zoom.pull"
         case .punch: "editor.zoom.punch"

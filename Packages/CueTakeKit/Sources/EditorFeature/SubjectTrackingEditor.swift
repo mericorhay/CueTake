@@ -20,6 +20,8 @@ struct SubjectTrackingEditor: View {
     @State private var zoom = 1.15
     @State private var successPulse = 0
     @State private var isCorrecting = false
+    @State private var trackingTask: Task<Void, Never>?
+    @State private var frameTask: Task<Void, Never>?
 
     private var isAnalyzing: Bool {
         if case .analyzing = model.mainSubjectTracking { return true }
@@ -32,7 +34,7 @@ struct SubjectTrackingEditor: View {
     }
 
     private var isReviewing: Bool {
-        !isCorrecting && (isApplied || !model.subjectTrackReviewPoints.isEmpty)
+        !isCorrecting && !model.subjectTrackReviewPoints.isEmpty
     }
 
     var body: some View {
@@ -86,12 +88,17 @@ struct SubjectTrackingEditor: View {
         .background(DS.Palette.screen.ignoresSafeArea())
         .statusBarHidden(true)
         .task { image = await model.subjectSelectionFrame() }
+        .onDisappear {
+            trackingTask?.cancel()
+            frameTask?.cancel()
+            model.mainSubjectTracking = .idle
+        }
         .sensoryFeedback(.success, trigger: successPulse)
     }
 
     private var header: some View {
         HStack(spacing: 12) {
-            Button(action: onClose) {
+            Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink)
@@ -155,7 +162,7 @@ struct SubjectTrackingEditor: View {
         return switch model.mainSubjectTracking {
         case .idle: String(localized: "editor.track.instruction", bundle: .module)
         case .analyzing(let progress): String(localized: "editor.track.progress \(Int((progress * 100).rounded()))", bundle: .module)
-        case .applied: String(localized: "editor.track.applied", bundle: .module)
+        case .applied: String(localized: "editor.track.instruction", bundle: .module)
         case .noFace, .failed: String(localized: "editor.track.failed", bundle: .module)
         }
     }
@@ -168,7 +175,7 @@ struct SubjectTrackingEditor: View {
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
 
-                Button(action: onClose) {
+                Button(action: close) {
                     Text("editor.track.return", bundle: .module)
                         .dsFont(.sans, .semibold, 12)
                         .foregroundStyle(DS.Palette.ink(0.72))
@@ -229,16 +236,22 @@ struct SubjectTrackingEditor: View {
 
             Button {
                 guard let bounds = normalizedSelectionBounds else { return }
-                Task {
+                trackingTask = Task {
                     await model.trackSelectedSubject(
                         in: bounds,
                         zoom: zoom,
                         correctionRadius: isCorrecting ? 2 : nil
                     )
+                    guard !Task.isCancelled else { return }
                     if isApplied {
-                        isCorrecting = false
+                        withAnimation(DS.Motion.settle) {
+                            isCorrecting = false
+                            strokes.removeAll()
+                            activeStroke.removeAll()
+                        }
                         successPulse += 1
                     }
+                    trackingTask = nil
                 }
             } label: {
                 HStack(spacing: 9) {
@@ -267,9 +280,25 @@ struct SubjectTrackingEditor: View {
             isCorrecting = true
             strokes.removeAll()
             activeStroke.removeAll()
+            image = nil
         }
         model.beginSubjectCorrection(at: point.timelineTime)
-        Task { image = await model.subjectSelectionFrame() }
+        frameTask?.cancel()
+        frameTask = Task {
+            let frame = await model.subjectSelectionFrame()
+            guard !Task.isCancelled else { return }
+            image = frame
+            frameTask = nil
+        }
+    }
+
+    private func close() {
+        trackingTask?.cancel()
+        frameTask?.cancel()
+        trackingTask = nil
+        frameTask = nil
+        model.mainSubjectTracking = .idle
+        onClose()
     }
 
     private func imageRect(in size: CGSize) -> CGRect {
@@ -289,7 +318,7 @@ struct SubjectTrackingEditor: View {
     private func markingGesture(in frame: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                guard !isAnalyzing, image != nil, frame.contains(value.location) else { return }
+                guard !isAnalyzing, !isReviewing, image != nil, frame.contains(value.location) else { return }
                 if let last = activeStroke.last, hypot(last.x - value.location.x, last.y - value.location.y) < 2 { return }
                 activeStroke.append(value.location)
             }
@@ -409,10 +438,11 @@ private struct SubjectTrackConfidenceSpine: View {
                 .contentShape(Rectangle())
                 .gesture(
                     SpatialTapGesture().onEnded { value in
+                        let trackWidth = max(proxy.size.width - 10, 1)
+                        let tapped = min(max((value.location.x - 5) / trackWidth, 0), 1)
                         guard proxy.size.width > 0,
                               let nearest = points.min(by: {
-                                  abs($0.progress - value.location.x / proxy.size.width)
-                                    < abs($1.progress - value.location.x / proxy.size.width)
+                                  abs($0.progress - tapped) < abs($1.progress - tapped)
                               })
                         else { return }
                         onSelect(nearest)
