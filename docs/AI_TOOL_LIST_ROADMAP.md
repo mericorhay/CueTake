@@ -1,5 +1,7 @@
 # AI Tool List Roadmap
 
+> **Ana ürün otoritesi:** [CUETAKE_MASTER_PRODUCT_PLAN.md](CUETAKE_MASTER_PRODUCT_PLAN.md). Bu dosya AI araçlarının ayrıntılı tarihçesidir; öncelik, Apple entegrasyonu ve UX kararlarında ana rapor geçerlidir.
+
 Bu dosya, sonraki AI güçlendirme turlarında ana referanstır.
 
 Masaüstü–mobil özellik farklarının tam kapsamı ve son kod checkpoint’i için [FEATURE_GAP_REPORT.md](FEATURE_GAP_REPORT.md) dosyasına bak. Bu dosya yalnız AI’ın kullanacağı tool yüzeyini ve execution kurallarını tutar.

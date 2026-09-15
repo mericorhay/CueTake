@@ -1,5 +1,7 @@
 # CueTake Timeline UX Audit
 
+> **Ana ürün otoritesi:** [CUETAKE_MASTER_PRODUCT_PLAN.md](CUETAKE_MASTER_PRODUCT_PLAN.md). Bu dosya timeline denetim ayrıntılarını korur.
+
 _15 Eylül 2026 — mobil kurgu akışı, resmi ürün sayfaları ve yardım belgeleri üzerinden karşılaştırıldı._
 
 ## Hedef

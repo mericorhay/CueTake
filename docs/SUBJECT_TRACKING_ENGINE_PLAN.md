@@ -1,5 +1,7 @@
 # CueTake Subject Tracking Engine
 
+> **Ana ürün otoritesi:** [CUETAKE_MASTER_PRODUCT_PLAN.md](CUETAKE_MASTER_PRODUCT_PLAN.md). Bu dosya takip motorunun ayrıntılı teknik ekidir.
+
 > Ürün, UX ve teknik mimari planı — 15 Eylül 2026
 > Bu belge kodlama talimatı değildir. Buradaki “kesme”, timeline'da klip kesmek değil; görüntü içinden bir özneyi seçip hareketini izlemek ve kadrajı ona bağlamaktır.
 

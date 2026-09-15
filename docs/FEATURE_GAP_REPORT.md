@@ -1,5 +1,7 @@
 # CueTake Feature Gap Report
 
+> **Ana ürün otoritesi:** [CUETAKE_MASTER_PRODUCT_PLAN.md](CUETAKE_MASTER_PRODUCT_PLAN.md). Bu dosya rakip/feature keşif ekidir; yürütme önceliği, AI sözleşmesi ve UX için ana rapor geçerlidir.
+
 > Masaüstü–mobil karşılaştırması, önerilen ürün kapsamı ve mevcut kod durumu
 > Güncelleme: 15 Eylül 2026
 

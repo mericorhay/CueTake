@@ -1,5 +1,7 @@
 # CueTake Zoom Engine
 
+> **Ana ürün otoritesi:** [CUETAKE_MASTER_PRODUCT_PLAN.md](CUETAKE_MASTER_PRODUCT_PLAN.md). Bu dosya zoom/motion motorunun ayrıntılı teknik ekidir.
+
 > Ürün, UX ve teknik mimari planı — 15 Eylül 2026
 > Zoom Engine, Subject Tracking Engine ile ortak Motion Graph üzerinde çalışan fakat onsuz da manuel ve otomatik zoom üretebilen bağımsız bir araçtır.
 
