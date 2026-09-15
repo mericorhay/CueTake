@@ -10,6 +10,132 @@ Masaüstü–mobil özellik farklarının tam kapsamı ve son kod checkpoint’i
 
 CueTake AI’sının editörü yalnızca metinle tarif etmek yerine, kullanılabilir araçları otomatik keşfedip doğru sırayla seçmesi, güvenli parametrelerle çalıştırması ve sonucu doğrulaması.
 
+## Yeni ürün çekirdeği — Intent Graph, Semantic Timeline ve Continuity Guardian
+
+Bu üç kavram ayrı ayrı AI özelliği olarak tasarlanmayacak. Aynı proje gerçekliğini paylaşan, modelden bağımsız ve geri alınabilir tek bir edit mimarisinin üç yüzü olacak:
+
+1. **Intent Graph:** Kullanıcının anlatmak istediği şeyi, içerik rollerini ve medya arasındaki ilişkileri temsil eder.
+2. **Semantic Timeline:** Bu niyet ve ilişkilerin mevcut `EditDocument` üzerinde zaman çizelgesine yansıyan görünümüdür.
+3. **Continuity Guardian:** Zaman çizelgesinin anlatım, görüntü, ses ve yerleşim sürekliliğini denetleyen kural/evaluator katmanıdır.
+
+Bu mimarinin amacı “AI daha çok efekt yapsın” değildir. Kullanıcı bir hedef söylediğinde CueTake’in aynı bağlamı çekim, transcript, timeline, kadraj, altyazı, ses ve çıktı boyunca korumasıdır. Üç katman da kullanıcı arayüzünde tek bir devre olarak hissedilir; graph veya teknik düğüm editörü kullanıcıya açılmaz.
+
+### Kanonik domain modeli
+
+Intent Graph ayrı bir veritabanı veya serbest biçimli model çıktısı olmayacak; sürümlenmiş, `Codable` ve test edilebilir bir domain snapshot’ı olacak:
+
+```text
+IntentGraph {
+  schemaVersion
+  projectIntent
+  entities: [SemanticEntity]
+  events: [SemanticEvent]
+  relations: [SemanticRelation]
+  constraints: [ContinuityConstraint]
+  evidence: [EvidenceRef]
+  revision
+}
+
+SemanticEvent {
+  id
+  kind                 // hook, claim, reaction, action, payoff, cta, ...
+  sourceRange          // recordingID + sourceStart + sourceDuration
+  entityIDs
+  role
+  confidence
+  evidence             // transcript, vision, audio, manual anchor
+  state                // proposed, confirmed, stale, rejected
+}
+
+EvidenceRef {
+  provider             // Speech, Vision, user, metadata, ...
+  sourceHash
+  analysisRevision
+  confidence
+}
+```
+
+`sourceRange` her zaman özgün recording zamanını referanslar. Split, trim, speed, reverse, freeze veya reorder sonrasında graph referansı silinmez; ortak `ClipPlayback` resolver ile yeni timeline aralığına çevrilir. Bir klibin farklı trim’leri aynı graph verisini yanlışlıkla paylaşmaz. Graph snapshot’ı immutable kabul edilir; yeni analiz veya kullanıcı düzeltmesi yeni revision üretir.
+
+### Intent Graph’in sorumluluğu
+
+- Kullanıcı niyetini (`comparison`, `reaction`, `story`, `tutorial`, `cta` gibi) yapılandırılmış `IntentRequest` olarak tutmak.
+- Kişi, nesne, çekim, cümle, bölüm ve platform hedeflerini sabit kimliklerle ilişkilendirmek.
+- Hook, point, example, reaction ve CTA gibi rolleri transcript, script, Vision kanıtı ve kullanıcı düzeltmesiyle birleştirmek.
+- Ses bulunmadığında görsel olay, manuel anchor veya metadata ile düşük güvenli ama kullanılabilir sonuç üretmek.
+- “Bu iki klipte aynı olayı göster”, “CTA’yı sona taşı” veya “bu kişiyi takip et” gibi istekleri doğrudan UI mutasyonu yerine doğrulanabilir `EditAction` adaylarına çevirmek.
+- Her önerinin hangi kanıtlara dayandığını, hangi source range’i etkileyeceğini ve ne kadar güvenilir olduğunu taşımak.
+
+Model sağlayıcısı yalnızca `IntentRequest` ve yapılandırılmış öneri üretir. Proje durumunu doğrudan değiştirmez, `EditorModel` alanlarına yazmaz ve renderer çağırmaz. Planlama ile uygulama arasındaki tek kapı mevcut typed tool registry, validator ve action executor’dır.
+
+### Semantic Timeline’in sorumluluğu
+
+Semantic Timeline yeni ve paralel bir timeline modeli olmayacak; `EditDocument`’ın graph’tan türetilen, kullanıcıya odaklı projeksiyonu olacak. Böylece iki farklı “gerçek zaman” oluşmayacak.
+
+- Klipler yalnız sıra ve süre olarak değil, olay/rol/entity anchor’larıyla gösterilecek.
+- Olay marker’ları timeline’ın üzerine bindirilmek yerine üstte hafif bir semantic rail olarak açılıp kapanabilecek.
+- Aynı olayın iki veya daha fazla videodaki karşılıkları, kullanıcı istediğinde ilişki çizgisi ve eşlenmiş aralık olarak görünecek.
+- “Öpüşme anlarını yan yana getir”, “reaction’ı bu cümlenin üstüne koy” gibi işlemler event anchor’a göre yapılacak; sabit piksel veya tahmini saniye hesabına bağlanmayacak.
+- 50+ klipte media rail, semantic rail ve inspector birbirine binmeyecek. Detay yalnız seçili event/clip için progressive disclosure ile açılacak.
+- Her graph işlemi normal timeline işlemiyle aynı `EditAction` transaction’ına girecek; tek undo, seçili değişikliği geri alma ve güvenli retry korunacak.
+
+Timeline’ın temel gösterimi sade kalacak: kullanıcı önce klibi, olay etiketini veya “neden uyarı var?” satırını görür. Teknik `entityID`, provider adı ve tool adı yalnız debug/diagnostic yüzeyinde bulunur.
+
+### Continuity Guardian’in sorumluluğu
+
+Continuity Guardian bir sohbet prompt’u değil, ölçülebilir bulgular üreten deterministik bir evaluator katmanıdır. Her kontrol `Finding` döndürür:
+
+```text
+Finding {
+  id
+  category             // story, timing, framing, identity, audio, caption, layer
+  severity             // info, warning, blocking
+  affectedSourceRange
+  confidence
+  explanation
+  suggestedActions
+  verifiedAtRevision
+}
+```
+
+İlk kural kümeleri:
+
+- **Story:** Hook/payoff/CTA eksikliği, tekrar, off-script cümle, yanlış rol sırası.
+- **Timing:** Konuşma başlamadan caption, gereğinden uzun caption, event overlap, yanlış ripple sonucu.
+- **Identity ve framing:** Track’in başka kişiye atlaması, yüz/nesnenin güvenli crop dışına çıkması, bakış yönü ve ekran yönü kırılması.
+- **Layer ve layout:** Video katmanının ana klibi kapatması, safe area ihlali, caption/CTA çakışması, yanlış opacity/volume.
+- **Audio:** clipping, konuşma anlaşılabilirliği, aşırı ducking, müzik ve görüntü arasında zaman kayması.
+- **Visual continuity:** belirgin exposure/white-balance/skin-tone farkı, keskin scale veya camera motion sıçraması.
+- **Source integrity:** boşluk, overlap, kayıp caption/effect/audio bağı, proxy’nin export’a sızması.
+
+`info` bulguları yalnız bilgi verir, `warning` için tek dokunuşla öneri gösterilir, `blocking` bulguları kullanıcı kabul etmeden otomatik uygulanmaz. Guardian sessizce “düzeltmiş gibi” yapmaz; her çözüm aynı preview → approve → apply → verify zincirinden geçer.
+
+### Modern teknik direktif
+
+- **Domain ve state:** Swift 6 strict concurrency; `Sendable` değer modelleri; actor sınırında `ProjectStore`, `AnalysisStore` ve `ActionExecutor`; immutable project snapshot + versioned migration.
+- **Medya:** AVFoundation composition, `AVAssetReader/Writer` ve ortak source-time/geometry resolver. Preview ve export aynı evaluator ve render planını kullanır.
+- **Analiz:** SpeechAnalyzer ve mevcut fallback transcript; Vision tracking, face/person segmentation ve gerektiğinde pose; Core Image ile güvenli fallback, ağır ve tekrarlanan işlemlerde Metal render pipeline.
+- **Graph/index:** Graph snapshot’ları `sourceHash + analysisProfile + revision` anahtarıyla cache’lenir. Her analiz iptal edilebilir, yeniden başlatılabilir ve eski revision’ın projeyi değiştirmesi engellenir.
+- **Planlama:** `IntentRequest → Finding/Evidence → EditAction proposal → validation → execution → verification`. Modelin ürettiği serbest metin hiçbir zaman doğrudan renderer veya persistence katmanına geçmez.
+- **Gözlemlenebilirlik:** OSLog/`OSSignposter` ile analiz, scrub, graph rebuild ve export süreleri; MetricKit ile hitch, memory, hang, crash ve enerji ölçümü. Hata raporu kullanıcıya teknik stack trace olarak gösterilmez.
+- **Arka plan:** Uzun graph/preview/render işleri cancellation ve Background Tasks ile devam edebilir; uygulama kapanırsa resume state korunur ve aynı işlem idempotent biçimde yeniden denenir.
+- **Test:** Sabit media fixture’ları ile source-time, split/trim/reverse/freeze, düşük confidence, graph migration, 50+ klip, semantic sync ve Guardian finding golden testleri. Preview/export çıktıları aynı render planına karşı doğrulanır.
+- **Gizlilik:** On-device analiz mümkün olduğunca varsayılan; buluta giden kanıt, transcript veya medya için açık kapsam ve durum gösterimi. Yerel style/intent hafızası kullanıcı tarafından silinebilir.
+
+### Kabul ölçütleri
+
+Bu mimari tamamlandı sayılmadan şu koşullar sağlanmalı:
+
+1. Ses olmayan iki klipte ortak görsel olay manuel anchor veya Vision kanıtıyla güvenli biçimde eşlenebiliyor.
+2. Split, trim, reverse, freeze, reorder ve farklı format çıktıları graph event’lerini kaybetmiyor.
+3. 50+ klipte semantic rail ve inspector timeline’ın üstüne binmeden çalışıyor; düşük güven aralığı dışındaki ayrıntı gizli kalıyor.
+4. Her AI önerisi source range, kanıt, güven, etki özeti ve geri alma kapsamı taşıyor.
+5. Continuity Guardian aynı proje revision’ında preview ve export için aynı bulguları üretiyor.
+6. Track kaybolduğunda otomatik yeniden bağlanma yanlış özneye atlamıyor; emin değilse öneri durumunda kalıyor.
+7. Kullanıcı bir öneriyi kabul etmeden hiçbir geri döndürülemez medya veya proje değişikliği yapılmıyor.
+
+Bu üç katman CueTake’in ayrı “AI araçları” değil, bütün araçların üzerinde çalıştığı ürün omurgasıdır. Yeni bir araç ancak Intent Graph kanıtı, Semantic Timeline etkisi ve Continuity Guardian doğrulaması tanımlandığında registry’ye alınır.
+
 ## Yapılacak çekirdek sistem
 
 - Tek bir `ToolDescriptor` / registry: araç adı, açıklama, giriş parametreleri, ön koşullar, risk seviyesi ve geri alma kapsamı.
