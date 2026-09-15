@@ -19,6 +19,7 @@ struct SubjectTrackingEditor: View {
     @State private var activeStroke: [CGPoint] = []
     @State private var zoom = 1.15
     @State private var successPulse = 0
+    @State private var isCorrecting = false
 
     private var isAnalyzing: Bool {
         if case .analyzing = model.mainSubjectTracking { return true }
@@ -28,6 +29,10 @@ struct SubjectTrackingEditor: View {
     private var isApplied: Bool {
         if case .applied = model.mainSubjectTracking { return true }
         return false
+    }
+
+    private var isReviewing: Bool {
+        !isCorrecting && (isApplied || !model.subjectTrackReviewPoints.isEmpty)
     }
 
     var body: some View {
@@ -126,8 +131,8 @@ struct SubjectTrackingEditor: View {
 
     private var instruction: some View {
         HStack(spacing: 7) {
-            Image(systemName: isApplied ? "checkmark.circle.fill" : isAnalyzing ? "scope" : "hand.draw")
-                .foregroundStyle(isApplied ? DS.Palette.lime : DS.Palette.accent)
+            Image(systemName: isReviewing ? "checkmark.circle.fill" : isAnalyzing ? "scope" : "hand.draw")
+                .foregroundStyle(isReviewing ? DS.Palette.lime : DS.Palette.accent)
                 .symbolEffect(.breathe, options: .repeating, isActive: isAnalyzing)
             Text(statusText)
                 .dsFont(.sans, .semibold, 11)
@@ -141,6 +146,12 @@ struct SubjectTrackingEditor: View {
     }
 
     private var statusText: String {
+        if isCorrecting, !isAnalyzing {
+            return String(localized: "editor.track.correctInstruction", bundle: .module)
+        }
+        if isReviewing {
+            return String(localized: "editor.track.applied", bundle: .module)
+        }
         switch model.mainSubjectTracking {
         case .idle: String(localized: "editor.track.instruction", bundle: .module)
         case .analyzing(let progress): String(localized: "editor.track.progress \(Int((progress * 100).rounded()))", bundle: .module)
@@ -150,6 +161,30 @@ struct SubjectTrackingEditor: View {
     }
 
     private var footer: some View {
+        VStack(spacing: 12) {
+            if isReviewing {
+                SubjectTrackConfidenceSpine(points: model.subjectTrackReviewPoints) { point in
+                    beginCorrection(at: point)
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+
+                Button(action: onClose) {
+                    Text("editor.track.return", bundle: .module)
+                        .dsFont(.sans, .semibold, 12)
+                        .foregroundStyle(DS.Palette.ink(0.72))
+                        .frame(height: 36)
+                }
+                .buttonStyle(.dsPress(radius: 18))
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            } else {
+                trackingControls
+            }
+        }
+        .padding(.horizontal, 16)
+        .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isReviewing)
+    }
+
+    private var trackingControls: some View {
         VStack(spacing: 12) {
             HStack(spacing: 8) {
                 ForEach(MarkingMode.allCases, id: \.self) { choice in
@@ -195,42 +230,46 @@ struct SubjectTrackingEditor: View {
             Button {
                 guard let bounds = normalizedSelectionBounds else { return }
                 Task {
-                    await model.trackSelectedSubject(in: bounds, zoom: zoom)
-                    if isApplied { successPulse += 1 }
+                    await model.trackSelectedSubject(
+                        in: bounds,
+                        zoom: zoom,
+                        correctionRadius: isCorrecting ? 2 : nil
+                    )
+                    if isApplied {
+                        isCorrecting = false
+                        successPulse += 1
+                    }
                 }
             } label: {
                 HStack(spacing: 9) {
                     if isAnalyzing {
                         ProgressView().controlSize(.small).tint(DS.Palette.inkInverse)
                     } else {
-                        Image(systemName: isApplied ? "checkmark" : "scope")
+                        Image(systemName: "scope")
                     }
-                    Text(isApplied ? "editor.track.done" : "editor.track.start", bundle: .module)
+                    Text(isCorrecting ? "editor.track.correct" : "editor.track.start", bundle: .module)
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .dsFont(.sans, .semibold, 13)
                 .foregroundStyle(DS.Palette.inkInverse)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(Capsule().fill(isApplied ? DS.Palette.lime : DS.Palette.accent))
+                .background(Capsule().fill(DS.Palette.accent))
             }
             .buttonStyle(.dsPress(radius: 25))
-            .disabled(normalizedSelectionBounds == nil || isAnalyzing || image == nil || isApplied)
-            .opacity(normalizedSelectionBounds == nil && !isApplied ? 0.42 : 1)
-
-            if isApplied {
-                Button(action: onClose) {
-                    Text("editor.track.return", bundle: .module)
-                        .dsFont(.sans, .semibold, 12)
-                        .foregroundStyle(DS.Palette.ink(0.72))
-                        .frame(height: 36)
-                }
-                .buttonStyle(.dsPress(radius: 18))
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-            }
+            .disabled(normalizedSelectionBounds == nil || isAnalyzing || image == nil)
+            .opacity(normalizedSelectionBounds == nil ? 0.42 : 1)
         }
-        .padding(.horizontal, 16)
-        .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isApplied)
+    }
+
+    private func beginCorrection(at point: SubjectTrackReviewPoint) {
+        withAnimation(DS.Motion.settle) {
+            isCorrecting = true
+            strokes.removeAll()
+            activeStroke.removeAll()
+        }
+        model.beginSubjectCorrection(at: point.timelineTime)
+        Task { image = await model.subjectSelectionFrame() }
     }
 
     private func imageRect(in size: CGSize) -> CGRect {
@@ -325,4 +364,76 @@ struct SubjectTrackingEditor: View {
     }
 
     @State private var selectionFrame: CGRect?
+}
+
+private struct SubjectTrackConfidenceSpine: View {
+    let points: [SubjectTrackReviewPoint]
+    let onSelect: (SubjectTrackReviewPoint) -> Void
+
+    private var weakPoints: [SubjectTrackReviewPoint] {
+        points.filter { $0.confidence < 0.6 }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Label(String(localized: "editor.track.confidence", bundle: .module), systemImage: "waveform.path.ecg")
+                    .dsFont(.sans, .semibold, 11)
+                    .foregroundStyle(DS.Palette.ink(0.76))
+                Spacer(minLength: 8)
+                Text(
+                    weakPoints.isEmpty
+                        ? String(localized: "editor.track.stable", bundle: .module)
+                        : String(localized: "editor.track.weak \(weakPoints.count)", bundle: .module)
+                )
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(weakPoints.isEmpty ? DS.Palette.lime : DS.Palette.accentWarm)
+            }
+
+            GeometryReader { proxy in
+                ZStack {
+                    Capsule().fill(DS.Palette.hairline(0.08))
+                    Canvas { context, size in
+                        for point in points {
+                            let x = min(max(point.progress, 0), 1) * size.width
+                            let height = max(5, point.confidence * (size.height - 8))
+                            let rect = CGRect(x: x - 1.5, y: (size.height - height) / 2, width: 3, height: height)
+                            context.fill(
+                                Capsule().path(in: rect),
+                                with: .color(point.confidence < 0.6 ? DS.Palette.accentWarm : DS.Palette.lime)
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 5)
+                }
+                .contentShape(Rectangle())
+                .gesture(
+                    SpatialTapGesture().onEnded { value in
+                        guard proxy.size.width > 0,
+                              let nearest = points.min(by: {
+                                  abs($0.progress - value.location.x / proxy.size.width)
+                                    < abs($1.progress - value.location.x / proxy.size.width)
+                              })
+                        else { return }
+                        onSelect(nearest)
+                    }
+                )
+            }
+            .frame(height: 42)
+
+            if let weakest = weakPoints.min(by: { $0.confidence < $1.confidence }) {
+                Button { onSelect(weakest) } label: {
+                    Label(String(localized: "editor.track.correctWeakest", bundle: .module), systemImage: "scope")
+                        .dsFont(.sans, .semibold, 11)
+                        .foregroundStyle(DS.Palette.accentWarm)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.dsPress(radius: 18))
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(DS.Palette.hairline(0.045)))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(DS.Palette.hairline(0.08), lineWidth: 1))
+        .accessibilityElement(children: .contain)
+    }
 }

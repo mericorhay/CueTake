@@ -154,9 +154,20 @@ public struct SubjectTracker: Sendable {
                 let request = VNTrackObjectRequest(detectedObjectObservation: observation)
                 request.trackingLevel = .accurate
                 try sequence.perform([request], on: image)
-                guard let tracked = request.results?.first as? VNDetectedObjectObservation,
-                      tracked.confidence >= 0.25
-                else { break }
+                guard let tracked = request.results?.first as? VNDetectedObjectObservation else { break }
+                if tracked.confidence < 0.25 {
+                    // Keep the failure edge for review. It is not used to continue Vision's
+                    // search, but it gives the editor an exact frame to offer for correction.
+                    result.append(SubjectFocus(
+                        time: sourceTime - sourceStart,
+                        x: Double(tracked.boundingBox.midX),
+                        y: Double(1 - tracked.boundingBox.midY),
+                        confidence: Double(tracked.confidence)
+                    ))
+                    completed += 1
+                    await progress(Double(completed) / Double(total))
+                    break
+                }
                 visionBounds = tracked.boundingBox
                 result.append(SubjectFocus(
                     time: sourceTime - sourceStart,
@@ -212,6 +223,8 @@ public struct SubjectTracker: Sendable {
         for value in values.dropFirst().dropLast() {
             guard let last = result.last,
                   hypot(value.x - last.x, value.y - last.y) >= 0.018
+                    || value.confidence < 0.6
+                    || abs(value.confidence - last.confidence) >= 0.15
             else { continue }
             result.append(value)
         }

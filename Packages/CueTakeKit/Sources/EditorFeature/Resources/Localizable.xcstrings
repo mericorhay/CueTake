@@ -7620,6 +7620,23 @@
         }
       }
     },
+    "editor.change.subjectTrackCorrection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subject tracking corrected"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne takibi düzeltildi"
+          }
+        }
+      }
+    },
     "editor.change.zoom": {
       "extractionState": "manual",
       "localizations": {
@@ -7701,6 +7718,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "YAKINLIK"
+          }
+        }
+      }
+    },
+    "editor.track.confidence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRACK CONFIDENCE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TAKİP GÜVENİ"
+          }
+        }
+      }
+    },
+    "editor.track.correct": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply correction"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düzeltmeyi uygula"
+          }
+        }
+      }
+    },
+    "editor.track.correctInstruction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark the subject again on this frame"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu karede özneyi yeniden işaretle"
+          }
+        }
+      }
+    },
+    "editor.track.correctWeakest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct weakest moment"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En zayıf anı düzelt"
           }
         }
       }
@@ -7841,6 +7926,23 @@
         }
       }
     },
+    "editor.track.stable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STABLE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KARARLI"
+          }
+        }
+      }
+    },
     "editor.track.subtitle": {
       "extractionState": "manual",
       "localizations": {
@@ -7871,6 +7973,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Takip"
+          }
+        }
+      }
+    },
+    "editor.track.weak %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld weak moments"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sorunlu an"
           }
         }
       }

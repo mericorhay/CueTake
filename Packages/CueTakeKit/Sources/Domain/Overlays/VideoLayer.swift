@@ -74,12 +74,15 @@ public struct VideoFocusKeyframe: Hashable, Sendable, Codable, Identifiable {
     public var y: Double
     /// Optional camera distance at this tracked point. Old face tracks remain exactly 1x.
     public var zoom: Double?
+    /// Vision's confidence at this source frame. Nil means the project predates confidence review.
+    public var confidence: Double?
 
-    public init(time: Double, x: Double, y: Double, zoom: Double? = nil) {
+    public init(time: Double, x: Double, y: Double, zoom: Double? = nil, confidence: Double? = nil) {
         self.time = time
         self.x = x
         self.y = y
         self.zoom = zoom
+        self.confidence = confidence
     }
 }
 
@@ -142,7 +145,8 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
                     time: time,
                     x: previous.x + (frame.x - previous.x) * fraction,
                     y: previous.y + (frame.y - previous.y) * fraction,
-                    zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction
+                    zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
+                    confidence: (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
                 )
                 break
             }

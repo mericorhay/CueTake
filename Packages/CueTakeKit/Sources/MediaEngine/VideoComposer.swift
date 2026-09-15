@@ -449,7 +449,8 @@ public struct VideoComposer: Sendable {
                         time: sourceTime,
                         x: previous.x + (frame.x - previous.x) * fraction,
                         y: previous.y + (frame.y - previous.y) * fraction,
-                        zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction
+                        zoom: (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
+                        confidence: (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction
                     )
                     break
                 }

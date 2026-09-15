@@ -216,7 +216,15 @@ extension Project {
                   let recording = recordings.firstIndex(where: { $0.id == take.recordingID })
             else { continue }
             let start = take.sourceRange.start.seconds
-            let moved = points.map { VideoFocusKeyframe(time: start + $0.time, x: $0.x, y: $0.y) }
+            let moved = points.map {
+                VideoFocusKeyframe(
+                    time: start + $0.time,
+                    x: $0.x,
+                    y: $0.y,
+                    zoom: $0.zoom,
+                    confidence: $0.confidence
+                )
+            }
             let kept = (recordings[recording].reframe ?? []).filter {
                 $0.time < start || $0.time > start + take.sourceRange.duration.seconds
             }

@@ -14,6 +14,20 @@ public enum SubjectTrackingState: Hashable, Sendable {
     case failed
 }
 
+public struct SubjectTrackReviewPoint: Identifiable, Hashable, Sendable {
+    public var id: UUID
+    public var timelineTime: Double
+    public var confidence: Double
+    public var progress: Double
+
+    public init(id: UUID, timelineTime: Double, confidence: Double, progress: Double) {
+        self.id = id
+        self.timelineTime = timelineTime
+        self.confidence = confidence
+        self.progress = progress
+    }
+}
+
 /// Editor state: the playhead and which segment is being inspected.
 ///
 /// The timeline itself is never stored — it is derived from the project by `TimelineBuilder`,
@@ -1103,7 +1117,7 @@ extension EditorModel {
                 return frame
             }
             project.videoLayers[index].focusKeyframes = focuses.map {
-                VideoFocusKeyframe(time: $0.time, x: mirrored ? 1 - $0.x : $0.x, y: $0.y)
+                VideoFocusKeyframe(time: $0.time, x: mirrored ? 1 - $0.x : $0.x, y: $0.y, confidence: $0.confidence)
             }
             project.updatedAt = .now
             subjectTracking = .applied(focuses.count)
@@ -1160,16 +1174,20 @@ extension EditorModel {
 
     /// Turns one direct manipulation on the picture into a source-space motion track. Zoom is a
     /// separate camera channel: changing it never rewrites the selected subject's path.
-    public func trackSelectedSubject(in bounds: CGRect, zoom: Double) async {
+    public func trackSelectedSubject(in bounds: CGRect, zoom: Double, correctionRadius: Double? = nil) async {
         if case .analyzing = mainSubjectTracking { return }
         guard let target = subjectTrackingTarget() else { mainSubjectTracking = .failed; return }
+        let takeStart = target.take.sourceRange.start.seconds
+        let takeEnd = target.take.sourceRange.end.seconds
+        let analysisStart = correctionRadius.map { max(takeStart, target.reference - max(0.5, $0)) } ?? takeStart
+        let analysisEnd = correctionRadius.map { min(takeEnd, target.reference + max(0.5, $0)) } ?? takeEnd
         pause()
         mainSubjectTracking = .analyzing(0)
         do {
             let focuses = try await SubjectTracker().objectFocus(
                 in: target.url,
-                sourceStart: target.take.sourceRange.start.seconds,
-                duration: target.take.sourceRange.duration.seconds,
+                sourceStart: analysisStart,
+                duration: analysisEnd - analysisStart,
                 referenceTime: target.reference,
                 initialBounds: bounds
             ) { [weak self] progress in
@@ -1179,16 +1197,17 @@ extension EditorModel {
                   let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
             else { mainSubjectTracking = .failed; return }
 
-            record("editor.change.subjectTrack", symbol: "scope")
+            record(correctionRadius == nil ? "editor.change.subjectTrack" : "editor.change.subjectTrackCorrection", symbol: "scope")
             let replacement = focuses.map {
                 VideoFocusKeyframe(
-                    time: target.take.sourceRange.start.seconds + $0.time,
+                    time: analysisStart + $0.time,
                     x: $0.x,
                     y: $0.y,
-                    zoom: min(max(zoom, 1.1), 1.2)
+                    zoom: min(max(zoom, 1.1), 1.2),
+                    confidence: $0.confidence
                 )
             }
-            let range = target.take.sourceRange.start.seconds...target.take.sourceRange.end.seconds
+            let range = analysisStart...analysisEnd
             let kept = (project.recordings[recordingIndex].reframe ?? []).filter { !range.contains($0.time) }
             project.recordings[recordingIndex].reframe = (kept + replacement).sorted { $0.time < $1.time }
             project.mainVideoPlacement.fillsFrame = true
@@ -1199,6 +1218,37 @@ extension EditorModel {
         } catch {
             mainSubjectTracking = .failed
         }
+    }
+
+    /// Confidence points for the primary clip under the playhead, converted from recording time
+    /// to the visible timeline. Old projects have no confidence and stay quietly green.
+    public var subjectTrackReviewPoints: [SubjectTrackReviewPoint] {
+        guard let (index, _) = segmentAtPlayhead,
+              let take = project.segments[index].selectedTake,
+              let recording = project.recording(id: take.recordingID)
+        else { return [] }
+        let segment = project.segments[index]
+        let takeStart = take.sourceRange.start.seconds
+        let takeLength = take.sourceRange.duration.seconds
+        let timelineStart = start(at: index)
+        return (recording.reframe ?? []).compactMap { frame in
+            let sourceOffset = frame.time - takeStart
+            guard sourceOffset >= -0.0001, sourceOffset <= takeLength + 0.0001 else { return nil }
+            let playbackSource = segment.playback.isReversed ? takeLength - sourceOffset : sourceOffset
+            let localTime = segment.playback.timelineSeconds(forSource: min(max(playbackSource, 0), takeLength))
+            return SubjectTrackReviewPoint(
+                id: frame.id,
+                timelineTime: timelineStart + localTime,
+                confidence: min(max(frame.confidence ?? 1, 0), 1),
+                progress: min(max(localTime / max(segment.barWeight, 0.001), 0), 1)
+            )
+        }.sorted { $0.progress < $1.progress }
+    }
+
+    public func beginSubjectCorrection(at timelineTime: Double) {
+        pause()
+        seek(to: timelineTime)
+        mainSubjectTracking = .idle
     }
 
     public var mainVideoZoom: Double { project.mainVideoPlacement.zoom ?? 1 }
@@ -1316,7 +1366,9 @@ extension EditorModel {
                     ) { [weak self] local in
                         self?.mainSubjectTracking = .analyzing((Double(done) + local) / Double(spans.count))
                     }
-                    tracks[span.recording.id] = focuses.map { VideoFocusKeyframe(time: span.start + $0.time, x: $0.x, y: $0.y) }
+                    tracks[span.recording.id] = focuses.map {
+                        VideoFocusKeyframe(time: span.start + $0.time, x: $0.x, y: $0.y, confidence: $0.confidence)
+                    }
                 } catch SubjectTrackingError.noFace {
                     continue
                 } catch SubjectTrackingError.emptyRange {

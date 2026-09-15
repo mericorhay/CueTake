@@ -39,6 +39,15 @@ struct VideoPlacementTests {
         #expect(abs((middle.focusX ?? 0) - 0.5) < 0.001)
     }
 
+    @Test func olderFocusFramesDecodeWithoutInventingAWarning() throws {
+        let id = UUID()
+        let json = #"{"id":"\#(id.uuidString)","time":1.5,"x":0.4,"y":0.6}"#
+        let frame = try JSONDecoder().decode(VideoFocusKeyframe.self, from: Data(json.utf8))
+
+        #expect(frame.confidence == nil)
+        #expect(frame.zoom == nil)
+    }
+
     @Test func build54TrackingMigratesAwayFromPlacementAnimation() {
         var layer = VideoLayer(
             recordingID: UUID(),
