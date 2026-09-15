@@ -1349,13 +1349,12 @@ extension EditorModel {
     public func applyCameraMotion(
         _ kind: CameraMotionRecipe.Kind,
         amount: Double,
-        feel: CameraMotionRecipe.Feel = .natural
+        feel: CameraMotionRecipe.Feel? = nil
     ) {
         guard canApplyCameraMotion,
               let target = cameraMotionTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
         else { return }
-        record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
         let range = target.take.sourceRange
         let reversed = segmentAtPlayhead.map { project.segments[$0.index].playback.isReversed } ?? false
         let sourceKind = kind.facingTimeline(isReversed: reversed)
@@ -1364,9 +1363,16 @@ extension EditorModel {
         }) {
             // Changing the move from its inspector edits the ribbon the user selected. Replacing
             // it with a whole-take recipe made a carefully trimmed camera move expand again.
+            let boundedAmount = min(max(amount, 0.02), 1)
+            let selectedFeel = feel ?? project.recordings[recordingIndex].cameraMotions?[selected].feel ?? .natural
+            guard project.recordings[recordingIndex].cameraMotions?[selected].kind != sourceKind
+                    || project.recordings[recordingIndex].cameraMotions?[selected].amount != boundedAmount
+                    || project.recordings[recordingIndex].cameraMotions?[selected].feel != selectedFeel
+            else { return }
+            record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
             project.recordings[recordingIndex].cameraMotions?[selected].kind = sourceKind
-            project.recordings[recordingIndex].cameraMotions?[selected].amount = min(max(amount, 0.02), 1)
-            project.recordings[recordingIndex].cameraMotions?[selected].feel = feel
+            project.recordings[recordingIndex].cameraMotions?[selected].amount = boundedAmount
+            project.recordings[recordingIndex].cameraMotions?[selected].feel = selectedFeel
             project.mainVideoPlacement.zoom = nil
             project.mainVideoPlacement.fillsFrame = true
             project.updatedAt = .now
@@ -1375,11 +1381,12 @@ extension EditorModel {
         let existing = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
             $0.end <= range.start.seconds || $0.start >= range.end.seconds
         }
+        record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
         let recipe = CameraMotionRecipe(
             sourceRange: range,
             amount: amount,
             kind: sourceKind,
-            feel: feel
+            feel: feel ?? .natural
         )
         project.recordings[recordingIndex].cameraMotions = (existing + [recipe]).sorted { $0.start < $1.start }
         // A manual static zoom and a motion recipe describe the same camera channel. The recipe is
@@ -1404,9 +1411,32 @@ extension EditorModel {
         else { return }
         let fileEnd = max(0.1, project.recordings[recordingIndex].duration.seconds)
         let minimum = min(0.1, fileEnd)
-        let lower = min(max(0, min(sourceStart, sourceEnd)), max(0, fileEnd - minimum))
-        let upper = min(fileEnd, max(max(sourceStart, sourceEnd), lower + minimum))
-        let old = project.recordings[recordingIndex].cameraMotions?[motionIndex].sourceRange
+        guard let current = project.recordings[recordingIndex].cameraMotions?[motionIndex] else { return }
+        let others = (project.recordings[recordingIndex].cameraMotions ?? []).filter { $0.id != motionID }
+        // Recipes are ordered channels, not layers. Letting a drag cross a neighbour made two
+        // ribbons occupy the same pixels while the renderer silently chose the last one.
+        let leftLimit = others.filter { $0.end <= current.start + 0.0001 }.map(\.end).max() ?? 0
+        let rightLimit = others.filter { $0.start >= current.end - 0.0001 }.map(\.start).min() ?? fileEnd
+        let wantedLower = min(max(leftLimit, min(sourceStart, sourceEnd)), max(leftLimit, rightLimit - minimum))
+        let wantedUpper = min(rightLimit, max(max(sourceStart, sourceEnd), wantedLower + minimum))
+
+        let lower: Double
+        let upper: Double
+        if key == "move" {
+            let length = min(current.sourceRange.duration.seconds, max(minimum, rightLimit - leftLimit))
+            lower = min(max(wantedLower, leftLimit), max(leftLimit, rightLimit - length))
+            upper = lower + length
+        } else if abs(wantedUpper - current.end) < 0.0001 {
+            lower = min(wantedLower, current.end - minimum)
+            upper = current.end
+        } else if abs(wantedLower - current.start) < 0.0001 {
+            lower = current.start
+            upper = max(wantedUpper, current.start + minimum)
+        } else {
+            lower = wantedLower
+            upper = wantedUpper
+        }
+        let old = current.sourceRange
         let range = MediaTimeRange(
             start: MediaTime(seconds: lower),
             duration: MediaTime(seconds: upper - lower)

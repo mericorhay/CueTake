@@ -20,6 +20,9 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
     /// Opens the direct-on-picture subject picker owned by the editor screen.
     var onTrack: () -> Void = {}
+    /// The timeline stays between the stable tool row and whichever inspector the row opens. This
+    /// keeps the edit visible while its controls grow below it instead of pushing it off-screen.
+    var inlineTimeline: AnyView? = nil
 
     enum Item: String, CaseIterable, Identifiable {
         case ai, split, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
@@ -55,6 +58,10 @@ struct ToolDock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             row
+
+            if let inlineTimeline {
+                inlineTimeline
+            }
 
             if let open {
                 panel(for: open)
@@ -450,7 +457,10 @@ struct ToolDock: View {
         let active = model.cameraMotionAtPlayhead?.kind == kind
         return Button {
             withAnimation(DS.Motion.settle) {
-                model.applyCameraMotion(kind, amount: max(0.15, model.mainVideoZoom - 1))
+                model.applyCameraMotion(
+                    kind,
+                    amount: model.cameraMotionAtPlayhead?.amount ?? max(0.15, model.mainVideoZoom - 1)
+                )
             }
         } label: {
             VStack(spacing: 5) {

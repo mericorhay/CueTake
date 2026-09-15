@@ -45,13 +45,15 @@ struct CameraMotionLane: View {
 
             ForEach(moves) { move in
                 moveBar(move)
-                .frame(width: max(CGFloat(move.duration * scale) - 2, 24), height: Self.height)
+                // Draw the true time width. A forced minimum made two short adjacent moves paint
+                // over each other and hid which one would actually render.
+                .frame(width: max(CGFloat(move.duration * scale) - 2, 4), height: Self.height)
                 .offset(x: CGFloat(move.start * scale))
                 .zIndex(selectedMove == move.id ? 1 : 0)
                 .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
             }
         }
-        .frame(height: Self.height)
+        .frame(width: max(CGFloat(model.timelineDuration * scale), 1), height: Self.height, alignment: .leading)
         .coordinateSpace(.named(Self.space))
         .animation(DS.Motion.settle, value: moves.map(\.id))
         .onChange(of: moves.map(\.id)) { _, ids in
@@ -77,6 +79,7 @@ struct CameraMotionLane: View {
         .frame(height: 28)
         .background(Capsule().fill(DS.gradient(100, [DS.Palette.lime, DS.Palette.accentWarm])))
         .overlay { Capsule().stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0) }
+        .clipped()
         .frame(height: Self.height)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)

@@ -101,8 +101,8 @@ struct CameraMotionEditorTests {
 
         // Timeline second 3 points at source second 6 for this take.
         model.seek(to: 3)
-        model.applyCameraMotion(.punch, amount: 0.2)
         model.setCameraMotionFeel(.calm)
+        model.applyCameraMotion(.punch, amount: 0.2)
 
         let changed = try #require(model.project.recordings.first?.cameraMotions?.first)
         #expect(changed.id == recipe.id)
@@ -110,5 +110,32 @@ struct CameraMotionEditorTests {
         #expect(changed.feel == .calm)
         #expect(abs(changed.start - 5) < 0.001)
         #expect(abs(changed.end - 9) < 0.001)
+    }
+
+    @Test func cameraRangeCannotOverlapANeighbour() throws {
+        let model = model()
+        let recording = try #require(model.project.recordings.first)
+        let first = CameraMotionRecipe(
+            sourceRange: MediaTimeRange(start: MediaTime(seconds: 3), duration: MediaTime(seconds: 3)),
+            kind: .pushIn
+        )
+        let second = CameraMotionRecipe(
+            sourceRange: MediaTimeRange(start: MediaTime(seconds: 8), duration: MediaTime(seconds: 3)),
+            kind: .pullOut
+        )
+        model.project.recordings[0].cameraMotions = [first, second]
+
+        model.setCameraMotionRange(
+            recordingID: recording.id,
+            motionID: first.id,
+            sourceStart: 7,
+            sourceEnd: 10,
+            coalescing: "move"
+        )
+
+        let moved = try #require(model.project.recordings.first?.cameraMotions?.first(where: { $0.id == first.id }))
+        #expect(abs(moved.start - 5) < 0.001)
+        #expect(abs(moved.end - 8) < 0.001)
+        #expect(moved.end <= second.start)
     }
 }

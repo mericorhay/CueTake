@@ -71,10 +71,14 @@ struct TimelineBarEditing: ViewModifier {
     // MARK: Parts
 
     private var handles: some View {
-        HStack(spacing: 0) {
-            if edits.trimStart != nil { handle(active: origin?.grip == .start) }
-            Spacer(minLength: 0)
-            if edits.trimEnd != nil { handle(active: origin?.grip == .end) }
+        GeometryReader { proxy in
+            if proxy.size.width >= 18 {
+                HStack(spacing: 0) {
+                    if edits.trimStart != nil { handle(active: origin?.grip == .start) }
+                    Spacer(minLength: 0)
+                    if edits.trimEnd != nil { handle(active: origin?.grip == .end) }
+                }
+            }
         }
         .allowsHitTesting(false)
     }

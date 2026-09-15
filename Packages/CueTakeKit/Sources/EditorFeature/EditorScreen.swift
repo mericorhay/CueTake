@@ -805,6 +805,20 @@ public struct EditorScreen: View {
                         dockPanel = nil
                         showsSubjectTrackingEditor = true
                     },
+                    inlineTimeline: AnyView(
+                        VStack(alignment: .leading, spacing: 0) {
+                            timelineHeader
+                            if dockPanel == nil {
+                                timeline
+                            } else {
+                                ScrollView(.vertical) {
+                                    timeline
+                                }
+                                .scrollBounceBehavior(.basedOnSize)
+                                .frame(height: min(EditorTimeline.height(for: model), 250))
+                            }
+                        }
+                    ),
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)
@@ -812,11 +826,9 @@ public struct EditorScreen: View {
                 EditorToolbar(model: model)
                     .padding(.horizontal, -18)
                     .padding(.bottom, 10)
+                timelineHeader
+                timeline
             }
-
-            timelineHeader
-
-            timeline
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)
