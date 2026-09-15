@@ -94,9 +94,9 @@ Stabilizasyon bağımsız bir correction channel olmalı; Subject Follow ve kull
 
 ## Mevcut kodda tam olarak nerede kaldık
 
-### Tamamlanan son kod turu — build 65
+### Tamamlanan son kod turu — build 66
 
-Son kod commit’i `a754552 feat(editor): add direct subject tracking and zoom`.
+Son kod commit’i `06d1568 feat(editor): add source-time zoom recipes and camera lane`. Önceki takip dikey dilimi `a754552 feat(editor): add direct subject tracking and zoom` commit’indedir.
 
 - `SubjectTrackingEditor.swift`: oynatıcıdan açılan tam ekran seçim yüzeyi; çember/boya gesture’ı, kaynak kare, `%10/%15/%20` yakınlık ve analiz durumu.
 - `SubjectTracker.objectFocus`: seçilen bounds’tan Vision `VNTrackObjectRequest` ile ileri/geri genel nesne takibi; yüzle sınırlı değil.
@@ -106,27 +106,31 @@ Son kod commit’i `a754552 feat(editor): add direct subject tracking and zoom`.
 - `ToolDock`: `Takip` ve `Zoom` girişleri; zoom panelinde 1×, +%10, +%15, +%20 ve slider.
 - `Localizable.xcstrings`: takip/zoom UX metinleri Türkçe ve İngilizce.
 - `VideoFrameGeometryTests`: zoom’un crop alanını küçülttüğünü doğrulayan test.
+- `CameraMotionRecipe`: `Yaklaş`, `Vurgu` ve `Geri açıl` hareketlerini recording source-time aralığında saklıyor.
+- `CameraMotionEvaluator`: calm/natural/energetic eğrilerini preview, export ve timeline için tek noktada hesaplıyor.
+- `VideoComposer`: focus track ile zoom recipe’yi aynı geometry pipeline’ında birleştiriyor; çakışan zoom değerlerini çarpmıyor.
+- `CameraMotionLane`: timeline’da uygulanan kamera hareketini ince lime–coral ribbon olarak gösteriyor.
+- Zoom paneli: hareket tarifini uygula/kaldır ve ayrı sabit kadraj kontrolleri.
+- `CameraMotionTests`: push, punch, source-range sınırı ve başlangıç/bitiş değerlerini doğruluyor.
 
-Build numarası `Config/CueTake.xcconfig` içinde **65**, marketing version **0.5.0**. Bu turdaki son dokümantasyon commit’i `f3673e9`.
+Build numarası `Config/CueTake.xcconfig` içinde **66**, marketing version **0.5.0**. Build 65 ve build 66 için macOS CI’da uygulama derlemesi ve bütün package testleri geçti. Build 66 CI run’ı `34996421137`.
 
 ### Henüz tamamlanmayanlar
 
-- macOS üzerinde Xcode build/test çalıştırılmadı; Windows ortamında `swift`/`xcodebuild` yok. CI sonucu alınmadan bu dikey dilim tamamlanmış kabul edilmemeli.
 - Vision tracker gerçek cihaz benchmark’ı yapılmadı; low texture, occlusion, benzer nesne, kadrajdan çıkma ve düşük ışık seti gerekiyor.
 - Vuruş/ayak basma/beat event motoru henüz kodlanmadı.
-- Zoom şu an ilk dikey dilimde statik ana placement kanalıdır; tarif galerisi, Camera Lane, recipe eğrileri ve event mix henüz yok.
+- Zoom recipe ve Camera Lane’in ilk sürümü var; recipe aralığını timeline’da elle uzatma/taşıma, gelişmiş feel kontrolü, subject binding, transition ve event mix henüz yok.
+- Track confidence değeri kalıcı domain verisine yazılmıyor; confidence ribbon ve tek kareden lokal yeniden işaretleme henüz yok.
 - AI registry’ye tracking/zoom tool’ları henüz bağlanmadı.
 - Multicam, proxy, renk/HDR, chroma key, ses stem ve batch render bu raporun sonraki feature fazlarıdır.
 - TestFlight otomasyonu daha önce iptal edildi; bu doküman güncellemesi TestFlight çalıştırmaz.
 
 ## Önerilen uygulama sırası
 
-1. macOS CI derlemesini çalıştır, Swift/Vision API hatalarını temizle.
-2. `SubjectTrack` ve `CameraTransform` verisini ayrı domain primitive’lerine çıkar; mevcut yüz `reframe` verisi için migration yaz.
-3. Track correction, confidence ribbon, occlusion/re-entry ve doğal event/shake motorunu tamamla.
-4. Zoom recipe + Camera Lane + preview/export parity’sini tamamla.
-5. AI registry ve validator’ları bu iki motorla bağla.
-6. Timeline multicam/proxy, sonra renk/HDR/chroma/audio/batch fazlarına geç.
+1. Track confidence değerini domain’e taşı; confidence ribbon, tek kare correction, occlusion/re-entry ve yanlış özneye atlamama davranışını tamamla.
+2. Zoom recipe aralığı düzenleme, subject binding ve Camera Lane seçim UX’ini tamamla.
+3. Görsel impact, ayak basma ve beat event’lerini ortak doğal shake/zoom impulse kanalına bağla.
+4. AI registry ve validator’ları bu iki motorla bağla.
+5. Timeline multicam/proxy, sonra renk/HDR/chroma/audio/batch fazlarına geç.
 
 Bu sıra, önce kullanıcıya görünen büyüyü ve güvenli geri dönüşü kurar; ağır masaüstü parity’si, temel timeline ve kaynak-zamanı güvenliği kanıtlandıktan sonra eklenir.
-
