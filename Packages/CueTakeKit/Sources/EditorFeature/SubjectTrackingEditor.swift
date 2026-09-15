@@ -152,7 +152,7 @@ struct SubjectTrackingEditor: View {
         if isReviewing {
             return String(localized: "editor.track.applied", bundle: .module)
         }
-        switch model.mainSubjectTracking {
+        return switch model.mainSubjectTracking {
         case .idle: String(localized: "editor.track.instruction", bundle: .module)
         case .analyzing(let progress): String(localized: "editor.track.progress \(Int((progress * 100).rounded()))", bundle: .module)
         case .applied: String(localized: "editor.track.applied", bundle: .module)
