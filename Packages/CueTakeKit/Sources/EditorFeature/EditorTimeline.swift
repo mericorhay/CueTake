@@ -33,6 +33,13 @@ struct EditorTimeline: View {
         case insert(Int)
         /// Land on the body of another clip, leaving every other position untouched.
         case swap(Int)
+
+        var symbol: String {
+            switch self {
+            case .insert: "arrow.right.to.line.compact"
+            case .swap: "arrow.left.arrow.right"
+            }
+        }
     }
 
     private struct LiftState: Equatable {
@@ -642,14 +649,5 @@ struct EditorTimeline: View {
             break
         }
         return segments
-    }
-}
-
-private extension EditorTimeline.ReorderIntent {
-    var symbol: String {
-        switch self {
-        case .insert: "arrow.right.to.line.compact"
-        case .swap: "arrow.left.arrow.right"
-        }
     }
 }
