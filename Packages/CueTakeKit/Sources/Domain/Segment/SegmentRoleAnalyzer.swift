@@ -2,9 +2,9 @@ import Foundation
 
 /// A local, deliberately conservative reading of a video's structure.
 ///
-/// A segment's place in the timeline is useful context, but it is never enough on its own: the
-/// last line is not automatically a CTA and the first line is not automatically a hook. The
-/// analyser asks for language signals as well, then only returns changes it can support strongly.
+/// Spoken words are the strongest evidence, but they are not a requirement. Scripts, hand-edited
+/// captions and useful clip titles are read next. A silent import can still receive a basic opening
+/// and body structure from its clip boundaries; a CTA is never invented from position alone.
 public enum SegmentRoleAnalyzer {
     public struct Suggestion: Identifiable, Hashable, Sendable {
         public let segmentID: Segment.ID
@@ -65,6 +65,18 @@ public enum SegmentRoleAnalyzer {
             } else if reading.mainPoint >= 0.72, reading.segment.role != .mainPoint {
                 result.append(Suggestion(segmentID: reading.segment.id, role: .mainPoint, confidence: reading.mainPoint))
             }
+        }
+
+        // Imported clips begin with numbered custom roles and often have neither speech nor a
+        // script. Their boundaries still tell us which shot opens the piece and which shots form
+        // its body. Keep this deliberately modest: position can support hook/body organisation,
+        // but it cannot prove that a silent final shot asks the viewer to act.
+        let assigned = Set(result.map(\.segmentID))
+        for reading in readings where !assigned.contains(reading.segment.id) && reading.words.isEmpty {
+            guard case .custom = reading.segment.role else { continue }
+            let role: SegmentRole = reading.index == 0 && readings.count > 1 ? .hook : .mainPoint
+            let confidence = role == .hook ? 0.56 : 0.52
+            result.append(Suggestion(segmentID: reading.segment.id, role: role, confidence: confidence))
         }
 
         return result.sorted { $0.confidence > $1.confidence }
@@ -167,6 +179,21 @@ private extension SegmentRoleAnalyzer {
 
     static func spokenText(for segment: Segment) -> String {
         let transcript = segment.selectedTake?.transcript?.text ?? ""
-        return ScriptText.words(in: transcript).count >= 3 ? transcript : segment.script
+        if ScriptText.words(in: transcript).count >= 3 { return transcript }
+        if ScriptText.words(in: segment.script).count >= 3 { return segment.script }
+
+        // Captions can be imported or written by hand, so they remain useful when the video has no
+        // audio track. A descriptive title is the final semantic clue before timing-only fallback.
+        let captions = segment.captions.map(\.text).joined(separator: " ")
+        if !ScriptText.words(in: captions).isEmpty { return captions }
+        return usefulTitle(segment.title) ? segment.title : ""
+    }
+
+    static func usefulTitle(_ title: String) -> Bool {
+        let words = ScriptText.words(in: title)
+        guard !words.isEmpty else { return false }
+        let compact = title.lowercased().replacingOccurrences(of: " ", with: "")
+        let generic = compact.range(of: #"^(img|vid|video|mov|clip|dsc)[-_]?\d+$"#, options: .regularExpression) != nil
+        return !generic && Int(compact) == nil
     }
 }

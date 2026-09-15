@@ -72,6 +72,8 @@ public struct EditPlan: Codable, Sendable, Equatable {
         // Only the AI has these
         /// Names a clip (what the timeline and the inspector call it).
         case renameClip(clip: String, title: String)
+        /// Assigns the clip's editorial role: hook, intro, point, example or cta.
+        case setRole(clip: String, role: String)
         /// Rewrites what the prompter shows for a clip.
         case setScript(clip: String, text: String)
         /// Uses another recorded attempt for a clip.
@@ -139,6 +141,7 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .voiceEffects: "voiceEffects"
             case .setTitle: "setTitle"
             case .renameClip: "renameClip"
+            case .setRole: "setRole"
             case .setScript: "setScript"
             case .selectTake: "selectTake"
             case .duplicateOverlay: "duplicateOverlay"
@@ -459,6 +462,12 @@ extension EditPlan.Operation: Codable {
         case "renameClip":
             guard let clip = f.string("clip"), let title = f.string("title") ?? f.string("text") else { self = unknown; return }
             self = .renameClip(clip: clip, title: title)
+        case "setRole":
+            guard let clip = f.string("clip"),
+                  let role = f.string("role")?.lowercased(),
+                  ["hook", "intro", "point", "example", "cta"].contains(role)
+            else { self = unknown; return }
+            self = .setRole(clip: clip, role: role)
         case "setScript":
             guard let clip = f.string("clip"), let text = f.string("text") ?? f.string("script") else { self = unknown; return }
             self = .setScript(clip: clip, text: text)
@@ -640,6 +649,8 @@ extension EditPlan.Operation: Codable {
             try put("title", title)
         case .renameClip(let clip, let title):
             try put("clip", clip); try put("title", title)
+        case .setRole(let clip, let role):
+            try put("clip", clip); try put("role", role)
         case .setScript(let clip, let text):
             try put("clip", clip); try put("text", text)
         case .selectTake(let clip, let take):
@@ -721,6 +732,7 @@ extension EditPlan {
             case .updateAudio(let audio, let patch): .updateAudio(audio: refs.audioClip(audio), patch: patch)
             case .removeAudio(let audio): .removeAudio(audio: refs.audioClip(audio))
             case .renameClip(let clip, let title): .renameClip(clip: refs.clip(clip), title: title)
+            case .setRole(let clip, let role): .setRole(clip: refs.clip(clip), role: role)
             case .setScript(let clip, let text): .setScript(clip: refs.clip(clip), text: text)
             case .selectTake(let clip, let take): .selectTake(clip: refs.clip(clip), take: refs.take(take))
             case .shiftCaptions(let clip, let by): .shiftCaptions(clip: clip.map(refs.clip), by: by)

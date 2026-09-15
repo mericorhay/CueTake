@@ -23,6 +23,7 @@ struct SegmentInspector: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Kept until the user applies or dismisses it. Analysing never mutates the project by itself.
     @State private var structureSuggestions: [SegmentRoleAnalyzer.Suggestion] = []
+    @State private var structureChecked = false
 
     /// Where the clip is now. Past the end when it is gone, so every model call guarding its index
     /// does nothing rather than editing whichever clip took its place.
@@ -372,6 +373,7 @@ struct SegmentInspector: View {
                 )
                 withAnimation(reduceMotion ? nil : DS.Motion.settle) {
                     structureSuggestions = suggestions
+                    structureChecked = true
                 }
             } label: {
                 HStack(spacing: 9) {
@@ -387,7 +389,7 @@ struct SegmentInspector: View {
                         Text(String(localized: "editor.style.analyzeStructureHint", bundle: .module))
                             .dsFont(.sans, .regular, 10)
                             .foregroundStyle(DS.Palette.ink(0.42))
-                            .lineLimit(1)
+                            .lineLimit(2)
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
@@ -432,6 +434,7 @@ struct SegmentInspector: View {
                         model.applyRoleSuggestions(structureSuggestions)
                         withAnimation(reduceMotion ? nil : DS.Motion.settle) {
                             structureSuggestions = []
+                            structureChecked = false
                         }
                     } label: {
                         Text(String(localized: "editor.style.applyStructure", bundle: .module))
@@ -446,6 +449,12 @@ struct SegmentInspector: View {
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.accent(0.06)))
                 .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+            } else if structureChecked {
+                Label(String(localized: "editor.style.structureCurrent", bundle: .module), systemImage: "checkmark.circle.fill")
+                    .dsFont(.sans, .medium, 11)
+                    .foregroundStyle(DS.Palette.lime)
+                    .padding(.horizontal, 10)
+                    .transition(.opacity)
             }
         }
     }

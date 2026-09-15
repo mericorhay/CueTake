@@ -539,4 +539,17 @@ extension SegmentRole {
         case .custom(let name): name
         }
     }
+
+    /// The closed vocabulary exposed to the editor AI. Custom labels stay a user-facing choice;
+    /// accepting arbitrary model text here would silently create unusable workflow roles.
+    public init?(documentName: String) {
+        switch documentName.lowercased() {
+        case "hook": self = .hook
+        case "intro": self = .intro
+        case "point": self = .mainPoint
+        case "example": self = .example
+        case "cta": self = .callToAction
+        default: return nil
+        }
+    }
 }

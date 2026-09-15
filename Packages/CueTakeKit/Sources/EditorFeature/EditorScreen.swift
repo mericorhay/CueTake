@@ -81,8 +81,11 @@ public struct EditorScreen: View {
         model.project.segments.map { segment in
             [
                 segment.id.uuidString,
+                segment.title,
                 segment.script,
                 segment.selectedTake?.transcript?.text ?? "",
+                segment.captions.map(\.text).joined(separator: " "),
+                String(segment.sourceSeconds),
             ].joined(separator: "|")
         }
     }

@@ -581,6 +581,17 @@ extension EditorModel {
                     m.project.segments[i].title = String(title.prefix(60))
                     return [.clip(m.project.segments[i].id)]
                 }
+            case .setRole(let clip, let name):
+                guard index(ofClip: clip) != nil, let role = SegmentRole(documentName: name) else {
+                    skipped.append(op.type)
+                    continue
+                }
+                add("sparkles", L("editor.ai.op.role \(clipNumber(clip)) \(role.displayLabel)"), op, locate: clipStart(clip)) { m in
+                    guard let i = m.index(ofClip: clip), m.project.segments[i].role != role else { return nil }
+                    m.project.segments[i].role = role
+                    m.project.segments[i].metadata["roleAssignment"] = "ai"
+                    return [.clip(m.project.segments[i].id)]
+                }
             case .setScript(let clip, let text):
                 guard index(ofClip: clip) != nil else { skipped.append(op.type); continue }
                 add("text.alignleft", L("editor.ai.op.script \(clipNumber(clip))"), op, locate: clipStart(clip)) { m in
@@ -1459,6 +1470,7 @@ extension EditorModel {
         case .voiceCleanup, .voiceEffects: "waveform.and.person.filled"
         case .setTitle: "character.cursor.ibeam"
         case .renameClip: "tag"
+        case .setRole: "sparkles"
         case .setScript: "text.alignleft"
         case .selectTake: "film.stack"
         case .duplicateOverlay: "plus.square.on.square"
@@ -1538,6 +1550,8 @@ extension EditorModel {
             L("editor.ai.op.title \(title)")
         case .renameClip(let clip, let title):
             L("editor.ai.op.rename \(clipNumber(clip)) \(title)")
+        case .setRole(let clip, let name):
+            L("editor.ai.op.role \(clipNumber(clip)) \(SegmentRole(documentName: name)?.displayLabel ?? name)")
         case .setScript(let clip, _):
             L("editor.ai.op.script \(clipNumber(clip))")
         case .selectTake(let clip, _):

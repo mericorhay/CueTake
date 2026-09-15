@@ -182,13 +182,16 @@ struct AIDirectorTests {
         model.addTextOverlay("Hi")
         let plan = EditPlan(summary: "", operations: [
             .renameClip(clip: "c1", title: "Opening"),
+            .setRole(clip: "c1", role: "hook"),
             .setScript(clip: "c1", text: "New words"),
             .shiftCaptions(clip: nil, by: 0.3),
             .duplicateOverlay(overlay: "o1", start: 5),
         ])
         let outcome = model.apply(plan)
-        #expect(outcome.applied == 4)
+        #expect(outcome.applied == 5)
         #expect(model.project.segments[0].title == "Opening")
+        #expect(model.project.segments[0].role == .hook)
+        #expect(model.project.segments[0].metadata["roleAssignment"] == "ai")
         #expect(model.project.segments[0].script == "New words")
         let after = model.project.segments[0].captions.map(\.range.start.seconds)
         #expect(zip(before, after).allSatisfy { abs(($1 - $0) - 0.3) < 0.001 })

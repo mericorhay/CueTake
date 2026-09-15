@@ -1599,6 +1599,23 @@
         }
       }
     },
+    "editor.ai.op.role %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@: %2$@ role assigned"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@: %2$@ rolü atandı"
+          }
+        }
+      }
+    },
     "editor.ai.op.reorder": {
       "extractionState": "manual",
       "localizations": {
@@ -2122,6 +2139,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "İlk 3 saniyeyi güçlendir"
+          }
+        }
+      }
+    },
+    "editor.ai.suggest.structure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse and assign the video structure"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yapısını analiz et ve rolleri ata"
           }
         }
       }
@@ -5772,13 +5806,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uses the script and what was actually said"
+            "value": "Works without sound; speech and captions improve accuracy"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Senaryoyu ve gerçekten söylenenleri kullanır"
+            "value": "Ses olmadan çalışır; konuşma ve altyazı doğruluğu artırır"
           }
         }
       }
@@ -5864,6 +5898,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "ROL"
+          }
+        }
+      }
+    },
+    "editor.style.structureCurrent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video structure is already up to date"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yapısı zaten güncel"
           }
         }
       }

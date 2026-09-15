@@ -57,4 +57,36 @@ struct SegmentRoleAnalyzerTests {
             .first { $0.segmentID == segment.id }
         #expect(suggestion?.role == .callToAction)
     }
+
+    @Test func silentImportedClipsStillReceiveAnHonestBasicStructure() {
+        let segments = [
+            Segment(role: .custom("1"), title: "IMG_1001", script: "", estimatedDuration: MediaTime(seconds: 3)),
+            Segment(role: .custom("2"), title: "IMG_1002", script: "", estimatedDuration: MediaTime(seconds: 8)),
+            Segment(role: .custom("3"), title: "IMG_1003", script: "", estimatedDuration: MediaTime(seconds: 4)),
+        ]
+
+        let suggestions = SegmentRoleAnalyzer.suggestions(for: segments, localeIdentifier: "tr")
+
+        #expect(suggestions.first { $0.segmentID == segments[0].id }?.role == .hook)
+        #expect(suggestions.first { $0.segmentID == segments[1].id }?.role == .mainPoint)
+        #expect(suggestions.first { $0.segmentID == segments[2].id }?.role == .mainPoint)
+        #expect(!suggestions.contains { $0.role == .callToAction })
+    }
+
+    @Test func handWrittenCaptionsProvideMeaningWithoutAnAudioTrack() {
+        let opening = Segment(role: .mainPoint, script: "", estimatedDuration: MediaTime(seconds: 3))
+        let closing = Segment(
+            role: .mainPoint,
+            script: "",
+            estimatedDuration: MediaTime(seconds: 2),
+            captions: [CaptionCue(
+                text: "Devamı için takip et ve kaydet",
+                range: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 2))
+            )]
+        )
+
+        let suggestions = SegmentRoleAnalyzer.suggestions(for: [opening, closing], localeIdentifier: "tr")
+
+        #expect(suggestions.first { $0.segmentID == closing.id }?.role == .callToAction)
+    }
 }

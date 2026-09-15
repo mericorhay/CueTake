@@ -18,11 +18,12 @@ struct AIControlTests {
           {"op":"splitClip","clip":"C","at":"4"},
           {"op":"updateAudio","audio":"A","gainDb":-12,"muted":"true"},
           "not an object",
+          {"op":"setRole","clip":"c1","role":"hook"},
           {"op":"setTitle","title":"New"}
         ]}
         """
         let plan = try EditPlan.decode(from: text)
-        #expect(plan.operations.count == 9)
+        #expect(plan.operations.count == 10)
         #expect(plan.operations[0] == .addText(EditPlan.OverlayPatch(text: "Hello", start: 2.5, duration: 3, y: 0.2, animation: "pop")))
         #expect(plan.operations[1] == .captionLook(EditPlan.CaptionLook(preset: "bold", size: 0.06, highlightColor: "none")))
         #expect(plan.operations[2] == .captionStyle(preset: "clean", position: nil))
@@ -31,7 +32,8 @@ struct AIControlTests {
         #expect(plan.operations[5] == .splitClip(clip: "C", at: 4))
         #expect(plan.operations[6] == .updateAudio(audio: "A", patch: EditPlan.AudioPatch(gainDb: -12, muted: true)))
         #expect(plan.operations[7] == .unknown(type: "unknown"))
-        #expect(plan.operations[8] == .setTitle("New"))
+        #expect(plan.operations[8] == .setRole(clip: "c1", role: "hook"))
+        #expect(plan.operations[9] == .setTitle("New"))
 
         let again = try JSONDecoder().decode(EditPlan.self, from: JSONEncoder().encode(plan))
         #expect(again == plan)
@@ -133,6 +135,7 @@ struct AIControlTests {
             .setCaptionText(caption: "K2", text: "x"),
             .removeOverlay(overlay: "o1"),
             .selectTake(clip: "c1", take: "t2"),
+            .setRole(clip: "c2", role: "cta"),
             .reorder(clips: ["c2", String(a.id.uuidString.prefix(8))]),
             .deleteClip(clip: "c9"),
         ]).resolvingReferences(in: project)
@@ -142,7 +145,8 @@ struct AIControlTests {
         #expect(plan.operations[2] == .setCaptionText(caption: a.captions[1].id.uuidString, text: "x"))
         #expect(plan.operations[3] == .removeOverlay(overlay: project.overlays[0].id.uuidString))
         #expect(plan.operations[4] == .selectTake(clip: a.id.uuidString, take: second.id.uuidString))
-        #expect(plan.operations[5] == .reorder(clips: [b.id.uuidString, a.id.uuidString]))
-        #expect(plan.operations[6] == .deleteClip(clip: "c9"))
+        #expect(plan.operations[5] == .setRole(clip: b.id.uuidString, role: "cta"))
+        #expect(plan.operations[6] == .reorder(clips: [b.id.uuidString, a.id.uuidString]))
+        #expect(plan.operations[7] == .deleteClip(clip: "c9"))
     }
 }
