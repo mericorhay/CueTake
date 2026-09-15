@@ -115,7 +115,7 @@ private extension SegmentRoleAnalyzer {
             // "Follow for more" and "takip et" are complete closing requests even without a
             // second action word. Treat the phrase as evidence, not the clip's final position.
             if containsAny(["takip et", "abone ol", "follow for", "follow me", "subscribe for", "comment below"]) {
-                score += 0.16
+                score += 0.25
             }
             if normalized.contains("!") { score += 0.05 }
             return Score(score: min(max(score, 0), 1), hasExplicitAction: actionHits > 0)
