@@ -1,8 +1,8 @@
 // Shared build settings for the app target.
 //
 // Identity and versions live here rather than inside project.pbxproj so they
-// are readable in a diff and editable without opening Xcode. CI overrides
-// CURRENT_PROJECT_VERSION per run so TestFlight uploads never collide.
+// are readable in a diff and editable without opening Xcode. CI honours this
+// number and only raises it when App Store Connect already has a newer build.
 
 PRODUCT_NAME = CueTake
 PRODUCT_BUNDLE_IDENTIFIER = com.orhay.cuetake
