@@ -2,6 +2,8 @@
 
 Bu dosya, sonraki AI güçlendirme turlarında ana referanstır.
 
+Masaüstü–mobil özellik farklarının tam kapsamı ve son kod checkpoint’i için [FEATURE_GAP_REPORT.md](FEATURE_GAP_REPORT.md) dosyasına bak. Bu dosya yalnız AI’ın kullanacağı tool yüzeyini ve execution kurallarını tutar.
+
 ## Hedef
 
 CueTake AI’sının editörü yalnızca metinle tarif etmek yerine, kullanılabilir araçları otomatik keşfedip doğru sırayla seçmesi, güvenli parametrelerle çalıştırması ve sonucu doğrulaması.
