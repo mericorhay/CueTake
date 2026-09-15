@@ -688,6 +688,33 @@ public final class EditorModel {
         project.segments.insert(segment, at: destination)
         project.updatedAt = .now
     }
+
+    /// Exchanges two positions without moving the clips between them. This is distinct from
+    /// `move`: dropping a lifted clip on another clip means "put these two in each other's place".
+    public func swapSegments(at index: Int, with destination: Int) {
+        guard project.segments.indices.contains(index),
+              project.segments.indices.contains(destination),
+              index != destination
+        else { return }
+        record("editor.change.move", symbol: "arrow.left.arrow.right")
+        project.segments.swapAt(index, destination)
+        project.updatedAt = .now
+    }
+
+    /// Applies the locally analysed structure as one history entry, so the user can review a
+    /// useful set of roles and undo it in one step rather than chasing individual chips.
+    public func applyRoleSuggestions(_ suggestions: [SegmentRoleAnalyzer.Suggestion]) {
+        let byID = Dictionary(uniqueKeysWithValues: suggestions.map { ($0.segmentID, $0.role) })
+        let changes = project.segments.filter { byID[$0.id] != nil && byID[$0.id] != $0.role }
+        guard !changes.isEmpty else { return }
+        record("editor.change.autoStructure", symbol: "sparkles")
+        for index in project.segments.indices {
+            if let role = byID[project.segments[index].id] {
+                project.segments[index].role = role
+            }
+        }
+        project.updatedAt = .now
+    }
 }
 
 

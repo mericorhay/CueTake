@@ -21,6 +21,8 @@ struct SegmentInspector: View {
     var onOpenCaptions: () -> Void = {}
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Kept until the user applies or dismisses it. Analysing never mutates the project by itself.
+    @State private var structureSuggestions: [SegmentRoleAnalyzer.Suggestion] = []
 
     /// Where the clip is now. Past the end when it is gone, so every model call guarding its index
     /// does nothing rather than editing whichever clip took its place.
@@ -299,6 +301,8 @@ struct SegmentInspector: View {
                 }
             }
 
+            structureAnalysis
+
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     label("editor.style.prompterSpeed")
@@ -346,6 +350,96 @@ struct SegmentInspector: View {
                     RoundedRectangle(cornerRadius: 13, style: .continuous)
                         .fill(DS.Palette.hairline(0.05))
                 )
+            }
+        }
+    }
+
+    /// The editor offers a reviewable structure pass rather than silently relabelling the video.
+    /// It can use an actual selected-take transcript, which is why this belongs in the editor and
+    /// not only in script generation.
+    private var structureAnalysis: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Button {
+                let suggestions = SegmentRoleAnalyzer.suggestions(
+                    for: model.project.segments,
+                    localeIdentifier: model.project.localeIdentifier
+                )
+                withAnimation(reduceMotion ? nil : DS.Motion.settle) {
+                    structureSuggestions = suggestions
+                }
+            } label: {
+                HStack(spacing: 9) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(DS.Palette.lime)
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(DS.Palette.lime(0.13)))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "editor.style.analyzeStructure", bundle: .module))
+                            .dsFont(.sans, .semibold, 13)
+                            .foregroundStyle(DS.Palette.ink)
+                        Text(String(localized: "editor.style.analyzeStructureHint", bundle: .module))
+                            .dsFont(.sans, .regular, 10)
+                            .foregroundStyle(DS.Palette.ink(0.42))
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.35))
+                }
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.05)))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(DS.Palette.hairline(0.08), lineWidth: 1)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.dsPress(radius: 14))
+
+            if structureSuggestions.isEmpty == false {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(String(localized: "editor.style.structureReady \(structureSuggestions.count)", bundle: .module))
+                        .dsFont(.sans, .medium, 11)
+                        .foregroundStyle(DS.Palette.ink(0.58))
+
+                    ForEach(structureSuggestions.prefix(3)) { suggestion in
+                        if let candidate = model.project.segments.first(where: { $0.id == suggestion.segmentID }) {
+                            HStack(spacing: 7) {
+                                Text(suggestion.role.displayLabel)
+                                    .dsFont(.mono, .medium, 9)
+                                    .foregroundStyle(DS.Palette.accent)
+                                Text(candidate.script.isEmpty ? candidate.title : candidate.script)
+                                    .dsFont(.sans, .regular, 11)
+                                    .foregroundStyle(DS.Palette.ink(0.62))
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                                Text(suggestion.confidence.formatted(.percent.precision(.fractionLength(0))))
+                                    .dsFont(.mono, .medium, 9)
+                                    .foregroundStyle(DS.Palette.ink(0.38))
+                            }
+                        }
+                    }
+
+                    Button {
+                        model.applyRoleSuggestions(structureSuggestions)
+                        withAnimation(reduceMotion ? nil : DS.Motion.settle) {
+                            structureSuggestions = []
+                        }
+                    } label: {
+                        Text(String(localized: "editor.style.applyStructure", bundle: .module))
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 9)
+                            .background(Capsule().fill(DS.Palette.accent))
+                    }
+                    .buttonStyle(.dsPress(radius: 18))
+                }
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.accent(0.06)))
+                .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             }
         }
     }

@@ -3163,6 +3163,23 @@
         }
       }
     },
+    "editor.change.autoStructure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Structure applied"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yapı uygulandı"
+          }
+        }
+      }
+    },
     "editor.change.background": {
       "extractionState": "manual",
       "localizations": {
@@ -5732,6 +5749,57 @@
         }
       }
     },
+    "editor.style.analyzeStructure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse video structure"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yapısını analiz et"
+          }
+        }
+      }
+    },
+    "editor.style.analyzeStructureHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses the script and what was actually said"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senaryoyu ve gerçekten söylenenleri kullanır"
+          }
+        }
+      }
+    },
+    "editor.style.applyStructure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply suggestions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önerileri uygula"
+          }
+        }
+      }
+    },
     "editor.style.notes": {
       "extractionState": "manual",
       "localizations": {
@@ -5796,6 +5864,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "ROL"
+          }
+        }
+      }
+    },
+    "editor.style.structureReady %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld confident role suggestions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld güçlü rol önerisi"
           }
         }
       }

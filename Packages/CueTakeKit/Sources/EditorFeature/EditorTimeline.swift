@@ -20,11 +20,29 @@ struct EditorTimeline: View {
     @State private var trim: (index: Int, origin: Double)?
     /// The clip whose front is being trimmed, and where its footage started when the finger went down.
     @State private var leadTrim: (index: Int, origin: Double)?
-    @State private var lift: (index: Int, offset: Double)?
+    /// A picked-up clip keeps its identity while the row underneath it previews the result. Using
+    /// an id instead of a position matters because a successful drop changes the positions.
+    @State private var lift: LiftState?
     /// Bumped every time something snaps, which is what the haptic keys off.
     @State private var snapCount = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private enum ReorderIntent: Equatable {
+        /// Land in the space between clips, moving the surrounding clips around it.
+        case insert(Int)
+        /// Land on the body of another clip, leaving every other position untouched.
+        case swap(Int)
+    }
+
+    private struct LiftState: Equatable {
+        let segmentID: Segment.ID
+        let sourceIndex: Int
+        var offset: Double
+        var verticalOffset: Double
+        var tilt: Double
+        var intent: ReorderIntent?
+    }
 
     private var scale: Double { model.pointsPerSecond }
     /// The audio can run past the last clip — an outro over black is a real thing — so the surface
@@ -275,8 +293,12 @@ struct EditorTimeline: View {
             ForEach(Array(model.project.segments.enumerated()), id: \.element.id) { index, segment in
                 clip(segment, at: index)
                     .frame(width: max(CGFloat(segment.barWeight * scale) - 3, 12), height: 64)
-                    .offset(x: CGFloat(model.start(at: index) * scale) + CGFloat(lift?.index == index ? lift?.offset ?? 0 : 0))
-                    .zIndex(lift?.index == index ? 1 : 0)
+                    .offset(
+                        x: clipStart(for: segment, at: index),
+                        y: lift?.segmentID == segment.id ? CGFloat(-10 + (lift?.verticalOffset ?? 0)) : 0
+                    )
+                    .zIndex(lift?.segmentID == segment.id ? 1 : 0)
+                    .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.76), value: lift?.intent)
             }
         }
         .frame(height: 64, alignment: .topLeading)
@@ -284,7 +306,7 @@ struct EditorTimeline: View {
 
     private func clip(_ segment: Segment, at index: Int) -> some View {
         let isSelected = model.inspectedSegment == segment.id
-        let isLifted = lift?.index == index
+        let isLifted = lift?.segmentID == segment.id
         let isActive = model.isActive(at: index)
         let frames = segment.selectedTakeID.flatMap { model.thumbnails[$0] } ?? []
         let tint = DS.Palette.segment(at: segment.role.paletteIndex)
@@ -377,6 +399,7 @@ struct EditorTimeline: View {
         .opacity(isActive || isSelected ? 1 : 0.62)
         .aiGlow(model.glowToken(.clip(segment.id)), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .scaleEffect(isLifted && !reduceMotion ? 1.04 : 1)
+        .rotationEffect(.degrees(isLifted && !reduceMotion ? lift?.tilt ?? 0 : 0))
         .shadow(color: .black.opacity(isLifted ? 0.55 : 0), radius: 18, y: 10)
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
@@ -392,7 +415,16 @@ struct EditorTimeline: View {
             }
         }
         .onLongPressGesture(minimumDuration: 0.35) {
-            withAnimation(DS.Motion.bloom) { lift = (index, 0) }
+            withAnimation(DS.Motion.bloom) {
+                lift = LiftState(
+                    segmentID: segment.id,
+                    sourceIndex: index,
+                    offset: 0,
+                    verticalOffset: 0,
+                    tilt: 0,
+                    intent: nil
+                )
+            }
             snapCount += 1
         }
         .gesture(reorderDrag(at: index), including: isLifted ? .all : .subviews)
@@ -407,6 +439,18 @@ struct EditorTimeline: View {
                     .padding(.vertical, 4)
                     .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(DS.Palette.ink))
                     .offset(y: -30)
+                    .allowsHitTesting(false)
+            }
+        }
+        .overlay(alignment: .top) {
+            if isLifted, let intent = lift?.intent {
+                Image(systemName: intent.symbol)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(width: 28, height: 24)
+                    .background(Capsule().fill(DS.Palette.ink))
+                    .offset(y: -31)
+                    .transition(.scale.combined(with: .opacity))
                     .allowsHitTesting(false)
             }
         }
@@ -505,30 +549,107 @@ struct EditorTimeline: View {
     private func reorderDrag(at index: Int) -> some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { drag in
-                guard lift?.index == index else { return }
-                lift = (index, Double(drag.translation.width))
-            }
-            .onEnded { _ in
-                guard let lift, lift.index == index else { return }
-                let destination = destinationIndex(from: lift.index, offset: lift.offset)
-                if destination != lift.index {
-                    withAnimation(DS.Motion.settle) {
-                        model.move(segmentAt: lift.index, to: destination)
+                guard var activeLift = lift, activeLift.sourceIndex == index else { return }
+                let intent = reorderIntent(from: activeLift.sourceIndex, offset: Double(drag.translation.width))
+                activeLift.offset = Double(drag.translation.width)
+                // The clip follows the horizontal finger exactly, but carries a little mass in
+                // the other two axes. It is enough to feel picked up without hiding the cut.
+                activeLift.verticalOffset = min(max(Double(drag.translation.height) * 0.12, -4), 5)
+                activeLift.tilt = min(max(Double(drag.translation.height) * 0.16 + Double(drag.translation.width) * 0.025, -6), 6)
+                let didCrossTarget = activeLift.intent != intent
+                activeLift.intent = intent
+                if didCrossTarget {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.30, dampingFraction: 0.74)) {
+                        lift = activeLift
                     }
                     snapCount += 1
+                } else {
+                    lift = activeLift
+                }
+            }
+            .onEnded { _ in
+                guard let lift, lift.sourceIndex == index else { return }
+                switch lift.intent {
+                case .swap(let destination) where destination != lift.sourceIndex:
+                    withAnimation(DS.Motion.settle) {
+                        model.swapSegments(at: lift.sourceIndex, with: destination)
+                    }
+                    snapCount += 1
+                case .insert(let destination) where destination != lift.sourceIndex:
+                    withAnimation(DS.Motion.settle) {
+                        model.move(segmentAt: lift.sourceIndex, to: destination)
+                    }
+                    snapCount += 1
+                default:
+                    break
                 }
                 withAnimation(DS.Motion.settle) { self.lift = nil }
             }
     }
 
-    /// Where the clip would land, by how far its centre has travelled past its neighbours.
-    private func destinationIndex(from index: Int, offset: Double) -> Int {
+    /// A clip body means "swap"; the breathing room either side means "insert". The split is
+    /// intentional: it gives the common "swap 1 and 3, leave 2 and 4" edit its own simple move.
+    private func reorderIntent(from index: Int, offset: Double) -> ReorderIntent? {
+        guard model.project.segments.indices.contains(index) else { return nil }
         let centre = model.start(at: index) + model.project.segments[index].barWeight / 2 + offset / scale
+        for (candidate, segment) in model.project.segments.enumerated() where candidate != index {
+            let start = model.start(at: candidate)
+            let inset = min(segment.barWeight * 0.24, 0.5)
+            if centre >= start + inset, centre <= start + segment.barWeight - inset {
+                return .swap(candidate)
+            }
+        }
+        return .insert(destinationIndex(from: index, centre: centre))
+    }
+
+    /// Where an inserted clip would land, by how far its centre has travelled past its neighbours.
+    private func destinationIndex(from index: Int, centre: Double) -> Int {
         var running = 0.0
         for (candidate, segment) in model.project.segments.enumerated() {
             if centre < running + segment.barWeight / 2 { return candidate }
             running += segment.barWeight
         }
         return model.project.segments.count - 1
+    }
+
+    /// Every non-lifted clip previews the pending order, while the lifted one stays under the
+    /// finger. This is the thing that makes a gap and a swap legible before the user lets go.
+    private func clipStart(for segment: Segment, at index: Int) -> CGFloat {
+        guard let lift else { return CGFloat(model.start(at: index) * scale) }
+        if lift.segmentID == segment.id {
+            return CGFloat(model.start(at: index) * scale + lift.offset)
+        }
+        let projected = projectedSegments(for: lift)
+        var start = 0.0
+        for item in projected {
+            if item.id == segment.id { return CGFloat(start * scale) }
+            start += item.barWeight
+        }
+        return CGFloat(model.start(at: index) * scale)
+    }
+
+    private func projectedSegments(for lift: LiftState) -> [Segment] {
+        var segments = model.project.segments
+        switch lift.intent {
+        case .swap(let destination):
+            guard segments.indices.contains(lift.sourceIndex), segments.indices.contains(destination) else { return segments }
+            segments.swapAt(lift.sourceIndex, destination)
+        case .insert(let destination):
+            guard segments.indices.contains(lift.sourceIndex), segments.indices.contains(destination) else { return segments }
+            let item = segments.remove(at: lift.sourceIndex)
+            segments.insert(item, at: destination)
+        case nil:
+            break
+        }
+        return segments
+    }
+}
+
+private extension EditorTimeline.ReorderIntent {
+    var symbol: String {
+        switch self {
+        case .insert: "arrow.right.to.line.compact"
+        case .swap: "arrow.left.arrow.right"
+        }
     }
 }
