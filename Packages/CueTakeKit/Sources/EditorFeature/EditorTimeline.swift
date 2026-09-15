@@ -427,16 +427,23 @@ struct EditorTimeline: View {
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .onTapGesture {
+        .simultaneousGesture(SpatialTapGesture().onEnded { tap in
             if lift != nil {
                 withAnimation(DS.Motion.settle) { lift = nil }
                 return
             }
+            model.pause()
+            // The clip body is also a time ruler. Seeking to the point touched restores the direct
+            // "tap the frame you mean" interaction while the scroll view remains free to scrub.
+            let local = min(max(Double(tap.location.x) / scale, 0), segment.barWeight)
+            jump(to: model.start(at: index) + local)
+            snapCount += 1
             withAnimation(DS.Motion.snap) {
+                let changedClip = model.inspectedSegment != segment.id
                 model.inspectedSegment = segment.id
-                model.inspectorTab = .script
+                if changedClip { model.inspectorTab = .script }
             }
-        }
+        })
         .simultaneousGesture(reorderGesture(for: segment, at: index))
         // How long the clip is, over it, while either end is pulled.
         .overlay(alignment: .top) {

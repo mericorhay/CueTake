@@ -89,4 +89,44 @@ struct SegmentRoleAnalyzerTests {
 
         #expect(suggestions.first { $0.segmentID == closing.id }?.role == .callToAction)
     }
+
+    @Test func automaticApplicationReplacesNumberedImportsBeforeTheEditorAppears() {
+        var segments = [
+            Segment(role: .custom("1"), title: "IMG_1001", script: "Bugün yürüyüşe çıktım.", estimatedDuration: MediaTime(seconds: 3)),
+            Segment(role: .custom("2"), title: "IMG_1002", script: "Hava çok güzeldi.", estimatedDuration: MediaTime(seconds: 5)),
+        ]
+
+        let changed = SegmentRoleAnalyzer.applyAutomatically(to: &segments, localeIdentifier: "tr")
+
+        #expect(changed == 2)
+        #expect(segments.map(\.role) == [.hook, .mainPoint])
+        #expect(segments.allSatisfy { $0.metadata["roleAssignment"] == "automatic" })
+    }
+
+    @Test func automaticApplicationNeverOverwritesManualOrAIRoles() {
+        var manual = Segment(role: .custom("1"), title: "IMG_1001", script: "")
+        manual.metadata["roleAssignment"] = "manual"
+        var ai = Segment(role: .custom("2"), title: "IMG_1002", script: "")
+        ai.metadata["roleAssignment"] = "ai"
+        var segments = [manual, ai]
+
+        let changed = SegmentRoleAnalyzer.applyAutomatically(to: &segments, localeIdentifier: "tr")
+
+        #expect(changed == 0)
+        #expect(segments.map(\.role) == [.custom("1"), .custom("2")])
+    }
+
+    @Test func automaticSuggestionsChooseOneStrongestRolePerClip() {
+        let clip = Segment(
+            role: .custom("1"),
+            title: "",
+            script: "Dur! Neden yanlış yaptığını görmek için takip et ve yorum yaz.",
+            estimatedDuration: MediaTime(seconds: 5)
+        )
+
+        let suggestions = SegmentRoleAnalyzer.automaticSuggestions(for: [clip], localeIdentifier: "tr")
+
+        #expect(suggestions.count == 1)
+        #expect(suggestions[0].segmentID == clip.id)
+    }
 }

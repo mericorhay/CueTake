@@ -67,19 +67,61 @@ public enum SegmentRoleAnalyzer {
             }
         }
 
-        // Imported clips begin with numbered custom roles and often have neither speech nor a
-        // script. Their boundaries still tell us which shot opens the piece and which shots form
-        // its body. Keep this deliberately modest: position can support hook/body organisation,
-        // but it cannot prove that a silent final shot asks the viewer to act.
+        // Imported clips begin with numbered temporary roles. Their boundaries always tell us
+        // which shot opens the piece and which shots form its body, even when their transcript has
+        // ordinary speech that matches no semantic signal. Keep this deliberately modest:
+        // position can support hook/body organisation, but it cannot prove a CTA.
         let assigned = Set(result.map(\.segmentID))
-        for reading in readings where !assigned.contains(reading.segment.id) && reading.words.isEmpty {
-            guard case .custom = reading.segment.role else { continue }
+        for reading in readings where !assigned.contains(reading.segment.id) {
+            guard case .custom(let label) = reading.segment.role,
+                  Int(label.trimmingCharacters(in: .whitespacesAndNewlines)) != nil
+            else { continue }
             let role: SegmentRole = reading.index == 0 && readings.count > 1 ? .hook : .mainPoint
             let confidence = role == .hook ? 0.56 : 0.52
             result.append(Suggestion(segmentID: reading.segment.id, role: role, confidence: confidence))
         }
 
         return result.sorted { $0.confidence > $1.confidence }
+    }
+
+    /// Suggestions the automatic engine is allowed to apply. A user or AI choice is a decision;
+    /// only an unset role or one previously chosen by this engine may be revised as better evidence
+    /// arrives later.
+    public static func automaticSuggestions(
+        for segments: [Segment],
+        localeIdentifier: String
+    ) -> [Suggestion] {
+        let eligible = suggestions(for: segments, localeIdentifier: localeIdentifier).filter { suggestion in
+            guard let source = segments.first(where: { $0.id == suggestion.segmentID })?.metadata["roleAssignment"] else {
+                return true
+            }
+            return source == "automatic"
+        }
+
+        // `suggestions` is strongest first. A sentence can look like both a hook and a CTA; keep
+        // the most confident reading instead of producing duplicate dictionary keys downstream.
+        var seen = Set<Segment.ID>()
+        return eligible.filter { seen.insert($0.segmentID).inserted }
+    }
+
+    /// Applies automatic structure directly to a project being imported or reopened. This path is
+    /// intentionally free of editor history: an imported clip should arrive as Hook/Point instead
+    /// of briefly showing 1/2 and relying on a screen callback that another async task can overwrite.
+    @discardableResult
+    public static func applyAutomatically(
+        to segments: inout [Segment],
+        localeIdentifier: String
+    ) -> Int {
+        let proposed = automaticSuggestions(for: segments, localeIdentifier: localeIdentifier)
+        let byID = Dictionary(uniqueKeysWithValues: proposed.map { ($0.segmentID, $0.role) })
+        var changed = 0
+        for index in segments.indices {
+            guard let role = byID[segments[index].id], role != segments[index].role else { continue }
+            segments[index].role = role
+            segments[index].metadata["roleAssignment"] = "automatic"
+            changed += 1
+        }
+        return changed
     }
 }
 

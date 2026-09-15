@@ -47,4 +47,24 @@ struct SegmentReorderTests {
         model.undo()
         #expect(model.project.segments.map(\.role) == [.mainPoint, .mainPoint])
     }
+
+    @Test func addingAnEffectMovesThePreviewInsideItsVisibleRange() {
+        let model = EditorModel(project: Project(
+            title: "t",
+            localeIdentifier: "en",
+            segments: [Segment(role: .mainPoint, script: "", estimatedDuration: MediaTime(seconds: 10))]
+        ))
+        model.seek(to: 9)
+        let before = model.compositionSignature
+
+        let id = model.addEffect(
+            .filter(FilterSettings(look: .warm)),
+            from: 1,
+            to: 3
+        )
+
+        #expect(model.playhead >= 1 && model.playhead < 3)
+        #expect(model.selectedEffect == id)
+        #expect(model.compositionSignature != before)
+    }
 }

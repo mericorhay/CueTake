@@ -72,7 +72,10 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
     }
 
     var requiredPixelBufferAttributesForRenderContext: [String: any Sendable] {
-        [kCVPixelBufferPixelFormatTypeKey as String: [kCVPixelFormatType_32BGRA], kCVPixelBufferMetalCompatibilityKey as String: true]
+        // The render destination requires one concrete format. An array is valid for the source
+        // formats we accept, but not for the buffer pool AVFoundation asks us to render into; on
+        // device that left `newPixelBuffer()` empty and every visual effect silently failed.
+        [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferMetalCompatibilityKey as String: true]
     }
 
     func renderContextChanged(_ newRenderContext: AVVideoCompositionRenderContext) {

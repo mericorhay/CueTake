@@ -308,6 +308,13 @@ final class AppModel {
             return
         }
 
+        // Structure is part of the import result, not a best-effort screen effect. Doing this before
+        // save/adopt also prevents the quiet transcription task below from restoring the numbered
+        // pre-analysis copy over Hook/Point when a movie has no usable audio.
+        SegmentRoleAnalyzer.applyAutomatically(
+            to: &fresh.segments,
+            localeIdentifier: fresh.localeIdentifier
+        )
         fresh.updatedAt = .now
         try? await store.save(fresh)
         adopt(fresh)
@@ -336,7 +343,9 @@ final class AppModel {
         }
         guard let stored = try? await dependencies.projectStore.load(id) else { return }
         adopt(stored)
-        go(to: .editor)
+        // Reopening an older project must run the same role migration as the current project.
+        // Otherwise clips imported before automatic roles existed keep their temporary 1/2 labels.
+        openEditor()
     }
 
     /// Makes a project the one being worked on. Every per-screen model is rebuilt, because they
@@ -984,6 +993,13 @@ final class AppModel {
         }
 
         project.updatedAt = .now
+        // A transcript can refine Hook/Intro/Point/Example/CTA, but it must refine the project that
+        // is about to replace the editor's copy. Applying it here closes the async race that used to
+        // restore numbered roles after the editor had already analysed them.
+        SegmentRoleAnalyzer.applyAutomatically(
+            to: &project.segments,
+            localeIdentifier: project.localeIdentifier
+        )
         editorModel.project = project
         scheduleSave()
 
@@ -1034,6 +1050,14 @@ final class AppModel {
 
     /// The editor keeps its playhead and inspector; it only needs the current project.
     func openEditor() {
+        let changed = SegmentRoleAnalyzer.applyAutomatically(
+            to: &project.segments,
+            localeIdentifier: project.localeIdentifier
+        )
+        if changed > 0 {
+            project.updatedAt = .now
+            scheduleSave()
+        }
         editorModel.project = project
         go(to: .editor)
     }

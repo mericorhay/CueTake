@@ -21,6 +21,10 @@ extension EditorModel {
         project.updatedAt = .now
         pulse(.speed)
         select(effect: effect.id)
+        // Always show a frame covered by the effect that was just chosen. Applying a look to a
+        // selected clip while the playhead sat elsewhere made a working effect appear broken.
+        let inside = min(max(playhead, start + 0.01), max(start + 0.01, end - 0.01))
+        seek(to: inside)
         syncLiveFilters()
         return effect.id
     }

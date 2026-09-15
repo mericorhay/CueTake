@@ -721,17 +721,10 @@ public final class EditorModel {
     /// choices are final; earlier automatic choices may improve when a real transcript arrives.
     @discardableResult
     public func autoAssignSegmentRoles() -> Int {
-        let suggestions = SegmentRoleAnalyzer.suggestions(
+        let suggestions = SegmentRoleAnalyzer.automaticSuggestions(
             for: project.segments,
             localeIdentifier: project.localeIdentifier
-        ).filter { suggestion in
-            guard let source = project.segments.first(where: { $0.id == suggestion.segmentID })?.metadata["roleAssignment"] else {
-                return true
-            }
-            // New evidence may improve the local engine's own earlier answer. A choice made by the
-            // user or explicitly requested through AI remains stable when captions later arrive.
-            return source == "automatic"
-        }
+        )
         let changed = suggestions.filter { suggestion in
             project.segments.first(where: { $0.id == suggestion.segmentID })?.role != suggestion.role
         }.count
