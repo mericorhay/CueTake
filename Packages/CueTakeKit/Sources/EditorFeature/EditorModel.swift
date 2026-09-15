@@ -1282,7 +1282,7 @@ extension EditorModel {
 
     public func setMainVideoZoom(_ value: Double) {
         let zoom = min(max(value, 1), 3)
-        guard let target = subjectTrackingTarget(),
+        guard let target = cameraMotionTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
         else { return }
         let range = target.take.sourceRange
@@ -1322,7 +1322,7 @@ extension EditorModel {
         feel: CameraMotionRecipe.Feel = .natural
     ) {
         guard canApplyCameraMotion,
-              let target = subjectTrackingTarget(),
+              let target = cameraMotionTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
         else { return }
         record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
@@ -1346,7 +1346,7 @@ extension EditorModel {
     }
 
     public var cameraMotionAtPlayhead: CameraMotionRecipe? {
-        guard let target = subjectTrackingTarget(),
+        guard let target = cameraMotionTarget(),
               let recording = project.recording(id: target.recordingID)
         else { return nil }
         guard var recipe = recording.cameraMotions?.last(where: {
@@ -1358,7 +1358,7 @@ extension EditorModel {
     }
 
     public func removeCameraMotionAtPlayhead() {
-        guard let target = subjectTrackingTarget(),
+        guard let target = cameraMotionTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
               let selected = cameraMotionAtPlayhead
         else { return }
@@ -1374,9 +1374,16 @@ extension EditorModel {
         var reference: Double
     }
 
-    private func subjectTrackingTarget() -> SubjectTrackingTarget? {
-        guard let mediaDirectory,
-              let (index, offset) = segmentAtPlayhead,
+    private struct CameraMotionTarget {
+        var take: Take
+        var recordingID: Recording.ID
+        var reference: Double
+    }
+
+    /// Camera metadata remains editable while playback is still preparing. It only needs the
+    /// selected source clock; requiring a resolved media URL made fast taps silently do nothing.
+    private func cameraMotionTarget() -> CameraMotionTarget? {
+        guard let (index, offset) = segmentAtPlayhead,
               let take = project.segments[index].selectedTake,
               let recording = project.recording(id: take.recordingID)
         else { return nil }
@@ -1384,12 +1391,26 @@ extension EditorModel {
             forTimeline: offset,
             sourceLength: take.sourceRange.duration.seconds
         )
-        let reference = take.sourceRange.start.seconds + min(max(resolvedOffset, 0), take.sourceRange.duration.seconds - 0.02)
+        let reference = take.sourceRange.start.seconds
+            + min(max(resolvedOffset, 0), max(0, take.sourceRange.duration.seconds - 0.02))
+        return CameraMotionTarget(take: take, recordingID: recording.id, reference: reference)
+    }
+
+    private func subjectTrackingTarget() -> SubjectTrackingTarget? {
+        guard let mediaDirectory,
+              let target = cameraMotionTarget(),
+              let recording = project.recording(id: target.recordingID)
+        else { return nil }
         let url = mediaDirectory.appending(
             path: (recording.relativePath as NSString).lastPathComponent,
             directoryHint: .notDirectory
         )
-        return SubjectTrackingTarget(url: url, take: take, recordingID: recording.id, reference: reference)
+        return SubjectTrackingTarget(
+            url: url,
+            take: target.take,
+            recordingID: recording.id,
+            reference: target.reference
+        )
     }
 
     /// Reframes the primary cut. Faces are found once per recording file, across the part of it
