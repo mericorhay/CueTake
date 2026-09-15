@@ -16,6 +16,137 @@ CueTake AI’sının editörü yalnızca metinle tarif etmek yerine, kullanılab
 - Tool çıktılarının sonraki tool’lara aktarılması; finding ve confidence nesnelerinin ortak primitive olması.
 - Kullanıcıya AI’nın hangi araçları neden seçtiğini gösteren sade bir plan özeti.
 
+## Nerede kaldık — 15 Eylül 2026
+
+Şu an AI tarafında registry ve güvenli execution sözleşmesi tanımlı, fakat otomatik tool seçimi henüz ürünleştirilmiş değil. P0 timeline araçlarının önemli bir bölümü mevcut editörde çalışıyor; eksik olan taraf, bunların ortak `proposed → approved → applied → verified` akışında güvenilir biçimde birleştirilmesi.
+
+Son teknik turda build **65** için iki görsel motorun ilk dikey dilimi eklendi:
+
+- oynatıcıdan açılan doğrudan nesne seçimi ve iki yönlü genel subject tracking,
+- `%10 / %15 / %20` takipli kadraj ve ayrı zoom kanalı,
+- takip verisini placement keyframe’lerinden ayıran kaynak-zamanı yaklaşımı,
+- aynı veriyi ileride zoom, efekt, yazı ve doğal sarsıntıya bağlayacak temel yapı.
+
+Bu dilimin AI tool registry karşılığı henüz yok. Bir sonraki AI işi, bu motorları teknik isimleri kullanıcıya sızmadan `createSubjectTrack`, `bindZoomToTrack`, `applyZoomRecipe` ve `inspectTrackConfidence` araçlarına bağlamak olmalı. Üretim derlemesi Windows çalışma ortamında çalıştırılamadı; macOS CI sonucu alınmadan kalite tamamlandı sayılmamalı.
+
+## Yeni rapordan alınacak AI özellikleri
+
+Gönderilen masaüstü–mobil karşılaştırmasındaki her özelliği kopyalamıyoruz. AI’ın gerçekten karar verebildiği, sonucu doğrulayabildiği ve CueTake’in mevcut timeline’ına güvenli biçimde bağlayabildiği özellikleri aşağıdaki sıraya ekliyoruz.
+
+### P0 — AI’ın temel timeline güvenilirliği
+
+Mevcut `trimClip`, `splitClip`, `deleteRange`, `restoreOriginalRange`, `replaceClipSource`, `reorderClips`, `setSpeed`, `reverse`, `toolPreview`, `toolUndo` ve `toolRetry` listesi korunuyor. Raporun katkısı, bunlara şu doğrulama araçlarının eklenmesi:
+
+- `validateTimelineOperation`: hedef aralık, source range, caption/effect/audio bağı ve clip kilidi kontrolü,
+- `previewTimelineImpact`: ripple sonucu oluşacak yeni başlangıç/bitişleri ve taşacak katmanları göster,
+- `verifyTimelineIntegrity`: işlem sonrası boşluk, overlap, kayıp caption, ses senkronu ve kaynak dışına taşmayı bul,
+- `restoreOriginalRange`: yalnız seçilen klibin özgün aralığını geri aç; bağlı track/zoom verisini yeniden temellendir.
+
+AI birden fazla kesmeyi tek history grubunda uygular; doğrulama başarısızsa kısmi sonucu bırakmaz.
+
+### P0 — Takip, kadraj ve zoom’un AI yüzeyi
+
+Yeni motor planları bu yol haritasına şu araçlarla bağlanmalı:
+
+- `createSubjectTrack`: kullanıcı seçimi veya AI önerisiyle track üret,
+- `correctSubjectTrack`: yalnız confidence düşen aralığı düzelt,
+- `bindTrackToTarget`: track’i ana kadraja, ek video layer’ına, yazıya veya efekte bağla,
+- `applyZoomRecipe`: sakin yaklaşma, punch, follow, impact ve aspect-ratio reframe tarifini uygula,
+- `detectMotionEvents`: ayak vuruşu, darbe, beat ve manuel marker üret,
+- `inspectTrackConfidence`: AI’ın emin olmadığı kareleri kullanıcıya aç.
+
+Bu araçlar şu an mevcut registry’de yok; sonraki turda ortak `Finding`, `Confidence`, `MotionTrackReference` ve `CameraTransform` primitive’leriyle eklenmeli. AI “yüz 13 noktayla bulundu” gibi teknik bir metin göstermemeli; kullanıcıya `Motoru takip eden kadraj` ve sorun varsa ilgili tek kareyi göstermeli.
+
+### P1 — Çoklu kamera senkronu
+
+Rapordaki en değerli masaüstü farklarından biri multicam. Mobilde önce tam bir multicam editörü değil, AI’ın güvenilir bir senkron hazırlama aracı yapılmalı:
+
+- `syncCameraSources`: ses waveform, clap/flash veya ortak hareket üzerinden kaynakları hizala,
+- `createCameraGroup`: senkron klipleri tek grup olarak timeline’a yerleştir,
+- `suggestCameraCuts`: konuşmacı, aktif hareket, reaction ve script beat’ine göre kamera geçişi öner,
+- `switchCameraRange`: seçilen aralıkta kamerayı değiştir; caption/effect/audio zamanını koru,
+- `verifySync`: drift ve ses fazı sapmasını raporla.
+
+İlk sürüm iki veya üç kaynakla, ses yoksa yalnız görsel clap/flash ve manuel anchor ile çalışmalı. Altı kamera parity’si, cihaz belleği ve UX ölçülmeden hedef yapılmamalı.
+
+### P1 — Proxy ve adaptif önizleme
+
+4K/8K medya için AI’ın bilmesi gereken özellik “proxy düğmesi” değil, kaliteyi koruyarak gecikmeyi yönetmektir:
+
+- `preparePreviewProxy`: proje/klip için düşük çözünürlüklü, kaynakla kimliklendirilmiş preview üret,
+- `setPreviewQuality`: thermal state, katman sayısı ve efekt maliyetine göre kalite seç,
+- `warmAnalysisCache`: transcript, track, thumbnail ve waveform sonuçlarını aynı source hash altında tut,
+- `verifyExportSource`: export’un proxy değil özgün kaynaktan yapıldığını kontrol et.
+
+AI ağır bir işlem önermeden önce tahmini süre, RAM ve enerji maliyetini görmeli; proxy oluşturma sessiz bir kalıcı medya kopyasına dönüşmemeli.
+
+### P1 — Ana klip kamera keyframe’i
+
+Kullanıcıların mobilde en sık istediği masaüstü davranışlarından biri ana klip üzerinde keyframe. Bunun AI karşılığı ham keyframe listesi değil:
+
+- `createCameraKeyframes`: başlangıç, hold ve bitiş anchor’larıyla açık bir kamera tarifi oluştur,
+- `setCameraCurve`: speed, easing, anticipation ve hold değerlerini değiştir,
+- `protectCaptionSafeArea`: zoom/reframe sırasında caption ve overlay çakışmasını önle,
+- `verifyCameraMotion`: ani center/scale/jerk değişimini bul.
+
+Manuel editör bu veriyi `Camera Lane` üzerinde gösterir. AI her frame’e keyframe yazmaz; sürekli envelope/recipe üretir ve renderer için azaltılmış örnekler çıkarır.
+
+### P1 — Temel renk ve HDR kapısı
+
+Raporun renk önerisini sınırlı ve açıklanabilir tutuyoruz:
+
+- `analyzeColorIssues`: exposure, white balance, clipping ve skin-tone sapması bul,
+- `applyColorCorrection`: exposure, contrast, saturation, warmth, highlights/shadows ve vignette,
+- `matchColor`: seçilen referans kliple temel eşleştirme,
+- `applyLUT`: LUT metadata, renk uzayı ve geri alma bilgisiyle uygula,
+- `verifyHDRPipeline`: kaynak/output HDR uyumsuzluğu veya SDR’ye düşme riskini export öncesi bildir.
+
+İlk MVP’de node tabanlı grading, sınırsız Power Window ve üçüncü taraf LUT marketi yok. AI yalnız önerdiği renk değişikliğini before/after preview ve geri alınabilir tek adımla sunmalı.
+
+### P1 — Chroma key ve foreground compositing
+
+Basit yeşil perdeyi AI registry’ye şu sınırlarla ekliyoruz:
+
+- `keyColorRange`: renk, tolerance, spill suppression ve edge softness,
+- `refineForegroundMask`: insan/nesne maskesi ile kenar düzeltme,
+- `replaceBackground`: background layer’ını seç, hizala ve safe-area kontrol et,
+- `verifyKeyQuality`: delik, halo, saç kenarı ve renk spill finding’i üret.
+
+Bu, mevcut `backgroundCutout` aracını daha denetlenebilir yapar. Sessizce kötü bir alfa üretmek yerine sorunlu kenarı kullanıcıya gösterir.
+
+### P1 — Ses katmanları ve beat bilgisi
+
+Raporun Fairlight seviyesinde çok kanallı ses hedefi mobil MVP’ye taşınmıyor; AI için gerekli çekirdek şudur:
+
+- `splitAudioTracks`: voice, music, ambience ve SFX stem’lerini ayır,
+- `denoiseVoice`: denoise/echo/wind/hum işlemlerini before/after ile uygula,
+- `duckMusicUnderVoice`: konuşma ve caption timing ile otomatik envelope üret,
+- `detectBeats`: beat marker’ları confidence ile çıkar,
+- `syncEditsToBeats`: cut, transition, punch zoom ve shake önerilerini marker’lara bağla,
+- `verifyAudioMix`: clipping, konuşma anlaşılabilirliği ve aşırı ducking kontrolü.
+
+Ses yoksa görsel motion event çalışır; audio yalnızca zorunlu önkoşul değildir.
+
+### P1 — Batch render ve platform paketleme
+
+Toplu işlem, AI’ın aynı yaratıcı kararı tekrar tekrar vermesi yerine doğrulanmış projeyi güvenle çoğaltması olarak ele alınmalı:
+
+- `createOutputVariants`: 9:16, 1:1, 4:5 ve 16:9 varyantları,
+- `batchRender`: aynı recipe/brand kit ile çıktı kuyruğu,
+- `verifyVariant`: crop, caption safe area, audio, HDR ve source kullanımı,
+- `exportSubtitleSidecar`: SRT/VTT ile burn-in çıktıyı birlikte üret,
+- `renderReport`: her varyant için başarı, uyarı ve atlanan tool listesi.
+
+Kuyrukta biri başarısız olduğunda diğer çıktılar bozulmaz; tekrar yalnız başarısız varyantta yapılır.
+
+## Şimdilik eklemiyoruz
+
+Rapordaki plugin/SDK ekosistemi, node tabanlı Fusion/After Effects parity’si, sınırsız Fairlight kanalı, masaüstü ortak proje sunucusu ve tam script marketplace’i bu AI yol haritasına alınmıyor. Bunlar mobilde yalnız “özellik var” demek için eklenirse bakım, izin, performans ve UX maliyeti yaratır. İleride eklenecekse önce `ToolDescriptor` güvenliği, sandbox, versiyonlama ve offline davranışı tanımlanmalı.
+
+## Bu raporun güven notu
+
+Gönderilen metindeki rakip tablosu yön gösterici bir keşif notudur; tüm satırlar aynı ürün sürümü ve aynı cihaz sınıfı için bağımsız olarak doğrulanmış kabul edilmemeli. AI önceliğini belirleyen maddeler resmi ürün dokümanlarıyla tekrar kontrol edilmeli ve CueTake üzerinde benchmark edilmelidir. Özellikle multicam, HDR, proxy ve GPU hızlandırmada “masaüstünde var” bilgisi mobilde aynı kullanıcı deneyimini veya performansı garanti etmez.
+
 ## İlk tool grupları
 
 1. **Analyze:** transcribe, detect filler, detect dead air, detect repetition, check script coverage, detect framing issues.
