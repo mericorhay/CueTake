@@ -23,6 +23,9 @@ struct EditorTimeline: View {
     /// A picked-up clip keeps its identity while the row underneath it previews the result. Using
     /// an id instead of a position matters because a successful drop changes the positions.
     @State private var lift: LiftState?
+    /// Gesture state resets itself even when iOS cancels a touch. It is therefore the authority for
+    /// locking horizontal scrolling; a stale visual state can never make the timeline untouchable.
+    @GestureState private var reorderGestureActive = false
     /// Bumped every time something snaps, which is what the haptic keys off.
     @State private var snapCount = 0
 
@@ -102,7 +105,7 @@ struct EditorTimeline: View {
         }
         .scrollIndicators(.hidden)
         .scrollPosition($position)
-        .scrollDisabled(trim != nil || leadTrim != nil || lift != nil || model.isAdjustingTimeline)
+        .scrollDisabled(trim != nil || leadTrim != nil || reorderGestureActive || model.isAdjustingTimeline)
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { width in
@@ -137,6 +140,16 @@ struct EditorTimeline: View {
             }
         }
         .onChange(of: model.pointsPerSecond) { follow() }
+        .onChange(of: reorderGestureActive) { wasActive, isActive in
+            guard wasActive, !isActive else { return }
+            // `onEnded` clears or commits synchronously. The next run-loop turn is a fallback for
+            // interruptions where SwiftUI cancels the gesture and never delivers `onEnded`.
+            Task { @MainActor in
+                await Task.yield()
+                guard !reorderGestureActive, lift != nil else { return }
+                withAnimation(DS.Motion.settle) { lift = nil }
+            }
+        }
         .overlay { centreLine }
         .overlay {
             if model.aiSession?.phase == .thinking {
@@ -537,29 +550,40 @@ struct EditorTimeline: View {
             }
     }
 
-    /// One continuous hold-and-drag gesture. Running it simultaneously with the scroll view lets a
-    /// normal swipe keep scrubbing; once the short hold succeeds, the same touch lifts the clip and
-    /// immediately becomes its drag. There is no second grab and no gesture hand-off to lose.
+    /// One continuous hold-and-drag gesture. A hold only arms the gesture; the clip is not lifted
+    /// and the timeline is not disabled until the finger deliberately moves. This keeps a tap a
+    /// tap, lets a horizontal swipe scrub immediately, and prevents an ordinary selection from
+    /// leaving the whole timeline in reorder mode.
     private func reorderGesture(for segment: Segment, at index: Int) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.18, maximumDistance: 18)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .global))
+        LongPressGesture(minimumDuration: 0.32, maximumDistance: 10)
+            .sequenced(before: DragGesture(minimumDistance: 7, coordinateSpace: .global))
+            .updating($reorderGestureActive) { phase, active, _ in
+                if case .second(true, let drag) = phase {
+                    active = drag != nil
+                } else {
+                    active = false
+                }
+            }
             .onChanged { phase in
                 switch phase {
-                case .first(true):
-                    beginReorder(segment, at: index)
                 case .second(true, let drag):
-                    beginReorder(segment, at: index)
-                    if let drag { updateReorder(with: drag, at: index) }
+                    // SwiftUI reports nil while the second gesture is waiting for its movement
+                    // threshold. Starting only after a real drag is what keeps a stationary hold
+                    // from lifting the clip and disabling the scroll view.
+                    if let drag {
+                        beginReorder(segment, at: index)
+                        updateReorder(with: drag, at: index)
+                    }
                 default:
                     break
                 }
             }
             .onEnded { phase in
-                if case .second(true, let drag) = phase, let drag {
+                if case .second(true, let drag) = phase, let drag, lift?.segmentID == segment.id {
                     updateReorder(with: drag, at: index)
                     commitReorder(at: index)
                 } else {
-                    withAnimation(DS.Motion.settle) { lift = nil }
+                    cancelReorder(for: segment.id)
                 }
             }
     }
@@ -604,6 +628,11 @@ struct EditorTimeline: View {
             break
         }
         withAnimation(DS.Motion.settle) { self.lift = nil }
+    }
+
+    private func cancelReorder(for segmentID: Segment.ID) {
+        guard lift?.segmentID == segmentID else { return }
+        withAnimation(DS.Motion.settle) { lift = nil }
     }
 
     /// A clip body means "swap"; the breathing room either side means "insert". The split is
