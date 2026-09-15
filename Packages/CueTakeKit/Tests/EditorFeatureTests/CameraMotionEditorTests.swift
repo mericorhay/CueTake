@@ -64,20 +64,20 @@ struct CameraMotionEditorTests {
             recordingID: recording.id,
             motionID: recipe.id,
             sourceStart: 5,
-            sourceEnd: 9,
+            sourceEnd: 15,
             coalescing: "move"
         )
         model.setCameraMotionRange(
             recordingID: recording.id,
             motionID: recipe.id,
             sourceStart: 6,
-            sourceEnd: 10,
+            sourceEnd: 16,
             coalescing: "move"
         )
 
         let moved = try #require(model.project.recordings.first?.cameraMotions?.first)
         #expect(abs(moved.start - 6) < 0.001)
-        #expect(abs(moved.end - 10) < 0.001)
+        #expect(abs(moved.end - 16) < 0.001)
         #expect(model.changes.count == 1)
 
         model.undo()
