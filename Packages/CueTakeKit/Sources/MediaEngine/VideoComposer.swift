@@ -255,7 +255,12 @@ public struct VideoComposer: Sendable {
                     // Keep the long-standing static instruction for ordinary clips. A ramp with
                     // identical endpoints is needlessly rejected by some iOS AVFoundation builds
                     // when the source has been time-scaled.
-                    let geometry = VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: project.mainVideoPlacement, render: renderSize)
+                    let geometry = VideoFrameGeometry(
+                        natural: trackNatural,
+                        preferred: trackPreferred,
+                        placement: Self.framed(project.mainVideoPlacement, natural: trackNatural, preferred: trackPreferred, render: renderSize),
+                        render: renderSize
+                    )
                     layer.setTransform(geometry.transform, at: pieceCursor)
                     layer.setCropRectangle(geometry.crop, at: pieceCursor)
                 } else {
@@ -288,7 +293,12 @@ public struct VideoComposer: Sendable {
                             playback: playback,
                             timelineTime: time
                         )
-                        return VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: placement, render: renderSize)
+                        return VideoFrameGeometry(
+                            natural: trackNatural,
+                            preferred: trackPreferred,
+                            placement: Self.framed(placement, natural: trackNatural, preferred: trackPreferred, render: renderSize),
+                            render: renderSize
+                        )
                     }
                     let frame = project.mainVideoPlacement.bounded
                     let coversFrame = frame.x < 0.001 && frame.y < 0.001 && frame.width > 0.999 && frame.height > 0.999
@@ -338,6 +348,7 @@ public struct VideoComposer: Sendable {
                     $0.end > takeStart + 0.0001 && $0.start < takeStart + takeLength - 0.0001
                 }
                 let base = project.mainVideoPlacement
+                let pictureRange = (try? await sourceVideo.load(.timeRange)) ?? CMTimeRange(start: .zero, duration: assetDuration)
                 spans.append(ClipSpan(
                     segmentID: segment.id,
                     start: cursor,
@@ -345,7 +356,7 @@ public struct VideoComposer: Sendable {
                     track: sourceVideo,
                     sourceStart: range.start,
                     sourceDuration: range.duration,
-                    assetDuration: assetDuration,
+                    pictureRange: pictureRange,
                     speed: playback.freeze != nil ? 1 : speed,
                     holdsEdges: playback.freeze != nil || playback.isReversed,
                     frameDuration: CMTime(value: 1, timescale: CMTimeScale(max(24, recording.format.frameRate))),
@@ -361,7 +372,12 @@ public struct VideoComposer: Sendable {
                                 playback: playback,
                                 timelineTime: offset
                             )
-                        return VideoFrameGeometry(natural: natural, preferred: preferred, placement: placement, render: renderSize)
+                        return VideoFrameGeometry(
+                            natural: natural,
+                            preferred: preferred,
+                            placement: Self.framed(placement, natural: natural, preferred: preferred, render: renderSize),
+                            render: renderSize
+                        )
                     }
                 ))
             }
@@ -453,13 +469,12 @@ public struct VideoComposer: Sendable {
         guard !instructions.isEmpty || !project.videoLayers.isEmpty else { throw ComposeError.nothingToCompose }
 
         // Transitions draw two clips at once around each cut; the rest of the timeline is as laid.
-        let transitioned = try applyTransitions(
+        let transitioned = applyTransitions(
             project.transitions,
             spans: spans,
             composition: composition,
             mainTrack: videoTrack,
-            instructions: instructions,
-            render: renderSize
+            instructions: instructions
         )
         instructions = transitioned.instructions
 
@@ -508,6 +523,25 @@ public struct VideoComposer: Sendable {
     /// trimming or splitting keeps it attached to the same frame; reverse reads the take backwards.
     /// Seconds over which a track eases in and out at its ends.
     static let trackEase = 0.35
+
+    /// The main video fills the frame, unless filling would cut away more than 30% of it.
+    ///
+    /// The main video used to be fitted unless the clip was tracked or zoomed. A clip in another
+    /// shape than the video — imported, or shot 3:4 — then sat small inside black bars next to
+    /// its filled neighbours, as if zoomed out to 0.5×. Only a very different shape (landscape in
+    /// a vertical video) is still fitted, because filling would keep a third of it.
+    static func framed(_ placement: VideoPlacement, natural: CGSize, preferred: CGAffineTransform, render: CGSize) -> VideoPlacement {
+        guard !placement.fillsFrame else { return placement }
+        let oriented = CGRect(origin: .zero, size: natural).applying(preferred)
+        let bounds = placement.bounded
+        let source = abs(oriented.width) / max(1, abs(oriented.height))
+        let target = bounds.width * render.width / max(1, bounds.height * render.height)
+        guard source.isFinite, target.isFinite, source > 0, target > 0 else { return placement }
+        guard min(source, target) / max(source, target) >= 0.7 else { return placement }
+        var filled = placement
+        filled.fillsFrame = true
+        return filled
+    }
 
     static func mainPlacement(
         _ base: VideoPlacement,

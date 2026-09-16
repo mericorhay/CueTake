@@ -15,7 +15,8 @@ extension VideoComposer {
         var track: AVAssetTrack
         var sourceStart: CMTime
         var sourceDuration: CMTime
-        var assetDuration: CMTime
+        /// Where the file has pictures. Often a little shorter than the file, whose sound runs on.
+        var pictureRange: CMTimeRange
         var speed: Double
         /// Frozen or reversed: there is no footage beyond the ends to borrow, so the edge frame
         /// is held instead.
@@ -44,8 +45,7 @@ extension VideoComposer {
         composition: AVMutableComposition,
         mainTrack: AVMutableCompositionTrack,
         instructions: [AVMutableVideoCompositionInstruction],
-        render: CGSize
-    ) throws -> (instructions: [AVMutableVideoCompositionInstruction], regions: [TransitionRegion]) {
+    ) -> (instructions: [AVMutableVideoCompositionInstruction], regions: [TransitionRegion]) {
         guard !transitions.isEmpty, spans.count > 1 else { return (instructions, []) }
 
         struct Planned {
@@ -72,31 +72,57 @@ extension VideoComposer {
               let carrier = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
         else { return (instructions, []) }
 
-        // The second track: lead-ins and tails, each lasting exactly its half.
-        func lay(_ span: ClipSpan, from wanted: CMTime, length half: CMTime, at time: CMTime, tail: Bool) throws {
+        // The second track: lead-ins and tails, each lasting exactly its half. Footage past a
+        // clip's end is borrowed when the file has it; otherwise the edge frame is held. The
+        // bounds are the picture's, not the file's: asking for a moment the video track does not
+        // have made the insert throw, and with it the whole preview build, so no transition ever
+        // appeared.
+        func lay(_ span: ClipSpan, from wanted: CMTime, length half: CMTime, at time: CMTime, tail: Bool) -> Bool {
             let end = carrier.segments.last?.timeMapping.target.end ?? .zero
             if end < time {
                 carrier.insertEmptyTimeRange(CMTimeRange(start: end, duration: time - end))
             }
+            let pictures = span.pictureRange
+            let frame = span.frameDuration
             let sourceLength = CMTime(seconds: half.seconds * span.speed, preferredTimescale: 600)
-            var range = CMTimeRange(start: wanted, duration: sourceLength)
-            let available = CMTimeRange(start: .zero, duration: span.assetDuration)
-            if span.holdsEdges || range.start < .zero || range.end > available.end {
-                // Nothing to borrow: hold the frame at that edge.
-                let edge = tail ? CMTimeMaximum(span.sourceStart, span.sourceStart + span.sourceDuration - span.frameDuration) : span.sourceStart
-                range = CMTimeRange(start: edge, duration: span.frameDuration)
+            let borrowed = CMTimeRange(start: wanted, duration: sourceLength)
+            let clipEnd = CMTimeMinimum(span.sourceStart + span.sourceDuration, pictures.end)
+            let edgeStart = tail
+                ? CMTimeMaximum(pictures.start, clipEnd - frame)
+                : CMTimeMinimum(CMTimeMaximum(span.sourceStart, pictures.start), CMTimeMaximum(pictures.start, pictures.end - frame))
+            let held = CMTimeRange(start: edgeStart, duration: frame)
+            var attempts: [CMTimeRange] = []
+            if !span.holdsEdges, borrowed.start >= pictures.start, borrowed.end <= pictures.end {
+                attempts.append(borrowed)
             }
-            try carrier.insertTimeRange(range, of: span.track, at: time)
-            if abs(range.duration.seconds - half.seconds) > 0.0005 {
-                carrier.scaleTimeRange(CMTimeRange(start: time, duration: range.duration), toDuration: half)
+            attempts.append(held)
+            for range in attempts where range.duration > .zero {
+                do {
+                    try carrier.insertTimeRange(range, of: span.track, at: time)
+                } catch {
+                    continue
+                }
+                if abs(range.duration.seconds - half.seconds) > 0.0005 {
+                    carrier.scaleTimeRange(CMTimeRange(start: time, duration: range.duration), toDuration: half)
+                }
+                return true
             }
+            return false
         }
 
+        var laid: [Planned] = []
         for region in planned {
             let half = region.cut - region.start
             let incomingSpeedLead = CMTime(seconds: half.seconds * region.incoming.speed, preferredTimescale: 600)
-            try lay(region.incoming, from: region.incoming.sourceStart - incomingSpeedLead, length: half, at: region.start, tail: false)
-            try lay(region.outgoing, from: region.outgoing.sourceStart + region.outgoing.sourceDuration, length: region.end - region.cut, at: region.cut, tail: true)
+            let leadIn = lay(region.incoming, from: region.incoming.sourceStart - incomingSpeedLead, length: half, at: region.start, tail: false)
+            let tail = lay(region.outgoing, from: region.outgoing.sourceStart + region.outgoing.sourceDuration, length: region.end - region.cut, at: region.cut, tail: true)
+            // Half a transition is worse than a cut.
+            if leadIn && tail { laid.append(region) }
+        }
+        planned = laid
+        guard !planned.isEmpty else {
+            composition.removeTrack(carrier)
+            return (instructions, [])
         }
 
         // The base instructions, with the transition stretches cut out of them.

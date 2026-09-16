@@ -111,4 +111,25 @@ struct VideoFrameGeometryTests {
         #expect(abs(focusX(at: 0.5) - 0.5) < 0.001)
         #expect(abs(focusX(at: 9) - 0.5) < 0.001)
     }
+
+    @Test func mainVideoFillsTheFrameUnlessThatCutsAwayTooMuch() {
+        let render = CGSize(width: 1080, height: 1920)
+        // Shot 3:4: filling keeps 75% of it, which beats a picture in black bars.
+        let photo = VideoComposer.framed(.full, natural: CGSize(width: 1440, height: 1920), preferred: .identity, render: render)
+        #expect(photo.fillsFrame)
+        // A portrait recording stored sideways is still portrait.
+        let rotated = VideoComposer.framed(
+            .full,
+            natural: CGSize(width: 1920, height: 1080),
+            preferred: CGAffineTransform(rotationAngle: .pi / 2),
+            render: render
+        )
+        #expect(rotated.fillsFrame)
+        // Landscape in a vertical video would keep a third: fitted.
+        let landscape = VideoComposer.framed(.full, natural: CGSize(width: 1920, height: 1080), preferred: .identity, render: render)
+        #expect(!landscape.fillsFrame)
+        // A choice already made is kept.
+        let chosen = VideoComposer.framed(VideoPlacement(fillsFrame: true), natural: CGSize(width: 1920, height: 1080), preferred: .identity, render: render)
+        #expect(chosen.fillsFrame)
+    }
 }
