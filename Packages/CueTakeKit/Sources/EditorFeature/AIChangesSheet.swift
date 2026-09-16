@@ -52,8 +52,11 @@ struct AIChangesSheet: View {
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)
                     .background(Circle().fill(DS.Palette.hairline(0.08)))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.dsPressIcon)
+            .accessibilityLabel(Text("editor.panel.close", bundle: .module))
         }
         .padding(.horizontal, 20)
         .padding(.top, 22)
@@ -194,6 +197,8 @@ struct AIChangesSheet: View {
                     .frame(width: 30, height: 30)
                     .background(Circle().fill(DS.Palette.hairline(0.09)))
                     .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.dsPressIcon)
             .disabled(model.isAIDriving)

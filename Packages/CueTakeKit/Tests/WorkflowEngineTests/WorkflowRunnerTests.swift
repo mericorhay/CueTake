@@ -85,7 +85,7 @@ struct WorkflowDeliveryBodyTests {
         let text = String(decoding: written.prefix(200), as: UTF8.self)
         #expect(text.hasPrefix("--B\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nMerhaba"))
         #expect(written.count > bytes.count)
-        #expect(String(decoding: written.suffix(8), as: UTF8.self) == "\r\n--B--\r\n")
+        #expect(String(decoding: written.suffix(9), as: UTF8.self) == "\r\n--B--\r\n")
         #expect(written.range(of: bytes) != nil)
     }
 }

@@ -258,6 +258,18 @@ public struct WorkflowsScreen: View {
                     )
                 }
             }
+
+            // What the run writes, and where it sends it: the two things people check first.
+            HStack(spacing: 8) {
+                Label(workflow.style.format.label, systemImage: "film")
+                if let delivery = workflow.delivery, delivery.isEnabled {
+                    Label(delivery.url?.host() ?? "API", systemImage: "paperplane.fill")
+                        .foregroundStyle(delivery.isReady ? DS.Palette.lime : DS.Palette.accentWarm)
+                        .lineLimit(1)
+                }
+            }
+            .dsFont(.mono, .medium, 10)
+            .foregroundStyle(DS.Palette.ink(0.5))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

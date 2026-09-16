@@ -1106,6 +1106,23 @@
         }
       }
     },
+    "editor.ai.hud.stopHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops the AI; changes already made stay and can be undone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI'ı durdurur; yapılan değişiklikler kalır ve geri alınabilir."
+          }
+        }
+      }
+    },
     "editor.ai.hud.undo": {
       "extractionState": "manual",
       "localizations": {
@@ -5560,6 +5577,40 @@
         }
       }
     },
+    "editor.generate.needsKey": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect this model's API key in Settings to make videos."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video üretmek için bu modelin API anahtarını Ayarlar'dan bağla."
+          }
+        }
+      }
+    },
+    "editor.generate.needsModel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write the model id in the options first."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önce seçeneklerde model kimliğini yaz."
+          }
+        }
+      }
+    },
     "editor.generate.noKey %@": {
       "extractionState": "manual",
       "localizations": {
@@ -5607,6 +5658,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Oynatma çizgisine %lld sn. Düzenlemeye devam et — hazır olunca kendini yerleştirir. Ücret sağlayıcı hesabına yansır."
+          }
+        }
+      }
+    },
+    "editor.generate.options": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model and length"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model ve süre"
           }
         }
       }
@@ -5726,6 +5794,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ahşap masada telefonu kullanan eller, yakın plan, yumuşak ışık"
+          }
+        }
+      }
+    },
+    "editor.generate.working %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld video(s) being made — they land on the timeline when ready."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld video üretiliyor — hazır olunca zaman çizelgesine yerleşir."
           }
         }
       }

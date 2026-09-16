@@ -213,15 +213,15 @@ extension WorkflowDefinition {
     /// kept step is the last export found, so its destination and delivery survive.
     public mutating func ensureFinalExport() {
         let exports = steps.filter { if case .export = $0.kind { true } else { false } }
-        var final = exports.last ?? WorkflowStep(kind: .export(.shortFormVertical))
+        var closing = exports.last ?? WorkflowStep(kind: .export(.shortFormVertical))
         steps.removeAll { if case .export = $0.kind { true } else { false } }
-        if case .export(var preset) = final.kind {
+        if case .export(var preset) = closing.kind {
             preset.format = style.format
             preset.burnsInCaptions = style.captions
-            final.kind = .export(preset)
+            closing.kind = .export(preset)
         }
-        final.isEnabled = true
-        steps.append(final)
+        closing.isEnabled = true
+        steps.append(closing)
     }
 
     /// A copy with the final export in place.

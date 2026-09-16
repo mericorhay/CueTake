@@ -1639,13 +1639,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No clips yet: \"Put clips in sections\" has nothing to place."
+            "value": "No clips yet: “Place clips” has nothing to place. Add footage first."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Henüz klip yok: \"Klipleri bölümlere yerleştir\" adımının yerleştireceği bir şey yok."
+            "value": "Henüz klip yok: “Klipleri yerleştir” adımının yerleştireceği bir şey yok. Önce görüntü ekle."
           }
         }
       }

@@ -47,8 +47,8 @@ struct StudioPipeline: View {
                 endZone
 
                 // Always last, always there: the run ends by writing the video.
-                if let final = model.definition.finalExport {
-                    card(final, index: model.definition.steps.count - 1)
+                if let closing = model.definition.finalExport {
+                    card(closing, index: model.definition.steps.count - 1)
                         .padding(.top, 10)
                 }
             }

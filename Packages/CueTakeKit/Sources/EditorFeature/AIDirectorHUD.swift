@@ -134,7 +134,26 @@ struct AIDirectorHUD: View {
     }
 
     /// One dot per change: done ones filled with the spectrum, the current one wide and glowing.
+    /// Past two dozen changes the dots would be thinner than a hairline, so it becomes a bar.
+    @ViewBuilder
     private func stepTrack(_ session: AISession) -> some View {
+        if session.steps.count > 24 {
+            GeometryReader { box in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(DS.Palette.hairline(0.12))
+                    Capsule()
+                        .fill(AIPalette.linear)
+                        .frame(width: max(8, box.size.width * CGFloat(session.current + 1) / CGFloat(max(1, session.steps.count))))
+                }
+            }
+            .frame(height: 5)
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: session.current)
+        } else {
+            dotTrack(session)
+        }
+    }
+
+    private func dotTrack(_ session: AISession) -> some View {
         HStack(spacing: session.steps.count > 16 ? 2 : 4) {
             ForEach(session.steps) { step in
                 let done = step.id < session.current
@@ -257,11 +276,13 @@ struct AIDirectorHUD: View {
                     .dsFont(.sans, .semibold, 11)
             }
             .foregroundStyle(DS.Palette.ink)
-            .padding(.horizontal, 11)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
             .background(Capsule().fill(DS.Palette.hairline(0.12)))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.dsPress(radius: 20))
+        .accessibilityHint(Text("editor.ai.hud.stopHint", bundle: .module))
     }
 
     private var closeButton: some View {
@@ -273,7 +294,10 @@ struct AIDirectorHUD: View {
                 .foregroundStyle(DS.Palette.ink(0.7))
                 .frame(width: 28, height: 28)
                 .background(Circle().fill(DS.Palette.hairline(0.1)))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.dsPressIcon)
+        .accessibilityLabel(Text("editor.panel.close", bundle: .module))
     }
 }

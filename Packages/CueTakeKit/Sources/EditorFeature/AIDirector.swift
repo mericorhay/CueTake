@@ -135,9 +135,10 @@ extension EditorModel {
         guard !text.isEmpty, !isAIDriving else { return }
         aiRequester = request
         pause()
-        inspectedSegment = nil
-        selectedAudio = nil
-        selectedOverlay = nil
+        // Nothing stays open under the AI: a panel would show values it is about to change.
+        selectedCameraMotion = nil
+        selectedSubjectTrack = nil
+        clearOtherSelections()
 
         let project = self.project
         withAnimation(.snappy(duration: 0.3)) {

@@ -169,44 +169,31 @@ public struct EditorScreen: View {
             }
         }
         .animation(DS.Motion.settle, value: model.lastDeletion)
-        .overlay(alignment: .top) {
+        .overlay {
             if composingAI {
                 AIComposer(
                     model: model,
                     text: $aiDraft,
-                    request: onAIEdit,
-                    onAllowCloudAI: onAllowCloudAI,
-                    onShowChanges: {
-                        composingAI = false
-                        showsAIChanges = true
-                    },
+                    purpose: .edit(
+                        request: onAIEdit,
+                        onAllowCloudAI: onAllowCloudAI,
+                        onShowChanges: {
+                            composingAI = false
+                            showsAIChanges = true
+                        }
+                    ),
                     onClose: { composingAI = false }
                 )
-            }
-        }
-        .overlay(alignment: .top) {
-            if composingGenerate {
-                ZStack(alignment: .top) {
-                    Color.black.opacity(0.35)
-                        .ignoresSafeArea()
-                        .onTapGesture { withAnimation(DS.Motion.settle) { composingGenerate = false } }
-                    AIPromptBar(
-                        text: $generateDraft,
-                        title: "editor.generate.compose",
-                        placeholder: String(localized: "editor.generate.placeholder", bundle: .module),
-                        suggestions: Self.generateSuggestions,
-                        sendSymbol: "wand.and.stars",
-                        tint: DS.Palette.lime,
-                        onSend: {
-                            let text = generateDraft
-                            guard model.generateClip(prompt: text) != nil else { return }
-                            generateDraft = ""
-                            withAnimation(DS.Motion.settle) { composingGenerate = false }
-                        },
-                        onCancel: { withAnimation(DS.Motion.settle) { composingGenerate = false } }
-                    )
-                }
-                .transition(.opacity)
+            } else if composingGenerate {
+                AIComposer(
+                    model: model,
+                    text: $generateDraft,
+                    purpose: .generate(onOpenOptions: {
+                        model.pause()
+                        withAnimation(DS.Motion.settle) { dockPanel = .generate }
+                    }),
+                    onClose: { composingGenerate = false }
+                )
             }
         }
         .animation(DS.Motion.settle, value: composingAI)
