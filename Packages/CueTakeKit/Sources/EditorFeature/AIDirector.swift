@@ -163,6 +163,7 @@ extension EditorModel {
                 }
                 await self.drive(plan)
                 await self.secondPass(after: plan, instruction: text, using: request)
+                self.rememberAIRun(text)
             } catch {
                 guard let self, !Task.isCancelled else { return }
                 withAnimation(.snappy(duration: 0.3)) {
@@ -241,6 +242,32 @@ extension EditorModel {
     public func dismissAISession() {
         guard !isAIDriving else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { aiSession = nil }
+    }
+
+    // MARK: - Memory
+
+    /// The session the AI is in, for the composer.
+    public var aiSessionNumber: Int { max(project.aiConversations.count, 1) }
+    public var aiSessionTurns: [AITurn] { project.currentAIConversation?.turns ?? [] }
+
+    /// A clean slate: the AI no longer sees earlier requests of this project.
+    public func startNewAISession() {
+        project.startAIConversation()
+    }
+
+    /// Writes what this run did into the project's AI memory.
+    func rememberAIRun(_ instruction: String) {
+        guard let session = aiSession else { return }
+        // Both passes of this run are the newest change sets, under the same request.
+        let changed = session.changeSetID == nil
+            ? []
+            : aiChanges.prefix(2).filter { $0.instruction == instruction }.reversed().flatMap { $0.items.map(\.text) }
+        let summary: String
+        switch session.phase {
+        case .failed(let reason): summary = reason
+        default: summary = session.summary
+        }
+        project.remember(AITurn(instruction: instruction, summary: summary, changes: changed))
     }
 
     // MARK: - Running

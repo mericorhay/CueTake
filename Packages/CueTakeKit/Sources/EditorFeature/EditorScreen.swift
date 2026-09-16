@@ -141,30 +141,20 @@ public struct EditorScreen: View {
             }
         }
         .overlay(alignment: .top) {
-            if composingAI, let onAIEdit {
-                ZStack(alignment: .top) {
-                    Color.black.opacity(0.35)
-                        .ignoresSafeArea()
-                        .onTapGesture { withAnimation(DS.Motion.settle) { composingAI = false } }
-                    AIPromptBar(
-                        text: $aiDraft,
-                        onSend: {
-                            let text = aiDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-                            guard !text.isEmpty, !model.isAIDriving else { return }
-                            aiDraft = ""
-                            withAnimation(DS.Motion.settle) {
-                                composingAI = false
-                                dockPanel = nil
-                            }
-                            model.askAI(text, using: onAIEdit)
-                        },
-                        onCancel: { withAnimation(DS.Motion.settle) { composingAI = false } }
-                    )
-                }
-                .transition(.opacity)
+            if composingAI {
+                AIComposer(
+                    model: model,
+                    text: $aiDraft,
+                    request: onAIEdit,
+                    onAllowCloudAI: onAllowCloudAI,
+                    onShowChanges: {
+                        composingAI = false
+                        showsAIChanges = true
+                    },
+                    onClose: { composingAI = false }
+                )
             }
         }
-        .animation(DS.Motion.settle, value: typing)
         .overlay(alignment: .top) {
             if composingGenerate {
                 ZStack(alignment: .top) {
@@ -820,7 +810,7 @@ public struct EditorScreen: View {
             ScrollView(.vertical) {
                 timeline
             }
-            .scrollBounceBehavior(.basedOnSize)
+            .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
             .frame(height: min(EditorTimeline.height(for: model), 250))
         }
         .padding(.horizontal, 18)
@@ -932,15 +922,14 @@ public struct EditorScreen: View {
                                     ScrollView(.vertical) {
                                         timeline(filling: box.size.height)
                                     }
-                                    .scrollBounceBehavior(.basedOnSize)
-                                    .scrollIndicators(.hidden)
+                                    .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
                                 }
                                 .frame(minHeight: min(EditorTimeline.height(for: model), 250))
                             } else {
                                 ScrollView(.vertical) {
                                     timeline
                                 }
-                                .scrollBounceBehavior(.basedOnSize)
+                                .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
                                 .frame(height: min(EditorTimeline.height(for: model), 250))
                             }
                         }
@@ -1266,5 +1255,19 @@ private struct PulseWhileSaving: ViewModifier {
 extension View {
     fileprivate func dsPulseIfSaving(_ isSaving: Bool) -> some View {
         modifier(PulseWhileSaving(isSaving: isSaving))
+    }
+}
+
+/// The timeline's lanes scroll up and down when there are more than fit — dozens of texts, many
+/// sounds — with a visible bar that flashes whenever lanes are added, so the rest is findable.
+private struct LanesScroll: ViewModifier {
+    let height: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+            .scrollIndicators(.visible, axes: .vertical)
+            .scrollIndicatorsFlash(trigger: height)
+            .scrollIndicatorsFlash(onAppear: true)
     }
 }

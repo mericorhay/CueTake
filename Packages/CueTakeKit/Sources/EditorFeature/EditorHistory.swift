@@ -152,6 +152,8 @@ extension EditorModel {
 
     /// Puts a project back and repairs whatever pointed into the old one.
     func adopt(_ restored: Project) {
+        var restored = restored
+        restored.aiConversations = project.aiConversations
         project = restored
         if let inspected = inspectedSegment, !restored.segments.contains(where: { $0.id == inspected }) {
             inspectedSegment = nil

@@ -1123,6 +1123,23 @@
         }
       }
     },
+    "editor.ai.newSession": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New session"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni oturum"
+          }
+        }
+      }
+    },
     "editor.ai.nothing": {
       "extractionState": "manual",
       "localizations": {
@@ -2173,6 +2190,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tekrar dene"
+          }
+        }
+      }
+    },
+    "editor.ai.send": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gönder"
+          }
+        }
+      }
+    },
+    "editor.ai.session %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session %1$lld · %2$lld requests"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum %1$lld · %2$lld istek"
           }
         }
       }

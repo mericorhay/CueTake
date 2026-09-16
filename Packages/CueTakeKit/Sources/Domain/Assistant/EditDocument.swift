@@ -45,6 +45,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var cameraMoves: [CameraMove]?
     /// The video model `generateVideo` will use, when the user has connected one.
     public var videoModel: String?
+    /// Earlier requests in this session and what was done, oldest first.
+    public var history: [Turn]?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.
@@ -506,6 +508,7 @@ extension EditDocument {
             animations: OverlayAnimation.allCases.map(\.rawValue),
             beats: beats
         )
+        history = Self.history(of: project)
         let moves = Self.cameraMoves(in: project)
         if !moves.isEmpty {
             cameraMoves = moves.enumerated().map { i, move in

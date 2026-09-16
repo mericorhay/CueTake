@@ -35,7 +35,7 @@ struct ToolDock: View {
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .ai, .generate, .zoom, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -296,7 +296,10 @@ struct ToolDock: View {
         case .audio: onAddAudio()
         case .more: onMore()
         case .reframe: onTrack()
-        case .trim, .speed, .ai, .generate, .zoom, .background, .filter, .sound: break
+        case .ai:
+            open = nil
+            onComposeAI()
+        case .trim, .speed, .generate, .zoom, .background, .filter, .sound: break
         }
     }
 
@@ -331,23 +334,7 @@ struct ToolDock: View {
             }
 
             Group {
-                if item == .ai {
-                    if let aiRequest {
-                        AIEditPanel(
-                            model: model,
-                            request: aiRequest,
-                            draft: aiDraft,
-                            onCompose: onComposeAI,
-                            onStart: { open = nil },
-                            onShowChanges: {
-                                open = nil
-                                onShowAIChanges()
-                            }
-                        )
-                    } else {
-                        aiConsentPanel
-                    }
-                } else if item == .generate {
+                if item == .generate {
                     GeneratePanel(model: model, draft: generateDraft, onCompose: onComposeGenerate)
                 } else if item == .reframe {
                     mainReframePanel
@@ -547,39 +534,6 @@ struct ToolDock: View {
         case .calm: "editor.zoom.feel.calm"
         case .natural: "editor.zoom.feel.natural"
         case .energetic: "editor.zoom.feel.energetic"
-        }
-    }
-
-    /// AI sends the video's words and structure to the server. Off by default, so the panel asks
-    /// right here instead of sending the user to Settings.
-    private var aiConsentPanel: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label {
-                Text(onAllowCloudAI == nil ? "editor.ai.unavailable" : "editor.ai.consent", bundle: .module)
-                    .dsFont(.sans, .regular, 12, lineHeight: 1.4)
-                    .fixedSize(horizontal: false, vertical: true)
-            } icon: {
-                Image(systemName: "lock.shield")
-                    .foregroundStyle(DS.Palette.accentWarm)
-            }
-            .foregroundStyle(DS.Palette.ink(0.65))
-            if let onAllowCloudAI {
-                Button {
-                    withAnimation(DS.Motion.settle) { onAllowCloudAI() }
-                } label: {
-                    Label {
-                        Text("editor.ai.consent.allow", bundle: .module)
-                    } icon: {
-                        Image(systemName: "sparkles")
-                    }
-                    .dsFont(.sans, .semibold, 13)
-                    .foregroundStyle(DS.Palette.ink)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Capsule().fill(DS.Palette.hairline(0.1)))
-                }
-                .buttonStyle(.dsPress(radius: 22))
-            }
         }
     }
 
