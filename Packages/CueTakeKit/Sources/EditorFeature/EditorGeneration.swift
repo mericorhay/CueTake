@@ -110,12 +110,11 @@ extension EditorModel {
               let job = generationJobs.first(where: { $0.id == id })
         else { return }
         let request = ClipGenerationRequest(options: job.options, prompt: job.prompt)
+        let sink = GenerationProgressSink(model: self, job: id)
         generationTasks[id] = Task { [weak self] in
             do {
                 let clip = try await generator(request) { fraction in
-                    Task { @MainActor [weak self] in
-                        self?.updateJob(id) { if let fraction { $0.progress = fraction } }
-                    }
+                    Task { await sink.report(fraction) }
                 }
                 self?.arrive(clip, for: id)
             } catch is CancellationError {
@@ -151,7 +150,7 @@ extension EditorModel {
         dropJob(id)
     }
 
-    private func updateJob(_ id: UUID, _ change: (inout ClipGenerationJob) -> Void) {
+    func updateJob(_ id: UUID, _ change: (inout ClipGenerationJob) -> Void) {
         guard let index = generationJobs.firstIndex(where: { $0.id == id }) else { return }
         change(&generationJobs[index])
     }
@@ -276,12 +275,26 @@ extension EditorModel {
         )
         withAnimation(DS.Motion.settle) { generationJobs.append(job) }
         defer { withAnimation(DS.Motion.settle) { generationJobs.removeAll { $0.id == job.id } } }
-        let id = job.id
+        let sink = GenerationProgressSink(model: self, job: job.id)
         return try? await generator(ClipGenerationRequest(options: options, prompt: request.prompt)) { fraction in
-            Task { @MainActor [weak self] in
-                guard let self, let fraction, let index = self.generationJobs.firstIndex(where: { $0.id == id }) else { return }
-                self.generationJobs[index].progress = fraction
-            }
+            Task { await sink.report(fraction) }
         }
+    }
+}
+
+/// Carries progress from the network back to the editor without holding the editor.
+@MainActor
+final class GenerationProgressSink {
+    private weak var model: EditorModel?
+    private let job: UUID
+
+    init(model: EditorModel, job: UUID) {
+        self.model = model
+        self.job = job
+    }
+
+    func report(_ fraction: Double?) {
+        guard let fraction else { return }
+        model?.updateJob(job) { $0.progress = fraction }
     }
 }

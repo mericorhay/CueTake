@@ -907,14 +907,14 @@ public struct EditorScreen: View {
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
                     aiDraft: $aiDraft,
+                    onComposeAI: {
+                        model.pause()
+                        withAnimation(DS.Motion.settle) { composingAI = true }
+                    },
                     generateDraft: $generateDraft,
                     onComposeGenerate: {
                         model.pause()
                         withAnimation(DS.Motion.settle) { composingGenerate = true }
-                    },
-                    onComposeAI: {
-                        model.pause()
-                        withAnimation(DS.Motion.settle) { composingAI = true }
                     },
                     onAllowCloudAI: onAllowCloudAI,
                     onAddImage: { pickingImage = true },
