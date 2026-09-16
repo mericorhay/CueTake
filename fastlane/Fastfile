@@ -80,7 +80,8 @@ platform :ios do
     # The version lives in an xcconfig, not the pbxproj. The checked-in build is authoritative;
     # an optional migration floor may raise it but must never replace it. Replacing it is how a
     # checked-in Build 64 was accidentally archived as Build 63.
-    configured_build = (File.read("Config/CueTake.xcconfig")[/CURRENT_PROJECT_VERSION\s*=\s*(\d+)/, 1] || "0").to_i
+    xcconfig_path = File.expand_path("../Config/CueTake.xcconfig", __dir__)
+    configured_build = (File.read(xcconfig_path)[/CURRENT_PROJECT_VERSION\s*=\s*(\d+)/, 1] || "0").to_i
     migration_floor = (ENV["BUILD_NUMBER_FLOOR"] || "0").to_i
     build_number = [uploaded_build + 1, configured_build, migration_floor].max
     UI.success("Building CueTake #{version} (#{build_number}); latest TestFlight build is #{uploaded_build}")
