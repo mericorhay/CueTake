@@ -222,7 +222,7 @@ struct StudioPipeline: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .black))
                         .foregroundStyle(DS.Palette.inkInverse)
-                        .transition(reduceMotion ? .opacity : .symbolEffect(.drawOn))
+                        .transition(.symbolEffect(.drawOn))
                 case .skipped:
                     Image(systemName: "arrow.turn.down.right")
                         .font(.system(size: 9, weight: .bold))

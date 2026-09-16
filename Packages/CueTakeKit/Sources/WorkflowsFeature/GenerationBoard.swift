@@ -187,7 +187,7 @@ private struct GenerationTileView: View {
                     .transition(.opacity)
             case .done:
                 done
-                    .transition(reduceMotion ? .opacity : .blurReplace.combined(with: .scale(scale: 1.12)))
+                    .transition(reduceMotion ? AnyTransition.opacity : AnyTransition(.blurReplace).combined(with: .scale(scale: 1.12)))
             case .failed:
                 failed
                     .transition(.opacity)
