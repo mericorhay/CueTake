@@ -9286,6 +9286,23 @@
         }
       }
     },
+    "export.droppedCaptions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captions and texts could not be burned in, so this file is without them."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altyazı ve metinler videoya gömülemedi; bu dosya onlarsız yazıldı."
+          }
+        }
+      }
+    },
     "export.fileReady": {
       "extractionState": "manual",
       "localizations": {
@@ -9401,6 +9418,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Videoyu render et"
+          }
+        }
+      }
+    },
+    "export.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrar dene"
           }
         }
       }

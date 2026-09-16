@@ -29,6 +29,9 @@ enum StudioCatalog {
         Tool(type: "export", symbol: "square.and.arrow.up", title: "tool.export", note: "tool.export.note", category: .deliver),
     ]
 
+    /// What can be added: the closing export is always there already.
+    static var addable: [Tool] { tools.filter { $0.type != "export" } }
+
     static func tool(for type: String) -> Tool {
         tools.first { $0.type == type }
             ?? Tool(type: type, symbol: "questionmark.square.dashed", title: "tool.unknown", note: "tool.unknown.note", category: .deliver)
@@ -77,7 +80,11 @@ enum StudioCatalog {
             let count = o.prompts.isEmpty ? "§" : "\(o.prompts.count)×"
             return "\(name) · \(count) · \(Int(o.seconds)) s · \(o.aspect)"
         case .export(let preset):
-            return preset.format.label
+            var parts = [preset.format.label]
+            if let delivery = preset.delivery, delivery.isEnabled {
+                parts.append("API → " + (delivery.url?.host() ?? "?"))
+            }
+            return parts.joined(separator: " · ")
         default:
             return ""
         }

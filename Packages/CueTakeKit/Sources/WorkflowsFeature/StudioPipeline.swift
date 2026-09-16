@@ -31,18 +31,26 @@ struct StudioPipeline: View {
 
             VStack(spacing: 0) {
                 ForEach(Array(model.definition.steps.enumerated()), id: \.element.id) { index, step in
-                    card(step, index: index)
-                        .transition(
-                            reduceMotion
-                                ? .opacity
-                                : .asymmetric(
-                                    insertion: .move(edge: .leading).combined(with: .opacity),
-                                    removal: .scale(scale: 0.9).combined(with: .opacity)
-                                )
-                        )
+                    if !model.isLocked(step.id) {
+                        card(step, index: index)
+                            .transition(
+                                reduceMotion
+                                    ? .opacity
+                                    : .asymmetric(
+                                        insertion: .move(edge: .leading).combined(with: .opacity),
+                                        removal: .scale(scale: 0.9).combined(with: .opacity)
+                                    )
+                            )
+                    }
                 }
 
                 endZone
+
+                // Always last, always there: the run ends by writing the video.
+                if let final = model.definition.finalExport {
+                    card(final, index: model.definition.steps.count - 1)
+                        .padding(.top, 10)
+                }
             }
             .animation(reduceMotion ? nil : DS.Motion.settle, value: model.definition.steps.map(\.id))
         }
@@ -53,7 +61,7 @@ struct StudioPipeline: View {
     private var toolStrip: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 6) {
-                ForEach(StudioCatalog.tools) { tool in
+                ForEach(StudioCatalog.addable) { tool in
                     let tint = StudioCatalog.tint(tool.category)
                     Button {
                         withAnimation(DS.Motion.settle) { model.addStep(type: tool.type) }
@@ -92,11 +100,12 @@ struct StudioPipeline: View {
         let tint = StudioCatalog.tint(tool.category)
         let state = model.state(of: step.id)
         let isExpanded = model.expandedStep == step.id
-        let isTarget = dropTarget == step.id.uuidString
+        let isTarget = dropTarget == step.id.uuidString && !model.isLocked(step.id)
         let warning = model.warning(for: step)
+        let locked = model.isLocked(step.id)
 
         return HStack(alignment: .top, spacing: 12) {
-            rail(for: state, tint: tint, index: index, isLast: false)
+            rail(for: state, tint: tint, index: index, isLast: locked)
 
             VStack(alignment: .leading, spacing: 0) {
                 // Where a dragged step or tool will land: a line that opens above the card.
@@ -124,22 +133,30 @@ struct StudioPipeline: View {
                                 .foregroundStyle(step.isEnabled ? DS.Palette.ink : DS.Palette.ink(0.35))
                                 .strikethrough(!step.isEnabled, color: DS.Palette.ink(0.3))
 
-                            Text(Self.subtitle(step, state: state, note: tool.note))
+                            Text(model.stepNotes[step.id] ?? Self.subtitle(step, state: state, note: tool.note))
                                 .dsFont(.sans, .regular, 11)
                                 .foregroundStyle(Self.subtitleColor(state))
-                                .lineLimit(1)
+                                .lineLimit(isExpanded ? 3 : 1)
                                 .contentTransition(.opacity)
                         }
 
                         Spacer(minLength: 0)
 
-                        Toggle("", isOn: Binding(
-                            get: { step.isEnabled },
-                            set: { _ in withAnimation(DS.Motion.snap) { model.toggleStep(step.id) } }
-                        ))
-                        .labelsHidden()
-                        .tint(tint)
-                        .scaleEffect(0.8)
+                        if locked {
+                            // Not a switch: the closing export cannot be turned off or moved.
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(DS.Palette.ink(0.35))
+                                .frame(width: 30, height: 30)
+                                .accessibilityLabel(Text("studio.export.locked", bundle: .module))
+                        } else {
+                            Toggle("", isOn: Binding(
+                                get: { step.isEnabled },
+                                set: { _ in withAnimation(DS.Motion.snap) { model.toggleStep(step.id) } }
+                            ))
+                            .labelsHidden()
+                            .tint(tint)
+                        }
                     }
 
                     if let warning, step.isEnabled {
@@ -158,16 +175,27 @@ struct StudioPipeline: View {
                         StudioStepEditor(model: model, step: step)
                             .transition(.opacity.combined(with: .move(edge: .top)))
 
-                        HStack {
-                            Spacer(minLength: 0)
-                            Button(role: .destructive) {
-                                withAnimation(DS.Motion.settle) { model.removeStep(step.id) }
-                            } label: {
-                                Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
-                                    .dsFont(.sans, .medium, 12)
-                                    .foregroundStyle(DS.Palette.accent)
+                        if locked {
+                            Label(String(localized: "studio.export.lockedNote", bundle: .module), systemImage: "lock")
+                                .dsFont(.sans, .regular, 10)
+                                .foregroundStyle(DS.Palette.ink(0.4))
+                        } else {
+                            HStack(spacing: 6) {
+                                moveButton("arrow.up", step: step, by: -1)
+                                moveButton("arrow.down", step: step, by: 1)
+                                Spacer(minLength: 0)
+                                Button(role: .destructive) {
+                                    withAnimation(DS.Motion.settle) { model.removeStep(step.id) }
+                                } label: {
+                                    Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
+                                        .dsFont(.sans, .medium, 12)
+                                        .foregroundStyle(DS.Palette.accent)
+                                        .padding(.horizontal, 12)
+                                        .frame(height: 36)
+                                        .background(Capsule().fill(DS.Palette.accent(0.1)))
+                                }
+                                .buttonStyle(.dsPress(radius: 18))
                             }
-                            .buttonStyle(.dsPress)
                         }
                     }
                 }
@@ -190,14 +218,7 @@ struct StudioPipeline: View {
                         model.expandedStep = isExpanded ? nil : step.id
                     }
                 }
-                .draggable(StudioDrag.step + step.id.uuidString) {
-                    Label(String(localized: tool.title, bundle: .module), systemImage: tool.symbol)
-                        .dsFont(.sans, .semibold, 13)
-                        .foregroundStyle(DS.Palette.inkInverse)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Capsule().fill(tint))
-                }
+                .modifier(StepDrag(enabled: !locked, payload: StudioDrag.step + step.id.uuidString, title: String(localized: tool.title, bundle: .module), symbol: tool.symbol, tint: tint))
                 .padding(.bottom, 10)
             }
             .animation(DS.Motion.snap, value: isTarget)
@@ -207,6 +228,22 @@ struct StudioPipeline: View {
         } isTargeted: { targeted in
             dropTarget = targeted ? step.id.uuidString : (dropTarget == step.id.uuidString ? nil : dropTarget)
         }
+    }
+
+    private func moveButton(_ symbol: String, step: WorkflowStep, by offset: Int) -> some View {
+        let enabled = model.canMoveStep(step.id, by: offset)
+        return Button {
+            withAnimation(DS.Motion.settle) { model.moveStep(step.id, by: offset) }
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(DS.Palette.ink(enabled ? 0.75 : 0.2))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(DS.Palette.hairline(0.08)))
+        }
+        .buttonStyle(.dsPressIcon)
+        .disabled(!enabled)
+        .accessibilityLabel(Text(offset < 0 ? "studio.step.up" : "studio.step.down", bundle: .module))
     }
 
     /// The rail: a node per step, and the line to the next one, filled once the step is done.
@@ -248,6 +285,7 @@ struct StudioPipeline: View {
             }
             .frame(width: 2)
             .frame(maxHeight: .infinity)
+            .opacity(isLast ? 0 : 1)
             .animation(reduceMotion ? .easeOut(duration: 0.2) : .easeInOut(duration: 0.55), value: state)
         }
         .frame(width: 22)
@@ -354,6 +392,31 @@ private struct RunningArc: View {
     }
 }
 
+/// Steps are dragged to reorder them; the closing export is not.
+private struct StepDrag: ViewModifier {
+    let enabled: Bool
+    let payload: String
+    let title: String
+    let symbol: String
+    let tint: Color
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if enabled {
+            content.draggable(payload) {
+                Label(title, systemImage: symbol)
+                    .dsFont(.sans, .semibold, 13)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(tint))
+            }
+        } else {
+            content
+        }
+    }
+}
+
 private struct PulseWhileRunning: ViewModifier {
     let isRunning: Bool
 
@@ -398,7 +461,7 @@ struct StudioToolPalette: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     ForEach(Array(WorkflowToolCategory.allCases.enumerated()), id: \.element) { order, category in
-                        let tools = StudioCatalog.tools.filter { $0.category == category }
+                        let tools = StudioCatalog.addable.filter { $0.category == category }
                         if !tools.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(String(localized: StudioCatalog.categoryTitle(category), bundle: .module))

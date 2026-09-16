@@ -51,6 +51,7 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
         self.steps = steps
         self.createdAt = createdAt
         self.updatedAt = createdAt
+        ensureFinalExport()
     }
 
     /// Tolerant on purpose. A workflow an AI wrote will leave out ids, dates and anything it did
@@ -73,6 +74,8 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
             .compactMap(\.value) ?? []
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+        // Every workflow ends by writing the video, whatever the document said.
+        ensureFinalExport()
     }
 }
 

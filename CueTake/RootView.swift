@@ -254,7 +254,14 @@ struct RootView: View {
         case .export:
             ExportScreen(
                 model: model.exportModel,
-                format: $model.project.format,
+                // Both copies: the editor's is what comes back to the app when it is next opened.
+                format: Binding(
+                    get: { model.project.format },
+                    set: { format in
+                        model.project.format = format
+                        model.editorModel.project.format = format
+                    }
+                ),
                 onRender: { Task { await model.exportProject() } },
                 onBack: { model.openEditor() },
                 onDone: { model.finishExport() }
@@ -289,7 +296,9 @@ struct RootView: View {
                     onStop: { model.stopWorkflowRun() },
                     onAskAI: { Task { await model.askWorkflowAI() } },
                     onPickClips: { model.pickClipsForWorkflow() },
-                    onDelete: { Task { await model.deleteWorkflow() } }
+                    onDelete: { Task { await model.deleteWorkflow() } },
+                    onOpenResult: { model.openWorkflowResult() },
+                    onResend: { model.resendWorkflowDelivery() }
                 )
             }
 

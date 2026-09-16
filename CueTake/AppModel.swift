@@ -158,6 +158,11 @@ final class AppModel {
     var busy: String?
     /// The workflow run in progress, kept so it can be stopped.
     var workflowRunTask: Task<Void, Never>?
+    /// Where a workflow's export step sends the video, for the length of that step.
+    var exportDestinationOverride: ExportDestination?
+    /// What the last workflow run wrote and what its API answered.
+    var workflowVideo: URL?
+    var workflowDeliveryResult: StudioDeliveryResult?
     /// Work going on in the background that does not stop anyone — listening to new clips.
     var activity: String?
     /// A short message that fades by itself: how listening went, what was restored.
@@ -510,7 +515,8 @@ final class AppModel {
     /// The screen does not know how to build a video and should not learn; it asks, and this
     /// answers. Stages are advanced from the work rather than a timer, so a long write shows as a
     /// long stage instead of a progress bar that finishes before the file does.
-    func exportProject() async {
+    func exportProject(burnCaptions: Bool = true) async {
+        guard !exportModel.isRunning else { return }
         exportModel.begin()
 
         let store = dependencies.projectStore
@@ -520,26 +526,66 @@ final class AppModel {
         }
 
         let composer = VideoComposer()
-        let project = project
-        let destination = FileManager.default.temporaryDirectory
-            .appending(path: "\(project.id.uuidString).mov", directoryHint: .notDirectory)
+        var project = project
+        if !burnCaptions {
+            for index in project.segments.indices { project.segments[index].captions = [] }
+        }
+        // Named after the project, so a shared file says what it is.
+        let name = Self.exportFileName(for: project)
+        let folder = FileManager.default.temporaryDirectory.appending(path: "exports", directoryHint: .isDirectory)
+        // Earlier renders already went to Photos or were shared; the phone keeps only this one.
+        try? FileManager.default.removeItem(at: folder)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let destination = folder.appending(path: "\(name).mov", directoryHint: .notDirectory)
 
+        let assembled: VideoComposer.Assembled
         do {
-            let assembled = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
-            exportModel.advance(to: 2)
+            assembled = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
+        } catch {
+            exportModel.fail(Self.composeFailureMessage(error), detail: String(describing: error))
+            return
+        }
+        exportModel.advance(to: 2)
 
-            let url = try await composer.write(assembled, to: destination) { [exportModel] value in
+        let written: VideoComposer.WriteResult
+        do {
+            written = try await composer.writeResilient(assembled, to: destination) { [exportModel] value in
                 exportModel.report(value)
             }
-            exportModel.advance(to: 3)
-
-            var destination: ExportModel.Destination = .fileOnly
-            if settingsModel.settings.exportDestination == .photoLibrary {
-                destination = try await Self.saveToPhotoLibrary(url) ? .photos : .photosRefused
-            }
-            exportModel.succeed(url: url, destination: destination)
         } catch {
-            exportModel.fail(String(localized: "export.failed.generic"))
+            let detail: String
+            if case VideoComposer.ComposeError.exportFailed(let reason) = error { detail = reason } else { detail = String(describing: error) }
+            exportModel.fail(String(localized: "export.failed.generic"), detail: detail)
+            return
+        }
+        exportModel.advance(to: 3)
+
+        // The file exists whatever Photos says: a refused or failed save is reported, not fatal.
+        var saved: ExportModel.Destination = .fileOnly
+        if (exportDestinationOverride ?? settingsModel.settings.exportDestination) == .photoLibrary {
+            saved = ((try? await Self.saveToPhotoLibrary(written.url)) ?? false) ? .photos : .photosRefused
+        }
+        exportModel.succeed(url: written.url, destination: saved, format: project.format, droppedCaptions: written.droppedCaptions)
+    }
+
+    /// A file name people can read, from the project title.
+    static func exportFileName(for project: Project) -> String {
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: " -_"))
+        let cleaned = String(project.title.unicodeScalars.filter { allowed.contains($0) })
+            .trimmingCharacters(in: .whitespaces)
+        let base = cleaned.isEmpty ? "CueTake" : String(cleaned.prefix(60))
+        return "\(base) \(Int(Date.now.timeIntervalSince1970) % 100_000)"
+    }
+
+    /// Why a video could not be put together, in words that say what to do.
+    static func composeFailureMessage(_ error: any Error) -> String {
+        switch error {
+        case VideoComposer.ComposeError.nothingToCompose:
+            String(localized: "export.failed.empty")
+        case VideoComposer.ComposeError.missingMedia, VideoComposer.ComposeError.noVideoTrack:
+            String(localized: "export.failed.media")
+        default:
+            String(localized: "export.failed.generic")
         }
     }
 
@@ -656,6 +702,12 @@ final class AppModel {
 
     func go(to screen: Screen) {
         stopTimers()
+        // The export screen opens ready to render. A finished or failed export from an earlier
+        // visit used to stay on it, with its old file and no render button.
+        if screen == .export, self.screen != .export, !exportModel.isRunning {
+            if self.screen == .editor, !editorModel.isAIDriving { adoptEditorEdits() }
+            exportModel.reset()
+        }
         self.screen = screen
     }
 

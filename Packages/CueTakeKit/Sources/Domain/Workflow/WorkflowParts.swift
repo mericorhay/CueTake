@@ -308,7 +308,9 @@ extension WorkflowDefinition {
     - musicBed: { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } level existing music.
     - generateCaptions: build captions from the transcript.
     - applyCaptionStyle: { "presetID": "pop|clean|karaoke|bold|boxed|minimal|neon|story" }
-    - export: write the finished video.
+    - export: write the finished video. Always the last step, exactly once; the app adds it if missing.
+      { "destination": "photoLibrary|files", "delivery": { "endpoint": "https://…", "method": "POST|PUT", "payload": "multipart|rawVideo|json", "fields": { } } }
+      Only add "delivery" when the user asks to send the video to a URL or API. Never invent a URL.
     Only use these types. Answer with the JSON object only.
     """
 }

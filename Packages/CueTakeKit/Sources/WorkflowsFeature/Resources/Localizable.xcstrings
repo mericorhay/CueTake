@@ -205,6 +205,516 @@
         }
       }
     },
+    "studio.delete.confirm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this workflow?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu workflow silinsin mi?"
+          }
+        }
+      }
+    },
+    "studio.delete.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its steps, sections and API settings go with it. Your videos are not touched."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adımları, bölümleri ve API ayarları da silinir. Videolarına dokunulmaz."
+          }
+        }
+      }
+    },
+    "studio.delivery.advanced": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Method, headers and fields"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yöntem, başlıklar ve alanlar"
+          }
+        }
+      }
+    },
+    "studio.delivery.endpoint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENDPOINT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ADRES"
+          }
+        }
+      }
+    },
+    "studio.delivery.error.file": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The video file is gone; run the workflow again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video dosyası bulunamadı; workflow'u yeniden çalıştır."
+          }
+        }
+      }
+    },
+    "studio.delivery.error.status %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server answered %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunucu %lld döndü"
+          }
+        }
+      }
+    },
+    "studio.delivery.fieldKey": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "name"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ad"
+          }
+        }
+      }
+    },
+    "studio.delivery.fieldValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "value"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "değer"
+          }
+        }
+      }
+    },
+    "studio.delivery.fields": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EXTRA FIELDS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EK ALANLAR"
+          }
+        }
+      }
+    },
+    "studio.delivery.fileField": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FILE FIELD"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DOSYA ALANI"
+          }
+        }
+      }
+    },
+    "studio.delivery.header": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HEADER"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BAŞLIK"
+          }
+        }
+      }
+    },
+    "studio.delivery.json": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details (JSON)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bilgi (JSON)"
+          }
+        }
+      }
+    },
+    "studio.delivery.json.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the details as JSON, no file: for a webhook that should know a video is ready."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosya olmadan yalnızca bilgiler JSON olarak: video hazır olduğunda haber alması gereken bir webhook için."
+          }
+        }
+      }
+    },
+    "studio.delivery.multipart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Form + video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Form + video"
+          }
+        }
+      }
+    },
+    "studio.delivery.multipart.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "multipart/form-data: the video in a file field, title, size, length and captions as text fields. Works with most upload APIs, Make, n8n and Zapier."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "multipart/form-data: video bir dosya alanında; başlık, boyut, süre ve altyazılar metin alanlarında. Çoğu yükleme API'si, Make, n8n ve Zapier ile çalışır."
+          }
+        }
+      }
+    },
+    "studio.delivery.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When the video is written, this workflow sends it to your own endpoint."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yazıldığında bu workflow onu kendi adresine gönderir."
+          }
+        }
+      }
+    },
+    "studio.delivery.ok %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent · %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gönderildi · %lld"
+          }
+        }
+      }
+    },
+    "studio.delivery.prefix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREFIX"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÖNEK"
+          }
+        }
+      }
+    },
+    "studio.delivery.raw": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video only"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnız video"
+          }
+        }
+      }
+    },
+    "studio.delivery.raw.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file is the whole body — for a presigned S3/R2 URL or a direct upload link. Use PUT for most of them."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dosyanın kendisi gövdedir — önceden imzalı S3/R2 adresi ya da doğrudan yükleme bağlantısı için. Çoğunda PUT kullan."
+          }
+        }
+      }
+    },
+    "studio.delivery.resend": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrar gönder"
+          }
+        }
+      }
+    },
+    "studio.delivery.secret": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TOKEN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ANAHTAR"
+          }
+        }
+      }
+    },
+    "studio.delivery.secret.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kept in this phone's Keychain for this workflow only. Never in the workflow file."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnızca bu workflow için bu telefonun Anahtar Zinciri'nde tutulur. Workflow dosyasına asla yazılmaz."
+          }
+        }
+      }
+    },
+    "studio.delivery.secret.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API token (optional)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API anahtarı (isteğe bağlı)"
+          }
+        }
+      }
+    },
+    "studio.delivery.secret.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove token"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtarı sil"
+          }
+        }
+      }
+    },
+    "studio.delivery.secret.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save token"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtarı kaydet"
+          }
+        }
+      }
+    },
+    "studio.delivery.secret.saved %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved ••••%@ — type to replace"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayıtlı ••••%@ — değiştirmek için yaz"
+          }
+        }
+      }
+    },
+    "studio.delivery.sending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending to your API…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API'ye gönderiliyor…"
+          }
+        }
+      }
+    },
+    "studio.delivery.test": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test connection"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlantıyı dene"
+          }
+        }
+      }
+    },
+    "studio.delivery.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send to an API"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API'ye gönder"
+          }
+        }
+      }
+    },
     "studio.duplicate": {
       "extractionState": "manual",
       "localizations": {
@@ -218,6 +728,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Çoğalt"
+          }
+        }
+      }
+    },
+    "studio.export.locked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always last"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her zaman son adım"
+          }
+        }
+      }
+    },
+    "studio.export.lockedNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every workflow ends by writing the video. This step stays last and cannot be removed."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her workflow videoyu yazarak biter. Bu adım hep sonda kalır ve silinemez."
           }
         }
       }
@@ -1072,6 +1616,125 @@
         }
       }
     },
+    "studio.ready.emptySections": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some sections have no clip; they become empty gaps."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bazı bölümlerde klip yok; bunlar boş boşluk olarak kalır."
+          }
+        }
+      }
+    },
+    "studio.ready.noClips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No clips yet: \"Put clips in sections\" has nothing to place."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz klip yok: \"Klipleri bölümlere yerleştir\" adımının yerleştireceği bir şey yok."
+          }
+        }
+      }
+    },
+    "studio.result.dismiss": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close result"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sonucu kapat"
+          }
+        }
+      }
+    },
+    "studio.result.noVideo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No video this time"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu sefer video çıkmadı"
+          }
+        }
+      }
+    },
+    "studio.result.open": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in editor"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editörde aç"
+          }
+        }
+      }
+    },
+    "studio.result.ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video ready"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video hazır"
+          }
+        }
+      }
+    },
+    "studio.result.share": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paylaş"
+          }
+        }
+      }
+    },
     "studio.run": {
       "extractionState": "manual",
       "localizations": {
@@ -1259,6 +1922,23 @@
         }
       }
     },
+    "studio.step.down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aşağı taşı"
+          }
+        }
+      }
+    },
     "studio.step.running": {
       "extractionState": "manual",
       "localizations": {
@@ -1272,6 +1952,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Üzerinde çalışıyor…"
+          }
+        }
+      }
+    },
+    "studio.step.up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yukarı taşı"
           }
         }
       }
@@ -1442,6 +2139,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Üst"
+          }
+        }
+      }
+    },
+    "studio.warning.deliveryURL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The API address must start with https://"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API adresi https:// ile başlamalı"
           }
         }
       }
@@ -1707,13 +2421,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Writes the finished video"
+            "value": "Writes the finished video at the chosen size and frame rate, and sends it to your API if set"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bitmiş videoyu yazar"
+            "value": "Bitmiş videoyu seçilen çözünürlük ve FPS ile yazar; ayarlıysa API'ne gönderir"
           }
         }
       }

@@ -34,8 +34,12 @@ struct VideoFrameGeometry {
                 translationX: target.midX - width * factor * focusX,
                 y: target.midY - height * factor * focusY
             ))
-        self.transform = transform
-        self.crop = target.applying(transform.inverted()).intersection(source)
+        let crop = target.applying(transform.inverted()).intersection(source)
+        let finite = [transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty].allSatisfy(\.isFinite)
+        self.transform = finite ? transform : preferred
+        self.crop = crop.isNull || crop.isEmpty || !crop.origin.x.isFinite
+            ? CGRect(x: source.midX, y: source.midY, width: 1, height: 1)
+            : crop
     }
 }
 
@@ -122,6 +126,7 @@ extension VideoComposer {
             }
             if let source = base.first(where: { middle >= $0.timeRange.start.seconds && middle < $0.timeRange.end.seconds }) {
                 layers += source.layerInstructions
+                if let background = source.backgroundColor { instruction.backgroundColor = background }
             }
             instruction.layerInstructions = layers
             instructions.append(instruction)

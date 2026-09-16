@@ -24,8 +24,11 @@ public struct WorkflowStudioScreen: View {
     private let onAskAI: () -> Void
     private let onPickClips: () -> Void
     private let onDelete: () -> Void
+    private let onOpenResult: () -> Void
+    private let onResend: () -> Void
 
     @State private var showsJSON = false
+    @State private var confirmsDelete = false
     @State private var showsPalette = false
     @State private var dropSection: WorkflowSection.ID?
     @State private var structureTargeted = false
@@ -40,7 +43,9 @@ public struct WorkflowStudioScreen: View {
         onStop: @escaping () -> Void = {},
         onAskAI: @escaping () -> Void,
         onPickClips: @escaping () -> Void,
-        onDelete: @escaping () -> Void
+        onDelete: @escaping () -> Void,
+        onOpenResult: @escaping () -> Void = {},
+        onResend: @escaping () -> Void = {}
     ) {
         self.model = model
         self.onBack = onBack
@@ -50,6 +55,8 @@ public struct WorkflowStudioScreen: View {
         self.onAskAI = onAskAI
         self.onPickClips = onPickClips
         self.onDelete = onDelete
+        self.onOpenResult = onOpenResult
+        self.onResend = onResend
     }
 
     public var body: some View {
@@ -59,6 +66,19 @@ public struct WorkflowStudioScreen: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 26) {
                     aiBar
+                    if let summary = model.lastRunSummary, !model.isRunning {
+                        StudioRunResultCard(
+                            model: model,
+                            summary: summary,
+                            onOpen: onOpenResult,
+                            onResend: onResend,
+                            onDismiss: { withAnimation(DS.Motion.settle) { model.dismissRunSummary() } }
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
+                    }
+                    if !readiness.isEmpty, !model.isRunning {
+                        readinessCard
+                    }
                     structure
                     StudioStyleCard(model: model)
                     StudioPipeline(model: model, onShowPalette: { showsPalette = true })
@@ -86,6 +106,19 @@ public struct WorkflowStudioScreen: View {
                 .presentationDragIndicator(.visible)
         }
         .onChange(of: model.definition) { onSave() }
+        // The closing export says what the style says, the moment the style changes.
+        .onChange(of: model.definition.style) { model.syncFinalExport() }
+        .sensoryFeedback(.warning, trigger: model.refusedPulse)
+        .animation(DS.Motion.settle, value: model.lastRunSummary)
+        .confirmationDialog(
+            String(localized: "studio.delete.confirm", bundle: .module),
+            isPresented: $confirmsDelete,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "studio.delete", bundle: .module), role: .destructive, action: onDelete)
+        } message: {
+            Text("studio.delete.message", bundle: .module)
+        }
         .dsEnter(.screen())
     }
 
@@ -117,7 +150,14 @@ public struct WorkflowStudioScreen: View {
             iconButton("curlybraces") { showsJSON = true }
 
             Menu {
-                Button(role: .destructive, action: onDelete) {
+                Button {
+                    showsJSON = true
+                } label: {
+                    Label(String(localized: "studio.json", bundle: .module), systemImage: "curlybraces")
+                }
+                Button(role: .destructive) {
+                    confirmsDelete = true
+                } label: {
                     Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
                 }
             } label: {
@@ -546,6 +586,70 @@ public struct WorkflowStudioScreen: View {
         }
         dropSection = nil
         return true
+    }
+
+    // MARK: - Readiness
+
+    /// What will make this run do less than the user expects, said before they press Run.
+    private var readiness: [String] {
+        var notes: [String] = []
+        let steps = model.definition.steps.filter(\.isEnabled).map(\.kind)
+        if steps.contains(.assembleSections) {
+            if model.clips.isEmpty {
+                notes.append(String(localized: "studio.ready.noClips", bundle: .module))
+            } else if model.definition.sections.contains(where: { $0.clip == nil }) {
+                notes.append(String(localized: "studio.ready.emptySections", bundle: .module))
+            }
+        }
+        if let delivery = model.definition.delivery, delivery.isEnabled, delivery.url == nil {
+            notes.append(String(localized: "studio.warning.deliveryURL", bundle: .module))
+        }
+        return notes
+    }
+
+    private var readinessCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(readiness, id: \.self) { note in
+                Label(note, systemImage: "exclamationmark.circle.fill")
+                    .dsFont(.sans, .medium, 12, lineHeight: 1.3)
+                    .foregroundStyle(DS.Palette.ink(0.8))
+                    .symbolRenderingMode(.hierarchical)
+            }
+            HStack(spacing: 8) {
+                if model.clips.isEmpty || model.definition.sections.contains(where: { $0.clip == nil }) {
+                    Button(action: onPickClips) {
+                        Label(String(localized: "studio.clips.pick", bundle: .module), systemImage: "plus")
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(Capsule().fill(DS.Palette.lime))
+                    }
+                    .buttonStyle(.dsPress(radius: 17))
+                }
+                if !model.clips.isEmpty, model.definition.sections.contains(where: { $0.clip == nil }) {
+                    Button {
+                        withAnimation(DS.Motion.bloom) { model.autoAssignClips() }
+                    } label: {
+                        Label(String(localized: "studio.clips.auto", bundle: .module), systemImage: "wand.and.stars")
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.ink)
+                            .padding(.horizontal, 12)
+                            .frame(height: 34)
+                            .background(Capsule().fill(DS.Palette.hairline(0.1)))
+                    }
+                    .buttonStyle(.dsPress(radius: 17))
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(DS.Palette.accentWarm.opacity(0.1)))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(DS.Palette.accentWarm.opacity(0.35), lineWidth: 1)
+        }
+        .transition(.opacity)
     }
 
     // MARK: - Run

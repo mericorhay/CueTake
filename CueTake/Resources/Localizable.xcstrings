@@ -647,6 +647,23 @@
         }
       }
     },
+    "export.failed.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is nothing to render yet: add a clip with footage first."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz render edilecek bir şey yok: önce görüntüsü olan bir klip ekle."
+          }
+        }
+      }
+    },
     "export.failed.generic": {
       "extractionState": "manual",
       "localizations": {
@@ -1545,6 +1562,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "kopya"
+          }
+        }
+      }
+    },
+    "workflow.delivery.failed %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video written, but the API refused it: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yazıldı ama API kabul etmedi: %@"
+          }
+        }
+      }
+    },
+    "workflow.delivery.sending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending to your API…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API'ye gönderiliyor…"
           }
         }
       }

@@ -6,6 +6,7 @@ import Foundation
 import Persistence
 import SettingsFeature
 import SwiftUI
+import WorkflowEngine
 import WorkflowsFeature
 
 /// Opening, saving, writing with AI and running workflows.
@@ -76,7 +77,7 @@ extension AppModel {
         }
     }
 
-    private func flushWorkflowSave() {
+    func flushWorkflowSave() {
         guard let definition = workflowStudio?.definition else { return }
         workflowSaveTask?.cancel()
         let store = dependencies.workflowStore
@@ -262,7 +263,10 @@ extension AppModel {
         let before = project
         editorModel.project = project
         editorModel.beginBatch()
+        workflowDeliveryResult = nil
+        workflowVideo = nil
 
+        // The style's size and frame rate are what the run writes; the closing export shows them.
         project.format = definition.style.format
         project.updatedAt = .now
 
@@ -287,7 +291,7 @@ extension AppModel {
         editorModel.endBatch(startingFrom: before)
         scheduleSave()
         await refreshLibrary()
-        studio.finishRun()
+        studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
         if before.segments != project.segments {
             show(notice: String(localized: "workflow.undoable"))
         }
@@ -368,10 +372,30 @@ extension AppModel {
             applyCaptionStyle(presetID: preset, position: definition.style.position)
             return .done
 
-        case .export:
+        case .export(let preset):
+            project.format = definition.style.format
             editorModel.project = project
-            await exportProject()
-            return exportModel.outputURL != nil ? .done : .skipped(String(localized: "workflow.skip.exportFailed"))
+            exportDestinationOverride = preset.destination
+            defer { exportDestinationOverride = nil }
+            exportModel.reset()
+            // Captions off in the workflow: the file is written without them, the project keeps them.
+            await exportProject(burnCaptions: definition.style.captions && preset.burnsInCaptions)
+            guard let video = exportModel.outputURL else {
+                let reason = exportModel.failureDetail.map { String(localized: "workflow.skip.exportFailed") + " · " + $0 }
+                    ?? String(localized: "workflow.skip.exportFailed")
+                return .skipped(reason)
+            }
+            workflowVideo = video
+            if let delivery = preset.delivery, delivery.isEnabled {
+                workflowStudio?.note(String(localized: "workflow.delivery.sending"), for: step)
+                let result = await deliverWorkflowVideo(video, delivery: delivery, definition: definition)
+                workflowDeliveryResult = result
+                workflowStudio?.note(nil, for: step)
+                if case .failed(let reason) = result {
+                    return .skipped(String(localized: "workflow.delivery.failed \(reason)"))
+                }
+            }
+            return .done
 
         case .generateVideo(let options):
             return await generateVideos(options, step: step)
@@ -385,6 +409,51 @@ extension AppModel {
         case .unsupported:
             return .skipped(String(localized: "workflow.skip.unsupported"))
         }
+    }
+
+    /// Sends the finished video to the workflow's own API.
+    func deliverWorkflowVideo(_ video: URL, delivery: WorkflowDelivery, definition: WorkflowDefinition) async -> StudioDeliveryResult {
+        let size = project.format.renderSize
+        let bytes = (try? video.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
+        let report = WorkflowDeliveryReport(
+            workflowID: definition.id,
+            workflowName: definition.name,
+            projectID: project.id,
+            projectTitle: project.title,
+            seconds: editorModel.duration,
+            width: size.width,
+            height: size.height,
+            frameRate: project.format.frameRate,
+            fileName: video.lastPathComponent,
+            fileBytes: bytes,
+            captions: project.segments.flatMap(\.captions).map(\.text).joined(separator: " ")
+        )
+        let secret = WorkflowSecretStore().secret(for: definition.id)
+        do {
+            let outcome = try await WorkflowDeliveryClient().deliver(delivery, video: video, report: report, secret: secret)
+            return .sent(status: outcome.status)
+        } catch {
+            return .failed(StudioDeliveryText.describe(error))
+        }
+    }
+
+    /// The result card's "send again", with the video the last run wrote.
+    func resendWorkflowDelivery() {
+        guard let studio = workflowStudio, let video = studio.lastRunSummary?.video,
+              let delivery = studio.definition.delivery, delivery.isEnabled
+        else { return }
+        let definition = studio.definition
+        studio.updateRunDelivery(.sending)
+        Task {
+            let result = await deliverWorkflowVideo(video, delivery: delivery, definition: definition)
+            studio.updateRunDelivery(result)
+        }
+    }
+
+    /// The result card's "open in editor".
+    func openWorkflowResult() {
+        flushWorkflowSave()
+        openEditor()
     }
 
     private var hasTranscripts: Bool {

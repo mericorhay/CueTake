@@ -24,10 +24,21 @@ public final class ExportModel {
         case fileOnly
     }
     public private(set) var destination: Destination?
+    /// The system's own words for the last failure, for anyone reporting it.
+    public private(set) var failureDetail: String?
+    /// The captions and overlays could not be burned in; the video was written without them.
+    public private(set) var droppedCaptions = false
+    /// How big the finished file is.
+    public private(set) var fileBytes: Int64?
+    /// What the finished file is, in one line: size, frame rate, codec.
+    public private(set) var summary: String?
 
     public init() {}
 
-    public var isIdle: Bool { stage == 0 && failure == nil }
+    /// Nothing under way: the format can be changed and a render started, including after a
+    /// failure — the button used to disappear with the error, leaving nothing to try again with.
+    public var isIdle: Bool { stage == 0 }
+    public var hasFailed: Bool { failure != nil }
     public var isDone: Bool { stage >= 4 }
     public var isRunning: Bool { stage > 0 && stage < 4 }
 
@@ -37,7 +48,12 @@ public final class ExportModel {
 
     public func begin() {
         failure = nil
+        failureDetail = nil
+        droppedCaptions = false
         outputURL = nil
+        fileBytes = nil
+        summary = nil
+        destination = nil
         progress = nil
         stage = 1
     }
@@ -51,15 +67,31 @@ public final class ExportModel {
         stage = next
     }
 
-    public func succeed(url: URL, destination: Destination = .fileOnly) {
+    public func succeed(
+        url: URL,
+        destination: Destination = .fileOnly,
+        format: VideoFormat? = nil,
+        droppedCaptions: Bool = false
+    ) {
         outputURL = url
         self.destination = destination
+        self.droppedCaptions = droppedCaptions
+        let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
+        fileBytes = bytes
+        if let format {
+            let size = format.renderSize
+            var parts = ["\(size.width)×\(size.height)", "\(format.frameRate) fps", format.resolution.prefersHEVC ? "HEVC" : "H.264"]
+            if let bytes { parts.append(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)) }
+            summary = parts.joined(separator: " · ")
+        }
         progress = nil
         stage = 4
     }
 
-    public func fail(_ reason: String) {
+    public func fail(_ reason: String, detail: String? = nil) {
         failure = reason
+        failureDetail = detail
+        progress = nil
         stage = 0
     }
 
@@ -72,6 +104,10 @@ public final class ExportModel {
         destination = nil
         outputURL = nil
         failure = nil
+        failureDetail = nil
+        droppedCaptions = false
+        fileBytes = nil
+        summary = nil
         progress = nil
     }
 }
@@ -137,7 +173,7 @@ public struct ExportScreen: View {
                 finished
             } else if model.isIdle {
                 DSPrimaryButton(
-                    String(localized: "export.render", bundle: .module),
+                    String(localized: model.hasFailed ? "export.retry" : "export.render", bundle: .module),
                     radius: DS.Radius.cardLarge,
                     verticalPadding: 19,
                     fontSize: 16
@@ -170,12 +206,26 @@ public struct ExportScreen: View {
             }
 
             if let failure = model.failure {
-                Text(failure)
-                    .dsFont(.sans, .regular, 12)
+                VStack(spacing: 4) {
+                    Label {
+                        Text(failure)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                    }
+                    .dsFont(.sans, .semibold, 12)
                     .foregroundStyle(DS.Palette.accent)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 10)
+                    if let detail = model.failureDetail {
+                        Text(verbatim: detail)
+                            .dsFont(.mono, .medium, 9)
+                            .foregroundStyle(DS.Palette.ink(0.4))
+                            .lineLimit(3)
+                            .textSelection(.enabled)
+                    }
+                }
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 10)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .padding(.horizontal, 22)
@@ -336,10 +386,22 @@ public struct ExportScreen: View {
             DSHeadline(String(localized: "export.ready", bundle: .module), size: 28)
                 .padding(.bottom, 6)
 
-            Text("export.summary", bundle: .module)
-                .dsFont(.sans, .regular, 13)
-                .foregroundStyle(DS.Palette.ink(0.45))
-                .padding(.bottom, 18)
+            if let summary = model.summary {
+                Text(verbatim: summary)
+                    .dsFont(.mono, .medium, 11)
+                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .padding(.bottom, model.droppedCaptions ? 6 : 18)
+            }
+            if model.droppedCaptions {
+                Label {
+                    Text("export.droppedCaptions", bundle: .module)
+                } icon: {
+                    Image(systemName: "captions.bubble")
+                }
+                .dsFont(.sans, .medium, 11)
+                .foregroundStyle(DS.Palette.accent)
+                .padding(.bottom, 14)
+            }
 
             // Where it went, in a sentence. The screen used to say "ready" and show four tiles that
             // did nothing, so a video saved to Photos and a video saved nowhere looked the same.

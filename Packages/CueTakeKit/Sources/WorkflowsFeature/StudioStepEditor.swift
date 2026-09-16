@@ -115,21 +115,7 @@ struct StudioStepEditor: View {
                 }
 
             case .export(let preset):
-                chips(
-                    "studio.param.destination",
-                    options: [ExportDestination.photoLibrary, .files],
-                    selected: preset.destination,
-                    label: { $0 == .photoLibrary
-                        ? String(localized: "studio.param.photos", bundle: .module)
-                        : String(localized: "studio.param.files", bundle: .module) }
-                ) { value in
-                    var changed = preset
-                    changed.destination = value
-                    model.updateStep(step.id, kind: .export(changed))
-                }
-                Text("studio.param.exportNote", bundle: .module)
-                    .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                StudioExportEditor(model: model, preset: preset)
 
             case .generateVideo(let options):
                 StudioGenerateVideoEditor(model: model, step: step, options: options)

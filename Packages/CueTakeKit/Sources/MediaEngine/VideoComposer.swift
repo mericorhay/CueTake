@@ -39,6 +39,8 @@ public struct VideoComposer: Sendable {
         /// Pictures and text over the video, burned in with the captions.
         public var overlays: [Overlay] = []
         public var mediaDirectory: URL?
+        /// Set by a retry: H.264 even where HEVC would be chosen.
+        var forceH264 = false
     }
 
     /// Assembles the project's selected takes, in segment order.
@@ -635,6 +637,67 @@ public struct VideoComposer: Sendable {
             )
     }
 
+    /// What a resilient write produced, and what it had to leave out to produce it.
+    public struct WriteResult: Sendable {
+        public var url: URL
+        /// True when the captions and overlays could not be burned in and the video was written
+        /// without them rather than not at all.
+        public var droppedCaptions: Bool
+    }
+
+    /// Writes the video, and when the full render is refused, tries the simpler renders that
+    /// still give the user a real file: H.264 instead of HEVC, then without the burned-in layer.
+    ///
+    /// The export used to be a single attempt, and AVFoundation's refusals ("Operation Stopped",
+    /// "Cannot Encode") arrived as one generic sentence with nothing to try next.
+    public func writeResilient(
+        _ assembled: Assembled,
+        to destination: URL,
+        onProgress: (@MainActor @Sendable (Double) -> Void)? = nil
+    ) async throws -> WriteResult {
+        var assembled = assembled
+        Self.pruneEmptyTracks(&assembled)
+        var firstError: (any Error)?
+        do {
+            return WriteResult(url: try await write(assembled, to: destination, onProgress: onProgress), droppedCaptions: false)
+        } catch {
+            if Task.isCancelled { throw error }
+            firstError = error
+        }
+        var plain = assembled
+        plain.forceH264 = true
+        do {
+            return WriteResult(url: try await write(plain, to: destination, onProgress: onProgress), droppedCaptions: false)
+        } catch {
+            if Task.isCancelled { throw error }
+        }
+        plain.captions = []
+        plain.overlays = []
+        do {
+            return WriteResult(url: try await write(plain, to: destination, onProgress: onProgress), droppedCaptions: true)
+        } catch {
+            throw firstError ?? error
+        }
+    }
+
+    /// Tracks with nothing in them, and every mix entry and layer that points at them, removed.
+    /// An empty composition track — a video made only of added videos, footage with no sound —
+    /// is a reason AVAssetExportSession stops without saying why.
+    static func pruneEmptyTracks(_ assembled: inout Assembled) {
+        let composition = assembled.composition
+        for track in composition.tracks where track.segments.allSatisfy(\.isEmpty) {
+            composition.removeTrack(track)
+        }
+        let alive = Set(composition.tracks.map(\.trackID))
+        if let mix = assembled.audioMix {
+            mix.inputParameters = mix.inputParameters.filter { alive.contains($0.trackID) }
+            if mix.inputParameters.isEmpty { assembled.audioMix = nil }
+        }
+        for case let instruction as AVMutableVideoCompositionInstruction in assembled.videoComposition.instructions {
+            instruction.layerInstructions = instruction.layerInstructions.filter { alive.contains($0.trackID) }
+        }
+    }
+
     /// Writes the assembled video to a file, reporting real progress as it goes.
     ///
     /// - Parameter onProgress: called on the main actor with 0...1. The export screen used to
@@ -687,7 +750,7 @@ public struct VideoComposer: Sendable {
         // to be one that re-encodes.
         // Above 1080p the codec is not a preference. H.264 has no level that carries 8K, and at
         // 4K it costs roughly twice the file for the same picture.
-        let preset = assembled.format.resolution.prefersHEVC
+        let preset = assembled.format.resolution.prefersHEVC && !assembled.forceH264
             ? AVAssetExportPresetHEVCHighestQuality
             : AVAssetExportPresetHighestQuality
 
@@ -697,22 +760,26 @@ public struct VideoComposer: Sendable {
             throw ComposeError.exportFailed("no export session")
         }
         // Captions go on here, at the last moment, because the same video composition is handed
-        // to the preview player and the animation tool would mean nothing to it.
+        // to the preview player and the animation tool would mean nothing to it. A copy carries
+        // the tool, so a retry without it is not handed the one from the failed attempt.
         let renderSize = assembled.videoComposition.renderSize
         let overlayLayers = assembled.mediaDirectory.map {
             OverlayRenderer.layers(for: assembled.overlays, renderSize: renderSize, mediaDirectory: $0)
         } ?? []
-        assembled.videoComposition.animationTool = CaptionRenderer.tool(
-            cues: assembled.captions,
-            style: assembled.captionStyle,
-            locale: Locale(identifier: assembled.localeIdentifier),
-            renderSize: renderSize,
-            underlays: overlayLayers
-        )
-        session.videoComposition = assembled.videoComposition
+        let videoComposition = assembled.videoComposition.mutableCopy() as! AVMutableVideoComposition
+        if assembled.captions.isEmpty && overlayLayers.isEmpty {
+            videoComposition.animationTool = nil
+        } else {
+            videoComposition.animationTool = CaptionRenderer.tool(
+                cues: assembled.captions,
+                style: assembled.captionStyle,
+                locale: Locale(identifier: assembled.localeIdentifier),
+                renderSize: renderSize,
+                underlays: overlayLayers
+            )
+        }
+        session.videoComposition = videoComposition
         session.audioMix = assembled.audioMix
-        // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
-        // leaves a sped-up voice sounding like the same person.
         // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
         // leaves a slowed or sped-up voice sounding like the same person.
         session.audioTimePitchAlgorithm = .spectral
@@ -739,6 +806,12 @@ public struct VideoComposer: Sendable {
         )
         defer { try? FileManager.default.removeItem(at: partial) }
         do {
+            // The picture ends where the video does. Audio running past it (a song longer than
+            // the cut) otherwise asks the compositor for frames no instruction describes.
+            if let end = videoComposition.instructions.last?.timeRange.end,
+               end > .zero, end < assembled.composition.duration {
+                session.timeRange = CMTimeRange(start: .zero, end: end)
+            }
             try await session.export(to: partial, as: .mov)
             let rendered = AVURLAsset(url: partial)
             let duration = try await rendered.load(.duration)
@@ -749,9 +822,20 @@ public struct VideoComposer: Sendable {
             try FileManager.default.moveItem(at: partial, to: destination)
         } catch {
             if let error = error as? ComposeError { throw error }
-            throw ComposeError.exportFailed(error.localizedDescription)
+            throw ComposeError.exportFailed(Self.describe(error))
         }
         return destination
+    }
+
+    /// The system's reason with its code, which is what a bug report needs.
+    static func describe(_ error: any Error) -> String {
+        let ns = error as NSError
+        var text = "\(ns.domain) \(ns.code): \(ns.localizedDescription)"
+        if let reason = ns.localizedFailureReason { text += " — \(reason)" }
+        if let underlying = ns.userInfo[NSUnderlyingErrorKey] as? NSError {
+            text += " [\(underlying.domain) \(underlying.code)]"
+        }
+        return text
     }
 }
 
@@ -769,7 +853,7 @@ extension VideoComposer {
         to destination: URL,
         onProgress: @escaping @Sendable (Double) async -> Void
     ) async throws {
-        let preset = assembled.format.resolution.prefersHEVC ? AVAssetExportPresetHEVCHighestQuality : AVAssetExportPresetHighestQuality
+        let preset = assembled.format.resolution.prefersHEVC && !assembled.forceH264 ? AVAssetExportPresetHEVCHighestQuality : AVAssetExportPresetHighestQuality
         guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset) else {
             throw ComposeError.exportFailed("no export session")
         }
@@ -796,7 +880,7 @@ extension VideoComposer {
         } catch {
             try? FileManager.default.removeItem(at: destination)
             if let error = error as? ComposeError { throw error }
-            throw ComposeError.exportFailed(error.localizedDescription)
+            throw ComposeError.exportFailed(Self.describe(error))
         }
     }
 }

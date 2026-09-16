@@ -29,11 +29,24 @@ public enum StudioStepState: Hashable, Sendable {
 public struct StudioRunSummary: Hashable, Sendable {
     public var completed: Int
     public var skipped: Int
+    /// The video the run wrote, when it got that far.
+    public var video: URL?
+    /// What the workflow's API said, when it has one.
+    public var delivery: StudioDeliveryResult?
 
-    public init(completed: Int, skipped: Int) {
+    public init(completed: Int, skipped: Int, video: URL? = nil, delivery: StudioDeliveryResult? = nil) {
         self.completed = completed
         self.skipped = skipped
+        self.video = video
+        self.delivery = delivery
     }
+}
+
+/// How sending to a workflow's API went.
+public enum StudioDeliveryResult: Hashable, Sendable {
+    case sending
+    case sent(status: Int)
+    case failed(String)
 }
 
 /// Everything dragged around the studio is a string with a prefix. `String` is already
@@ -72,9 +85,15 @@ public final class WorkflowStudioModel {
 
     /// Bumped on every structural edit, for the haptic.
     public private(set) var editPulse = 0
+    /// A word about what a running step is doing right now ("sending to your API").
+    public private(set) var stepNotes: [WorkflowStep.ID: String] = [:]
+    /// The connection test of the workflow's API, from the button beside its settings.
+    public var deliveryTest: StudioDeliveryResult?
+    /// Bumped when a change was refused — moving or removing the closing export — for a nudge.
+    public private(set) var refusedPulse = 0
 
     public init(definition: WorkflowDefinition, clips: [StudioClip] = []) {
-        self.definition = definition
+        self.definition = definition.withFinalExport()
         self.clips = clips
     }
 
@@ -152,32 +171,109 @@ public final class WorkflowStudioModel {
 
     // MARK: - Steps
 
+    /// Whether a step is the closing export, which stays last and cannot be removed.
+    public func isLocked(_ id: WorkflowStep.ID) -> Bool {
+        definition.finalExport?.id == id
+    }
+
+    /// Where a step lands when dropped "before" a target: never after the closing export.
+    private func insertionIndex(before target: WorkflowStep.ID?) -> Int {
+        let end = definition.finalExport == nil ? definition.steps.count : definition.steps.count - 1
+        guard let target, let index = definition.steps.firstIndex(where: { $0.id == target }) else { return end }
+        return min(index, end)
+    }
+
     public func addStep(type: String, before target: WorkflowStep.ID? = nil) {
+        // There is one export and it is always there: asking for another opens it.
+        if WorkflowStepKind.make(type: type).isFinalExport {
+            expandedStep = definition.finalExport?.id
+            refusedPulse += 1
+            return
+        }
         let step = WorkflowStep(kind: .make(type: type))
-        let index = target.flatMap { t in definition.steps.firstIndex { $0.id == t } } ?? definition.steps.count
-        definition.steps.insert(step, at: index)
+        definition.steps.insert(step, at: insertionIndex(before: target))
         expandedStep = step.id
         touch()
     }
 
     public func moveStep(_ id: WorkflowStep.ID, before target: WorkflowStep.ID?) {
-        guard id != target, let from = definition.steps.firstIndex(where: { $0.id == id }) else { return }
+        guard id != target, !isLocked(id), let from = definition.steps.firstIndex(where: { $0.id == id }) else {
+            if isLocked(id) { refusedPulse += 1 }
+            return
+        }
         let step = definition.steps.remove(at: from)
-        let to = target.flatMap { t in definition.steps.firstIndex { $0.id == t } } ?? definition.steps.count
+        definition.steps.insert(step, at: insertionIndex(before: target))
+        touch()
+    }
+
+    /// One place up or down, for anyone who does not drag.
+    public func moveStep(_ id: WorkflowStep.ID, by offset: Int) {
+        guard !isLocked(id), let from = definition.steps.firstIndex(where: { $0.id == id }) else { return }
+        let last = definition.finalExport == nil ? definition.steps.count - 1 : definition.steps.count - 2
+        let to = min(max(from + offset, 0), last)
+        guard to != from else { return }
+        let step = definition.steps.remove(at: from)
         definition.steps.insert(step, at: to)
         touch()
     }
 
+    public func canMoveStep(_ id: WorkflowStep.ID, by offset: Int) -> Bool {
+        guard !isLocked(id), let from = definition.steps.firstIndex(where: { $0.id == id }) else { return false }
+        let last = definition.finalExport == nil ? definition.steps.count - 1 : definition.steps.count - 2
+        let to = from + offset
+        return to >= 0 && to <= last
+    }
+
     public func removeStep(_ id: WorkflowStep.ID) {
+        guard !isLocked(id) else {
+            refusedPulse += 1
+            return
+        }
         definition.steps.removeAll { $0.id == id }
         if expandedStep == id { expandedStep = nil }
         touch()
     }
 
     public func toggleStep(_ id: WorkflowStep.ID) {
-        guard let index = definition.steps.firstIndex(where: { $0.id == id }) else { return }
+        guard !isLocked(id), let index = definition.steps.firstIndex(where: { $0.id == id }) else { return }
         definition.steps[index].isEnabled.toggle()
         touch()
+    }
+
+    // MARK: - Export and delivery
+
+    /// Resolution and frame rate, set from the export step: the same numbers the style card shows.
+    public func setExportFormat(resolution: VideoFormat.Resolution? = nil, frameRate: Int? = nil) {
+        if let resolution { definition.style.resolution = resolution }
+        if let frameRate { definition.style.frameRate = frameRate }
+        if !definition.style.format.isPhysicallyPlausible { definition.style.frameRate = 30 }
+        syncFinalExport()
+    }
+
+    /// Keeps the closing export saying what the style says. Called whenever the style changes.
+    public func syncFinalExport() {
+        let before = definition.steps
+        definition.ensureFinalExport()
+        if before != definition.steps { definition.updatedAt = .now }
+    }
+
+    public func updateExport(_ change: (inout ExportPreset) -> Void) {
+        guard let step = definition.finalExport, case .export(var preset) = step.kind else { return }
+        change(&preset)
+        updateStep(step.id, kind: .export(preset))
+    }
+
+    public func updateDelivery(_ change: (inout WorkflowDelivery) -> Void) {
+        updateExport { preset in
+            var delivery = preset.delivery ?? WorkflowDelivery()
+            change(&delivery)
+            preset.delivery = delivery
+        }
+        deliveryTest = nil
+    }
+
+    public func note(_ text: String?, for id: WorkflowStep.ID) {
+        stepNotes[id] = text
     }
 
     public func updateStep(_ id: WorkflowStep.ID, kind: WorkflowStepKind) {
@@ -199,9 +295,11 @@ public final class WorkflowStudioModel {
             return before.contains("generateCaptions") ? nil : "studio.warning.needsCaptions"
         case .unsupported:
             return "studio.warning.unsupported"
-        case .export:
-            let after = definition.steps[(index + 1)...].contains { $0.isEnabled }
-            return after ? "studio.warning.exportLast" : nil
+        case .export(let preset):
+            if let delivery = preset.delivery, delivery.isEnabled, delivery.url == nil {
+                return "studio.warning.deliveryURL"
+            }
+            return nil
         default:
             return nil
         }
@@ -230,7 +328,7 @@ public final class WorkflowStudioModel {
             steps: decoded.steps,
             createdAt: definition.createdAt
         )
-        definition = decoded
+        definition = decoded.withFinalExport()
         stepStates = [:]
         touch()
         return true
@@ -249,7 +347,14 @@ public final class WorkflowStudioModel {
             aiFailure = String(localized: "studio.ai.failed", bundle: .module)
             return
         }
-        definition = workflow
+        // The AI never sees the delivery secret, and should not lose the endpoint the user set.
+        var written = workflow.withFinalExport()
+        if written.delivery == nil, let delivery = definition.delivery,
+           let step = written.finalExport, case .export(var preset) = step.kind {
+            preset.delivery = delivery
+            written.steps[written.steps.count - 1].kind = .export(preset)
+        }
+        definition = written
         stepStates = [:]
         aiRequest = ""
         touch()
@@ -262,6 +367,8 @@ public final class WorkflowStudioModel {
         isStopping = false
         generation = nil
         lastRunSummary = nil
+        stepNotes = [:]
+        syncFinalExport()
         stepStates = Dictionary(uniqueKeysWithValues: definition.steps.map { ($0.id, .waiting) })
     }
 
@@ -282,16 +389,36 @@ public final class WorkflowStudioModel {
         return Double(settled) / Double(total)
     }
 
-    public func finishRun() {
+    public func finishRun(video: URL? = nil, delivery: StudioDeliveryResult? = nil) {
         isRunning = false
         isStopping = false
+        stepNotes = [:]
         lastRunSummary = StudioRunSummary(
             completed: stepStates.values.filter { $0 == .done }.count,
             skipped: stepStates.values.filter {
                 if case .skipped = $0 { return true }
                 return false
-            }.count
+            }.count,
+            video: video,
+            delivery: delivery
         )
+    }
+
+    public func dismissRunSummary() {
+        lastRunSummary = nil
+    }
+
+    /// The delivery was sent again after the run.
+    public func updateRunDelivery(_ result: StudioDeliveryResult) {
+        lastRunSummary?.delivery = result
+    }
+
+    /// Steps that were skipped on the last run, with why, for the result card.
+    public var skippedReasons: [(title: String, reason: String)] {
+        definition.steps.compactMap { step in
+            guard case .skipped(let reason)? = stepStates[step.id] else { return nil }
+            return (step.kind.typeName, reason)
+        }
     }
 
     public func state(of id: WorkflowStep.ID) -> StudioStepState? {
