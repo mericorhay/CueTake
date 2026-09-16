@@ -66,6 +66,8 @@ extension EditorModel {
     public func select(overlay id: Overlay.ID?) {
         selectedOverlay = id
         if id != nil {
+            selectedCameraMotion = nil
+            selectedSubjectTrack = nil
             inspectedSegment = nil
             selectedAudio = nil
             selectedEffect = nil

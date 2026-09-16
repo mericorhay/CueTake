@@ -17,6 +17,9 @@ struct EditorTimeline: View {
     var onOpenCameraMotion: (Double) -> Void = { _ in }
     /// The caption open for editing, retimed on its lane.
     var editingCaption: CaptionCue.ID? = nil
+    /// The height to fill when the timeline has the screen to itself. Empty space below the lanes
+    /// still belongs to the scroll view, so a swipe there scrubs.
+    var minimumHeight: CGFloat = 0
 
     @State private var zoomOrigin: Double?
     @State private var trim: (index: Int, origin: Double)?
@@ -80,7 +83,8 @@ struct EditorTimeline: View {
         let camera = CameraMotionLane.hasVisibleMoves(in: model.project)
             ? CameraMotionLane.height + 7
             : 0
-        return audio + overlays + captions + effects + videoLayers + camera
+        let tracks = model.subjectTrackSpans.isEmpty ? 0 : SubjectTrackLane.height + 7
+        return audio + overlays + captions + effects + videoLayers + camera + tracks
     }
 
     private var hasCaptions: Bool {
@@ -105,8 +109,10 @@ struct EditorTimeline: View {
             HStack(spacing: 0) {
                 Color.clear.frame(width: viewport / 2)
                 surface
+                    .frame(maxHeight: .infinity, alignment: .top)
                 Color.clear.frame(width: viewport / 2)
             }
+            .frame(maxHeight: .infinity, alignment: .top)
         }
         .scrollIndicators(.hidden)
         .scrollPosition($position)
@@ -164,7 +170,7 @@ struct EditorTimeline: View {
             }
         }
 
-        .frame(height: 116 + audioHeight)
+        .frame(height: max(116 + audioHeight, minimumHeight))
         .sensoryFeedback(.selection, trigger: snapCount)
     }
 
@@ -185,6 +191,9 @@ struct EditorTimeline: View {
                 }
                 if CameraMotionLane.hasVisibleMoves(in: model.project) {
                     CameraMotionLane(model: model, scale: scale, onOpen: onOpenCameraMotion)
+                }
+                if !model.subjectTrackSpans.isEmpty {
+                    SubjectTrackLane(model: model, scale: scale, onSeek: { jump(to: $0) })
                 }
                 clipRow
                 if !model.project.videoLayers.isEmpty {
@@ -435,10 +444,9 @@ struct EditorTimeline: View {
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .simultaneousGesture(DragGesture(minimumDistance: 0).onEnded { tap in
-            // A finger rarely lands without moving a few points. Treat that natural movement as a
-            // direct seek; larger movement remains the scroll view's scrub or the reorder gesture.
-            guard abs(tap.translation.width) < 9, abs(tap.translation.height) < 9 else { return }
+        .onTapGesture(coordinateSpace: .local) { location in
+            // A tap, not a zero-distance drag: a drag recogniser on every clip swallowed the pan
+            // that scrolls the timeline, so a swipe over the clips no longer scrubbed.
             if lift != nil {
                 withAnimation(DS.Motion.settle) { lift = nil }
                 return
@@ -446,15 +454,17 @@ struct EditorTimeline: View {
             model.pause()
             // The clip body is also a time ruler. Seeking to the point touched restores the direct
             // "tap the frame you mean" interaction while the scroll view remains free to scrub.
-            let local = min(max(Double(tap.location.x) / scale, 0), segment.barWeight)
+            let local = min(max(Double(location.x) / scale, 0), segment.barWeight)
             jump(to: model.start(at: index) + local)
             snapCount += 1
             withAnimation(DS.Motion.snap) {
                 let changedClip = model.inspectedSegment != segment.id
+                model.select(cameraMotion: nil)
+                model.select(subjectTrack: nil)
                 model.inspectedSegment = segment.id
                 if changedClip { model.inspectorTab = .script }
             }
-        })
+        }
         .simultaneousGesture(reorderGesture(for: segment, at: index))
         // How long the clip is, over it, while either end is pulled.
         .overlay(alignment: .top) {

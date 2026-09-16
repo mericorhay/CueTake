@@ -15,6 +15,8 @@ extension EditorModel {
     public func select(effect id: TimelineEffect.ID?) {
         selectedEffect = id
         if id != nil {
+            selectedCameraMotion = nil
+            selectedSubjectTrack = nil
             inspectedSegment = nil
             selectedAudio = nil
             selectedOverlay = nil

@@ -75,15 +75,60 @@ struct CameraMotionEditorTests {
             coalescing: "move"
         )
 
+        // A move keeps its length: two seconds from the playhead, at source second 5.
         let moved = try #require(model.project.recordings.first?.cameraMotions?.first)
         #expect(abs(moved.start - 6) < 0.001)
-        #expect(abs(moved.end - 16) < 0.001)
+        #expect(abs(moved.end - 8) < 0.001)
         #expect(model.changes.count == 1)
 
         model.undo()
         let restored = try #require(model.project.recordings.first?.cameraMotions?.first)
-        #expect(abs(restored.start - 3) < 0.001)
-        #expect(abs(restored.end - 13) < 0.001)
+        #expect(abs(restored.start - 5) < 0.001)
+        #expect(abs(restored.end - 7) < 0.001)
+    }
+
+    @Test func aNewMoveStartsAtThePlayheadAndLeavesOthersAlone() throws {
+        let model = model()
+        model.seek(to: 1)
+        model.applyCameraMotion(.pushIn, amount: 0.15)
+        model.seek(to: 6)
+        model.applyCameraMotion(.punch, amount: 0.2)
+        model.seek(to: 4)
+        model.setMainVideoZoom(1.1)
+
+        let moves = try #require(model.project.recordings.first?.cameraMotions)
+        #expect(moves.map(\.kind) == [.pushIn, .hold, .punch])
+        #expect(abs(moves[0].start - 4) < 0.001 && abs(moves[0].end - 6) < 0.001)
+        // The static zoom fills the free stretch between the two moves.
+        #expect(abs(moves[1].start - 6) < 0.001 && abs(moves[1].end - 9) < 0.001)
+        #expect(abs(moves[2].start - 9) < 0.001 && abs(moves[2].end - 10) < 0.001)
+
+        model.select(cameraMotion: moves[2].id)
+        model.removeCameraMotion(moves[2].id)
+        #expect(model.project.recordings.first?.cameraMotions?.count == 2)
+        #expect(model.selectedCameraMotionValue == nil)
+    }
+
+    @Test func aTrackIsABarThatCanBeShortenedAndRemoved() throws {
+        let model = model()
+        model.project.recordings[0].reframe = stride(from: 3.0, through: 13.0, by: 1).map {
+            VideoFocusKeyframe(time: $0, x: 0.3, y: 0.5)
+        }
+        let span = try #require(model.subjectTrackSpans.first)
+        #expect(abs(span.start - 0) < 0.001 && abs(span.end - 10) < 0.001)
+
+        model.isAdjustingTimeline = true
+        model.setSubjectTrackRange(forSegment: span.segmentID, start: 2.5, coalescing: "start")
+        model.setSubjectTrackRange(forSegment: span.segmentID, start: 4, coalescing: "start")
+        model.isAdjustingTimeline = false
+        let shortened = try #require(model.subjectTrackSpans.first)
+        #expect(abs(shortened.start - 4) < 0.001)
+        #expect(abs(shortened.end - 10) < 0.001)
+        #expect(model.changes.count == 1)
+
+        model.removeSubjectTrack(forSegment: span.segmentID)
+        #expect(model.subjectTrackSpans.isEmpty)
+        #expect(model.project.recordings[0].reframe == nil)
     }
 
     @Test func changingSelectedMoveKeepsItsAuthoredRange() throws {

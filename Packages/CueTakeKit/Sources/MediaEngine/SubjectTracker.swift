@@ -187,7 +187,9 @@ public struct SubjectTracker: Sendable {
         generator.requestedTimeToleranceBefore = tolerance
         generator.requestedTimeToleranceAfter = tolerance
 
-        let step = max(0.08, duration / 240)
+        // About fifteen decisions a second, fewer only on long clips. The tracker compares each
+        // frame with the one before, so wide gaps are where it loses a moving subject.
+        let step = max(0.066, duration / 360)
         let reference = min(max(referenceTime, sourceStart), sourceStart + duration - 0.02)
         let before = stride(from: reference - step, through: sourceStart, by: -step).map { $0 }
         let after = stride(from: reference + step, through: sourceStart + duration - 0.02, by: step).map { $0 }
@@ -227,6 +229,10 @@ public struct SubjectTracker: Sendable {
             var missedFrames = 0
             var pending: (time: Double, bounds: CGRect, confidence: Double)?
             var sequence = VNSequenceRequestHandler()
+            // The observation Vision returned last. Handing it back keeps the tracker's own state
+            // (its model of the subject) across frames; a new observation built from the box every
+            // frame restarted the tracker each time, which is why confidence kept collapsing.
+            var trackedObservation: VNDetectedObjectObservation?
 
             for sourceTime in times {
                 try Task.checkCancellation()
@@ -258,6 +264,7 @@ public struct SubjectTracker: Sendable {
                         pending = (relativeTime, candidate.bounds, candidate.confidence)
                         visionBounds = candidate.bounds
                         sequence = VNSequenceRequestHandler()
+                        trackedObservation = nil
                     } else {
                         missedFrames += 1
                     }
@@ -266,7 +273,7 @@ public struct SubjectTracker: Sendable {
                     continue
                 }
 
-                let observation = VNDetectedObjectObservation(boundingBox: visionBounds)
+                let observation = trackedObservation ?? VNDetectedObjectObservation(boundingBox: visionBounds)
                 let request = VNTrackObjectRequest(detectedObjectObservation: observation)
                 request.trackingLevel = .accurate
                 try? sequence.perform([request], on: image)
@@ -311,6 +318,7 @@ public struct SubjectTracker: Sendable {
                         previousReliableBounds = pendingRecovery.bounds
                         lastReliableBounds = accepted
                         visionBounds = accepted
+                        trackedObservation = tracked
                         missedFrames = 0
                         pending = nil
                     } else {
@@ -321,19 +329,38 @@ public struct SubjectTracker: Sendable {
                         missedFrames += 1
                         pending = nil
                         sequence = VNSequenceRequestHandler()
+                        trackedObservation = nil
                     }
                     completed += 1
                     await progress(Double(completed) / Double(total))
                     continue
                 }
 
-                guard let tracked, tracked.confidence >= 0.25,
-                      SubjectRecoveryPolicy.score(
-                        candidate: tracked.boundingBox,
+                // Vision's confidence dips on a subject that turns, blurs or changes light while it
+                // is still being followed. A weak frame is checked against how the subject looked
+                // when it was chosen, and only a frame that neither Vision nor its appearance
+                // vouches for counts as lost.
+                let plausible = tracked.map {
+                    SubjectRecoveryPolicy.score(
+                        candidate: $0.boundingBox,
                         predicted: predicted,
                         appearanceDistance: nil,
                         missedFrames: 0
-                      ) != nil else {
+                    ) != nil
+                } ?? false
+                var vouched = false
+                if let tracked, plausible {
+                    if tracked.confidence >= 0.3 {
+                        vouched = true
+                    } else if tracked.confidence >= 0.05,
+                              let distance = Self.featureDistance(
+                                referenceFeature,
+                                Self.featurePrint(in: image, visionBounds: tracked.boundingBox)
+                              ) {
+                        vouched = distance <= 0.5
+                    }
+                }
+                guard let tracked, vouched else {
                     result.append(Self.searchingFocus(
                         time: relativeTime,
                         lastReliableBounds: lastReliableBounds,
@@ -341,17 +368,19 @@ public struct SubjectTracker: Sendable {
                     ))
                     missedFrames = 1
                     sequence = VNSequenceRequestHandler()
+                    trackedObservation = nil
                     completed += 1
                     await progress(Double(completed) / Double(total))
                     continue
                 }
 
                 visionBounds = tracked.boundingBox
+                trackedObservation = tracked
                 result.append(SubjectFocus(
                     time: relativeTime,
                     x: Double(visionBounds.midX),
                     y: Double(1 - visionBounds.midY),
-                    confidence: Double(tracked.confidence)
+                    confidence: max(Double(tracked.confidence), 0.5)
                 ))
                 previousReliableBounds = lastReliableBounds
                 lastReliableBounds = visionBounds
@@ -405,7 +434,7 @@ public struct SubjectTracker: Sendable {
         referenceFeature: VNFeaturePrintObservation?,
         missedFrames: Int
     ) -> RecoveryCandidate? {
-        recoveryCandidateBoxes(in: image).compactMap { bounds in
+        (recoveryCandidateBoxes(in: image) + [predicted]).compactMap { bounds in
             let feature = featurePrint(in: image, visionBounds: bounds)
             let distance = featureDistance(referenceFeature, feature)
             guard let score = SubjectRecoveryPolicy.score(
@@ -463,7 +492,8 @@ public struct SubjectTracker: Sendable {
             let coverage = Double((intersection.width * intersection.height) / selectedArea)
             guard coverage >= 0.18 || candidate.contains(CGPoint(x: selected.midX, y: selected.midY)) else { return nil }
             let expansion = Double((candidate.width * candidate.height) / selectedArea)
-            let score = coverage - abs(log(max(expansion, 0.001))) * 0.08
+            guard expansion <= 2.6, expansion >= 0.15 else { return nil }
+            let score = coverage - abs(log(max(expansion, 0.001))) * 0.25
             return (candidate, score)
         }.max { $0.1 < $1.1 }?.0
     }

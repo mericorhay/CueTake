@@ -255,8 +255,14 @@ public struct VideoComposer: Sendable {
                     layer.setTransform(geometry.transform, at: pieceCursor)
                     layer.setCropRectangle(geometry.crop, at: pieceCursor)
                 } else {
-                    let internalTimes = focuses.compactMap { frame -> Double? in
-                        let offset = frame.time - takeStart
+                    // Where a shortened track eases back to the centre, sampled so the ease is seen.
+                    let trackEdges: [Double] = {
+                        guard let first = focuses.map(\.time).min(), let last = focuses.map(\.time).max() else { return [] }
+                        let ease = Self.trackEase
+                        return [first - ease, first - ease / 2, last + ease / 2, last + ease]
+                    }()
+                    let internalTimes = (focuses.map(\.time) + trackEdges).compactMap { sourceTime -> Double? in
+                        let offset = sourceTime - takeStart
                         guard offset >= 0, offset <= takeLength else { return nil }
                         guard let time = playback.timelineOffset(forSourceOffset: offset, sourceLength: takeLength) else { return nil }
                         return time > pieceTimelineStart + 0.001 && time < pieceTimelineEnd - 0.001 ? time : nil
@@ -281,8 +287,11 @@ public struct VideoComposer: Sendable {
                         return VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: placement, render: renderSize)
                     }
                     for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where to - from > 0.002 {
-                        let first = geometry(at: from)
-                        let last = geometry(at: to)
+                        // Each stretch reads just inside its own ends. A static zoom starts and stops
+                        // with a cut; read exactly on the boundary, the stretch before it took the
+                        // zoomed value as its end and crept in over the whole gap.
+                        let first = geometry(at: from + 0.001)
+                        let last = geometry(at: to - 0.001)
                         let start = cursor + CMTime(seconds: from, preferredTimescale: 600)
                         // A still face is a still frame: no ramp with equal ends.
                         guard first.transform != last.transform || first.crop != last.crop else {
@@ -433,6 +442,9 @@ public struct VideoComposer: Sendable {
 
     /// The face point at a primary clip's timeline moment. Focus uses file time so changing speed,
     /// trimming or splitting keeps it attached to the same frame; reverse reads the take backwards.
+    /// Seconds over which a track eases in and out at its ends.
+    static let trackEase = 0.35
+
     static func mainPlacement(
         _ base: VideoPlacement,
         focuses: [VideoFocusKeyframe],
@@ -444,6 +456,9 @@ public struct VideoComposer: Sendable {
     ) -> VideoPlacement {
         let sourceTime = takeStart + playback.sourceOffset(forTimeline: timelineTime, sourceLength: takeLength)
         var placement = base
+        // One framing for the whole clip. Switching between fitted and filled only while a move
+        // or track is active made the picture jump in size at its first frame.
+        if !focuses.isEmpty || !cameraMotions.isEmpty { placement.fillsFrame = true }
         if !focuses.isEmpty {
             let ordered = focuses.sorted { $0.time < $1.time }
             var previous = ordered[0]
@@ -457,28 +472,26 @@ public struct VideoComposer: Sendable {
                         y: previous.y + (frame.y - previous.y) * fraction,
                         zoom: previous.zoom == nil && frame.zoom == nil
                             ? nil
-                            : (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction,
-                        confidence: previous.confidence == nil && frame.confidence == nil
-                            ? nil
-                            : (previous.confidence ?? 1) + ((frame.confidence ?? 1) - (previous.confidence ?? 1)) * fraction,
-                        trackingState: fraction < 0.5 ? previous.trackingState : frame.trackingState
+                            : (previous.zoom ?? 1) + ((frame.zoom ?? 1) - (previous.zoom ?? 1)) * fraction
                     )
                     break
                 }
                 previous = frame
                 focus = frame
             }
-            placement.fillsFrame = true
-            placement.focusX = focus.x
-            placement.focusY = focus.y
-            if let zoom = focus.zoom { placement.zoom = zoom }
+            // Outside the tracked stretch the camera eases back to the centre instead of staying
+            // parked where the track ended, so a shortened track really stops.
+            let outside = max(ordered[0].time - sourceTime, sourceTime - ordered[ordered.count - 1].time, 0)
+            let t = min(max(1 - outside / trackEase, 0), 1)
+            let weight = t * t * (3 - 2 * t)
+            if weight > 0 {
+                placement.focusX = 0.5 + (focus.x - 0.5) * weight
+                placement.focusY = 0.5 + (focus.y - 0.5) * weight
+                if let zoom = focus.zoom { placement.zoom = 1 + (zoom - 1) * weight }
+            }
         }
-        let authoredZoom = CameraMotionEvaluator.zoom(at: sourceTime, recipes: cameraMotions)
-        if CameraMotionEvaluator.activeRecipe(at: sourceTime, recipes: cameraMotions) != nil,
-           authoredZoom > 1.0001 {
-            placement.fillsFrame = true
+        if CameraMotionEvaluator.activeRecipe(at: sourceTime, recipes: cameraMotions) != nil {
             // Tracking supplies the safe base crop; a move adds camera travel to that base.
-            // Taking only the stronger value made equal 15% settings produce no motion at all.
             placement.zoom = CameraMotionEvaluator.combinedZoom(
                 baseZoom: placement.zoom ?? 1,
                 at: sourceTime,

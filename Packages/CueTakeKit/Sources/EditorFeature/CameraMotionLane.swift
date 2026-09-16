@@ -11,7 +11,6 @@ struct CameraMotionLane: View {
 
     static let height: CGFloat = 44
     private static let space = "cameraMotionLane"
-    @State private var selectedMove: String?
 
     private struct DisplayMove: Identifiable {
         var id: String
@@ -49,21 +48,18 @@ struct CameraMotionLane: View {
                 // over each other and hid which one would actually render.
                 .frame(width: max(CGFloat(move.duration * scale) - 2, 4), height: Self.height)
                 .offset(x: CGFloat(move.start * scale))
-                .zIndex(selectedMove == move.id ? 1 : 0)
+                .zIndex(model.selectedCameraMotion == move.recipeID ? 1 : 0)
                 .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .leading)))
             }
         }
         .frame(width: max(CGFloat(model.timelineDuration * scale), 1), height: Self.height, alignment: .leading)
         .coordinateSpace(.named(Self.space))
         .animation(DS.Motion.settle, value: moves.map(\.id))
-        .onChange(of: moves.map(\.id)) { _, ids in
-            if let selectedMove, !ids.contains(selectedMove) { self.selectedMove = nil }
-        }
     }
 
     @ViewBuilder
     private func moveBar(_ move: DisplayMove) -> some View {
-        let selected = selectedMove == move.id
+        let selected = model.selectedCameraMotion == move.recipeID
         let bar = HStack(spacing: 5) {
             Image(systemName: symbol(move.kind))
                 .font(.system(size: 9, weight: .bold))
@@ -108,7 +104,9 @@ struct CameraMotionLane: View {
     }
 
     private func select(_ move: DisplayMove) {
-        withAnimation(DS.Motion.snap) { selectedMove = move.id }
+        withAnimation(DS.Motion.snap) {
+            model.select(cameraMotion: model.selectedCameraMotion == move.recipeID ? nil : move.recipeID)
+        }
         onOpen(move.middle)
     }
 

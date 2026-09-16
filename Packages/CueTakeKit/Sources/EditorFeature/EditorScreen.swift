@@ -219,6 +219,12 @@ public struct EditorScreen: View {
                         selectedTimeline
                         selectionPanel
                             .frame(maxHeight: .infinity, alignment: .top)
+                    } else if dockPanel == nil {
+                        // Nothing open: the timeline takes the rest of the screen, so a swipe
+                        // anywhere below the tools scrubs, not just on the lanes themselves.
+                        timelineBlock
+                            .frame(maxHeight: .infinity, alignment: .top)
+                            .padding(.bottom, 8)
                     } else {
                         ScrollView {
                             timelineBlock
@@ -712,6 +718,7 @@ public struct EditorScreen: View {
         editingCaption != nil || model.selectedVideoLayerValue != nil || model.selectedAudioClip != nil
             || model.selectedEffectValue != nil || model.selectedOverlayValue != nil
             || model.inspectedSegment.map { id in model.project.segments.contains { $0.id == id } } == true
+            || model.selectedCameraMotionValue != nil || model.selectedSubjectTrackValue != nil
     }
 
     /// The timeline alone, as it sits above an open panel: never scrolled away, and only as tall
@@ -780,6 +787,22 @@ public struct EditorScreen: View {
         } else if let id = model.inspectedSegment,
                   let index = model.project.segments.firstIndex(where: { $0.id == id }) {
             inspector(at: index)
+        } else if let value = model.selectedCameraMotionValue {
+            CameraMotionPanel(
+                model: model,
+                recipe: value.recipe,
+                onClose: { withAnimation(DS.Motion.settle) { model.select(cameraMotion: nil) } }
+            )
+        } else if let span = model.selectedSubjectTrackValue {
+            SubjectTrackPanel(
+                model: model,
+                span: span,
+                onEdit: {
+                    model.pause()
+                    showsSubjectTrackingEditor = true
+                },
+                onClose: { withAnimation(DS.Motion.settle) { model.select(subjectTrack: nil) } }
+            )
         }
     }
 
@@ -809,7 +832,14 @@ public struct EditorScreen: View {
                         VStack(alignment: .leading, spacing: 0) {
                             timelineHeader
                             if dockPanel == nil {
-                                timeline
+                                GeometryReader { box in
+                                    ScrollView(.vertical) {
+                                        timeline(filling: box.size.height)
+                                    }
+                                    .scrollBounceBehavior(.basedOnSize)
+                                    .scrollIndicators(.hidden)
+                                }
+                                .frame(minHeight: min(EditorTimeline.height(for: model), 250))
                             } else {
                                 ScrollView(.vertical) {
                                     timeline
@@ -836,11 +866,15 @@ public struct EditorScreen: View {
     }
 
     /// The timeline, the same view above the tools and above an open panel.
-    private var timeline: some View {
+    private var timeline: some View { timeline(filling: 0) }
+
+    private func timeline(filling minimumHeight: CGFloat) -> some View {
         EditorTimeline(
             model: model,
             onEditCaption: { id in
                 model.pause()
+                model.select(cameraMotion: nil)
+                model.select(subjectTrack: nil)
                 withAnimation(DS.Motion.settle) {
                     model.inspectedSegment = nil
                     model.selectedAudio = nil
@@ -871,12 +905,12 @@ public struct EditorScreen: View {
                     model.selectedAudio = nil
                     model.select(overlay: nil)
                     model.select(effect: nil)
-                    model.select(videoLayer: nil)
                     model.seek(to: time)
-                    dockPanel = .zoom
+                    dockPanel = nil
                 }
             },
-            editingCaption: editingCaption
+            editingCaption: editingCaption,
+            minimumHeight: minimumHeight
         )
     }
 

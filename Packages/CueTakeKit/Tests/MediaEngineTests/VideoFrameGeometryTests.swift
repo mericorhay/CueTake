@@ -89,4 +89,26 @@ struct VideoFrameGeometryTests {
         #expect(placement.fillsFrame)
         #expect(abs((placement.focusX ?? 0) - 0.5) < 0.001)
     }
+
+    @Test func aShortenedTrackEasesBackToTheCentre() {
+        let focuses = [
+            VideoFocusKeyframe(time: 5, x: 0.2, y: 0.5),
+            VideoFocusKeyframe(time: 8, x: 0.2, y: 0.5),
+        ]
+        func focusX(at timeline: Double) -> Double {
+            VideoComposer.mainPlacement(
+                .full,
+                focuses: focuses,
+                cameraMotions: [],
+                takeStart: 3,
+                takeLength: 10,
+                playback: .normal,
+                timelineTime: timeline
+            ).focusX ?? 0.5
+        }
+        #expect(abs(focusX(at: 3) - 0.2) < 0.001)
+        #expect(focusX(at: 1.9) > 0.2 && focusX(at: 1.9) < 0.5)
+        #expect(abs(focusX(at: 0.5) - 0.5) < 0.001)
+        #expect(abs(focusX(at: 9) - 0.5) < 0.001)
+    }
 }

@@ -35,12 +35,11 @@ public struct SubjectTrackReviewPoint: Identifiable, Hashable, Sendable {
         self.trackingState = trackingState
     }
 
+    /// Only a lost subject is a problem. Vision's tracker confidence swings widely on a subject it
+    /// is following perfectly well; the engine verifies weak frames by appearance instead, so a
+    /// point still marked as tracking is trusted.
     public var needsReview: Bool {
-        if trackingState == .searching { return true }
-        if trackingState == .reacquired { return false }
-        // Vision confidence naturally breathes while a visible object turns or changes light.
-        // Flag only a genuinely weak tracked sample; the renderer still keeps every point.
-        return confidence < 0.35
+        trackingState == .searching
     }
 
     /// Returns one representative warning per uninterrupted weak stretch. Counting sampled frames
@@ -50,8 +49,10 @@ public struct SubjectTrackReviewPoint: Identifiable, Hashable, Sendable {
         var issues: [Self] = []
         var episode: [Self] = []
         func finishEpisode() {
-            guard let weakest = episode.min(by: { $0.confidence < $1.confidence }) else { return }
-            issues.append(weakest)
+            // One lost sample between good ones is a blink, not a problem worth a warning.
+            if episode.count >= 2, let weakest = episode.min(by: { $0.confidence < $1.confidence }) {
+                issues.append(weakest)
+            }
             episode.removeAll(keepingCapacity: true)
         }
         for point in ordered {
@@ -106,6 +107,12 @@ public final class EditorModel {
     public var selectedEffect: TimelineEffect.ID?
     /// The additional movie being positioned above the main cut.
     public var selectedVideoLayer: VideoLayer.ID?
+    /// The camera move picked on the timeline.
+    public var selectedCameraMotion: CameraMotionRecipe.ID?
+    /// The clip whose subject track is picked on the timeline.
+    public var selectedSubjectTrack: Segment.ID?
+    /// A track's points as they were when the current edge drag began.
+    @ObservationIgnored var trackEditOrigin: (key: String, points: [VideoFocusKeyframe])?
     /// Progress and result of smart reframe for the selected added video.
     public internal(set) var subjectTracking: SubjectTrackingState = .idle
     /// Progress for reframing the primary cut across all recorded segments.
@@ -988,6 +995,8 @@ extension EditorModel {
         selectedVideoLayer = id
         subjectTracking = .idle
         if id != nil {
+            selectedCameraMotion = nil
+            selectedSubjectTrack = nil
             inspectedSegment = nil
             selectedAudio = nil
             selectedOverlay = nil
@@ -1292,28 +1301,8 @@ extension EditorModel {
     /// Confidence points for the primary clip under the playhead, converted from recording time
     /// to the visible timeline. Old projects have no confidence and stay quietly green.
     public var subjectTrackReviewPoints: [SubjectTrackReviewPoint] {
-        guard let (index, _) = segmentAtPlayhead,
-              let take = project.segments[index].selectedTake,
-              let recording = project.recording(id: take.recordingID)
-        else { return [] }
-        let segment = project.segments[index]
-        let takeStart = take.sourceRange.start.seconds
-        let takeLength = take.sourceRange.duration.seconds
-        let timelineStart = start(at: index)
-        return (recording.reframe ?? []).compactMap { frame in
-            let sourceOffset = frame.time - takeStart
-            guard let localTime = segment.playback.timelineOffset(
-                forSourceOffset: sourceOffset,
-                sourceLength: takeLength
-            ) else { return nil }
-            return SubjectTrackReviewPoint(
-                id: frame.id,
-                timelineTime: timelineStart + localTime,
-                confidence: min(max(frame.confidence ?? 1, 0), 1),
-                progress: min(max(localTime / max(segment.barWeight, 0.001), 0), 1),
-                trackingState: frame.trackingState
-            )
-        }.sorted { $0.progress < $1.progress }
+        guard let (index, _) = segmentAtPlayhead else { return [] }
+        return reviewPoints(forSegmentAt: index)
     }
 
     public var subjectTrackReviewIssues: [SubjectTrackReviewPoint] {
@@ -1345,31 +1334,43 @@ extension EditorModel {
         guard let target = cameraMotionTarget(),
               let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
         else { return }
-        let range = target.take.sourceRange
-        let overlapping = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
-            $0.end > range.start.seconds + 0.0001 && $0.start < range.end.seconds - 0.0001
+        let motions = project.recordings[recordingIndex].cameraMotions ?? []
+        if let current = motions.last(where: {
+            target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
+        }) {
+            // Something is already under the playhead: this edits it rather than stacking a second
+            // move on the same frames.
+            if zoom <= 1.005 {
+                if current.kind == .hold { removeCameraMotion(current.id) }
+            } else {
+                updateCameraMotion(current.id, coalescing: "static") {
+                    $0.kind = .hold
+                    $0.amount = zoom - 1
+                }
+            }
+            return
         }
-        let sameHold = overlapping.count == 1
-            && overlapping[0].kind == .hold
-            && abs(1 + overlapping[0].amount - zoom) < 0.0001
-            && project.mainVideoPlacement.zoom == nil
-        guard !sameHold else { return }
-        record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "main-video-zoom-\(target.take.id)")
-        let kept = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
-            $0.end <= range.start.seconds + 0.0001 || $0.start >= range.end.seconds - 0.0001
+        guard zoom > 1.005 else {
+            if project.mainVideoPlacement.zoom != nil {
+                record("editor.change.zoom", symbol: "plus.magnifyingglass")
+                project.mainVideoPlacement.zoom = nil
+                project.updatedAt = .now
+            }
+            return
         }
-        if zoom > 1.005 {
-            let priorHold = overlapping.last { $0.kind == .hold }
-            let hold = CameraMotionRecipe(
-                id: priorHold?.id ?? UUID(),
-                sourceRange: range,
-                amount: zoom - 1,
-                kind: .hold
-            )
-            project.recordings[recordingIndex].cameraMotions = (kept + [hold]).sorted { $0.start < $1.start }
-        } else {
-            project.recordings[recordingIndex].cameraMotions = kept
-        }
+        // The free stretch around the playhead: the whole clip when nothing else is there.
+        let free = freeCameraSpan(around: target.reference, in: target.take, motions: motions)
+        guard free.upperBound - free.lowerBound >= 0.2 else { return }
+        record("editor.change.zoom", symbol: "plus.magnifyingglass")
+        let hold = CameraMotionRecipe(
+            sourceRange: MediaTimeRange(
+                start: MediaTime(seconds: free.lowerBound),
+                duration: MediaTime(seconds: free.upperBound - free.lowerBound)
+            ),
+            amount: zoom - 1,
+            kind: .hold
+        )
+        project.recordings[recordingIndex].cameraMotions = (motions + [hold]).sorted { $0.start < $1.start }
         project.mainVideoPlacement.fillsFrame = true
         // Build 66 stored this globally. The first intentional edit migrates it to this source clip.
         project.mainVideoPlacement.zoom = nil
@@ -1383,44 +1384,46 @@ extension EditorModel {
     ) {
         guard canApplyCameraMotion,
               let target = cameraMotionTarget(),
-              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID })
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
+              let (segmentIndex, _) = segmentAtPlayhead
         else { return }
-        let range = target.take.sourceRange
-        let reversed = segmentAtPlayhead.map { project.segments[$0.index].playback.isReversed } ?? false
-        let sourceKind = kind.facingTimeline(isReversed: reversed)
-        if let selected = project.recordings[recordingIndex].cameraMotions?.lastIndex(where: {
+        let playback = project.segments[segmentIndex].playback
+        let sourceKind = kind.facingTimeline(isReversed: playback.isReversed)
+        let boundedAmount = min(max(amount, 0.02), 1)
+        let motions = project.recordings[recordingIndex].cameraMotions ?? []
+        if let current = motions.last(where: {
             target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
         }) {
-            // Changing the move from its inspector edits the ribbon the user selected. Replacing
-            // it with a whole-take recipe made a carefully trimmed camera move expand again.
-            let boundedAmount = min(max(amount, 0.02), 1)
-            let selectedFeel = feel ?? project.recordings[recordingIndex].cameraMotions?[selected].feel ?? .natural
-            guard project.recordings[recordingIndex].cameraMotions?[selected].kind != sourceKind
-                    || project.recordings[recordingIndex].cameraMotions?[selected].amount != boundedAmount
-                    || project.recordings[recordingIndex].cameraMotions?[selected].feel != selectedFeel
-            else { return }
-            record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
-            project.recordings[recordingIndex].cameraMotions?[selected].kind = sourceKind
-            project.recordings[recordingIndex].cameraMotions?[selected].amount = boundedAmount
-            project.recordings[recordingIndex].cameraMotions?[selected].feel = selectedFeel
+            // Changing the move from its panel edits the ribbon under the playhead and keeps the
+            // range the user trimmed on the timeline.
+            updateCameraMotion(current.id) {
+                $0.kind = sourceKind
+                $0.amount = boundedAmount
+                $0.feel = feel ?? $0.feel
+            }
             project.mainVideoPlacement.zoom = nil
             project.mainVideoPlacement.fillsFrame = true
-            project.updatedAt = .now
             return
         }
-        let existing = (project.recordings[recordingIndex].cameraMotions ?? []).filter {
-            $0.end <= range.start.seconds || $0.start >= range.end.seconds
-        }
+        // A move is a gesture, not a state: it starts at the playhead and lasts as long as a
+        // camera operator would take, measured on the finished video. It can then be stretched on
+        // the timeline.
+        let visibleLength = kind == .punch ? 1.0 : 2.0
+        let free = freeCameraSpan(around: target.reference, in: target.take, motions: motions)
+        guard let range = newCameraRange(
+            length: visibleLength * min(max(playback.speed, 0.1), 8),
+            reference: target.reference,
+            reversed: playback.isReversed,
+            free: free
+        ) else { return }
         record("editor.change.zoomRecipe", symbol: "plus.magnifyingglass")
         let recipe = CameraMotionRecipe(
             sourceRange: range,
-            amount: amount,
+            amount: boundedAmount,
             kind: sourceKind,
             feel: feel ?? .natural
         )
-        project.recordings[recordingIndex].cameraMotions = (existing + [recipe]).sorted { $0.start < $1.start }
-        // A manual static zoom and a motion recipe describe the same camera channel. The recipe is
-        // visible on the timeline, so choosing it intentionally replaces the hidden static value.
+        project.recordings[recordingIndex].cameraMotions = (motions + [recipe]).sorted { $0.start < $1.start }
         project.mainVideoPlacement.zoom = nil
         project.mainVideoPlacement.fillsFrame = true
         project.updatedAt = .now

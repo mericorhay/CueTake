@@ -20,6 +20,8 @@ struct SubjectTrackingEditor: View {
     @State private var zoom = 1.15
     @State private var successPulse = 0
     @State private var isCorrecting = false
+    /// A finished track is shown for review; this goes back to drawing a new one from scratch.
+    @State private var isRedrawing = false
     @State private var trackingTask: Task<Void, Never>?
     @State private var frameTask: Task<Void, Never>?
 
@@ -34,7 +36,7 @@ struct SubjectTrackingEditor: View {
     }
 
     private var isReviewing: Bool {
-        !isCorrecting && !model.subjectTrackReviewPoints.isEmpty
+        !isCorrecting && !isRedrawing && !model.subjectTrackReviewPoints.isEmpty
     }
 
     var body: some View {
@@ -175,6 +177,44 @@ struct SubjectTrackingEditor: View {
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
 
+                HStack(spacing: 8) {
+                    Button {
+                        withAnimation(DS.Motion.settle) {
+                            isRedrawing = true
+                            strokes.removeAll()
+                            activeStroke.removeAll()
+                        }
+                        model.mainSubjectTracking = .idle
+                    } label: {
+                        Label(String(localized: "editor.track.redraw", bundle: .module), systemImage: "hand.draw")
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.ink)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(Capsule().fill(DS.Palette.hairline(0.09)))
+                    }
+                    .buttonStyle(.dsPress(radius: 22))
+
+                    Button {
+                        guard let (index, _) = model.segmentAtPlayhead else { return }
+                        let id = model.project.segments[index].id
+                        withAnimation(DS.Motion.settle) {
+                            model.removeSubjectTrack(forSegment: id)
+                            strokes.removeAll()
+                            activeStroke.removeAll()
+                        }
+                    } label: {
+                        Label(String(localized: "editor.trackPanel.delete", bundle: .module), systemImage: "trash")
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.accentWarm)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(Capsule().fill(DS.Palette.accentWarm.opacity(0.1)))
+                    }
+                    .buttonStyle(.dsPress(radius: 22))
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+
                 Button(action: close) {
                     Text("editor.track.return", bundle: .module)
                         .dsFont(.sans, .semibold, 12)
@@ -246,6 +286,7 @@ struct SubjectTrackingEditor: View {
                     if isApplied {
                         withAnimation(DS.Motion.settle) {
                             isCorrecting = false
+                            isRedrawing = false
                             strokes.removeAll()
                             activeStroke.removeAll()
                         }

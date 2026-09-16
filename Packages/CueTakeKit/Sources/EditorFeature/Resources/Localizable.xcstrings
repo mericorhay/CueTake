@@ -1599,23 +1599,6 @@
         }
       }
     },
-    "editor.ai.op.role %@ %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clip %1$@: %2$@ role assigned"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Klip %1$@: %2$@ rolü atandı"
-          }
-        }
-      }
-    },
     "editor.ai.op.reorder": {
       "extractionState": "manual",
       "localizations": {
@@ -1663,6 +1646,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klip %@: ters oynat"
+          }
+        }
+      }
+    },
+    "editor.ai.op.role %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clip %1$@: %2$@ role assigned"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %1$@: %2$@ rolü atandı"
           }
         }
       }
@@ -2143,23 +2143,6 @@
         }
       }
     },
-    "editor.ai.suggest.structure": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Analyse and assign the video structure"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Video yapısını analiz et ve rolleri ata"
-          }
-        }
-      }
-    },
     "editor.ai.suggest.look": {
       "extractionState": "manual",
       "localizations": {
@@ -2173,6 +2156,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Altyazıları büyüt, vurguyu sarı yap"
+          }
+        }
+      }
+    },
+    "editor.ai.suggest.structure": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyse and assign the video structure"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yapısını analiz et ve rolleri ata"
           }
         }
       }
@@ -2908,6 +2908,74 @@
         }
       }
     },
+    "editor.cameraLane.accessibility %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera lane with %lld moves"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hareketli kamera şeridi"
+          }
+        }
+      }
+    },
+    "editor.cameraLane.editHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to move. Pull either edge to change the range."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşımak için sürükle. Aralığı değiştirmek için iki uçtan birini çek."
+          }
+        }
+      }
+    },
+    "editor.cameraPanel.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove camera move"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketini sil"
+          }
+        }
+      }
+    },
+    "editor.cameraPanel.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the middle on the timeline to move it, an end to change how long it lasts."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşımak için zaman çizelgesinde ortasından, süresini değiştirmek için ucundan sürükle."
+          }
+        }
+      }
+    },
     "editor.caption.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -3605,6 +3673,74 @@
         }
       }
     },
+    "editor.change.subjectTrack": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subject tracking applied"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne takibi uygulandı"
+          }
+        }
+      }
+    },
+    "editor.change.subjectTrackCorrection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subject tracking corrected"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne takibi düzeltildi"
+          }
+        }
+      }
+    },
+    "editor.change.subjectTrackRange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking shortened"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takip kısaltıldı"
+          }
+        }
+      }
+    },
+    "editor.change.subjectTrackRemoved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takip silindi"
+          }
+        }
+      }
+    },
     "editor.change.take": {
       "extractionState": "manual",
       "localizations": {
@@ -3754,6 +3890,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "Workflow çalıştırıldı"
+          }
+        }
+      }
+    },
+    "editor.change.zoom": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera zoom changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera yakınlığı değiştirildi"
+          }
+        }
+      }
+    },
+    "editor.change.zoomFeel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera movement changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi değişti"
+          }
+        }
+      }
+    },
+    "editor.change.zoomRange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera move timing changed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi zamanlandı"
+          }
+        }
+      }
+    },
+    "editor.change.zoomRecipe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera move added"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi eklendi"
+          }
+        }
+      }
+    },
+    "editor.change.zoomRecipeRemoved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera move removed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi kaldırıldı"
           }
         }
       }
@@ -6158,57 +6379,6 @@
         }
       }
     },
-    "editor.transport.pause": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pause"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duraklat"
-          }
-        }
-      }
-    },
-    "editor.transport.play": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Play"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Oynat"
-          }
-        }
-      }
-    },
-    "editor.transport.start": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Go to beginning"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Başa git"
-          }
-        }
-      }
-    },
     "editor.timing.dragHint": {
       "extractionState": "manual",
       "localizations": {
@@ -7025,6 +7195,465 @@
         }
       }
     },
+    "editor.track.applied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subject locked. Preview is ready."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne kilitlendi. Önizleme hazır."
+          }
+        }
+      }
+    },
+    "editor.track.clear": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizle"
+          }
+        }
+      }
+    },
+    "editor.track.close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close tracking"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takibi kapat"
+          }
+        }
+      }
+    },
+    "editor.track.closeness": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CLOSENESS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YAKINLIK"
+          }
+        }
+      }
+    },
+    "editor.track.confidence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRACK CONFIDENCE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TAKİP GÜVENİ"
+          }
+        }
+      }
+    },
+    "editor.track.correct": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply correction"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düzeltmeyi uygula"
+          }
+        }
+      }
+    },
+    "editor.track.correctInstruction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark the subject again on this frame"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu karede özneyi yeniden işaretle"
+          }
+        }
+      }
+    },
+    "editor.track.correctWeakest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct weakest moment"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En zayıf anı düzelt"
+          }
+        }
+      }
+    },
+    "editor.track.done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking ready"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takip hazır"
+          }
+        }
+      }
+    },
+    "editor.track.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The subject was lost. Mark a tighter area and retry."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne kayboldu. Daha sıkı bir alan işaretleyip tekrar dene."
+          }
+        }
+      }
+    },
+    "editor.track.instruction": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Circle or paint the subject"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özneyi çember içine al veya boya"
+          }
+        }
+      }
+    },
+    "editor.track.lasso": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Circle"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çember"
+          }
+        }
+      }
+    },
+    "editor.track.paint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paint"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boya"
+          }
+        }
+      }
+    },
+    "editor.track.progress %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Following subject · %lld%%"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özne takip ediliyor · %%%lld"
+          }
+        }
+      }
+    },
+    "editor.track.redraw": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draw again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden işaretle"
+          }
+        }
+      }
+    },
+    "editor.track.return": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return to editor"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editöre dön"
+          }
+        }
+      }
+    },
+    "editor.track.stable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STABLE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KARARLI"
+          }
+        }
+      }
+    },
+    "editor.track.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow subject"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özneyi takip et"
+          }
+        }
+      }
+    },
+    "editor.track.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SELECT ON THE PICTURE · TRACK BOTH WAYS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GÖRÜNTÜDE SEÇ · İKİ YÖNE TAKİP"
+          }
+        }
+      }
+    },
+    "editor.track.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takip"
+          }
+        }
+      }
+    },
+    "editor.track.weak %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld weak moments"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sorunlu an"
+          }
+        }
+      }
+    },
+    "editor.trackLane.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracking"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takip"
+          }
+        }
+      }
+    },
+    "editor.trackPanel.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove tracking"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takibi sil"
+          }
+        }
+      }
+    },
+    "editor.trackPanel.edit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fix or draw again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düzelt veya yeniden işaretle"
+          }
+        }
+      }
+    },
+    "editor.trackPanel.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag either end on the timeline to shorten where the camera follows."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kameranın takip ettiği bölümü kısaltmak için zaman çizelgesinde uçlarından sürükle."
+          }
+        }
+      }
+    },
+    "editor.trackPanel.issues %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lost %lld times — tap a moment to see it"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld kez kaybedildi — görmek için bir ana dokun"
+          }
+        }
+      }
+    },
+    "editor.trackPanel.stable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Followed the whole way"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baştan sona takip edildi"
+          }
+        }
+      }
+    },
     "editor.transcript.count %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -7157,6 +7786,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "NE SÖYLEDİN"
+          }
+        }
+      }
+    },
+    "editor.transport.pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duraklat"
+          }
+        }
+      }
+    },
+    "editor.transport.play": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynat"
+          }
+        }
+      }
+    },
+    "editor.transport.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to beginning"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başa git"
           }
         }
       }
@@ -7654,703 +8334,6 @@
         }
       }
     },
-    "editor.change.subjectTrack": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Subject tracking applied"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özne takibi uygulandı"
-          }
-        }
-      }
-    },
-    "editor.change.subjectTrackCorrection": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Subject tracking corrected"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özne takibi düzeltildi"
-          }
-        }
-      }
-    },
-    "editor.change.zoom": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera zoom changed"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera yakınlığı değiştirildi"
-          }
-        }
-      }
-    },
-    "editor.track.applied": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Subject locked. Preview is ready."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özne kilitlendi. Önizleme hazır."
-          }
-        }
-      }
-    },
-    "editor.track.clear": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clear"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Temizle"
-          }
-        }
-      }
-    },
-    "editor.track.close": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close tracking"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Takibi kapat"
-          }
-        }
-      }
-    },
-    "editor.track.closeness": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CLOSENESS"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "YAKINLIK"
-          }
-        }
-      }
-    },
-    "editor.track.confidence": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TRACK CONFIDENCE"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TAKİP GÜVENİ"
-          }
-        }
-      }
-    },
-    "editor.track.correct": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apply correction"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Düzeltmeyi uygula"
-          }
-        }
-      }
-    },
-    "editor.track.correctInstruction": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mark the subject again on this frame"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu karede özneyi yeniden işaretle"
-          }
-        }
-      }
-    },
-    "editor.track.correctWeakest": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Correct weakest moment"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En zayıf anı düzelt"
-          }
-        }
-      }
-    },
-    "editor.track.done": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tracking ready"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Takip hazır"
-          }
-        }
-      }
-    },
-    "editor.track.failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The subject was lost. Mark a tighter area and retry."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özne kayboldu. Daha sıkı bir alan işaretleyip tekrar dene."
-          }
-        }
-      }
-    },
-    "editor.track.instruction": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Circle or paint the subject"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özneyi çember içine al veya boya"
-          }
-        }
-      }
-    },
-    "editor.track.lasso": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Circle"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Çember"
-          }
-        }
-      }
-    },
-    "editor.track.paint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paint"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Boya"
-          }
-        }
-      }
-    },
-    "editor.track.progress %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Following subject · %lld%%"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özne takip ediliyor · %%%lld"
-          }
-        }
-      }
-    },
-    "editor.track.return": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Return to editor"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Editöre dön"
-          }
-        }
-      }
-    },
-    "editor.track.start": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Follow subject"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özneyi takip et"
-          }
-        }
-      }
-    },
-    "editor.track.stable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "STABLE"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "KARARLI"
-          }
-        }
-      }
-    },
-    "editor.track.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SELECT ON THE PICTURE · TRACK BOTH WAYS"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "GÖRÜNTÜDE SEÇ · İKİ YÖNE TAKİP"
-          }
-        }
-      }
-    },
-    "editor.track.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Track"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Takip"
-          }
-        }
-      }
-    },
-    "editor.track.weak %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld weak moments"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sorunlu an"
-          }
-        }
-      }
-    },
-    "editor.zoom.amount %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zoom %lld percent"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yakınlık yüzde %lld"
-          }
-        }
-      }
-    },
-    "editor.zoom.hint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Set the camera distance. A subject track keeps the chosen object at the center."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera mesafesini ayarla. Özne takibi seçtiğin nesneyi merkezde tutar."
-          }
-        }
-      }
-    },
-    "editor.zoom.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zoom"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zoom"
-          }
-        }
-      }
-    },
-    "editor.cameraLane.accessibility %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera lane with %lld moves"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld hareketli kamera şeridi"
-          }
-        }
-      }
-    },
-    "editor.cameraLane.editHint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drag to move. Pull either edge to change the range."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taşımak için sürükle. Aralığı değiştirmek için iki uçtan birini çek."
-          }
-        }
-      }
-    },
-    "editor.change.zoomFeel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera movement changed"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera hareketi değişti"
-          }
-        }
-      }
-    },
-    "editor.change.zoomRange": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera move timing changed"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera hareketi zamanlandı"
-          }
-        }
-      }
-    },
-    "editor.change.zoomRecipe": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera move added"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera hareketi eklendi"
-          }
-        }
-      }
-    },
-    "editor.change.zoomRecipeRemoved": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera move removed"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera hareketi kaldırıldı"
-          }
-        }
-      }
-    },
-    "editor.zoom.feel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FEEL"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HİS"
-          }
-        }
-      }
-    },
-    "editor.zoom.feel.calm": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calm"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sakin"
-          }
-        }
-      }
-    },
-    "editor.zoom.feel.energetic": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Energetic"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Canlı"
-          }
-        }
-      }
-    },
-    "editor.zoom.feel.natural": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Natural"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Doğal"
-          }
-        }
-      }
-    },
-    "editor.zoom.pull": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pull out"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geri açıl"
-          }
-        }
-      }
-    },
-    "editor.zoom.punch": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emphasis"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vurgu"
-          }
-        }
-      }
-    },
-    "editor.zoom.push": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Push in"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yaklaş"
-          }
-        }
-      }
-    },
-    "editor.zoom.remove": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kaldır"
-          }
-        }
-      }
-    },
-    "editor.zoom.static": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FIXED FRAME"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SABİT KADRAJ"
-          }
-        }
-      }
-    },
     "editor.video.smartReframe": {
       "extractionState": "manual",
       "localizations": {
@@ -8551,6 +8534,210 @@
           "stringUnit": {
             "state": "translated",
             "value": "Video katmanları"
+          }
+        }
+      }
+    },
+    "editor.zoom.amount %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom %lld percent"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yakınlık yüzde %lld"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FEEL"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HİS"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.calm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calm"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakin"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.energetic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Energetic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı"
+          }
+        }
+      }
+    },
+    "editor.zoom.feel.natural": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Natural"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doğal"
+          }
+        }
+      }
+    },
+    "editor.zoom.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set the camera distance. A subject track keeps the chosen object at the center."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera mesafesini ayarla. Özne takibi seçtiğin nesneyi merkezde tutar."
+          }
+        }
+      }
+    },
+    "editor.zoom.pull": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pull out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri açıl"
+          }
+        }
+      }
+    },
+    "editor.zoom.punch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emphasis"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vurgu"
+          }
+        }
+      }
+    },
+    "editor.zoom.push": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Push in"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yaklaş"
+          }
+        }
+      }
+    },
+    "editor.zoom.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaldır"
+          }
+        }
+      }
+    },
+    "editor.zoom.static": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FIXED FRAME"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SABİT KADRAJ"
+          }
+        }
+      }
+    },
+    "editor.zoom.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom"
           }
         }
       }
