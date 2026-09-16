@@ -76,7 +76,10 @@ Step types, in the order they usually run:
 - musicBed { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } — only if the project already has music.
 - generateCaptions
 - applyCaptionStyle { "presetID": one of the caption presets above }
-- export
+- export { "destination": "photoLibrary|files", "delivery": { "endpoint": "https://…", "method": "POST|PUT",
+  "payload": "multipart|rawVideo|json", "fields": { } } } — always the last step, exactly once (the app adds it when missing).
+  Add "delivery" only when the user asks to send the finished video to a URL, API or automation; never invent an endpoint,
+  and never put tokens or passwords in the workflow (the user enters them in the app).
 Use only these types. A comprehensive, high quality workflow usually is: analyzeSpeech, trimSilences,
 cutWords, cleanAudio, generateCaptions, applyCaptionStyle, export — with sections only if the user wants
 a structure. Leave out sections when the user only wants tools applied to what they already have.
@@ -135,6 +138,9 @@ Camera: cameraMove{move|null,at,to,kind push|pull|punch|hold,amount 0.04-0.35,fe
   (without move: a new move from at to to on the finished video, inside one clip, replacing moves it covers;
    with move: changes that move, and at/to retime it) removeCameraMove{move}
   trackFace{clip|null,closeness 0.08-0.2} (the camera follows the speaker's face; null = every clip) removeTrack{clip|null}
+Transitions: transition{clip|null,kind,seconds 0.2-2} (how clip hands over to the next; null = every cut)
+  kind crossfade|fadeBlack|fadeWhite|slideLeft|slideRight|slideUp|slideDown|pushLeft|pushRight|wipeLeft|wipeRight|wipeUp|wipeDown|zoomIn|zoomOut
+  removeTransition{clip|null}. clips[].transition shows the current one. The video keeps its length.
 Project: setTitle{title} renameClip{clip,title} setRole{clip,role hook|intro|point|example|cta} setScript{clip,text} selectTake{clip,take}
 Example: {"op":"setFilter","from":0,"to":3.2,"look":"cinematic","intensity":0.7}
 
@@ -162,6 +168,9 @@ How to work:
   generateVideo shots on concrete, visual moments (a place, an object, an action the speaker names), 4-6 s, starting on that
   word. Prompts in English, one shot each: subject, action, setting, camera, light, "no text". They cost the user money, so
   never more than 3 per request unless asked, and never when videoModel is missing.
+- Transitions: only where the story changes (new point, new place, before the call to action), not on every cut of one
+  sentence. crossfade 0.4-0.6 for calm, fadeBlack 0.6-1 for a chapter, slide/push 0.3-0.45 or zoomIn 0.35-0.5 for energetic
+  edits. Never on the cut before the last clip's final word if it would hide it.
 - Session memory: read history. Build on what was done; never repeat or undo an earlier change unless the request asks.
   Follow-ups like "more", "less", "undo the zoom", "same for the second clip" refer to the latest turn.
 - Use only ids from the document. summary talks about the video, never about JSON, ids or operations.

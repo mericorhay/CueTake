@@ -218,7 +218,7 @@ struct SubjectTrackPanel: View {
     }
 }
 
-private struct CameraPanelHeader: View {
+struct CameraPanelHeader: View {
     let title: Text
     let symbol: String
     let tint: Color
@@ -259,7 +259,7 @@ private struct CameraPanelHeader: View {
     }
 }
 
-private struct CameraPanelDelete: View {
+struct CameraPanelDelete: View {
     let title: Text
     let action: () -> Void
 
@@ -280,7 +280,7 @@ private struct CameraPanelDelete: View {
     }
 }
 
-private extension View {
+extension View {
     func cameraPanelSurface() -> some View {
         ScrollView {
             padding(16)

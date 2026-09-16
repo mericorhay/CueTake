@@ -26,6 +26,8 @@ public enum AITarget: Hashable, Sendable {
     case audio(UUID)
     case voice
     case title
+    /// Every transition between clips, as one.
+    case transitions
 
     /// Clips go back before their order does: the order can only be restored among clips that exist.
     var restoreRank: Int {
@@ -93,6 +95,8 @@ extension Project {
                 result.voiceEffects = source.voiceEffects
             case .title:
                 result.title = source.title
+            case .transitions:
+                result.transitions = source.transitions
             }
         }
         result.updatedAt = .now
@@ -129,6 +133,8 @@ extension Project {
                 voiceEffects == other.voiceEffects
             case .title:
                 title == other.title
+            case .transitions:
+                transitions == other.transitions
             }
         }
     }
@@ -187,6 +193,7 @@ extension Project {
         if captionWindow != before.captionWindow { targets.append(.captionWindow) }
         if voiceEffects != before.voiceEffects { targets.append(.voice) }
         if title != before.title { targets.append(.title) }
+        if transitions != before.transitions { targets.append(.transitions) }
         if mainVideoPlacement != before.mainVideoPlacement || mainVideoVolume != before.mainVideoVolume {
             targets.append(.mainVideo)
         }

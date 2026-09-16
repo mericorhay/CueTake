@@ -81,6 +81,8 @@ public struct EditorScreen: View {
     @State private var composingAI = false
     @State private var generateDraft = ""
     @State private var composingGenerate = false
+    /// The height the portrait column has, which the timeline's share is worked out from.
+    @State private var columnHeight: CGFloat = 760
 
     /// Changes when a script is edited, a take is selected, or transcription finishes.
     private var roleAnalysisInput: [String] {
@@ -122,8 +124,22 @@ public struct EditorScreen: View {
         return isPanelOpen || dockPanel != nil ? 150 : 212
     }
 
+    /// How tall the timeline may be while a panel shares the column with it.
+    ///
+    /// Worked out from the screen rather than fixed. A fixed 250 points was fine with three lanes
+    /// and a big phone; with a dozen texts and sounds on a small one it left the panel a sliver —
+    /// or pushed it below the bottom edge — and squeezed the tool row until its chips shrank.
+    /// Past this height the lanes scroll inside the timeline.
+    private var timelineCap: CGFloat {
+        let above: CGFloat = 58 + 44 + 38 + previewHeight + 10 + 44
+        let panelRoom: CGFloat = hasSelectionPanel ? 250 : (dockPanel != nil ? 230 : 0)
+        let toolRow: CGFloat = hasSelectionPanel ? 0 : 72
+        return max(122, min(260, columnHeight - above - panelRoom - toolRow))
+    }
+
     private var isPanelOpen: Bool {
-        model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
+        model.selectedTransition != nil
+            || model.inspectedSegment != nil || model.selectedAudio != nil || model.selectedOverlay != nil
             || model.selectedEffect != nil || model.selectedVideoLayer != nil || editingCaption != nil
     }
 
@@ -138,8 +154,21 @@ public struct EditorScreen: View {
                     withAnimation(DS.Motion.settle) { self.typing = nil }
                 }
                 .id(typing)
+            } else if let deletion = model.lastDeletion {
+                DeletionNote(deletion: deletion) {
+                    withAnimation(DS.Motion.settle) {
+                        model.undo()
+                        model.lastDeletion = nil
+                    }
+                } onDismiss: {
+                    withAnimation(DS.Motion.settle) { model.lastDeletion = nil }
+                }
+                .id(deletion.id)
+                .padding(.bottom, 26)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(DS.Motion.settle, value: model.lastDeletion)
         .overlay(alignment: .top) {
             if composingAI {
                 AIComposer(
@@ -275,24 +304,22 @@ public struct EditorScreen: View {
                         selectedTimeline
                         selectionPanel
                             .frame(maxHeight: .infinity, alignment: .top)
-                    } else if dockPanel == nil {
+                    } else {
                         // Nothing open: the timeline takes the rest of the screen, so a swipe
-                        // anywhere below the tools scrubs, not just on the lanes themselves.
+                        // anywhere below the tools scrubs. A tool panel open: it takes the rest
+                        // instead and scrolls inside itself, under a timeline of bounded height.
                         timelineBlock
                             .frame(maxHeight: .infinity, alignment: .top)
                             .padding(.bottom, 8)
-                    } else {
-                        ScrollView {
-                            timelineBlock
-                                .padding(.bottom, 28)
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                        .scrollIndicators(.visible)
                     }
                 }
                 .padding(.top, 58)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-                .onAppear { landscapePreviewHeight = nil }
+                .onAppear {
+                    landscapePreviewHeight = nil
+                    columnHeight = proxy.size.height
+                }
+                .onChange(of: proxy.size.height) { _, height in columnHeight = height }
             }
         }
         .animation(DS.Motion.settle, value: isPanelOpen)
@@ -396,12 +423,14 @@ public struct EditorScreen: View {
         // Filters are drawn by the compositor from a live copy: moved, stretched, changed, undone.
         .onChange(of: model.project.effects) { model.syncLiveFilters() }
         .animation(DS.Motion.settle, value: model.selectedOverlay)
-        .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil; model.selectedTransition = nil } }
         .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
         .onChange(of: model.selectedEffect) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
-        .onChange(of: model.selectedAudio) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: model.selectedAudio) { _, id in if id != nil { editingCaption = nil; dockPanel = nil; model.selectedTransition = nil } }
         .onChange(of: model.selectedVideoLayer) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
-        .onChange(of: dockPanel) { _, panel in if panel != nil { editingCaption = nil } }
+        .onChange(of: dockPanel) { _, panel in if panel != nil { editingCaption = nil; model.selectedTransition = nil } }
+        .onChange(of: model.selectedTransition) { _, cut in if cut != nil { editingCaption = nil; dockPanel = nil } }
+        .onChange(of: editingCaption) { _, caption in if caption != nil { model.selectedTransition = nil } }
         .onChange(of: model.isPlaying) { _, playing in if playing { editingCaption = nil } }
         .animation(DS.Motion.settle, value: editingCaption)
         .background(DS.Palette.screen)
@@ -791,7 +820,8 @@ public struct EditorScreen: View {
 
     /// Whether something on the timeline is open in a panel.
     private var hasSelectionPanel: Bool {
-        editingCaption != nil || model.selectedVideoLayerValue != nil || model.selectedAudioClip != nil
+        selectedCut != nil
+            || editingCaption != nil || model.selectedVideoLayerValue != nil || model.selectedAudioClip != nil
             || model.selectedEffectValue != nil || model.selectedOverlayValue != nil
             || model.inspectedSegment.map { id in model.project.segments.contains { $0.id == id } } == true
             || model.selectedCameraMotionValue != nil || model.selectedSubjectTrackValue != nil
@@ -803,6 +833,7 @@ public struct EditorScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             if model.selectedAudioClip != nil {
                 EditorToolbar(model: model)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, -18)
                     .padding(.bottom, 6)
             }
@@ -811,17 +842,29 @@ public struct EditorScreen: View {
                 timeline
             }
             .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
-            .frame(height: min(EditorTimeline.height(for: model), 250))
+            .frame(height: min(EditorTimeline.height(for: model), timelineCap))
         }
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 18)
         .padding(.top, 6)
         .allowsHitTesting(!model.isAIDriving)
     }
 
+    /// The open transition's cut, while that cut still exists.
+    private var selectedCut: Segment.ID? {
+        model.selectedTransition.flatMap { id in model.cuts.contains { $0.after == id } ? id : nil }
+    }
+
     /// The open item's own controls: one at a time.
     @ViewBuilder
     private var selectionPanel: some View {
-        if let captionID = editingCaption {
+        if let cut = selectedCut {
+            TransitionPanel(
+                model: model,
+                cut: cut,
+                onClose: { withAnimation(DS.Motion.settle) { model.select(transition: nil) } }
+            )
+        } else if let captionID = editingCaption {
             ScrollView {
                 CaptionQuickPanel(
                     model: model,
@@ -917,28 +960,31 @@ public struct EditorScreen: View {
                     inlineTimeline: AnyView(
                         VStack(alignment: .leading, spacing: 0) {
                             timelineHeader
-                            if dockPanel == nil {
+                            if dockPanel == nil, landscapePreviewHeight == nil {
+                                // Fills what is left, however little; the lanes scroll inside.
                                 GeometryReader { box in
                                     ScrollView(.vertical) {
                                         timeline(filling: box.size.height)
                                     }
                                     .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
                                 }
-                                .frame(minHeight: min(EditorTimeline.height(for: model), 250))
+                                .frame(minHeight: 122)
                             } else {
                                 ScrollView(.vertical) {
                                     timeline
                                 }
                                 .modifier(LanesScroll(height: EditorTimeline.height(for: model)))
-                                .frame(height: min(EditorTimeline.height(for: model), 250))
+                                .frame(height: min(EditorTimeline.height(for: model), landscapePreviewHeight == nil ? timelineCap : 250))
                             }
                         }
                     ),
+                    panelScrolls: landscapePreviewHeight == nil,
                     open: $dockPanel
                 )
                 .padding(.bottom, 10)
             } else {
                 EditorToolbar(model: model)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, -18)
                     .padding(.bottom, 10)
                 timelineHeader

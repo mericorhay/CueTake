@@ -21,6 +21,10 @@ struct AudioInspector: View {
 
             level
 
+            if model.project.audio.count > 1 {
+                laneRow
+            }
+
             HStack(spacing: 9) {
                 toggle(
                     "editor.audio.duck",
@@ -70,6 +74,35 @@ struct AudioInspector: View {
             }
             .pickerStyle(.menu)
             .tint(DS.Palette.ink(0.6))
+        }
+    }
+
+    /// Which row of the lane the sound sits in, and buttons to move it.
+    private var laneRow: some View {
+        let row = (model.audioRows[clip.id] ?? 0)
+        return HStack(spacing: 8) {
+            Image(systemName: "square.3.layers.3d")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(DS.Palette.ink(0.5))
+            Text("editor.audio.lane \(row + 1)", bundle: .module)
+                .dsFont(.sans, .medium, 12)
+                .foregroundStyle(DS.Palette.ink(0.75))
+                .contentTransition(.numericText())
+            Spacer(minLength: 0)
+            ForEach([-1, 1], id: \.self) { offset in
+                Button {
+                    withAnimation(DS.Motion.settle) { model.moveAudio(clip.id, byRows: offset) }
+                } label: {
+                    Image(systemName: offset < 0 ? "arrow.up" : "arrow.down")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.75))
+                        .frame(width: 36, height: 32)
+                        .background(Capsule().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPress(radius: 16))
+                .disabled(offset < 0 && row == 0)
+                .accessibilityLabel(Text(offset < 0 ? "editor.audio.laneUp" : "editor.audio.laneDown", bundle: .module))
+            }
         }
     }
 

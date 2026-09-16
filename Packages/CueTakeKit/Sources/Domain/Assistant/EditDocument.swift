@@ -73,6 +73,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var tracked: Bool?
         /// Finished-video seconds where the followed face was lost.
         public var lost: [Double]?
+        /// How this clip hands over to the next one: `"crossfade 0.5"`. Nil is a plain cut.
+        public var transition: String?
     }
 
     public struct Word: Codable, Sendable, Equatable {
@@ -520,6 +522,11 @@ extension EditDocument {
                     amount: r2(move.recipe.amount),
                     feel: move.kind == .hold || move.recipe.feel == .natural ? nil : move.recipe.feel.rawValue
                 )
+            }
+        }
+        for (index, segment) in project.segments.enumerated() where index < self.clips.count {
+            if let transition = project.transition(after: segment.id), index < project.segments.count - 1 {
+                self.clips[index].transition = "\(transition.kind.rawValue) \(r2(transition.duration))"
             }
         }
         var clipStart = 0.0

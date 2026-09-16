@@ -37,6 +37,8 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     public var metadata: [String: String]
     /// What the AI was asked and did in this project, session by session.
     public var aiConversations: [AIConversation] = []
+    /// How clips hand over to each other (see `ClipTransition`).
+    public var transitions: [ClipTransition] = []
 
     public init(
         id: UUID = UUID(),
@@ -99,6 +101,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
         aiConversations = (try? container.decodeIfPresent([AIConversation].self, forKey: .aiConversations)) ?? []
+        transitions = (try? container.decodeIfPresent([ClipTransition].self, forKey: .transitions)) ?? []
         // Backgrounds used to be a setting of the whole clip.
         adoptClipBackgrounds()
         // Freeze is gone from the app: held frames it made are removed, frozen clips play.

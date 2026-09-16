@@ -39,6 +39,8 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
     /// both music and a voice, and the one people otherwise fake with a dozen keyframes.
     public var ducksUnderVoice: Bool
     public var effects: AudioEffects
+    /// The row of the audio lane the user put this sound in. Nil lets the lane choose.
+    public var lane: Int?
 
     public init(
         id: UUID = UUID(),
@@ -103,7 +105,13 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
             isMuted: isMuted,
             ducksUnderVoice: ducksUnderVoice,
             effects: effects
-        )
+        ).withLane(lane)
+    }
+
+    func withLane(_ lane: Int?) -> AudioClip {
+        var copy = self
+        copy.lane = lane
+        return copy
     }
 }
 

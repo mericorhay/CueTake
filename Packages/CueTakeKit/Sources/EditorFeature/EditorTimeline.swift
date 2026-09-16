@@ -332,6 +332,22 @@ struct EditorTimeline: View {
                     // makes it chase the finger, overshoot and appear to fly away.
                     .animation(isLifted || reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.82), value: lift?.intent)
             }
+
+            // The cuts, each with its transition. Hidden while a clip is being carried.
+            if lift == nil, model.project.segments.count > 1 {
+                TransitionMarks(model: model, scale: scale) { id in
+                    model.pause()
+                    if let cut = model.cuts.first(where: { $0.after == id }) {
+                        jump(to: cut.time)
+                    }
+                    snapCount += 1
+                    withAnimation(DS.Motion.settle) {
+                        model.select(transition: model.selectedTransition == id ? nil : id)
+                    }
+                }
+                .zIndex(2)
+                .transition(.opacity)
+            }
         }
         .frame(height: 64, alignment: .topLeading)
     }

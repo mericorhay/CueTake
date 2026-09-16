@@ -46,6 +46,8 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     let passthroughTrackID = kCMPersistentTrackID_Invalid
     let layers: [AVVideoCompositionLayerInstruction]
     let filters: LiveFilters
+    /// What shows where no layer draws: black, or white under a dip to white.
+    let background: CIColor
 
     init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters) {
         timeRange = instruction.timeRange
@@ -53,6 +55,7 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         let ids = Set(instruction.layerInstructions.map(\.trackID))
         requiredSourceTrackIDs = ids.sorted().map { NSNumber(value: $0) }
         self.filters = filters
+        background = instruction.backgroundColor.map { CIColor(cgColor: $0) } ?? CIColor(red: 0, green: 0, blue: 0)
     }
 }
 
@@ -105,7 +108,7 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                 let time = request.compositionTime
                 let size = request.renderContext.size
                 let bounds = CGRect(origin: .zero, size: size)
-                var frame = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: bounds)
+                var frame = CIImage(color: instruction.background).cropped(to: bounds)
 
                 // The first layer instruction is on top; paint from the bottom up.
                 for layer in instruction.layers.reversed() {

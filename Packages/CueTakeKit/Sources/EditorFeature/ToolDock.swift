@@ -29,9 +29,12 @@ struct ToolDock: View {
     /// The timeline stays between the stable tool row and whichever inspector the row opens. This
     /// keeps the edit visible while its controls grow below it instead of pushing it off-screen.
     var inlineTimeline: AnyView? = nil
+    /// The open panel scrolls inside the space left to it (portrait). In landscape the whole
+    /// column already scrolls, and a scroll view inside it would have no height of its own.
+    var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, generate, split, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, generate, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -70,8 +73,21 @@ struct ToolDock: View {
             }
 
             if let open {
-                panel(for: open)
+                if panelScrolls {
+                    ScrollView {
+                        panel(for: open)
+                            .padding(.bottom, 12)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollIndicators(.visible)
+                    .scrollDismissesKeyboard(.interactively)
+                    .frame(minHeight: 120, maxHeight: .infinity, alignment: .top)
+                    .layoutPriority(1)
                     .transition(.opacity)
+                } else {
+                    panel(for: open)
+                        .transition(.opacity)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -79,7 +95,7 @@ struct ToolDock: View {
         // A tool that acts on a clip closes when there is no clip to act on.
         .onChange(of: index == nil) { _, lost in
             // The AI works on the whole video, not the clip under the playhead.
-            if lost, open != .ai { open = nil }
+            if lost, open != .ai, open != .audio, open != .generate { open = nil }
         }
     }
 
@@ -96,6 +112,7 @@ struct ToolDock: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .frame(height: 62)
     }
 
     /// Generating needs the app's help; a build without it shows no such tool.
@@ -111,7 +128,8 @@ struct ToolDock: View {
         case .zoom:
             index.map { model.project.segments[$0].selectedTake != nil } ?? false
         case .filter, .sound: !model.project.segments.isEmpty
-        case .delete: index != nil && model.project.segments.count > 1
+        case .delete: index.map { model.canDeleteSegment(at: $0) } ?? false
+        case .transition: model.project.segments.count > 1
         case .captions, .audio, .video, .more, .ai, .generate, .text, .image: true
         }
     }
@@ -188,6 +206,7 @@ struct ToolDock: View {
         case .trim: glyph.symbolEffect(.bounce.byLayer, value: count)
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
+        case .transition: glyph.symbolEffect(.bounce.byLayer, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .generate:
             glyph
@@ -214,6 +233,7 @@ struct ToolDock: View {
         case .filter: "camera.filters"
         case .sound: "waveform.badge.plus"
         case .split: "scissors"
+        case .transition: "square.on.square.intersection.dashed"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
         case .captions: "captions.bubble"
@@ -236,6 +256,7 @@ struct ToolDock: View {
         case .filter: String(localized: "editor.dock.filter", bundle: .module)
         case .sound: String(localized: "editor.dock.sound", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
+        case .transition: String(localized: "editor.dock.transition", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
         case .captions: String(localized: "editor.captions", bundle: .module)
@@ -289,11 +310,23 @@ struct ToolDock: View {
             guard let index else { return }
             model.pulse(.delete)
             withAnimation(settle) { model.deleteSegment(at: index) }
+        case .transition:
+            // The cut already open, or the one nearest the playhead.
+            guard let cut = model.selectedTransition ?? model.cutNearPlayhead else { return }
+            open = nil
+            if let time = model.cuts.first(where: { $0.after == cut })?.time { model.seek(to: time) }
+            withAnimation(settle) { model.select(transition: cut) }
         case .text: withAnimation(settle) { model.addTextOverlay() }
         case .image: onAddImage()
         case .video: onAddVideo()
         case .captions: onCaptions()
-        case .audio: onAddAudio()
+        case .audio:
+            // The first sound goes straight to the picker; after that, the list of them.
+            if model.project.audio.isEmpty {
+                onAddAudio()
+            } else {
+                open = open == .audio ? nil : .audio
+            }
         case .more: onMore()
         case .reframe: onTrack()
         case .ai:
@@ -314,7 +347,7 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if item != .ai, item != .generate, let index {
+                if ![.ai, .generate, .audio, .transition].contains(item), let index {
                     Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.4))
@@ -336,6 +369,8 @@ struct ToolDock: View {
             Group {
                 if item == .generate {
                     GeneratePanel(model: model, draft: generateDraft, onCompose: onComposeGenerate)
+                } else if item == .audio {
+                    AudioMixerPanel(model: model, onAdd: onAddAudio)
                 } else if item == .reframe {
                     mainReframePanel
                 } else if item == .zoom {

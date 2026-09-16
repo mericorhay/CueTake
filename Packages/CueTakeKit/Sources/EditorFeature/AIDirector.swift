@@ -988,6 +988,36 @@ extension EditorModel {
             case .removeTrack(let clip):
                 if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
                 add("scope", describe(op), op) { m in m.aiRemoveTracks(clip) }
+            case .transition(let clip, let kindName, let seconds):
+                guard let kind = ClipTransition.Kind(loose: kindName) else { skipped.append(op.type); continue }
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                add("square.on.square.intersection.dashed", describe(op), op, locate: { m in
+                    guard let clip, let i = m.index(ofClip: clip) else { return (nil, nil) }
+                    let cut = m.start(at: i) + m.project.segments[i].barWeight
+                    return (cut - 0.3, (cut - 0.5)...(cut + 0.5))
+                }) { m in
+                    let before = m.project.transitions
+                    if let clip, let i = m.index(ofClip: clip) {
+                        let id = m.project.segments[i].id
+                        m.project.setTransition(after: id, kind: kind, duration: seconds.map { min($0, m.longestTransition(after: id)) })
+                    } else {
+                        for cut in m.cuts {
+                            m.project.setTransition(after: cut.after, kind: kind, duration: min(seconds ?? kind.defaultDuration, m.longestTransition(after: cut.after)))
+                        }
+                    }
+                    return m.project.transitions == before ? nil : [.transitions]
+                }
+            case .removeTransition(let clip):
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                add("scissors", describe(op), op) { m in
+                    let before = m.project.transitions
+                    if let clip, let i = m.index(ofClip: clip) {
+                        m.project.setTransition(after: m.project.segments[i].id, kind: nil)
+                    } else {
+                        m.project.transitions.removeAll()
+                    }
+                    return m.project.transitions == before ? nil : [.transitions]
+                }
             case .generateVideo(let request):
                 guard aiVideoModel != nil else { skipped.append(op.type); continue }
                 let box = AIGeneratedClipBox()
@@ -1606,6 +1636,8 @@ extension EditorModel {
         case .removeCameraMove: "minus.magnifyingglass"
         case .trackFace, .removeTrack: "scope"
         case .generateVideo: "wand.and.stars"
+        case .transition: "square.on.square.intersection.dashed"
+        case .removeTransition: "scissors"
         case .unknown: "questionmark"
         }
     }
@@ -1718,6 +1750,10 @@ extension EditorModel {
             L("editor.ai.op.removeTrack \(clip.map(clipNumber) ?? "*")")
         case .generateVideo(let request):
             L("editor.ai.op.generateVideo \(String(request.prompt.prefix(40)))")
+        case .transition(let clip, let kind, _):
+            L("editor.ai.op.transition \(ClipTransition.Kind(loose: kind).map { String(localized: TransitionMarks.titleKey($0), bundle: .module) } ?? kind) \(clip.map(clipNumber) ?? "*")")
+        case .removeTransition(let clip):
+            L("editor.ai.op.removeTransition \(clip.map(clipNumber) ?? "*")")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

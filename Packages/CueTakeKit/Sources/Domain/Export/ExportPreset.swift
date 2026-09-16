@@ -37,7 +37,7 @@ public struct ExportPreset: Hashable, Sendable, Codable {
     }
 }
 
-public enum ExportDestination: String, Hashable, Sendable, Codable, CaseIterable {
+public enum ExportDestination: String, Hashable, Sendable, Codable {
     case photoLibrary
     case files
 }

@@ -83,6 +83,8 @@ public struct VideoComposer: Sendable {
         /// The voice's level from each moment on, for sound effects that change it.
         var voiceLevels: [(time: CMTime, gain: Float)] = []
         var effectTracks: [String: AVAssetTrack] = [:]
+        /// Each clip as laid, for the transitions between them.
+        var spans: [ClipSpan] = []
 
         for (segmentIndex, segment) in project.segments.enumerated() {
             guard let take = segment.selectedTake,
@@ -326,6 +328,44 @@ public struct VideoComposer: Sendable {
             let target = pieceCursor - cursor
             guard target > .zero else { continue }
 
+            if !project.transitions.isEmpty {
+                let takeStart = take.sourceRange.start.seconds
+                let takeLength = take.sourceRange.duration.seconds
+                let spanFocuses = (recording.reframe ?? []).filter {
+                    $0.time >= takeStart - 0.0001 && $0.time <= takeStart + takeLength + 0.0001
+                }
+                let spanMotions = (recording.cameraMotions ?? []).filter {
+                    $0.end > takeStart + 0.0001 && $0.start < takeStart + takeLength - 0.0001
+                }
+                let base = project.mainVideoPlacement
+                spans.append(ClipSpan(
+                    segmentID: segment.id,
+                    start: cursor,
+                    end: pieceCursor,
+                    track: sourceVideo,
+                    sourceStart: range.start,
+                    sourceDuration: range.duration,
+                    assetDuration: assetDuration,
+                    speed: playback.freeze != nil ? 1 : speed,
+                    holdsEdges: playback.freeze != nil || playback.isReversed,
+                    frameDuration: CMTime(value: 1, timescale: CMTimeScale(max(24, recording.format.frameRate))),
+                    geometry: { offset in
+                        let placement = spanFocuses.isEmpty && spanMotions.isEmpty
+                            ? base
+                            : Self.mainPlacement(
+                                base,
+                                focuses: spanFocuses,
+                                cameraMotions: spanMotions,
+                                takeStart: takeStart,
+                                takeLength: takeLength,
+                                playback: playback,
+                                timelineTime: offset
+                            )
+                        return VideoFrameGeometry(natural: natural, preferred: preferred, placement: placement, render: renderSize)
+                    }
+                ))
+            }
+
             // Audio is optional on purpose: a clip with no audio track is a legitimate thing to
             // put in a video, and refusing the whole export over it would be absurd. A frozen
             // frame is asked for silence — a held picture playing a second of sound under it is
@@ -411,6 +451,16 @@ public struct VideoComposer: Sendable {
         }
 
         guard !instructions.isEmpty || !project.videoLayers.isEmpty else { throw ComposeError.nothingToCompose }
+
+        // Transitions draw two clips at once around each cut; the rest of the timeline is as laid.
+        instructions = try applyTransitions(
+            project.transitions,
+            spans: spans,
+            composition: composition,
+            mainTrack: videoTrack,
+            instructions: instructions,
+            render: renderSize
+        )
 
         let audioMix = await mix(
             project: project,

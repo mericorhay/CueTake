@@ -118,6 +118,10 @@ public final class EditorModel {
     public internal(set) var generationJobs: [ClipGenerationJob] = []
     @ObservationIgnored var generationTasks: [UUID: Task<Void, Never>] = [:]
     /// The camera move picked on the timeline.
+    /// The clip just deleted, for the "deleted · undo" note. Cleared by the note itself.
+    public var lastDeletion: ClipDeletion?
+    /// The cut whose transition is open: the clip it leaves.
+    public var selectedTransition: Segment.ID?
     public var selectedCameraMotion: CameraMotionRecipe.ID?
     /// The clip whose subject track is picked on the timeline.
     public var selectedSubjectTrack: Segment.ID?
@@ -350,6 +354,8 @@ public final class EditorModel {
             let playback = segment.playback
             return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)"
         } + [
+            // Transitions draw from a second track: any change rebuilds the picture.
+            "transitions:" + project.transitions.map { "\($0.after.uuidString):\($0.kind.rawValue):\($0.duration)" }.joined(separator: ","),
             // Where every background effect sits, and whether its render is there to play.
             // Filters are read live by the compositor; only whether there are any changes the build.
             "effects:" + project.effects.filter { $0.filter == nil }.map { effect in
@@ -676,12 +682,33 @@ public final class EditorModel {
     /// Removes a segment. Everything after it closes up on its own, because the timeline is
     /// derived — there is no ripple to perform, only one less thing to lay out.
     public func deleteSegment(at index: Int) {
-        guard project.segments.indices.contains(index), project.segments.count > 1 else { return }
+        guard canDeleteSegment(at: index) else { return }
         record("editor.change.delete", symbol: "trash")
+        // Measured before the clip goes: where it started and how long it lasted on the video.
+        let from = start(at: index)
+        let length = project.segments[index].barWeight
         let removed = project.segments.remove(at: index)
+        // What was laid over the rest of the video stays on the pictures it was laid on.
+        let report = project.closeGap(from: from, length: length)
+        project.transitions.removeAll { $0.after == removed.id }
         if inspectedSegment == removed.id { inspectedSegment = nil }
+        if let selected = selectedAudio, !project.audio.contains(where: { $0.id == selected }) { selectedAudio = nil }
+        if let selected = selectedOverlay, !project.overlays.contains(where: { $0.id == selected }) { select(overlay: nil) }
+        if let selected = selectedEffect, !project.effects.contains(where: { $0.id == selected }) { select(effect: nil) }
+        if let selected = selectedVideoLayer, !project.videoLayers.contains(where: { $0.id == selected }) { select(videoLayer: nil) }
+        select(cameraMotion: nil)
+        select(subjectTrack: nil)
         project.updatedAt = .now
-        playhead = min(playhead, duration)
+        playhead = min(max(0, from - 0.001), duration)
+        // Said to the person who pressed delete; the AI reports its own changes.
+        if !isAIDriving {
+            lastDeletion = ClipDeletion(title: removed.title.isEmpty ? removed.role.displayLabel : removed.title, alsoRemoved: report.removedCount)
+        }
+    }
+
+    /// A clip can go while another remains: an empty timeline has nothing to build a video from.
+    public func canDeleteSegment(at index: Int) -> Bool {
+        project.segments.indices.contains(index) && project.segments.count > 1
     }
 
     public func duplicateSegment(at index: Int) {
@@ -947,16 +974,7 @@ extension EditorModel {
     /// calculations of the same number always drift apart eventually.
     public var audioRowCount: Int {
         guard !project.audio.isEmpty else { return 0 }
-        var ends: [Double] = []
-        for clip in audioClips {
-            let start = clip.start.seconds
-            if let row = ends.firstIndex(where: { $0 <= start + 0.01 }) {
-                ends[row] = clip.timelineRange.end.seconds
-            } else {
-                ends.append(clip.timelineRange.end.seconds)
-            }
-        }
-        return ends.count
+        return (audioRows.values.max() ?? 0) + 1
     }
 
     /// Reads frames for any take that does not have them yet.

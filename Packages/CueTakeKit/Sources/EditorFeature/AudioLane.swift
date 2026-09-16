@@ -26,21 +26,7 @@ struct AudioLane: View {
     /// Greedy, which is the right answer here — it puts a clip in the row a user would have drawn
     /// it in, and never reshuffles rows that are already settled because a new clip arrived.
     /// `EditorModel.audioRowCount` counts the same rows for the playhead's height.
-    private var rows: [AudioClip.ID: Int] {
-        var ends: [Double] = []
-        var result: [AudioClip.ID: Int] = [:]
-        for clip in model.audioClips {
-            let start = clip.start.seconds
-            if let row = ends.firstIndex(where: { $0 <= start + 0.01 }) {
-                ends[row] = clip.timelineRange.end.seconds
-                result[clip.id] = row
-            } else {
-                ends.append(clip.timelineRange.end.seconds)
-                result[clip.id] = ends.count - 1
-            }
-        }
-        return result
-    }
+    private var rows: [AudioClip.ID: Int] { model.audioRows }
 
     var body: some View {
         let placement = rows
@@ -65,6 +51,7 @@ struct AudioLane: View {
         .frame(height: height, alignment: .topLeading)
         .coordinateSpace(.named(Self.space))
         .animation(reduceMotion ? nil : DS.Motion.settle, value: model.project.audio.count)
+        .animation(reduceMotion ? nil : DS.Motion.settle, value: placement)
     }
 
     private func view(for clip: AudioClip) -> some View {

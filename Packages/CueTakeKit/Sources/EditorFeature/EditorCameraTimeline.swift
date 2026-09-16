@@ -40,7 +40,8 @@ extension EditorModel {
         }
     }
 
-    private func clearOtherSelections() {
+    func clearOtherSelections() {
+        selectedTransition = nil
         inspectedSegment = nil
         selectedAudio = nil
         selectedOverlay = nil
