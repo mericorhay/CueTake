@@ -400,7 +400,7 @@ private struct SubjectTrackConfidenceSpine: View {
     let onSelect: (SubjectTrackReviewPoint) -> Void
 
     private var weakPoints: [SubjectTrackReviewPoint] {
-        points.filter(\.needsReview)
+        SubjectTrackReviewPoint.reviewIssues(in: points)
     }
 
     var body: some View {

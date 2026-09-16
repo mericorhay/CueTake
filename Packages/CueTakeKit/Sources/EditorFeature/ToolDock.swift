@@ -396,6 +396,23 @@ struct ToolDock: View {
                             .accessibilityAddTraits(active ? .isSelected : [])
                         }
                     }
+
+                    HStack(spacing: 9) {
+                        Image(systemName: "minus.magnifyingglass")
+                            .foregroundStyle(DS.Palette.ink(0.45))
+                        Slider(
+                            value: Binding(
+                                get: { 1 + (model.cameraMotionAtPlayhead?.amount ?? 0.15) },
+                                set: { model.setCameraMotionAmount($0 - 1) }
+                            ),
+                            in: 1.02...2.0
+                        )
+                        .tint(DS.Palette.lime)
+                        Text(verbatim: "+%\(Int(((model.cameraMotionAtPlayhead?.amount ?? 0.15) * 100).rounded()))")
+                            .dsFont(.mono, .medium, 10)
+                            .foregroundStyle(DS.Palette.ink(0.72))
+                            .frame(width: 38, alignment: .trailing)
+                    }
                 }
                 .padding(.horizontal, 11)
                 .padding(.vertical, 4)

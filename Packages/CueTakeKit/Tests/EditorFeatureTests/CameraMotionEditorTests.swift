@@ -112,6 +112,21 @@ struct CameraMotionEditorTests {
         #expect(abs(changed.end - 9) < 0.001)
     }
 
+    @Test func changingMoveAmountDoesNotReplaceItWithAStaticZoom() throws {
+        let model = model()
+        model.seek(to: 2)
+        model.applyCameraMotion(.pushIn, amount: 0.15)
+        let original = try #require(model.project.recordings.first?.cameraMotions?.first)
+
+        model.setCameraMotionAmount(0.32)
+
+        let changed = try #require(model.project.recordings.first?.cameraMotions?.first)
+        #expect(changed.id == original.id)
+        #expect(changed.kind == .pushIn)
+        #expect(changed.sourceRange == original.sourceRange)
+        #expect(abs(changed.amount - 0.32) < 0.001)
+    }
+
     @Test func cameraRangeCannotOverlapANeighbour() throws {
         let model = model()
         let recording = try #require(model.project.recordings.first)

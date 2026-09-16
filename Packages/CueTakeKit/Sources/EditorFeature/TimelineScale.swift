@@ -7,10 +7,11 @@ import Foundation
 /// worked on, because a fifth of a second is two pixels wide. Laid out at a scale, it is an
 /// instrument: pinch until a second is wide enough to grab, and the edit becomes possible.
 enum TimelineScale {
-    /// Roughly a 30 second video across a phone. The scale a project opens at.
-    static let fit: Double = 11
+    /// About one 30 fps frame per point. The previous 11 pt/s made one pixel almost a tenth of a
+    /// second and turned a small scrub into guesswork even on a Pro Max.
+    static let fit: Double = 32
     /// Below this the clips stop being readable and there is nothing to aim at.
-    static let minimum: Double = 4
+    static let minimum: Double = 8
     /// A second is most of the screen. Enough to place a cut inside a word.
     static let maximum: Double = 240
 
@@ -31,10 +32,11 @@ enum TimelineScale {
 
     /// How close the finger has to be to a boundary before it snaps, in seconds.
     ///
-    /// Constant in *points*, not seconds: snapping should feel the same under the finger at every
-    /// zoom level, and a fixed tolerance in seconds would be unusable at one end and invisible at
-    /// the other.
+    /// Primarily constant in points so snapping feels stable under the finger, with a short time
+    /// ceiling so overview mode never swallows a nearby frame.
     static func snapTolerance(pointsPerSecond: Double) -> Double {
-        10 / pointsPerSecond
+        // At overview scale ten points used to pull the playhead back almost a full second. Keep
+        // nearby frames reachable while preserving a comfortable physical target.
+        min(0.12, 10 / max(pointsPerSecond, 1))
     }
 }

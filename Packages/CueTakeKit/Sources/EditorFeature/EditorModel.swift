@@ -36,7 +36,33 @@ public struct SubjectTrackReviewPoint: Identifiable, Hashable, Sendable {
     }
 
     public var needsReview: Bool {
-        confidence < 0.6 || trackingState == .searching
+        if trackingState == .searching { return true }
+        if trackingState == .reacquired { return false }
+        // Vision confidence naturally breathes while a visible object turns or changes light.
+        // Flag only a genuinely weak tracked sample; the renderer still keeps every point.
+        return confidence < 0.35
+    }
+
+    /// Returns one representative warning per uninterrupted weak stretch. Counting sampled frames
+    /// made a single brief wobble read as dozens of separate failures on a ten-second clip.
+    public static func reviewIssues(in points: [Self]) -> [Self] {
+        let ordered = points.sorted { $0.timelineTime < $1.timelineTime }
+        var issues: [Self] = []
+        var episode: [Self] = []
+        func finishEpisode() {
+            guard let weakest = episode.min(by: { $0.confidence < $1.confidence }) else { return }
+            issues.append(weakest)
+            episode.removeAll(keepingCapacity: true)
+        }
+        for point in ordered {
+            if point.needsReview {
+                episode.append(point)
+            } else {
+                finishEpisode()
+            }
+        }
+        finishEpisode()
+        return issues
     }
 }
 
@@ -1290,6 +1316,10 @@ extension EditorModel {
         }.sorted { $0.progress < $1.progress }
     }
 
+    public var subjectTrackReviewIssues: [SubjectTrackReviewPoint] {
+        SubjectTrackReviewPoint.reviewIssues(in: subjectTrackReviewPoints)
+    }
+
     public func beginSubjectCorrection(at timelineTime: Double) {
         pause()
         seek(to: timelineTime)
@@ -1482,6 +1512,21 @@ extension EditorModel {
         let motionID = project.recordings[recordingIndex].cameraMotions?[motionIndex].id
         record("editor.change.zoomFeel", symbol: "waveform.path", coalescing: "camera-motion-feel-\(motionID?.uuidString ?? "selected")")
         project.recordings[recordingIndex].cameraMotions?[motionIndex].feel = feel
+        project.updatedAt = .now
+    }
+
+    public func setCameraMotionAmount(_ amount: Double) {
+        guard let target = cameraMotionTarget(),
+              let recordingIndex = project.recordings.firstIndex(where: { $0.id == target.recordingID }),
+              let motionIndex = project.recordings[recordingIndex].cameraMotions?.lastIndex(where: {
+                  target.reference >= $0.start - 0.0001 && target.reference <= $0.end + 0.0001
+              })
+        else { return }
+        let bounded = min(max(amount.isFinite ? amount : 0.15, 0.02), 1)
+        guard abs((project.recordings[recordingIndex].cameraMotions?[motionIndex].amount ?? 0) - bounded) > 0.0001 else { return }
+        let motionID = project.recordings[recordingIndex].cameraMotions?[motionIndex].id
+        record("editor.change.zoom", symbol: "plus.magnifyingglass", coalescing: "camera-motion-amount-\(motionID?.uuidString ?? "selected")")
+        project.recordings[recordingIndex].cameraMotions?[motionIndex].amount = bounded
         project.updatedAt = .now
     }
 

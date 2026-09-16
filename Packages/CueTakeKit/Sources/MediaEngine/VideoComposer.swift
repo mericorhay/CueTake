@@ -433,7 +433,7 @@ public struct VideoComposer: Sendable {
 
     /// The face point at a primary clip's timeline moment. Focus uses file time so changing speed,
     /// trimming or splitting keeps it attached to the same frame; reverse reads the take backwards.
-    private static func mainPlacement(
+    static func mainPlacement(
         _ base: VideoPlacement,
         focuses: [VideoFocusKeyframe],
         cameraMotions: [CameraMotionRecipe],

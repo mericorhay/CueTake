@@ -573,6 +573,14 @@ public struct SubjectTracker: Sendable {
         guard let first = values.first else { return [] }
         var result = [first]
         for value in values.dropFirst().dropLast() {
+            // A decoded frame is one decision. Keep malformed or legacy duplicate timestamps from
+            // becoming two review warnings, especially while Vision is searching.
+            if let last = result.last, abs(value.time - last.time) < 0.0001 {
+                if value.confidence < last.confidence || value.state == .searching {
+                    result[result.count - 1] = value
+                }
+                continue
+            }
             guard let last = result.last,
                   hypot(value.x - last.x, value.y - last.y) >= 0.018
                     || value.confidence < 0.6

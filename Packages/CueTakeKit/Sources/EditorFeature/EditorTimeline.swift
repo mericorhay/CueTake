@@ -435,7 +435,10 @@ struct EditorTimeline: View {
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: isLifted)
         .dsMotion(DS.Motion.snap, reduced: reduceMotion, value: isSelected)
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .simultaneousGesture(SpatialTapGesture().onEnded { tap in
+        .simultaneousGesture(DragGesture(minimumDistance: 0).onEnded { tap in
+            // A finger rarely lands without moving a few points. Treat that natural movement as a
+            // direct seek; larger movement remains the scroll view's scrub or the reorder gesture.
+            guard abs(tap.translation.width) < 9, abs(tap.translation.height) < 9 else { return }
             if lift != nil {
                 withAnimation(DS.Motion.settle) { lift = nil }
                 return

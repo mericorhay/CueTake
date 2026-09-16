@@ -3,6 +3,18 @@ import Testing
 @testable import MediaEngine
 
 struct SubjectTrackerTests {
+    @Test func reductionCollapsesDuplicateReviewSamples() {
+        let reduced = SubjectTracker.reduce([
+            SubjectFocus(time: 0, x: 0.5, y: 0.5, confidence: 0.9),
+            SubjectFocus(time: 0.5, x: 0.5, y: 0.5, confidence: 0.2, state: .searching),
+            SubjectFocus(time: 0.5, x: 0.5, y: 0.5, confidence: 0.1, state: .searching),
+            SubjectFocus(time: 1, x: 0.5, y: 0.5, confidence: 0.9),
+        ])
+
+        #expect(reduced.map(\.time) == [0, 0.5, 1])
+        #expect(reduced[1].confidence == 0.1)
+    }
+
     @Test func reductionKeepsAConfidenceDipEvenWhenSubjectIsStill() {
         let points = [
             SubjectFocus(time: 0, x: 0.5, y: 0.5, confidence: 0.95),

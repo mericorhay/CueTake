@@ -63,4 +63,30 @@ struct VideoFrameGeometryTests {
         #expect(zoomed.crop.height < regular.crop.height)
         #expect(zoomed.crop.midX > regular.crop.midX - 1)
     }
+
+    @Test func cameraMotionAddsTravelOnTopOfTrackedFraming() {
+        let motion = CameraMotionRecipe(
+            sourceRange: MediaTimeRange(start: MediaTime(seconds: 3), duration: MediaTime(seconds: 10)),
+            amount: 0.2,
+            kind: .pushIn
+        )
+        let focuses = [
+            VideoFocusKeyframe(time: 3, x: 0.45, y: 0.5, zoom: 1.15),
+            VideoFocusKeyframe(time: 13, x: 0.55, y: 0.5, zoom: 1.15),
+        ]
+
+        let placement = VideoComposer.mainPlacement(
+            .full,
+            focuses: focuses,
+            cameraMotions: [motion],
+            takeStart: 3,
+            takeLength: 10,
+            playback: .normal,
+            timelineTime: 5
+        )
+
+        #expect(abs((placement.zoom ?? 0) - 1.25) < 0.001)
+        #expect(placement.fillsFrame)
+        #expect(abs((placement.focusX ?? 0) - 0.5) < 0.001)
+    }
 }
