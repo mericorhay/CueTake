@@ -168,14 +168,14 @@ public struct VideoModelPreset: Identifiable, Hashable, Sendable {
         resolutions.contains(wanted) ? wanted : (resolutions.last { Self.lines($0) <= Self.lines(wanted) } ?? resolutions.first ?? wanted)
     }
 
-    static func ratio(_ text: String) -> Double {
+    public static func ratio(_ text: String) -> Double {
         let parts = text.split(separator: ":").compactMap { Double($0) }
         guard parts.count == 2, parts[1] > 0 else { return 9.0 / 16.0 }
         return parts[0] / parts[1]
     }
 
     /// Picture height from a name: `720p` is 720, `4k` is 2160.
-    static func lines(_ text: String) -> Int {
+    public static func lines(_ text: String) -> Int {
         let number = Int(text.filter(\.isNumber)) ?? 720
         return text.lowercased().hasSuffix("k") ? number * 540 : number
     }
