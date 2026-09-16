@@ -48,14 +48,18 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     let filters: LiveFilters
     /// What shows where no layer draws: black, or white under a dip to white.
     let background: CIColor
+    /// The transition this stretch belongs to, drawn by the compositor itself.
+    let transition: TransitionRegion?
 
-    init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters) {
+    init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters, transitions: [TransitionRegion] = []) {
         timeRange = instruction.timeRange
         layers = instruction.layerInstructions
         let ids = Set(instruction.layerInstructions.map(\.trackID))
         requiredSourceTrackIDs = ids.sorted().map { NSNumber(value: $0) }
         self.filters = filters
         background = instruction.backgroundColor.map { CIColor(cgColor: $0) } ?? CIColor(red: 0, green: 0, blue: 0)
+        let middle = instruction.timeRange.start + CMTimeMultiplyByRatio(instruction.timeRange.duration, multiplier: 1, divisor: 2)
+        transition = transitions.first { $0.contains(middle) }
     }
 }
 
@@ -110,8 +114,27 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                 let bounds = CGRect(origin: .zero, size: size)
                 var frame = CIImage(color: instruction.background).cropped(to: bounds)
 
+                var layers = instruction.layers
+                // A transition: its two clips first, in the order and with the movement of the
+                // moment; anything added over the video stays over it.
+                if let region = instruction.transition, region.contains(time) {
+                    let look = region.look(at: time)
+                    let ids = region.tracks(at: time)
+                    let outgoing = layers.first { $0.trackID == ids.outgoing }
+                    let incoming = layers.first { $0.trackID == ids.incoming }
+                    layers.removeAll { $0.trackID == ids.outgoing || $0.trackID == ids.incoming }
+                    let pair = [(outgoing, look.outgoing), (incoming, look.incoming)]
+                    for (candidate, move) in look.incomingOnTop ? pair : Array(pair.reversed()) {
+                        guard let layer = candidate, let pixels = request.sourceFrame(byTrackID: layer.trackID),
+                              let placed = Self.place(pixels, layer: layer, at: time, renderHeight: size.height),
+                              let moved = Self.apply(move, to: placed, in: size)
+                        else { continue }
+                        frame = moved.composited(over: frame)
+                    }
+                }
+
                 // The first layer instruction is on top; paint from the bottom up.
-                for layer in instruction.layers.reversed() {
+                for layer in layers.reversed() {
                     guard let pixels = request.sourceFrame(byTrackID: layer.trackID) else { continue }
                     if let image = Self.place(pixels, layer: layer, at: time, renderHeight: size.height) {
                         frame = image.composited(over: frame)
@@ -168,6 +191,38 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                     "inputAVector": CIVector(x: 0, y: 0, z: 0, w: max(0, opacity)),
                 ])
             }
+        }
+        return image
+    }
+
+    /// A placed clip with a transition's movement on it, in Core Image's bottom-up render space.
+    /// Nil when it is not seen at all.
+    static func apply(_ move: TransitionLook.Layer, to image: CIImage, in size: CGSize) -> CIImage? {
+        guard move.opacity > 0.001 else { return nil }
+        var image = image
+        let cx = size.width / 2, cy = size.height / 2
+        if abs(move.scale - 1) > 0.0001 || abs(move.dx) > 0.0001 || abs(move.dy) > 0.0001 {
+            // The look counts down from the top; Core Image counts up from the bottom.
+            let transform = CGAffineTransform(translationX: -cx, y: -cy)
+                .concatenating(CGAffineTransform(scaleX: move.scale, y: move.scale))
+                .concatenating(CGAffineTransform(translationX: cx + move.dx * size.width, y: cy - move.dy * size.height))
+            image = image.transformed(by: transform)
+        }
+        if let visible = move.visible {
+            let height = max(0, visible.height) * size.height
+            let region = CGRect(
+                x: visible.x * size.width,
+                y: size.height - visible.y * size.height - height,
+                width: max(0, visible.width) * size.width,
+                height: height
+            )
+            guard region.width >= 0.5, region.height >= 0.5 else { return nil }
+            image = image.cropped(to: region)
+        }
+        if move.opacity < 0.999 {
+            image = image.applyingFilter("CIColorMatrix", parameters: [
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: CGFloat(move.opacity)),
+            ])
         }
         return image
     }

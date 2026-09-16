@@ -31,7 +31,13 @@ extension VideoComposer {
     ///
     /// The clips keep their places. A second video track carries, for the first half, the next
     /// clip's lead-in and, for the second half, the previous clip's tail; the instructions over
-    /// that stretch draw both tracks, animated. Everything else on the timeline is untouched.
+    /// that stretch hold both tracks, each framed as its clip is. The movement itself is not put
+    /// into the instructions: the compositor draws it, frame by frame, from the returned regions.
+    ///
+    /// It used to be eight sampled ramps per transition handed to the system's compositor. Some
+    /// iOS builds refuse a ramp whose two ends are equal — a crossfade's incoming clip is nothing
+    /// but those — and a refused instruction invalidates the whole video composition, so every
+    /// clip played unframed and the transition not at all.
     func applyTransitions(
         _ transitions: [ClipTransition],
         spans: [ClipSpan],
@@ -39,10 +45,10 @@ extension VideoComposer {
         mainTrack: AVMutableCompositionTrack,
         instructions: [AVMutableVideoCompositionInstruction],
         render: CGSize
-    ) throws -> [AVMutableVideoCompositionInstruction] {
-        guard !transitions.isEmpty, spans.count > 1 else { return instructions }
+    ) throws -> (instructions: [AVMutableVideoCompositionInstruction], regions: [TransitionRegion]) {
+        guard !transitions.isEmpty, spans.count > 1 else { return (instructions, []) }
 
-        struct Region {
+        struct Planned {
             var start: CMTime
             var cut: CMTime
             var end: CMTime
@@ -51,18 +57,20 @@ extension VideoComposer {
             var incoming: ClipSpan
         }
 
-        var regions: [Region] = []
+        var planned: [Planned] = []
         for (outgoing, incoming) in zip(spans, spans.dropFirst()) {
             guard let transition = transitions.last(where: { $0.after == outgoing.segmentID }) else { continue }
             let seconds = ClipTransition.usableDuration(transition.duration, outgoing: outgoing.length, incoming: incoming.length)
             guard seconds >= 0.1 else { continue }
-            let half = CMTime(seconds: seconds / 2, preferredTimescale: 600)
-            let cut = outgoing.end
-            regions.append(Region(start: cut - half, cut: cut, end: cut + half, kind: transition.kind, outgoing: outgoing, incoming: incoming))
+            // On the composition's own ticks, so the instructions around it meet exactly.
+            let half = CMTime(value: max(1, Int64((seconds / 2 * 600).rounded())), timescale: 600)
+            let cut = CMTimeConvertScale(outgoing.end, timescale: 600, method: .roundHalfAwayFromZero)
+            guard cut - half >= (planned.last?.end ?? .zero) else { continue }
+            planned.append(Planned(start: cut - half, cut: cut, end: cut + half, kind: transition.kind, outgoing: outgoing, incoming: incoming))
         }
-        guard !regions.isEmpty,
+        guard !planned.isEmpty,
               let carrier = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
-        else { return instructions }
+        else { return (instructions, []) }
 
         // The second track: lead-ins and tails, each lasting exactly its half.
         func lay(_ span: ClipSpan, from wanted: CMTime, length half: CMTime, at time: CMTime, tail: Bool) throws {
@@ -84,7 +92,7 @@ extension VideoComposer {
             }
         }
 
-        for region in regions {
+        for region in planned {
             let half = region.cut - region.start
             let incomingSpeedLead = CMTime(seconds: half.seconds * region.incoming.speed, preferredTimescale: 600)
             try lay(region.incoming, from: region.incoming.sourceStart - incomingSpeedLead, length: half, at: region.start, tail: false)
@@ -95,7 +103,7 @@ extension VideoComposer {
         var result: [AVMutableVideoCompositionInstruction] = []
         for instruction in instructions {
             var pieces = [instruction.timeRange]
-            for region in regions {
+            for region in planned {
                 let cutOut = CMTimeRange(start: region.start, end: region.end)
                 pieces = pieces.flatMap { piece -> [CMTimeRange] in
                     let overlap = CMTimeRangeGetIntersection(piece, otherRange: cutOut)
@@ -119,86 +127,80 @@ extension VideoComposer {
             }
         }
 
-        // The stretches themselves, sampled so the movement eases.
-        let samples = 8
-        for region in regions {
-            let total = (region.end - region.start).seconds
-            let first = (from: region.start, to: region.cut, outgoingTrack: mainTrack as AVAssetTrack, incomingTrack: carrier as AVAssetTrack)
-            let second = (from: region.cut, to: region.end, outgoingTrack: carrier as AVAssetTrack, incomingTrack: mainTrack as AVAssetTrack)
-            for half in [first, second] {
+        // The stretches themselves: both clips, framed as they are either side of the cut.
+        let samples = 4
+        for region in planned {
+            let halves = [
+                (from: region.start, to: region.cut, outgoingTrack: mainTrack as AVAssetTrack, incomingTrack: carrier as AVAssetTrack),
+                (from: region.cut, to: region.end, outgoingTrack: carrier as AVAssetTrack, incomingTrack: mainTrack as AVAssetTrack),
+            ]
+            for half in halves {
                 let instruction = AVMutableVideoCompositionInstruction()
                 instruction.timeRange = CMTimeRange(start: half.from, end: half.to)
                 let outgoing = AVMutableVideoCompositionLayerInstruction(assetTrack: half.outgoingTrack)
                 let incoming = AVMutableVideoCompositionLayerInstruction(assetTrack: half.incomingTrack)
-
-                let steps = samples / 2
-                let base = (half.from - region.start).seconds
-                var incomingOnTop = false
-                var white = false
-                for step in 0..<steps {
-                    let a = base + (total / 2) * Double(step) / Double(steps)
-                    let b = base + (total / 2) * Double(step + 1) / Double(steps)
-                    let lookA = TransitionLook.at(TransitionLook.eased(a / total), kind: region.kind)
-                    let lookB = TransitionLook.at(TransitionLook.eased(b / total), kind: region.kind)
-                    incomingOnTop = lookA.incomingOnTop || lookB.incomingOnTop
-                    white = lookA.whiteBackground
-                    let timeA = region.start + CMTime(seconds: a, preferredTimescale: 600)
-                    let timeB = step == steps - 1 ? half.to : region.start + CMTime(seconds: b, preferredTimescale: 600)
+                let length = (half.to - half.from).seconds
+                for step in 0..<samples {
+                    let timeA = step == 0 ? half.from : half.from + CMTime(seconds: length * Double(step) / Double(samples), preferredTimescale: 600)
+                    let timeB = step == samples - 1 ? half.to : half.from + CMTime(seconds: length * Double(step + 1) / Double(samples), preferredTimescale: 600)
                     guard timeB > timeA else { continue }
                     let ramp = CMTimeRange(start: timeA, end: timeB)
-
-                    // Seconds into each clip at the two ends of this ramp, held inside the clip.
+                    // Seconds into each clip at the two ends, held inside the clip.
                     let outA = region.outgoing.geometry(min((timeA - region.outgoing.start).seconds, region.outgoing.length))
                     let outB = region.outgoing.geometry(min((timeB - region.outgoing.start).seconds, region.outgoing.length))
                     let inA = region.incoming.geometry(max((timeA - region.incoming.start).seconds, 0))
                     let inB = region.incoming.geometry(max((timeB - region.incoming.start).seconds, 0))
-
-                    Self.ramp(outgoing, from: Self.placed(outA, lookA.outgoing, render: render), to: Self.placed(outB, lookB.outgoing, render: render), over: ramp)
-                    Self.ramp(incoming, from: Self.placed(inA, lookA.incoming, render: render), to: Self.placed(inB, lookB.incoming, render: render), over: ramp)
+                    Self.frame(outgoing, from: outA, to: outB, over: ramp)
+                    Self.frame(incoming, from: inA, to: inB, over: ramp)
                 }
-                instruction.layerInstructions = incomingOnTop ? [incoming, outgoing] : [outgoing, incoming]
-                instruction.backgroundColor = CGColor(gray: white ? 1 : 0, alpha: 1)
+                instruction.layerInstructions = [outgoing, incoming]
+                instruction.backgroundColor = CGColor(gray: region.kind == .fadeWhite ? 1 : 0, alpha: 1)
                 result.append(instruction)
             }
         }
-        return result.sorted { $0.timeRange.start < $1.timeRange.start }
-    }
-
-    /// A clip's framing with a transition's movement on top.
-    struct PlacedLayer {
-        var transform: CGAffineTransform
-        var crop: CGRect
-        var opacity: Float
-    }
-
-    static func placed(_ geometry: VideoFrameGeometry, _ layer: TransitionLook.Layer, render: CGSize) -> PlacedLayer {
-        let cx = render.width / 2, cy = render.height / 2
-        let move = CGAffineTransform(translationX: -cx, y: -cy)
-            .concatenating(CGAffineTransform(scaleX: layer.scale, y: layer.scale))
-            .concatenating(CGAffineTransform(translationX: cx + layer.dx * render.width, y: cy + layer.dy * render.height))
-        let transform = geometry.transform.concatenating(move)
-        var crop = geometry.crop
-        if let visible = layer.visible {
-            let region = CGRect(
-                x: visible.x * render.width,
-                y: visible.y * render.height,
-                width: max(0, visible.width) * render.width,
-                height: max(0, visible.height) * render.height
-            )
-            let inSource = region.applying(transform.inverted()).intersection(geometry.crop)
-            crop = inSource.isNull || inSource.width < 1 || inSource.height < 1
-                ? CGRect(x: geometry.crop.minX, y: geometry.crop.minY, width: 1, height: 1)
-                : inSource
-            if inSource.isNull || inSource.width < 1 || inSource.height < 1 {
-                return PlacedLayer(transform: transform, crop: crop, opacity: 0)
-            }
+        let regions = planned.map {
+            TransitionRegion(start: $0.start, cut: $0.cut, end: $0.end, kind: $0.kind, mainTrackID: mainTrack.trackID, carrierTrackID: carrier.trackID)
         }
-        return PlacedLayer(transform: transform, crop: crop, opacity: Float(min(max(layer.opacity, 0), 1)))
+        return (result.sorted { $0.timeRange.start < $1.timeRange.start }, regions)
     }
 
-    static func ramp(_ layer: AVMutableVideoCompositionLayerInstruction, from a: PlacedLayer, to b: PlacedLayer, over range: CMTimeRange) {
-        layer.setTransformRamp(fromStart: a.transform, toEnd: b.transform, timeRange: range)
-        layer.setCropRectangleRamp(fromStartCropRectangle: a.crop, toEndCropRectangle: b.crop, timeRange: range)
-        layer.setOpacityRamp(fromStartOpacity: a.opacity, toEndOpacity: b.opacity, timeRange: range)
+    /// A clip's framing over part of a transition. A value that does not change is set, not
+    /// ramped: a ramp with equal ends is exactly what some AVFoundation builds refuse.
+    static func frame(_ layer: AVMutableVideoCompositionLayerInstruction, from a: VideoFrameGeometry, to b: VideoFrameGeometry, over range: CMTimeRange) {
+        if a.transform == b.transform {
+            layer.setTransform(a.transform, at: range.start)
+        } else {
+            layer.setTransformRamp(fromStart: a.transform, toEnd: b.transform, timeRange: range)
+        }
+        if a.crop == b.crop {
+            layer.setCropRectangle(a.crop, at: range.start)
+        } else {
+            layer.setCropRectangleRamp(fromStartCropRectangle: a.crop, toEndCropRectangle: b.crop, timeRange: range)
+        }
+    }
+}
+
+/// A cut where two clips are drawn at once, as the compositor needs to know it.
+struct TransitionRegion: Sendable, Equatable {
+    var start: CMTime
+    var cut: CMTime
+    var end: CMTime
+    var kind: ClipTransition.Kind
+    /// The clips' own track, and the one carrying the borrowed lead-in and tail.
+    var mainTrackID: CMPersistentTrackID
+    var carrierTrackID: CMPersistentTrackID
+
+    func contains(_ time: CMTime) -> Bool { time >= start && time < end }
+
+    /// Which track shows which clip: before the cut the leaving clip is still on its own track.
+    func tracks(at time: CMTime) -> (outgoing: CMPersistentTrackID, incoming: CMPersistentTrackID) {
+        time < cut ? (mainTrackID, carrierTrackID) : (carrierTrackID, mainTrackID)
+    }
+
+    /// How the two clips are drawn at a moment, eased.
+    func look(at time: CMTime) -> TransitionLook {
+        let total = (end - start).seconds
+        guard total > 0 else { return TransitionLook.at(1, kind: kind) }
+        return TransitionLook.at(TransitionLook.eased((time - start).seconds / total), kind: kind)
     }
 }

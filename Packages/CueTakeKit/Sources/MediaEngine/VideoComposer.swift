@@ -453,7 +453,7 @@ public struct VideoComposer: Sendable {
         guard !instructions.isEmpty || !project.videoLayers.isEmpty else { throw ComposeError.nothingToCompose }
 
         // Transitions draw two clips at once around each cut; the rest of the timeline is as laid.
-        instructions = try applyTransitions(
+        let transitioned = try applyTransitions(
             project.transitions,
             spans: spans,
             composition: composition,
@@ -461,6 +461,7 @@ public struct VideoComposer: Sendable {
             instructions: instructions,
             render: renderSize
         )
+        instructions = transitioned.instructions
 
         let audioMix = await mix(
             project: project,
@@ -480,12 +481,14 @@ public struct VideoComposer: Sendable {
             timescale: CMTimeScale(max(24, project.format.frameRate))
         )
         videoComposition.instructions = layered.instructions
-        // Filters need a compositor of their own. Only then: every other project keeps the
-        // system's, which is also the only one the export's caption tool works with.
-        if project.effects.contains(where: { $0.filter != nil }) {
+        // Filters and transitions need a compositor of our own. Only then: every other project
+        // keeps the system's, which is also the only one the export's caption tool works with.
+        if project.effects.contains(where: { $0.filter != nil }) || !transitioned.regions.isEmpty {
             let filters = liveFilters ?? LiveFilters(project.effects)
             videoComposition.customVideoCompositorClass = FilterCompositor.self
-            videoComposition.instructions = layered.instructions.map { FilterInstruction($0, filters: filters) }
+            videoComposition.instructions = layered.instructions.map {
+                FilterInstruction($0, filters: filters, transitions: transitioned.regions)
+            }
         }
 
         return Assembled(
