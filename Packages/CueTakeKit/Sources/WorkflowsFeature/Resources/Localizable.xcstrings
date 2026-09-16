@@ -222,6 +222,23 @@
         }
       }
     },
+    "studio.generate.estimate %lld %lld %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld videos · %2$lld s in total · about %3$lld–%4$lld min. Billed to your provider account."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld video · toplam %2$lld sn · yaklaşık %3$lld–%4$lld dk. Ücret sağlayıcı hesabına yansır."
+          }
+        }
+      }
+    },
     "studio.generate.modelIDNote": {
       "extractionState": "manual",
       "localizations": {
@@ -269,6 +286,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "İstem yoksa görüntüsü olmayan her bölüm, başlığı ve senaryosundan üretilir."
+          }
+        }
+      }
+    },
+    "studio.generate.stopped": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durduruldu"
           }
         }
       }
@@ -1055,6 +1089,23 @@
         }
       }
     },
+    "studio.run.progress %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %1$lld of %2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adım %1$lld / %2$lld"
+          }
+        }
+      }
+    },
     "studio.run.result %lld %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1102,6 +1153,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Otomatik kaydediliyor"
+          }
+        }
+      }
+    },
+    "studio.run.stop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durdur"
+          }
+        }
+      }
+    },
+    "studio.run.stopping": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopping after this step…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu adımdan sonra duruyor…"
           }
         }
       }

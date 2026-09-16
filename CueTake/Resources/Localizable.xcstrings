@@ -1855,6 +1855,23 @@
         }
       }
     },
+    "workflow.skip.stopped": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Durduruldu"
+          }
+        }
+      }
+    },
     "workflow.skip.unsupported": {
       "extractionState": "manual",
       "localizations": {

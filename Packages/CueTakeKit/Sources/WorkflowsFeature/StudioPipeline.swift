@@ -149,6 +149,11 @@ struct StudioPipeline: View {
                             .transition(.opacity)
                     }
 
+                    if let board = model.generation, board.stepID == step.id {
+                        GenerationBoardView(board: board)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
                     if isExpanded {
                         StudioStepEditor(model: model, step: step)
                             .transition(.opacity.combined(with: .move(edge: .top)))
@@ -217,15 +222,15 @@ struct StudioPipeline: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .black))
                         .foregroundStyle(DS.Palette.inkInverse)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(reduceMotion ? .opacity : .symbolEffect(.drawOn))
                 case .skipped:
                     Image(systemName: "arrow.turn.down.right")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(DS.Palette.ink(0.6))
+                        .transition(.scale.combined(with: .opacity))
                 case .running:
-                    ProgressView()
-                        .controlSize(.mini)
-                        .tint(DS.Palette.inkInverse)
+                    RunningArc(reduceMotion: reduceMotion)
+                        .transition(.opacity)
                 default:
                     Text(verbatim: "\(index + 1)")
                         .dsFont(.mono, .medium, 10)
@@ -235,11 +240,15 @@ struct StudioPipeline: View {
             .animation(DS.Motion.bloom, value: state)
             .padding(.top, 17)
 
-            Rectangle()
-                .fill(state == .done ? tint : DS.Palette.hairline(0.12))
-                .frame(width: 2)
-                .frame(maxHeight: .infinity)
-                .animation(.easeInOut(duration: 0.45), value: state)
+            ZStack(alignment: .top) {
+                Rectangle().fill(DS.Palette.hairline(0.12))
+                Rectangle()
+                    .fill(tint)
+                    .scaleEffect(x: 1, y: state == .done ? 1 : 0, anchor: .top)
+            }
+            .frame(width: 2)
+            .frame(maxHeight: .infinity)
+            .animation(reduceMotion ? .easeOut(duration: 0.2) : .easeInOut(duration: 0.55), value: state)
         }
         .frame(width: 22)
     }
@@ -326,6 +335,22 @@ struct StudioPipeline: View {
         case .skipped: DS.Palette.hairline(0.15)
         default: DS.Palette.hairline(0.08)
         }
+    }
+}
+
+/// A quarter-open ring turning around the running step's node.
+private struct RunningArc: View {
+    let reduceMotion: Bool
+    @State private var turning = false
+
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: 0.72)
+            .stroke(DS.Palette.inkInverse, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+            .frame(width: 12, height: 12)
+            .rotationEffect(.degrees(turning ? 360 : 0))
+            .animation(reduceMotion ? nil : .linear(duration: 0.9).repeatForever(autoreverses: false), value: turning)
+            .onAppear { turning = true }
     }
 }
 

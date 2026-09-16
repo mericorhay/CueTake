@@ -156,6 +156,8 @@ final class AppModel {
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
+    /// The workflow run in progress, kept so it can be stopped.
+    var workflowRunTask: Task<Void, Never>?
     /// Work going on in the background that does not stop anyone — listening to new clips.
     var activity: String?
     /// A short message that fades by itself: how listening went, what was restored.

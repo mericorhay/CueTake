@@ -96,10 +96,12 @@ private struct ProviderKeyRow: View {
         VStack(alignment: .leading, spacing: 12) {
             Button(action: onToggle) {
                 HStack(spacing: 12) {
-                    Image(systemName: suffix == nil ? "key" : "key.fill")
+                    Image(systemName: icon)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(suffix == nil ? DS.Palette.ink(0.5) : DS.Palette.lime)
+                        .foregroundStyle(iconColor)
+                        .contentTransition(.symbolEffect(.replace))
                         .symbolEffect(.bounce, value: savePulse)
+                        .symbolEffect(.pulse, options: .repeating, isActive: check == .checking)
                         .frame(width: 34, height: 34)
                         .background(Circle().fill(DS.Palette.hairline(0.07)))
                     VStack(alignment: .leading, spacing: 2) {
@@ -130,7 +132,52 @@ private struct ProviderKeyRow: View {
         }
         .padding(14)
         .dsCard(radius: 18)
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(borderColor, lineWidth: 1.2)
+                .animation(DS.Motion.snap, value: check)
+        }
+        .keyframeAnimator(initialValue: 0.0, trigger: refusals) { content, offset in
+            content.offset(x: offset)
+        } keyframes: { _ in
+            KeyframeTrack {
+                SpringKeyframe(-8, duration: 0.07)
+                SpringKeyframe(7, duration: 0.07)
+                SpringKeyframe(-4, duration: 0.07)
+                SpringKeyframe(0, duration: 0.14)
+            }
+        }
+        .sensoryFeedback(.success, trigger: check) { _, new in new == .valid }
+        .sensoryFeedback(.error, trigger: check) { _, new in new == .invalid }
+        .animation(DS.Motion.settle, value: check)
         .onAppear { suffix = APIKeySheet.keys.suffix(for: provider) }
+    }
+
+    @State private var refusals = 0
+
+    private var icon: String {
+        switch check {
+        case .valid: "checkmark.seal.fill"
+        case .invalid: "key.slash"
+        default: suffix == nil ? "key" : "key.fill"
+        }
+    }
+
+    private var iconColor: Color {
+        switch check {
+        case .invalid: DS.Palette.accentWarm
+        case .valid: DS.Palette.lime
+        default: suffix == nil ? DS.Palette.ink(0.5) : DS.Palette.lime
+        }
+    }
+
+    private var borderColor: Color {
+        switch check {
+        case .valid: DS.Palette.lime.opacity(0.55)
+        case .invalid: DS.Palette.accentWarm.opacity(0.7)
+        case .checking: DS.Palette.ink(0.25)
+        default: .clear
+        }
     }
 
     @ViewBuilder
@@ -231,6 +278,7 @@ private struct ProviderKeyRow: View {
 
     @ViewBuilder
     private var checkLine: some View {
+        Group {
         switch check {
         case .idle:
             EmptyView()
@@ -254,6 +302,9 @@ private struct ProviderKeyRow: View {
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.55))
         }
+        }
+        .transition(.opacity.combined(with: .move(edge: .top)))
+        .id(check)
     }
 
     private func save() {
@@ -279,5 +330,6 @@ private struct ProviderKeyRow: View {
             case nil: .unknown
             }
         }
+        if result == false { refusals += 1 }
     }
 }

@@ -106,10 +106,12 @@ public struct GoogleVeoGenerator: VideoGenerator {
         if let image = request.image {
             instance["image"] = ["bytesBase64Encoded": image.base64EncodedString(), "mimeType": HTTP.mimeType(of: image)]
         }
+        let seconds = Int(request.seconds.rounded())
         var parameters: [String: Any] = [
             "aspectRatio": request.aspect,
-            "durationSeconds": Int(request.seconds.rounded()),
-            "resolution": request.resolution,
+            "durationSeconds": seconds,
+            // Veo makes 1080p only at eight seconds; shorter clips are asked for at 720p.
+            "resolution": seconds == 8 ? request.resolution : "720p",
         ]
         if let negative = request.negativePrompt { parameters["negativePrompt"] = negative }
         let body = try await HTTP.object(

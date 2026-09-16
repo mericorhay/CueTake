@@ -1,9 +1,11 @@
+import AVFoundation
 import Domain
 import EditorFeature
 import Foundation
 import GenerationEngine
 import MediaEngine
 import Persistence
+import UIKit
 import WorkflowsFeature
 
 /// Making footage with video models, on the user's own keys.
@@ -14,7 +16,7 @@ extension AppModel {
     ///
     /// One failed video does not fail the rest: the step finishes with what was made and says how
     /// many did not come back, and why the first one failed.
-    func generateVideos(_ options: GenerateVideoOptions) async -> StudioStepState {
+    func generateVideos(_ options: GenerateVideoOptions, step: WorkflowStep.ID) async -> StudioStepState {
         let preset = options.modelPreset
         let provider = preset.provider
         guard !options.resolvedModel.isEmpty else {
@@ -38,38 +40,54 @@ extension AppModel {
         var made: [Int: MediaImporter.ImportedClip] = [:]
         var firstError: String?
 
-        busy = String(localized: "workflow.generating \(0) \(total) \(preset.title)")
-        await withTaskGroup(of: (Int, MediaImporter.ImportedClip?, String?).self) { group in
+        // The studio shows a tile per video instead of covering the app while they are made.
+        let board = GenerationBoard(
+            stepID: step,
+            modelTitle: preset.isCustom ? options.resolvedModel : preset.title,
+            aspect: VideoModelPreset.ratio(preset.aspect(nearest: options.aspect)),
+            prompts: jobs.map(\.prompt)
+        )
+        workflowStudio?.generation = board
+
+        await withTaskGroup(of: (Int, MediaImporter.ImportedClip?, Data?, String?).self) { group in
             var next = 0
             func enqueue() {
                 guard next < jobs.count else { return }
                 let index = next
                 next += 1
                 let request = VideoGenerationRequest.fitted(options, prompt: jobs[index].prompt)
+                board.start(index)
                 group.addTask {
                     do {
-                        let file = try await service.generate(request, provider: provider, key: key, into: staging)
+                        let file = try await service.generate(request, provider: provider, key: key, into: staging) { fraction in
+                            Task { @MainActor in board.progress(index, fraction) }
+                        }
                         defer { try? FileManager.default.removeItem(at: file) }
                         let clip = try await MediaImporter().importClip(from: file, into: media)
-                        return (index, clip, nil)
+                        let thumbnail = await AppModel.thumbnail(of: file)
+                        return (index, clip, thumbnail, nil)
                     } catch is CancellationError {
-                        return (index, nil, nil)
+                        return (index, nil, nil, nil)
                     } catch {
-                        return (index, nil, error.localizedDescription)
+                        if Task.isCancelled { return (index, nil, nil, nil) }
+                        return (index, nil, nil, error.localizedDescription)
                     }
                 }
             }
             for _ in 0..<min(max(options.parallel, 1), 6) { enqueue() }
-            var finished = 0
-            for await (index, clip, failure) in group {
-                finished += 1
-                if let clip { made[index] = clip }
+            for await (index, clip, thumbnail, failure) in group {
+                if let clip {
+                    made[index] = clip
+                    board.finish(index, thumbnail: thumbnail)
+                } else {
+                    board.fail(index, message: failure)
+                }
                 if firstError == nil, let failure { firstError = failure }
-                busy = String(localized: "workflow.generating \(finished) \(total) \(preset.title)")
-                enqueue()
+                // A stopped run starts nothing new.
+                if !Task.isCancelled { enqueue() }
             }
         }
-        busy = nil
+        if Task.isCancelled { board.cancelWaiting() }
         try? FileManager.default.removeItem(at: staging)
 
         layIn(made, for: jobs)
@@ -81,6 +99,15 @@ extension AppModel {
             show(notice: String(localized: "workflow.generate.partial \(made.count) \(total) \(firstError ?? "")"))
         }
         return .done
+    }
+
+    /// The first frame, small, as JPEG.
+    nonisolated static func thumbnail(of video: URL) async -> Data? {
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: video))
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 360, height: 360)
+        guard let (image, _) = try? await generator.image(at: CMTime(seconds: 0.2, preferredTimescale: 600)) else { return nil }
+        return UIImage(cgImage: image).jpegData(compressionQuality: 0.72)
     }
 
     private struct GenerationJob {

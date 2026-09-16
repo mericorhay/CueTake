@@ -20,6 +20,7 @@ public struct WorkflowStudioScreen: View {
     private let onBack: () -> Void
     private let onSave: () -> Void
     private let onRun: () -> Void
+    private let onStop: () -> Void
     private let onAskAI: () -> Void
     private let onPickClips: () -> Void
     private let onDelete: () -> Void
@@ -36,6 +37,7 @@ public struct WorkflowStudioScreen: View {
         onBack: @escaping () -> Void,
         onSave: @escaping () -> Void,
         onRun: @escaping () -> Void,
+        onStop: @escaping () -> Void = {},
         onAskAI: @escaping () -> Void,
         onPickClips: @escaping () -> Void,
         onDelete: @escaping () -> Void
@@ -44,6 +46,7 @@ public struct WorkflowStudioScreen: View {
         self.onBack = onBack
         self.onSave = onSave
         self.onRun = onRun
+        self.onStop = onStop
         self.onAskAI = onAskAI
         self.onPickClips = onPickClips
         self.onDelete = onDelete
@@ -558,19 +561,41 @@ public struct WorkflowStudioScreen: View {
                 )
                 .dsFont(.sans, .semibold, 12)
                 .foregroundStyle(DS.Palette.ink)
-                Text(runDetail)
+                Text(model.isRunning ? runningDetail : runDetail)
                     .dsFont(.sans, .regular, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(model.isRunning ? DS.Palette.lime : DS.Palette.ink(0.4))
+                    .contentTransition(.numericText())
             }
 
             Spacer(minLength: 0)
+
+            if model.isRunning {
+                // Stopping is always one tap away: a run of sixty generated videos is not
+                // something to be trapped in.
+                Button {
+                    model.requestStop()
+                    onStop()
+                } label: {
+                    Image(systemName: model.isStopping ? "hourglass" : "stop.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink)
+                        .contentTransition(.symbolEffect(.replace))
+                        .frame(width: 46, height: 46)
+                        .background(Circle().fill(DS.Palette.hairline(0.1)))
+                }
+                .buttonStyle(.dsPressIcon)
+                .disabled(model.isStopping)
+                .accessibilityLabel(Text("studio.run.stop", bundle: .module))
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
 
             Button(action: onRun) {
                 HStack(spacing: 7) {
                     Image(systemName: model.isRunning ? "hourglass" : "play.fill")
                         .font(.system(size: 13, weight: .bold))
                         .contentTransition(.symbolEffect(.replace))
-                        .symbolEffect(.rotate, options: .repeating, isActive: model.isRunning)
+                        .symbolEffect(.rotate, options: .repeating, isActive: model.isRunning && !reduceMotion)
+                        .symbolEffect(.bounce, value: model.lastRunSummary)
                     Text(
                         model.isRunning
                             ? String(localized: "studio.run.running", bundle: .module)
@@ -581,7 +606,20 @@ public struct WorkflowStudioScreen: View {
                 .foregroundStyle(DS.Palette.inkInverse)
                 .padding(.horizontal, 22)
                 .padding(.vertical, 14)
-                .background(Capsule().fill(model.isRunning ? DS.Palette.lime : DS.Palette.accent))
+                .background {
+                    // The button fills as the run advances, left to right.
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(model.isRunning ? DS.Palette.lime.opacity(0.55) : DS.Palette.accent)
+                            if model.isRunning {
+                                Capsule()
+                                    .fill(DS.Palette.lime)
+                                    .frame(width: max(proxy.size.height, proxy.size.width * model.runProgress))
+                            }
+                        }
+                    }
+                }
+                .clipShape(Capsule())
                 .shadow(color: DS.Palette.accent(model.isRunning ? 0 : 0.35), radius: 16, y: 8)
             }
             .buttonStyle(.dsPress(radius: 30))
@@ -597,6 +635,17 @@ public struct WorkflowStudioScreen: View {
         .padding(.horizontal, 14)
         .padding(.bottom, 26)
         .animation(DS.Motion.snap, value: model.isRunning)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.5), value: model.runProgress)
+        .sensoryFeedback(.success, trigger: model.lastRunSummary) { _, summary in
+            (summary?.completed ?? 0) > 0
+        }
+    }
+
+    private var runningDetail: String {
+        let total = model.definition.steps.count
+        let settled = Int((model.runProgress * Double(total)).rounded())
+        if model.isStopping { return String(localized: "studio.run.stopping", bundle: .module) }
+        return String(localized: "studio.run.progress \(settled) \(total)", bundle: .module)
     }
 
     private var runDetail: String {

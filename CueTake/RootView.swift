@@ -285,7 +285,8 @@ struct RootView: View {
                     model: studio,
                     onBack: { model.closeWorkflow() },
                     onSave: { model.saveWorkflow() },
-                    onRun: { Task { await model.runWorkflow() } },
+                    onRun: { model.startWorkflowRun() },
+                    onStop: { model.stopWorkflowRun() },
                     onAskAI: { Task { await model.askWorkflowAI() } },
                     onPickClips: { model.pickClipsForWorkflow() },
                     onDelete: { Task { await model.deleteWorkflow() } }

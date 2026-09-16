@@ -237,6 +237,20 @@ extension AppModel {
     /// A short pause between steps is deliberate. The work itself is often instant, and a pipeline
     /// that finishes before the first card has lit up tells the user nothing about what happened
     /// to their video — the rail filling one step at a time is the report.
+    func startWorkflowRun() {
+        guard workflowRunTask == nil else { return }
+        workflowRunTask = Task { [weak self] in
+            await self?.runWorkflow()
+            self?.workflowRunTask = nil
+        }
+    }
+
+    /// Stops after the step under way lets go: generation requests are cancelled, nothing
+    /// half-made is laid in, and every step not reached is marked as stopped.
+    func stopWorkflowRun() {
+        workflowRunTask?.cancel()
+    }
+
     func runWorkflow() async {
         guard let studio = workflowStudio, !studio.isRunning else { return }
         let definition = studio.definition
@@ -253,6 +267,10 @@ extension AppModel {
         project.updatedAt = .now
 
         for step in definition.steps {
+            if Task.isCancelled {
+                studio.mark(step.id, .skipped(String(localized: "workflow.skip.stopped")))
+                continue
+            }
             guard step.isEnabled else {
                 studio.mark(step.id, .skipped(String(localized: "workflow.skip.disabled")))
                 continue
@@ -260,7 +278,7 @@ extension AppModel {
 
             studio.mark(step.id, .running)
             try? await Task.sleep(for: .milliseconds(220))
-            let outcome = await perform(step.kind, in: definition)
+            let outcome = await perform(step.kind, step: step.id, in: definition)
             studio.mark(step.id, outcome)
             try? await Task.sleep(for: .milliseconds(160))
         }
@@ -275,7 +293,7 @@ extension AppModel {
         }
     }
 
-    private func perform(_ kind: WorkflowStepKind, in definition: WorkflowDefinition) async -> StudioStepState {
+    private func perform(_ kind: WorkflowStepKind, step: WorkflowStep.ID, in definition: WorkflowDefinition) async -> StudioStepState {
         switch kind {
         case .assembleSections:
             return assemble(definition.sections)
@@ -356,7 +374,7 @@ extension AppModel {
             return exportModel.outputURL != nil ? .done : .skipped(String(localized: "workflow.skip.exportFailed"))
 
         case .generateVideo(let options):
-            return await generateVideos(options)
+            return await generateVideos(options, step: step)
 
         case .generateScript, .segmentScript:
             return .skipped(String(localized: "workflow.skip.script"))

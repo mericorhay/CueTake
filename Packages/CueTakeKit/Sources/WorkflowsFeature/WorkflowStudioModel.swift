@@ -60,6 +60,10 @@ public final class WorkflowStudioModel {
     public private(set) var stepStates: [WorkflowStep.ID: StudioStepState] = [:]
     public private(set) var isRunning = false
     public private(set) var lastRunSummary: StudioRunSummary?
+    /// The videos a "Generate video" step is making, or made on the last run.
+    public var generation: GenerationBoard?
+    /// True between asking a run to stop and the run noticing.
+    public private(set) var isStopping = false
     public var expandedStep: WorkflowStep.ID?
 
     public var aiRequest = ""
@@ -255,6 +259,8 @@ public final class WorkflowStudioModel {
 
     public func beginRun() {
         isRunning = true
+        isStopping = false
+        generation = nil
         lastRunSummary = nil
         stepStates = Dictionary(uniqueKeysWithValues: definition.steps.map { ($0.id, .waiting) })
     }
@@ -263,8 +269,22 @@ public final class WorkflowStudioModel {
         stepStates[id] = state
     }
 
+    public func requestStop() {
+        guard isRunning else { return }
+        isStopping = true
+    }
+
+    /// How far the run is, 0…1, counting finished and skipped steps.
+    public var runProgress: Double {
+        let total = definition.steps.count
+        guard total > 0 else { return 0 }
+        let settled = stepStates.values.filter { $0 != .waiting && $0 != .running }.count
+        return Double(settled) / Double(total)
+    }
+
     public func finishRun() {
         isRunning = false
+        isStopping = false
         lastRunSummary = StudioRunSummary(
             completed: stepStates.values.filter { $0 == .done }.count,
             skipped: stepStates.values.filter {

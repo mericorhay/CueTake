@@ -14,6 +14,8 @@ struct StudioGenerateVideoEditor: View {
 
     @State private var newPrompt = ""
     @State private var keyPresent = true
+    @Namespace private var selection
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var preset: VideoModelPreset { options.modelPreset }
 
@@ -36,7 +38,9 @@ struct StudioGenerateVideoEditor: View {
             prompts
             styleField
             shape
+            estimate
         }
+        .animation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.38, dampingFraction: 0.8), value: options.preset)
         .onAppear { keyPresent = ProviderKeyStore().hasKey(for: preset.provider) }
         .onChange(of: options.preset) { keyPresent = ProviderKeyStore().hasKey(for: preset.provider) }
     }
@@ -62,10 +66,16 @@ struct StudioGenerateVideoEditor: View {
                         .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.75))
                         .padding(.horizontal, 11)
                         .padding(.vertical, 7)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(isOn ? DS.Palette.lime : DS.Palette.hairline(0.07))
-                        )
+                        .background {
+                            if isOn {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(DS.Palette.lime)
+                                    .matchedGeometryEffect(id: "model", in: selection)
+                            } else {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(DS.Palette.hairline(0.07))
+                            }
+                        }
                     }
                     .buttonStyle(.dsPress(radius: 10))
                 }
@@ -239,6 +249,23 @@ struct StudioGenerateVideoEditor: View {
             label("studio.param.parallel")
             chips([1, 2, 3, 4, 5], selected: options.parallel, text: { "\($0)" }) { value in update { $0.parallel = value } }
         }
+    }
+
+    /// What the run will ask for, before it is asked: how many videos, how long, and that the
+    /// provider bills the user's own account.
+    private var estimate: some View {
+        let count = max(options.prompts.count, 1)
+        let batches = Int((Double(count) / Double(max(options.parallel, 1))).rounded(.up))
+        // Video models usually take one to three minutes a clip.
+        let low = max(1, batches * 1), high = max(2, batches * 3)
+        return Label {
+            Text("studio.generate.estimate \(count) \(Int(options.seconds) * count) \(low) \(high)", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .contentTransition(.numericText())
+        } icon: {
+            Image(systemName: "clock")
+        }
+        .foregroundStyle(DS.Palette.ink(0.5))
     }
 
     // MARK: Controls
