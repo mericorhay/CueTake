@@ -1,4 +1,5 @@
 import Domain
+import EditorFeature
 import Foundation
 import GenerationEngine
 import MediaEngine
