@@ -51,12 +51,12 @@ extension AppModel {
 
         await withTaskGroup(of: (Int, MediaImporter.ImportedClip?, Data?, String?).self) { group in
             var next = 0
-            func enqueue() {
-                guard next < jobs.count else { return }
+            // Returns the job it started; the board is told by the caller, on the main actor.
+            func enqueue() -> Int? {
+                guard next < jobs.count else { return nil }
                 let index = next
                 next += 1
                 let request = VideoGenerationRequest.fitted(options, prompt: jobs[index].prompt)
-                board.start(index)
                 group.addTask {
                     do {
                         let file = try await service.generate(request, provider: provider, key: key, into: staging) { fraction in
@@ -73,18 +73,21 @@ extension AppModel {
                         return (index, nil, nil, error.localizedDescription)
                     }
                 }
+                return index
             }
-            for _ in 0..<min(max(options.parallel, 1), 6) { enqueue() }
+            for _ in 0..<min(max(options.parallel, 1), 6) {
+                if let started = enqueue() { board.start(started) }
+            }
             for await (index, clip, thumbnail, failure) in group {
                 if let clip {
                     made[index] = clip
                     board.finish(index, thumbnail: thumbnail)
                 } else {
-                    board.fail(index, message: failure)
+                    board.fail(index, message: failure ?? String(localized: "workflow.skip.stopped"))
                 }
                 if firstError == nil, let failure { firstError = failure }
                 // A stopped run starts nothing new.
-                if !Task.isCancelled { enqueue() }
+                if !Task.isCancelled, let started = enqueue() { board.start(started) }
             }
         }
         if Task.isCancelled { board.cancelWaiting() }
