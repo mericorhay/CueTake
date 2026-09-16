@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import SwiftUI
+import UIKit
 
 /// The editing surface: a ruler in seconds, clips drawn to scale, and a playhead you can take hold of.
 ///
@@ -28,9 +29,9 @@ struct EditorTimeline: View {
     /// A picked-up clip keeps its identity while the row underneath it previews the result. Using
     /// an id instead of a position matters because a successful drop changes the positions.
     @State private var lift: LiftState?
-    /// Gesture state resets itself even when iOS cancels a touch. It is therefore the authority for
-    /// locking horizontal scrolling; a stale visual state can never make the timeline untouchable.
-    @GestureState private var reorderGestureActive = false
+    /// True from the moment a held clip lifts until the finger lets go (or iOS cancels the touch),
+    /// which the UIKit recogniser always reports.
+    @State private var reorderGestureActive = false
     /// Bumped every time something snaps, which is what the haptic keys off.
     @State private var snapCount = 0
 
@@ -151,16 +152,6 @@ struct EditorTimeline: View {
             }
         }
         .onChange(of: model.pointsPerSecond) { follow() }
-        .onChange(of: reorderGestureActive) { wasActive, isActive in
-            guard wasActive, !isActive else { return }
-            // `onEnded` clears or commits synchronously. The next run-loop turn is a fallback for
-            // interruptions where SwiftUI cancels the gesture and never delivers `onEnded`.
-            Task { @MainActor in
-                await Task.yield()
-                guard !reorderGestureActive, lift != nil else { return }
-                withAnimation(DS.Motion.settle) { lift = nil }
-            }
-        }
         .overlay { centreLine }
         .overlay {
             if model.aiSession?.phase == .thinking {
@@ -254,12 +245,8 @@ struct EditorTimeline: View {
                 .fill(DS.Palette.ink)
                 .frame(width: model.isScrubbing ? 16 : 11, height: 11)
 
-            // Under the finger, where the finger is covering the answer.
-            if model.isScrubbing {
-                ScrubLens(model: model)
-                    .offset(y: -34)
-                    .transition(.opacity)
-            }
+            // The exact time while scrubbing is read in the timeline heading: a glass bubble
+            // above the line collided with that heading and was cut in half.
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .allowsHitTesting(false)
@@ -465,7 +452,7 @@ struct EditorTimeline: View {
                 if changedClip { model.inspectorTab = .script }
             }
         }
-        .simultaneousGesture(reorderGesture(for: segment, at: index))
+        .gesture(reorderGesture(for: segment, at: index))
         // How long the clip is, over it, while either end is pulled.
         .overlay(alignment: .top) {
             if trim?.index == index || leadTrim?.index == index {
@@ -582,38 +569,28 @@ struct EditorTimeline: View {
     /// and the timeline is not disabled until the finger deliberately moves. This keeps a tap a
     /// tap, lets a horizontal swipe scrub immediately, and prevents an ordinary selection from
     /// leaving the whole timeline in reorder mode.
-    private func reorderGesture(for segment: Segment, at index: Int) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.32, maximumDistance: 10)
-            .sequenced(before: DragGesture(minimumDistance: 7, coordinateSpace: .global))
-            .updating($reorderGestureActive) { phase, active, _ in
-                if case .second(true, let drag) = phase {
-                    active = drag != nil
-                } else {
-                    active = false
-                }
-            }
-            .onChanged { phase in
-                switch phase {
-                case .second(true, let drag):
-                    // SwiftUI reports nil while the second gesture is waiting for its movement
-                    // threshold. Starting only after a real drag is what keeps a stationary hold
-                    // from lifting the clip and disabling the scroll view.
-                    if let drag {
-                        beginReorder(segment, at: index)
-                        updateReorder(with: drag, at: index)
-                    }
-                default:
-                    break
-                }
-            }
-            .onEnded { phase in
-                if case .second(true, let drag) = phase, let drag, lift?.segmentID == segment.id {
-                    updateReorder(with: drag, at: index)
+    /// Hold, then drag. A UIKit long press rather than a SwiftUI sequence: the SwiftUI long press
+    /// chained to a drag claimed every touch on the clips before the scroll view saw it, so a swipe
+    /// that started on a clip did not scrub. UIKit's recogniser fails as soon as the finger moves
+    /// early, leaving the swipe to the scroll view, and once it fires it follows the same touch.
+    private func reorderGesture(for segment: Segment, at index: Int) -> ClipHoldGesture {
+        ClipHoldGesture(
+            onBegan: {
+                reorderGestureActive = true
+                withAnimation(DS.Motion.bloom) { beginReorder(segment, at: index) }
+            },
+            onChanged: { translation in
+                updateReorder(with: translation, at: index)
+            },
+            onEnded: { committed in
+                reorderGestureActive = false
+                if committed, lift?.segmentID == segment.id {
                     commitReorder(at: index)
                 } else {
                     cancelReorder(for: segment.id)
                 }
             }
+        )
     }
 
     private func beginReorder(_ segment: Segment, at index: Int) {
@@ -630,13 +607,13 @@ struct EditorTimeline: View {
         snapCount += 1
     }
 
-    private func updateReorder(with drag: DragGesture.Value, at index: Int) {
+    private func updateReorder(with translation: CGSize, at index: Int) {
         guard var activeLift = lift, activeLift.sourceIndex == index else { return }
-        let offset = clampedReorderOffset(Double(drag.translation.width), from: index)
+        let offset = clampedReorderOffset(Double(translation.width), from: index)
         let intent = reorderIntent(from: index, offset: offset)
         activeLift.offset = offset
-        activeLift.verticalOffset = min(max(Double(drag.translation.height) * 0.10, -3), 4)
-        activeLift.tilt = min(max(Double(drag.translation.height) * 0.12, -4), 4)
+        activeLift.verticalOffset = min(max(Double(translation.height) * 0.10, -3), 4)
+        activeLift.tilt = min(max(Double(translation.height) * 0.12, -4), 4)
         let didCrossTarget = activeLift.intent != intent
         activeLift.intent = intent
         lift = activeLift
@@ -750,5 +727,47 @@ struct EditorTimeline: View {
             break
         }
         return segments
+    }
+}
+
+/// A long press that keeps reporting where the finger goes after it fires.
+struct ClipHoldGesture: UIGestureRecognizerRepresentable {
+    var onBegan: () -> Void
+    var onChanged: (CGSize) -> Void
+    var onEnded: (Bool) -> Void
+
+    final class Coordinator {
+        var origin: CGPoint = .zero
+    }
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let recognizer = UILongPressGestureRecognizer()
+        recognizer.minimumPressDuration = 0.32
+        // Moving further than this before the hold completes is a swipe: the recogniser fails
+        // and the timeline scrolls.
+        recognizer.allowableMovement = 10
+        return recognizer
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        let point = recognizer.location(in: nil)
+        switch recognizer.state {
+        case .began:
+            context.coordinator.origin = point
+            onBegan()
+        case .changed:
+            let origin = context.coordinator.origin
+            onChanged(CGSize(width: point.x - origin.x, height: point.y - origin.y))
+        case .ended:
+            onEnded(true)
+        case .cancelled, .failed:
+            onEnded(false)
+        default:
+            break
+        }
     }
 }

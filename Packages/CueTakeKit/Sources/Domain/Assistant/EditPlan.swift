@@ -108,6 +108,14 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case mainVolume(Double)
         /// Which listener's words a clip (or every clip) uses: device or cloud.
         case useTranscript(clip: String?, source: String)
+        /// Lays a camera move over a stretch of the finished video, or changes one (`move`).
+        case cameraMove(CameraMoveRequest)
+        case removeCameraMove(move: String)
+        /// Follows the speaker's face in a clip (every clip when nil); `closeness` is how much
+        /// closer the framing gets, which is what gives the camera room to follow.
+        case trackFace(clip: String?, closeness: Double?)
+        /// Stops following in a clip (every clip when nil).
+        case removeTrack(clip: String?)
 
         case unknown(type: String)
 
@@ -160,6 +168,10 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .splitOverlay: "splitOverlay"
             case .mainVolume: "mainVolume"
             case .useTranscript: "useTranscript"
+            case .cameraMove: "cameraMove"
+            case .removeCameraMove: "removeCameraMove"
+            case .trackFace: "trackFace"
+            case .removeTrack: "removeTrack"
             case .unknown(let type): type
             }
         }
@@ -539,6 +551,26 @@ extension EditPlan.Operation: Codable {
         case "mainVolume":
             guard let volume = f.number("volume") else { self = unknown; return }
             self = .mainVolume(FilterRequest.unit(volume))
+        case "cameraMove", "zoom", "camera":
+            let at = f.number("at") ?? f.number("from") ?? f.number("start")
+            let to = f.number("to") ?? f.number("end") ?? at.flatMap { a in f.number("duration").map { a + $0 } }
+            let request = CameraMoveRequest(
+                move: f.string("move"),
+                at: at,
+                to: to,
+                kind: CameraMoveRequest.kind(f.string("kind") ?? f.string("style")),
+                amount: CameraMoveRequest.amount(f.number("amount") ?? f.number("zoom")),
+                feel: CameraMoveRequest.feel(f.string("feel"))
+            )
+            guard request.move != nil || request.at != nil else { self = unknown; return }
+            self = .cameraMove(request)
+        case "removeCameraMove", "removeZoom":
+            guard let move = f.string("move") else { self = unknown; return }
+            self = .removeCameraMove(move: move)
+        case "trackFace", "track", "followFace":
+            self = .trackFace(clip: f.string("clip"), closeness: f.number("closeness").map { CameraMoveRequest.amount($0) ?? 0.12 })
+        case "removeTrack", "stopTracking":
+            self = .removeTrack(clip: f.string("clip"))
         case "useTranscript":
             guard let source = f.string("source"), ["device", "cloud"].contains(source) else { self = unknown; return }
             self = .useTranscript(clip: f.string("clip"), source: source)
@@ -696,6 +728,16 @@ extension EditPlan.Operation: Codable {
             try put("volume", volume)
         case .useTranscript(let clip, let source):
             try put("clip", clip); try put("source", source)
+        case .cameraMove(let r):
+            try put("move", r.move); try put("at", r.at); try put("to", r.to)
+            try put("kind", r.kind.map(EditDocument.documentName)); try put("amount", r.amount)
+            try put("feel", r.feel?.rawValue)
+        case .removeCameraMove(let move):
+            try put("move", move)
+        case .trackFace(let clip, let closeness):
+            try put("clip", clip); try put("closeness", closeness)
+        case .removeTrack(let clip):
+            try put("clip", clip)
         case .unknown:
             break
         }
@@ -752,6 +794,13 @@ extension EditPlan {
             case .splitVideo(let video, let at): .splitVideo(video: refs.video(video), at: at)
             case .splitOverlay(let overlay, let at): .splitOverlay(overlay: refs.overlay(overlay), at: at)
             case .useTranscript(let clip, let source): .useTranscript(clip: clip.map(refs.clip), source: source)
+            case .cameraMove(let r):
+                .cameraMove(CameraMoveRequest(
+                    move: r.move.map(refs.move), at: r.at, to: r.to, kind: r.kind, amount: r.amount, feel: r.feel
+                ))
+            case .removeCameraMove(let move): .removeCameraMove(move: refs.move(move))
+            case .trackFace(let clip, let closeness): .trackFace(clip: clip.map(refs.clip), closeness: closeness)
+            case .removeTrack(let clip): .removeTrack(clip: clip.map(refs.clip))
             case .layoutVideos, .mainVolume: op
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }

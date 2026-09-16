@@ -76,6 +76,9 @@ public struct EditorScreen: View {
     @State private var showsSubjectTrackingEditor = false
     /// Where typing goes while the keyboard is up.
     @State private var typing: TextEntryTarget?
+    /// What is being written to the AI, and whether its bar is open at the top.
+    @State private var aiDraft = ""
+    @State private var composingAI = false
 
     /// Changes when a script is edited, a take is selected, or transcription finishes.
     private var roleAnalysisInput: [String] {
@@ -135,7 +138,32 @@ public struct EditorScreen: View {
                 .id(typing)
             }
         }
+        .overlay(alignment: .top) {
+            if composingAI, let onAIEdit {
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation(DS.Motion.settle) { composingAI = false } }
+                    AIPromptBar(
+                        text: $aiDraft,
+                        onSend: {
+                            let text = aiDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                            guard !text.isEmpty, !model.isAIDriving else { return }
+                            aiDraft = ""
+                            withAnimation(DS.Motion.settle) {
+                                composingAI = false
+                                dockPanel = nil
+                            }
+                            model.askAI(text, using: onAIEdit)
+                        },
+                        onCancel: { withAnimation(DS.Motion.settle) { composingAI = false } }
+                    )
+                }
+                .transition(.opacity)
+            }
+        }
         .animation(DS.Motion.settle, value: typing)
+        .animation(DS.Motion.settle, value: composingAI)
         .onAppear { model.autoAssignSegmentRoles() }
         .onChange(of: roleAnalysisInput) { _, _ in model.autoAssignSegmentRoles() }
     }
@@ -669,15 +697,34 @@ public struct EditorScreen: View {
 
             Spacer(minLength: 8)
 
-            ViewThatFits(in: .horizontal) {
-                Text(verbatim: "\(model.playheadLabel) / \(model.durationLabel)")
-                Text(model.playheadLabel)
+            if model.isScrubbing {
+                // While the finger is on the timeline: the time to the hundredth and the frame.
+                HStack(spacing: 6) {
+                    Text(verbatim: ScrubLens.preciseLabel(model.playhead))
+                        .dsFont(.mono, .semibold, 12)
+                        .foregroundStyle(DS.Palette.ink)
+                    Text(verbatim: ScrubLens.frameLabel(for: model))
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                }
+                .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 10)
+                .frame(height: 26)
+                .background(Capsule().fill(DS.Palette.hairline(0.1)))
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    Text(verbatim: "\(model.playheadLabel) / \(model.durationLabel)")
+                    Text(model.playheadLabel)
+                }
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(DS.Palette.ink(0.42))
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .lineLimit(1)
             }
-            .dsFont(.mono, .medium, 10)
-            .foregroundStyle(DS.Palette.ink(0.42))
-            .monospacedDigit()
-            .contentTransition(.numericText())
-            .lineLimit(1)
 
             Button(action: model.skipToStart) {
                 Image(systemName: "backward.end.fill")
@@ -709,6 +756,7 @@ public struct EditorScreen: View {
             .animation(DS.Motion.snap, value: model.isPlaying)
         }
         .frame(height: 44)
+        .animation(DS.Motion.snap, value: model.isScrubbing)
     }
 
     // MARK: - Selection
@@ -820,6 +868,11 @@ public struct EditorScreen: View {
                     onAddVideo: onAddVideo,
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
+                    aiDraft: $aiDraft,
+                    onComposeAI: {
+                        model.pause()
+                        withAnimation(DS.Motion.settle) { composingAI = true }
+                    },
                     onAllowCloudAI: onAllowCloudAI,
                     onAddImage: { pickingImage = true },
                     onShowAIChanges: { showsAIChanges = true },

@@ -41,6 +41,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var animations: [String]
     /// The finished video sampled every `beatStep` seconds, only when asked for.
     public var beats: [Beat]?
+    /// Camera moves (zooms) on the finished video.
+    public var cameraMoves: [CameraMove]?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.
@@ -63,6 +65,10 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var captions: [Caption]
         /// Other attempts at this clip, when there are any.
         public var takes: [TakeItem]?
+        /// True when the picture follows the speaker's face.
+        public var tracked: Bool?
+        /// Finished-video seconds where the followed face was lost.
+        public var lost: [Double]?
     }
 
     public struct Word: Codable, Sendable, Equatable {
@@ -233,6 +239,7 @@ public struct EditReferences: Sendable {
     public var takes: [String: UUID] = [:]
     public var effects: [String: UUID] = [:]
     public var videos: [String: UUID] = [:]
+    public var moves: [String: UUID] = [:]
 
     public init(project: Project) {
         var caption = 0
@@ -253,6 +260,7 @@ public struct EditReferences: Sendable {
         for (i, overlay) in project.overlays.enumerated() { overlays["o\(i + 1)"] = overlay.id }
         for (i, effect) in project.effects.enumerated() { effects["e\(i + 1)"] = effect.id }
         for (i, layer) in project.videoLayers.enumerated() { videos["v\(i + 1)"] = layer.id }
+        for (i, move) in EditDocument.cameraMoves(in: project).enumerated() { moves["m\(i + 1)"] = move.recipe.id }
         for (i, clip) in project.audio.enumerated() { audio["a\(i + 1)"] = clip.id }
     }
 
@@ -279,6 +287,7 @@ public struct EditReferences: Sendable {
     public func take(_ reference: String) -> String { Self.resolve(reference, in: takes) }
     public func effect(_ reference: String) -> String { Self.resolve(reference, in: effects) }
     public func video(_ reference: String) -> String { Self.resolve(reference, in: videos) }
+    public func move(_ reference: String) -> String { Self.resolve(reference, in: moves) }
 }
 
 extension EditDocument {
@@ -495,6 +504,27 @@ extension EditDocument {
             animations: OverlayAnimation.allCases.map(\.rawValue),
             beats: beats
         )
+        let moves = Self.cameraMoves(in: project)
+        if !moves.isEmpty {
+            cameraMoves = moves.enumerated().map { i, move in
+                CameraMove(
+                    id: "m\(i + 1)",
+                    at: r2(move.at),
+                    length: r2(move.length),
+                    kind: Self.documentName(move.kind),
+                    amount: r2(move.recipe.amount),
+                    feel: move.kind == .hold || move.recipe.feel == .natural ? nil : move.recipe.feel.rawValue
+                )
+            }
+        }
+        var clipStart = 0.0
+        for (index, segment) in project.segments.enumerated() where index < self.clips.count {
+            if let track = Self.trackSummary(of: segment, in: project, at: clipStart) {
+                self.clips[index].tracked = track.tracked
+                self.clips[index].lost = track.lost.isEmpty ? nil : track.lost
+            }
+            clipStart += segment.barWeight
+        }
     }
 
     /// A filter's or sound effect's settings, only those that are not their defaults.

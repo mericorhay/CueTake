@@ -868,6 +868,23 @@
         }
       }
     },
+    "editor.ai.compose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell the AI what to do"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI'a ne yapacağını söyle"
+          }
+        }
+      }
+    },
     "editor.ai.consent": {
       "extractionState": "manual",
       "localizations": {
@@ -1208,6 +1225,23 @@
         }
       }
     },
+    "editor.ai.op.cameraMove %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera move: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketi: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.caption %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1531,6 +1565,23 @@
         }
       }
     },
+    "editor.ai.op.removeCameraMove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove camera move"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera hareketini sil"
+          }
+        }
+      }
+    },
     "editor.ai.op.removeEffect": {
       "extractionState": "manual",
       "localizations": {
@@ -1561,6 +1612,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Katman silindi: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.removeTrack %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop following in clip %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@: takibi kaldır"
           }
         }
       }
@@ -1816,6 +1884,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Başlık: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.trackFace %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow the face in clip %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip %@: yüzü takip et"
           }
         }
       }
@@ -2088,6 +2173,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld tanesi yapılamadı"
+          }
+        }
+      }
+    },
+    "editor.ai.suggest.camera": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add camera moves on the key moments and follow my face"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önemli anlara kamera hareketi ekle ve yüzümü takip et"
           }
         }
       }

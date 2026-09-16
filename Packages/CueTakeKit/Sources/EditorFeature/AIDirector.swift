@@ -91,6 +91,8 @@ struct AIStep {
     var locate: (EditorModel) -> (time: Double?, scan: ClosedRange<Double>?)
     /// Nil when the step could not be carried out.
     var perform: (EditorModel) -> [AITarget]?
+    /// Slow work the step needs first, such as finding a face through a clip.
+    var prepare: ((EditorModel) async -> Void)? = nil
 }
 
 /// Where the pieces of a split clip went, so later steps written against the whole clip still land.
@@ -287,6 +289,10 @@ extension EditorModel {
                 try? await Task.sleep(for: .seconds(pace * 0.4))
             }
             if Task.isCancelled { break }
+            if let prepare = step.prepare {
+                await prepare(self)
+                if Task.isCancelled { break }
+            }
 
             let stepBefore = project
             let targets = withAnimation(.snappy(duration: 0.3)) {
@@ -908,6 +914,56 @@ extension EditorModel {
             }
         }
 
+        // Camera: moves and face tracking. Before any cut, because their times are the
+        // document's; stored in source time, they then stay on their frames through the cuts.
+        for op in ops {
+            switch op {
+            case .cameraMove(let request):
+                if let move = request.move, UUID(uuidString: move) == nil { skipped.append(op.type); continue }
+                add("plus.magnifyingglass", describe(op), op, locate: { m in
+                    if let at = request.at { return (at + 0.05, at...(request.to ?? at + 1)) }
+                    if let move = request.move, let id = UUID(uuidString: move),
+                       let range = m.timelineRange(ofCameraMotion: id) {
+                        return (range.lowerBound + 0.05, range)
+                    }
+                    return (nil, nil)
+                }) { m in
+                    m.aiCameraMove(request)
+                }
+            case .removeCameraMove(let move):
+                guard let id = UUID(uuidString: move) else { skipped.append(op.type); continue }
+                add("minus.magnifyingglass", describe(op), op, locate: { m in
+                    guard let range = m.timelineRange(ofCameraMotion: id) else { return (nil, nil) }
+                    return (range.lowerBound + 0.05, range)
+                }) { m in
+                    guard let recording = m.project.recordings.first(where: { $0.cameraMotions?.contains { $0.id == id } == true })
+                    else { return nil }
+                    m.removeCameraMotion(id)
+                    return [.recording(recording.id)]
+                }
+            case .trackFace(let clip, let closeness):
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                let box = AIFaceTrackBox()
+                steps.append(AIStep(
+                    info: AIStepInfo(id: steps.count, symbol: "scope", text: describe(op)),
+                    types: [op.type],
+                    locate: { m in
+                        guard let clip, let i = m.index(ofClip: clip) else { return (nil, nil) }
+                        return (m.start(at: i) + 0.05, m.timelineRange(ofSegmentAt: i))
+                    },
+                    perform: { m in m.aiApplyFaceTracks(box.found) },
+                    prepare: { m in
+                        box.found = await m.aiFindFaces(in: m.aiTrackClips(clip), closeness: closeness ?? 0.12)
+                    }
+                ))
+            case .removeTrack(let clip):
+                if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
+                add("scope", describe(op), op) { m in m.aiRemoveTracks(clip) }
+            default:
+                continue
+            }
+        }
+
         // Backgrounds
         for op in ops {
             if case .removeEffect(let effect) = op {
@@ -1432,6 +1488,15 @@ extension EditorModel {
         return (start + 0.05, start...(start + clip.timelineDuration.seconds))
     }
 
+    private func cameraKindName(_ kind: CameraMotionRecipe.Kind) -> String {
+        switch kind {
+        case .pushIn: L("editor.zoom.push")
+        case .pullOut: L("editor.zoom.pull")
+        case .punch: L("editor.zoom.punch")
+        case .hold: L("editor.zoom.static")
+        }
+    }
+
     func clipNumber(_ id: String) -> String {
         guard let index = index(ofClip: id) else { return "?" }
         return "\(index + 1)"
@@ -1486,6 +1551,9 @@ extension EditorModel {
         case .removeVideo: "trash"
         case .mainVolume: "speaker.wave.2"
         case .useTranscript: "waveform.badge.magnifyingglass"
+        case .cameraMove: "plus.magnifyingglass"
+        case .removeCameraMove: "minus.magnifyingglass"
+        case .trackFace, .removeTrack: "scope"
         case .unknown: "questionmark"
         }
     }
@@ -1588,6 +1656,14 @@ extension EditorModel {
             L("editor.ai.op.mainVolume \(Int((volume * 100).rounded()))")
         case .useTranscript(_, let source):
             L("editor.ai.op.transcript \(source == "cloud" ? SpeechVersionsRow.name(.cloud) : SpeechVersionsRow.name(.device))")
+        case .cameraMove(let request):
+            L("editor.ai.op.cameraMove \(cameraKindName(request.kind ?? .pushIn))")
+        case .removeCameraMove:
+            L("editor.ai.op.removeCameraMove")
+        case .trackFace(let clip, _):
+            L("editor.ai.op.trackFace \(clip.map(clipNumber) ?? "*")")
+        case .removeTrack(let clip):
+            L("editor.ai.op.removeTrack \(clip.map(clipNumber) ?? "*")")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

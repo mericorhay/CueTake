@@ -42,6 +42,49 @@ struct AIDirectorTests {
         return false
     }
 
+    @Test func theAIDirectsTheCamera() throws {
+        let model = model()
+        model.project.recordings[0].reframe = [
+            VideoFocusKeyframe(time: 3, x: 0.4, y: 0.5),
+            VideoFocusKeyframe(time: 13, x: 0.6, y: 0.5),
+        ]
+        let plan = try EditPlan.decode(from: """
+        {"summary":"s","operations":[
+          {"op":"cameraMove","at":1,"to":2,"kind":"punch","amount":20},
+          {"op":"zoom","at":5,"kind":"push","feel":"calm"},
+          {"op":"trackFace","clip":"c1","closeness":0.12}
+        ]}
+        """)
+        let outcome = model.apply(plan)
+        // Finding a face needs the footage; without it the step is reported, not faked.
+        #expect(outcome.skipped == ["trackFace"])
+        let moves = try #require(model.project.recordings.first?.cameraMotions)
+        #expect(moves.map(\.kind) == [.punch, .pushIn])
+        #expect(abs(moves[0].start - 4) < 0.01 && abs(moves[0].end - 5) < 0.01)
+        #expect(abs(moves[0].amount - 0.2) < 0.001)
+        #expect(abs(moves[1].start - 8) < 0.01 && abs(moves[1].end - 10) < 0.01)
+        #expect(moves[1].feel == .calm)
+
+        let document = model.document()
+        #expect(document.cameraMoves?.map(\.id) == ["m1", "m2"])
+        #expect(document.cameraMoves?.first?.kind == "punch")
+        #expect(document.clips.first?.tracked == true)
+
+        let second = try EditPlan.decode(from: """
+        {"summary":"s","operations":[
+          {"op":"cameraMove","move":"m2","amount":0.1,"at":6,"to":7},
+          {"op":"removeCameraMove","move":"m1"},
+          {"op":"removeTrack","clip":"c1"}
+        ]}
+        """)
+        #expect(model.apply(second).skipped.isEmpty)
+        let left = try #require(model.project.recordings.first?.cameraMotions)
+        #expect(left.count == 1)
+        #expect(abs(left[0].amount - 0.1) < 0.001)
+        #expect(abs(left[0].start - 9) < 0.01 && abs(left[0].end - 10) < 0.01)
+        #expect(model.project.recordings[0].reframe == nil)
+    }
+
     @Test func theAIUsesFiltersAndSoundEffects() throws {
         let model = model()
         let text = """

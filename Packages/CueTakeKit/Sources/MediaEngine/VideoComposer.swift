@@ -286,6 +286,8 @@ public struct VideoComposer: Sendable {
                         )
                         return VideoFrameGeometry(natural: trackNatural, preferred: trackPreferred, placement: placement, render: renderSize)
                     }
+                    let frame = project.mainVideoPlacement.bounded
+                    let coversFrame = frame.x < 0.001 && frame.y < 0.001 && frame.width > 0.999 && frame.height > 0.999
                     for (from, to) in zip(geometryTimes, geometryTimes.dropFirst()) where to - from > 0.002 {
                         // Each stretch reads just inside its own ends. A static zoom starts and stops
                         // with a cut; read exactly on the boundary, the stretch before it took the
@@ -296,12 +298,19 @@ public struct VideoComposer: Sendable {
                         // A still face is a still frame: no ramp with equal ends.
                         guard first.transform != last.transform || first.crop != last.crop else {
                             layer.setTransform(first.transform, at: start)
-                            layer.setCropRectangle(first.crop, at: start)
+                            layer.setCropRectangle(first.crop.union(last.crop), at: start)
                             continue
                         }
                         let ramp = CMTimeRange(start: start, end: cursor + CMTime(seconds: to, preferredTimescale: 600))
                         layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: ramp)
-                        layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: ramp)
+                        // A full-frame picture is clipped by the render itself. Animating its crop
+                        // as well only gave the compositor a second, slightly different answer to
+                        // interpolate, which showed as edges sliding in during a zoom.
+                        if coversFrame {
+                            layer.setCropRectangle(first.crop.union(last.crop), at: start)
+                        } else {
+                            layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: ramp)
+                        }
                     }
                 }
                 layer.setOpacity(Float(project.mainVideoPlacement.bounded.opacity), at: pieceCursor)

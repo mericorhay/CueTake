@@ -14,6 +14,9 @@ struct ToolDock: View {
     let onMore: () -> Void
     /// Sends the editor's document and an instruction to a model; nil hides the AI tool.
     var aiRequest: AIRequester? = nil
+    /// What is being written to the AI, and the bar at the top where it is written.
+    var aiDraft: Binding<String> = .constant("")
+    var onComposeAI: () -> Void = {}
     /// Turns cloud AI on from the AI panel. Nil in a build without the assistant.
     var onAllowCloudAI: (() -> Void)? = nil
     var onAddImage: () -> Void = {}
@@ -308,6 +311,8 @@ struct ToolDock: View {
                         AIEditPanel(
                             model: model,
                             request: aiRequest,
+                            draft: aiDraft,
+                            onCompose: onComposeAI,
                             onStart: { open = nil },
                             onShowChanges: {
                                 open = nil
