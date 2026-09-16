@@ -1549,6 +1549,40 @@
         }
       }
     },
+    "workflow.generate.partial %lld %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld of %2$lld videos were made. %3$@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$lld videodan %1$lld tanesi üretildi. %3$@"
+          }
+        }
+      }
+    },
+    "workflow.generating %lld %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Making videos with %3$@ · %1$lld/%2$lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@ ile video üretiliyor · %1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "workflow.new.name": {
       "extractionState": "manual",
       "localizations": {
@@ -1651,6 +1685,40 @@
         }
       }
     },
+    "workflow.skip.noKey %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No API key for %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ için API anahtarı yok"
+          }
+        }
+      }
+    },
+    "workflow.skip.noModel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No model id"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model kimliği yok"
+          }
+        }
+      }
+    },
     "workflow.skip.noMusic": {
       "extractionState": "manual",
       "localizations": {
@@ -1664,6 +1732,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Önce editörde müzik ekle"
+          }
+        }
+      }
+    },
+    "workflow.skip.noPrompts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing to make: add prompts or sections"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üretilecek bir şey yok: istem ya da bölüm ekle"
           }
         }
       }
@@ -1715,6 +1800,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kliplerde konuşma bulunamadı"
+          }
+        }
+      }
+    },
+    "workflow.skip.noVideos": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No video came back"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiç video gelmedi"
           }
         }
       }

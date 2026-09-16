@@ -223,6 +223,8 @@ public struct MusicBedOptions: Hashable, Sendable, Codable {
 /// editor's catalogue is, so a tool is found in the same place in both.
 public enum WorkflowToolCategory: String, CaseIterable, Hashable, Sendable {
     case structure
+    /// Makes footage: video models, later voices and music.
+    case generate
     case cut
     case sound
     case words
@@ -233,6 +235,7 @@ extension WorkflowStepKind {
     public var category: WorkflowToolCategory {
         switch self {
         case .generateScript, .segmentScript, .record, .assembleSections: .structure
+        case .generateVideo: .generate
         case .trimSilences, .cutWords, .setSpeed: .cut
         case .cleanAudio, .musicBed: .sound
         case .analyzeSpeech, .generateCaptions, .applyCaptionStyle: .words

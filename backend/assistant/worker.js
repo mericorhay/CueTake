@@ -61,6 +61,12 @@ Workflow object:
 }
 
 Step types, in the order they usually run:
+- generateVideo { "preset": "seedance-2.5|veo-3.1|veo-3.1-fast|veo-3.1-lite|sora-2|sora-2-pro|fal-custom|replicate-custom",
+  "customModel": "provider model id, only for the custom presets", "prompts": ["one video per prompt"], "styleNote": "shared look",
+  "seconds": 8, "aspect": "9:16", "resolution": "720p", "audio": true, "parallel": 3 }
+  — makes footage with a video model on the user's own API key. Use it for faceless / AI shorts. Write concrete, visual
+  prompts (subject, action, setting, camera, light), one per video; with no prompts, planned sections are generated from
+  their titles. Put it first, before analyzeSpeech.
 - assembleSections — put the clips into the sections (only when the user wants a structure).
 - analyzeSpeech — transcribe. Required before trimSilences, cutWords and generateCaptions.
 - trimSilences { "minPause": 0.6, "padding": 0.12 }

@@ -16,6 +16,7 @@ enum StudioCatalog {
 
     /// Every tool the palette offers, in the order they usually run.
     static let tools: [Tool] = [
+        Tool(type: "generateVideo", symbol: "wand.and.stars", title: "tool.generateVideo", note: "tool.generateVideo.note", category: .generate),
         Tool(type: "assembleSections", symbol: "square.stack.3d.up", title: "tool.assembleSections", note: "tool.assembleSections.note", category: .structure),
         Tool(type: "analyzeSpeech", symbol: "waveform.and.person.filled", title: "tool.analyzeSpeech", note: "tool.analyzeSpeech.note", category: .words),
         Tool(type: "trimSilences", symbol: "arrow.right.and.line.vertical.and.arrow.left", title: "tool.trimSilences", note: "tool.trimSilences.note", category: .cut),
@@ -36,6 +37,7 @@ enum StudioCatalog {
     static func categoryTitle(_ category: WorkflowToolCategory) -> String.LocalizationValue {
         switch category {
         case .structure: "category.structure"
+        case .generate: "category.generate"
         case .cut: "category.cut"
         case .sound: "category.sound"
         case .words: "category.words"
@@ -46,6 +48,7 @@ enum StudioCatalog {
     static func tint(_ category: WorkflowToolCategory) -> Color {
         switch category {
         case .structure: DS.Palette.ink(0.75)
+        case .generate: DS.Palette.lime
         case .cut: DS.Palette.accent
         case .sound: DS.Palette.accentWarm
         case .words: DS.Palette.lime
@@ -69,6 +72,10 @@ enum StudioCatalog {
             return String(format: "%.0f dB", o.levelDB) + (o.ducking ? " · duck" : "")
         case .applyCaptionStyle(let preset):
             return preset
+        case .generateVideo(let o):
+            let name = o.modelPreset.isCustom && !o.customModel.isEmpty ? o.customModel : o.modelPreset.title
+            let count = o.prompts.isEmpty ? "§" : "\(o.prompts.count)×"
+            return "\(name) · \(count) · \(Int(o.seconds)) s · \(o.aspect)"
         case .export(let preset):
             return preset.format.label
         default:

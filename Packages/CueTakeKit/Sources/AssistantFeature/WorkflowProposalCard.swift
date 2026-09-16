@@ -108,6 +108,7 @@ struct WorkflowProposalCard: View {
         case .generateCaptions: String(localized: "assistant.step.captions", bundle: .module)
         case .applyCaptionStyle(let preset): String(localized: "assistant.step.look \(preset.capitalized)", bundle: .module)
         case .export: String(localized: "assistant.step.export", bundle: .module)
+        case .generateVideo(let o): o.modelPreset.title
         case .generateScript, .segmentScript, .record, .unsupported: kind.typeName
         }
     }

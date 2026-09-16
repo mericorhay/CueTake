@@ -355,6 +355,9 @@ extension AppModel {
             await exportProject()
             return exportModel.outputURL != nil ? .done : .skipped(String(localized: "workflow.skip.exportFailed"))
 
+        case .generateVideo(let options):
+            return await generateVideos(options)
+
         case .generateScript, .segmentScript:
             return .skipped(String(localized: "workflow.skip.script"))
 

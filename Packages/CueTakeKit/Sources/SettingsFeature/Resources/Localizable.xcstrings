@@ -228,13 +228,115 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "API key"
+            "value": "API keys"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "API anahtarı"
+            "value": "API anahtarları"
+          }
+        }
+      }
+    },
+    "settings.apiKey.anyModel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "any model by id"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kimliğiyle her model"
+          }
+        }
+      }
+    },
+    "settings.apiKey.checking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking the key…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar kontrol ediliyor…"
+          }
+        }
+      }
+    },
+    "settings.apiKey.close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        }
+      }
+    },
+    "settings.apiKey.connected %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld connected"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld bağlı"
+          }
+        }
+      }
+    },
+    "settings.apiKey.getKey": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a key"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar al"
+          }
+        }
+      }
+    },
+    "settings.apiKey.invalid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The provider refused this key."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağlayıcı bu anahtarı reddetti."
           }
         }
       }
@@ -245,13 +347,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not set"
+            "value": "Not connected"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Girilmedi"
+            "value": "Bağlı değil"
           }
         }
       }
@@ -262,13 +364,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kept in the Keychain on this iPhone only. It isn't used by any feature yet."
+            "value": "Connect your own accounts to make videos with AI models. Keys stay in this iPhone's Keychain and go only to the provider you choose — never to CueTake. Usage is billed to your account."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yalnızca bu iPhone'un Anahtar Zinciri'nde saklanır. Henüz hiçbir özellik kullanmıyor."
+            "value": "Yapay zekâ modelleriyle video üretmek için kendi hesaplarını bağla. Anahtarlar bu iPhone'un Anahtar Zinciri'nde kalır ve yalnızca seçtiğin sağlayıcıya gider, CueTake'e asla. Kullanım ücreti kendi hesabına yansır."
           }
         }
       }
@@ -371,6 +473,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bu iPhone'da bir anahtar kayıtlı."
+          }
+        }
+      }
+    },
+    "settings.apiKey.test": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kontrol et"
+          }
+        }
+      }
+    },
+    "settings.apiKey.unverified": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved. It will be checked on the first video."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydedildi. İlk videoda denenecek."
+          }
+        }
+      }
+    },
+    "settings.apiKey.valid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The key works."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anahtar çalışıyor."
           }
         }
       }

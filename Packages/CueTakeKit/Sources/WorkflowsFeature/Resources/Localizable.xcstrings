@@ -35,6 +35,23 @@
         }
       }
     },
+    "category.generate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üret"
+          }
+        }
+      }
+    },
     "category.sound": {
       "extractionState": "manual",
       "localizations": {
@@ -201,6 +218,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Çoğalt"
+          }
+        }
+      }
+    },
+    "studio.generate.modelIDNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy it from the model's page on the provider's site."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağlayıcının sitesindeki model sayfasından kopyala."
+          }
+        }
+      }
+    },
+    "studio.generate.noKey %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No API key for %@. Add it in Settings → API keys."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ için API anahtarı yok. Ayarlar → API anahtarları bölümünden ekle."
+          }
+        }
+      }
+    },
+    "studio.generate.promptsFromSections": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No prompts: each section without footage is made from its title and script."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İstem yoksa görüntüsü olmayan her bölüm, başlığı ve senaryosundan üretilir."
           }
         }
       }
@@ -392,6 +460,23 @@
         }
       }
     },
+    "studio.param.addPrompt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe a video — paste many lines to add many"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir video tarif et — birden çok satır yapıştırırsan hepsi eklenir"
+          }
+        }
+      }
+    },
     "studio.param.addWord": {
       "extractionState": "manual",
       "localizations": {
@@ -422,6 +507,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hepsi"
+          }
+        }
+      }
+    },
+    "studio.param.aspect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SHAPE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EN-BOY"
           }
         }
       }
@@ -562,6 +664,40 @@
         }
       }
     },
+    "studio.param.generateAudio": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model makes the sound too"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesi de model üretsin"
+          }
+        }
+      }
+    },
+    "studio.param.length": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LENGTH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÜRE"
+          }
+        }
+      }
+    },
     "studio.param.level": {
       "extractionState": "manual",
       "localizations": {
@@ -596,6 +732,40 @@
         }
       }
     },
+    "studio.param.model": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODEL"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODEL"
+          }
+        }
+      }
+    },
+    "studio.param.modelID": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODEL ID"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MODEL KİMLİĞİ"
+          }
+        }
+      }
+    },
     "studio.param.padding": {
       "extractionState": "manual",
       "localizations": {
@@ -609,6 +779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "KONUŞMA ÇEVRESİNDE BIRAKILAN PAY"
+          }
+        }
+      }
+    },
+    "studio.param.parallel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AT THE SAME TIME"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AYNI ANDA"
           }
         }
       }
@@ -647,6 +834,40 @@
         }
       }
     },
+    "studio.param.prompts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PROMPTS · ONE VIDEO EACH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İSTEMLER · HER BİRİ BİR VİDEO"
+          }
+        }
+      }
+    },
+    "studio.param.resolution": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUALITY"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KALİTE"
+          }
+        }
+      }
+    },
     "studio.param.rumble": {
       "extractionState": "manual",
       "localizations": {
@@ -677,6 +898,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "HIZ"
+          }
+        }
+      }
+    },
+    "studio.param.styleNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SHARED STYLE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ORTAK STİL"
+          }
+        }
+      }
+    },
+    "studio.param.styleNote.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. cinematic, warm light, handheld, no text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ör. sinematik, sıcak ışık, elde çekim, yazı yok"
           }
         }
       }
@@ -1408,6 +1663,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Söylenenden altyazı çıkarır"
+          }
+        }
+      }
+    },
+    "tool.generateVideo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video üret"
+          }
+        }
+      }
+    },
+    "tool.generateVideo.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Makes one video per prompt with Seedance, Veo, Sora or any fal / Replicate model, on your own API key, and lays them in as clips."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her istem için Seedance, Veo, Sora ya da herhangi bir fal / Replicate modeliyle, kendi API anahtarınla bir video üretir ve klip olarak ekler."
           }
         }
       }

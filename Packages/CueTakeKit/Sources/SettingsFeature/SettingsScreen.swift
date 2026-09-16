@@ -70,7 +70,9 @@ public struct SettingsScreen: View {
                     } label: {
                         row(
                             String(localized: "settings.apiKey", bundle: .module),
-                            value: String(localized: APIKeySheet.store.read() == nil ? "settings.apiKey.none" : "settings.apiKey.set", bundle: .module)
+                            value: APIKeySheet.connectedCount == 0
+                                ? String(localized: "settings.apiKey.none", bundle: .module)
+                                : String(localized: "settings.apiKey.connected \(APIKeySheet.connectedCount)", bundle: .module)
                         )
                     }
                     .buttonStyle(.dsPress)
@@ -100,7 +102,7 @@ public struct SettingsScreen: View {
         .background(DS.Palette.screen)
         .sheet(isPresented: $showsAPIKey) {
             APIKeySheet(onClose: { showsAPIKey = false })
-                .presentationDetents([.medium])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showsConverter) {

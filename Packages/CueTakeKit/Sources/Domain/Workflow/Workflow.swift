@@ -139,6 +139,8 @@ public struct RecordStepOptions: Hashable, Sendable, Codable {
 /// parameters decode as the step's defaults for the same reason. Adding a step = adding a case.
 public enum WorkflowStepKind: Hashable, Sendable {
     case generateScript(ScriptBrief)
+    /// Makes one video per prompt with a video model, on the user's own key, and lays them in.
+    case generateVideo(GenerateVideoOptions)
     case segmentScript
     case record(RecordStepOptions)
     /// Lays the chosen clips into the sections, in section order.
@@ -163,6 +165,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
     public var typeName: String {
         switch self {
         case .generateScript: StepType.generateScript.rawValue
+        case .generateVideo: StepType.generateVideo.rawValue
         case .segmentScript: StepType.segmentScript.rawValue
         case .record: StepType.record.rawValue
         case .assembleSections: StepType.assembleSections.rawValue
@@ -180,7 +183,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
     }
 
     enum StepType: String, CaseIterable {
-        case generateScript, segmentScript, record, assembleSections, analyzeSpeech, trimSilences,
+        case generateScript, generateVideo, segmentScript, record, assembleSections, analyzeSpeech, trimSilences,
              cutWords, setSpeed, cleanAudio, musicBed, generateCaptions, applyCaptionStyle, export
     }
 
@@ -192,6 +195,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
     public static func make(type: String) -> WorkflowStepKind {
         switch StepType(rawValue: type) {
         case .generateScript: .generateScript(.workflowDefault)
+        case .generateVideo: .generateVideo(GenerateVideoOptions())
         case .segmentScript: .segmentScript
         case .record: .record(RecordStepOptions())
         case .assembleSections: .assembleSections
@@ -230,6 +234,8 @@ extension WorkflowStepKind: Codable {
         switch StepType(rawValue: type) {
         case .generateScript:
             self = .generateScript(try parameters(ScriptBrief.self) ?? .workflowDefault)
+        case .generateVideo:
+            self = .generateVideo(((try? parameters(GenerateVideoOptions.self)) ?? nil) ?? GenerateVideoOptions())
         case .segmentScript:
             self = .segmentScript
         case .record:
@@ -265,6 +271,8 @@ extension WorkflowStepKind: Codable {
         switch self {
         case .generateScript(let brief):
             try container.encode(brief, forKey: .parameters)
+        case .generateVideo(let options):
+            try container.encode(options, forKey: .parameters)
         case .record(let options):
             try container.encode(options, forKey: .parameters)
         case .trimSilences(let options):

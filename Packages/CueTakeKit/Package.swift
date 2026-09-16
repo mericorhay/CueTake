@@ -12,7 +12,7 @@ let ui: [SwiftSetting] = concurrency + [.defaultIsolation(MainActor.self)]
 
 let modules: [String] = [
     "Domain",
-    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine",
+    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine",
     "DesignSystem", "Teleprompter",
     "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature",
 ]
@@ -43,6 +43,8 @@ let package = Package(
         engine("AIServices"),
         engine("Persistence"),
         engine("WorkflowEngine"),
+        // Video models on the user's own keys: fal, Veo, Sora, Replicate.
+        engine("GenerationEngine"),
 
         // Shared UI.
         uiModule("DesignSystem", []),
@@ -54,14 +56,15 @@ let package = Package(
         uiModule("ScriptFeature", ["Domain", "DesignSystem", "AIServices"]),
         uiModule("StudioFeature", ["Domain", "DesignSystem", "Teleprompter", "CaptureEngine", "SpeechEngine"]),
         uiModule("EditorFeature", ["Domain", "DesignSystem", "MediaEngine"]),
-        uiModule("WorkflowsFeature", ["Domain", "DesignSystem", "WorkflowEngine"]),
+        uiModule("WorkflowsFeature", ["Domain", "DesignSystem", "WorkflowEngine", "Persistence"]),
         // MediaEngine for the format converter, which is the one piece of Settings that does
         // real work to a file.
         uiModule("AssistantFeature", ["Domain", "DesignSystem"]),
-        uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine"]),
+        uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),
         .testTarget(name: "WorkflowEngineTests", dependencies: ["Domain", "WorkflowEngine"], swiftSettings: concurrency),
+        .testTarget(name: "GenerationEngineTests", dependencies: ["Domain", "GenerationEngine"], swiftSettings: concurrency),
         .testTarget(name: "MediaEngineTests", dependencies: ["Domain", "MediaEngine"], swiftSettings: concurrency),
         .testTarget(name: "EditorFeatureTests", dependencies: ["Domain", "EditorFeature"], swiftSettings: ui),
     ]

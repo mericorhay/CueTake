@@ -131,6 +131,9 @@ struct StudioStepEditor: View {
                     .dsFont(.sans, .regular, 11)
                     .foregroundStyle(DS.Palette.ink(0.4))
 
+            case .generateVideo(let options):
+                StudioGenerateVideoEditor(model: model, step: step, options: options)
+
             default:
                 Text(String(localized: StudioCatalog.tool(for: step.kind.typeName).note, bundle: .module))
                     .dsFont(.sans, .regular, 12, lineHeight: 1.4)
