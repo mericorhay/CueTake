@@ -8028,6 +8028,23 @@
         }
       }
     },
+    "editor.tools.transition.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blend, slide, wipe or zoom from one clip into the next"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir klipten diğerine karışım, kayma, silme ya da zoom geçişi"
+          }
+        }
+      }
+    },
     "editor.tools.trim.note": {
       "extractionState": "manual",
       "localizations": {

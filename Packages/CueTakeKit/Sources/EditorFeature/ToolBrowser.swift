@@ -204,10 +204,24 @@ struct ToolBrowser: View {
                     symbol: "trash",
                     title: "editor.tool.delete",
                     note: "editor.tools.delete.note",
-                    enabled: index != nil && model.project.segments.count > 1,
+                    enabled: index.map { model.canDeleteSegment(at: $0) } ?? false,
                     tint: DS.Palette.accent
                 ) {
                     if let index { model.pulse(.delete); model.deleteSegment(at: index) }
+                },
+
+                Item(
+                    id: "transition",
+                    symbol: "square.on.square.intersection.dashed",
+                    title: "editor.dock.transition",
+                    note: "editor.tools.transition.note",
+                    enabled: model.project.segments.count > 1,
+                    tint: DS.Palette.lime
+                ) {
+                    guard let cut = model.cutNearPlayhead else { return }
+                    onClose()
+                    if let time = model.cuts.first(where: { $0.after == cut })?.time { model.seek(to: time) }
+                    model.select(transition: cut)
                 },
             ]
         )

@@ -245,6 +245,10 @@ protocol StepExecutor {
 
 **16 Eylül 2026 — editörde üretim.** Editörde "Üret" aracı: istem → kullanıcının modeli → videonun üstüne (B-roll, sessiz) ya da klip olarak, oynatma çizgisine. Arka planda çalışır, zaman çizelgesinde yer tutucu gösterir, kendini yerleştirir, geri alınabilir. AI kurgu da `generateVideo` ile B-roll üretebilir (en fazla 3, yalnız model bağlıysa).
 
+**17 Eylül 2026 — her workflow videoyu yazarak biter.** Son adım her zaman tek bir Export'tur; silinemez, taşınamaz, kapatılamaz (`WorkflowDefinition.ensureFinalExport`, eski/AI/JSON belgelerde de uygulanır). Çözünürlük ve FPS stilden gelir ve Export kartında da düzenlenir; hedef (Fotoğraflar/Dosyalar) çalıştırmada gerçekten uygulanır.
+
+**17 Eylül 2026 — workflow'a özel API gönderimi.** Export adımında `delivery`: adres (HTTPS), POST/PUT, gövde (multipart form + video / yalnız video / yalnız JSON bilgi), başlık/önek, ek alanlar. Anahtar workflow dosyasında değil, Keychain'de workflow kimliğiyle (`WorkflowSecretStore`); çoğaltılan workflow anahtarsız başlar. "Bağlantıyı dene" JSON test isteği atar; sonuç kartı gönderim durumunu ve "Tekrar gönder"i gösterir. Arka planda (uygulama kapalıyken) yükleme henüz yok — sonraki adım: `URLSession` background configuration.
+
 ## Açık kararlar (ilk sürümdeki öneriler)
 
 1. **Üretim ve ödeme:** Seedance'ı kendi sunucumuz üzerinden, kredi (uygulama içi satın alma) ile mi sunalım, yoksa ilk aşamada yalnız kendi hesabımızla mı test edelim?
