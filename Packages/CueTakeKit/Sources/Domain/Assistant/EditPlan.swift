@@ -116,6 +116,9 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case trackFace(clip: String?, closeness: Double?)
         /// Stops following in a clip (every clip when nil).
         case removeTrack(clip: String?)
+        /// Makes a video with the user's video model and lays it in: over the video (B-roll) or
+        /// as a clip, at a moment of the finished video.
+        case generateVideo(GenerateClipRequest)
 
         case unknown(type: String)
 
@@ -172,6 +175,7 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .removeCameraMove: "removeCameraMove"
             case .trackFace: "trackFace"
             case .removeTrack: "removeTrack"
+            case .generateVideo: "generateVideo"
             case .unknown(let type): type
             }
         }
@@ -569,6 +573,18 @@ extension EditPlan.Operation: Codable {
             self = .removeCameraMove(move: move)
         case "trackFace", "track", "followFace":
             self = .trackFace(clip: f.string("clip"), closeness: f.number("closeness").map { CameraMoveRequest.amount($0) ?? 0.12 })
+        case "generateVideo", "generateBroll", "broll":
+            guard let prompt = f.string("prompt"), !prompt.trimmingCharacters(in: .whitespaces).isEmpty else {
+                self = unknown; return
+            }
+            let place = (f.string("as") ?? f.string("placement"))?.lowercased()
+            self = .generateVideo(GenerateClipRequest(
+                prompt: prompt,
+                at: f.number("at") ?? f.number("start"),
+                seconds: f.number("seconds") ?? f.number("duration"),
+                asClip: place == "clip",
+                model: f.string("model")
+            ))
         case "removeTrack", "stopTracking":
             self = .removeTrack(clip: f.string("clip"))
         case "useTranscript":
@@ -738,6 +754,9 @@ extension EditPlan.Operation: Codable {
             try put("clip", clip); try put("closeness", closeness)
         case .removeTrack(let clip):
             try put("clip", clip)
+        case .generateVideo(let r):
+            try put("prompt", r.prompt); try put("at", r.at); try put("seconds", r.seconds)
+            try put("as", r.asClip ? "clip" : "broll"); try put("model", r.model)
         case .unknown:
             break
         }
@@ -801,6 +820,7 @@ extension EditPlan {
             case .removeCameraMove(let move): .removeCameraMove(move: refs.move(move))
             case .trackFace(let clip, let closeness): .trackFace(clip: clip.map(refs.clip), closeness: closeness)
             case .removeTrack(let clip): .removeTrack(clip: clip.map(refs.clip))
+            case .generateVideo: op
             case .layoutVideos, .mainVolume: op
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }

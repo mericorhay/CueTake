@@ -183,7 +183,7 @@ private struct GenerationTileView: View {
                 queued
                     .transition(.opacity)
             case .working:
-                DevelopingFilm(started: tile.started, progress: tile.progress, reduceMotion: reduceMotion)
+                DSDevelopingFilm(started: tile.started, progress: tile.progress)
                     .transition(.opacity)
             case .done:
                 done
@@ -264,91 +264,5 @@ private struct GenerationTileView: View {
                 .foregroundStyle(DS.Palette.accentWarm)
                 .symbolEffect(.bounce, value: shake)
         }
-    }
-}
-
-/// A tile being made: light moving across unexposed film, a slow breath, and the time it has
-/// taken. The sweep is what says "working"; the clock is what says "not stuck".
-private struct DevelopingFilm: View {
-    let started: Date?
-    let progress: Double?
-    let reduceMotion: Bool
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 30, paused: false)) { context in
-            let time = context.date.timeIntervalSinceReferenceDate
-            let sweep = reduceMotion ? 0.5 : (time.truncatingRemainder(dividingBy: 2.2)) / 2.2
-            let breath = reduceMotion ? 0.5 : (sin(time * 2.4) + 1) / 2
-
-            ZStack {
-                LinearGradient(
-                    colors: [DS.Palette.accent.opacity(0.35), DS.Palette.lime.opacity(0.22), DS.Palette.accentWarm.opacity(0.3)],
-                    startPoint: UnitPoint(x: 0, y: breath),
-                    endPoint: UnitPoint(x: 1, y: 1 - breath)
-                )
-                .saturation(0.7)
-
-                // The band of light.
-                GeometryReader { proxy in
-                    LinearGradient(
-                        colors: [.clear, DS.Palette.ink(0.35), .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(width: proxy.size.width * 0.6)
-                    .rotationEffect(.degrees(18))
-                    .offset(x: proxy.size.width * (sweep * 2.2 - 0.9))
-                    .blendMode(.plusLighter)
-                }
-
-                // Film grain: a few specks that move every frame.
-                if !reduceMotion {
-                    Canvas { canvas, size in
-                        var generator = SeededRandom(seed: UInt64(time * 12))
-                        for _ in 0..<18 {
-                            let x = generator.next() * size.width
-                            let y = generator.next() * size.height
-                            canvas.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1.4, height: 1.4)), with: .color(.white.opacity(0.25)))
-                        }
-                    }
-                }
-
-                VStack(spacing: 4) {
-                    if let progress {
-                        ZStack {
-                            Circle().stroke(DS.Palette.ink(0.15), lineWidth: 2.5)
-                            Circle()
-                                .trim(from: 0, to: progress)
-                                .stroke(DS.Palette.ink, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
-                        }
-                        .frame(width: 22, height: 22)
-                        .animation(.easeOut(duration: 0.4), value: progress)
-                    }
-                    Text(verbatim: Self.elapsed(since: started, now: context.date))
-                        .dsFont(.mono, .semibold, 10)
-                        .foregroundStyle(DS.Palette.ink(0.85))
-                        .monospacedDigit()
-                }
-            }
-            .scaleEffect(reduceMotion ? 1 : 1 + 0.015 * breath)
-        }
-    }
-
-    static func elapsed(since start: Date?, now: Date) -> String {
-        let seconds = max(0, Int(now.timeIntervalSince(start ?? now)))
-        return String(format: "%d:%02d", seconds / 60, seconds % 60)
-    }
-}
-
-/// Cheap, repeatable randomness so the grain does not flicker differently on every redraw.
-private struct SeededRandom {
-    private var state: UInt64
-
-    init(seed: UInt64) { state = seed &+ 0x9E37_79B9_7F4A_7C15 }
-
-    mutating func next() -> Double {
-        state = state &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
-        return Double(state >> 11) / Double(1 << 53)
     }
 }

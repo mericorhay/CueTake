@@ -107,6 +107,16 @@ public final class EditorModel {
     public var selectedEffect: TimelineEffect.ID?
     /// The additional movie being positioned above the main cut.
     public var selectedVideoLayer: VideoLayer.ID?
+    /// Makes videos with a model, on the user's own key. Set by the app.
+    @ObservationIgnored public var clipGenerator: ClipGenerator?
+    /// Whether a provider has a key, for the generate panel. Set by the app.
+    @ObservationIgnored public var generationHasKey: (GenerationProviderID) -> Bool = { _ in false }
+    /// The last model and settings used to generate, reused by the next.
+    public var generationDefaults = GenerateVideoOptions()
+    public var generationPlacement: GenerationPlacement = .broll
+    /// Videos being made from the editor.
+    public internal(set) var generationJobs: [ClipGenerationJob] = []
+    @ObservationIgnored var generationTasks: [UUID: Task<Void, Never>] = [:]
     /// The camera move picked on the timeline.
     public var selectedCameraMotion: CameraMotionRecipe.ID?
     /// The clip whose subject track is picked on the timeline.

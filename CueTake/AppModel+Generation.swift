@@ -113,6 +113,48 @@ extension AppModel {
         return UIImage(cgImage: image).jpegData(compressionQuality: 0.72)
     }
 
+    // MARK: - In the editor
+
+    /// Gives the editor its video generator and, when the model it would use has no key, moves it
+    /// to the first model whose provider has one.
+    func connectEditorGeneration() {
+        let keys = ProviderKeyStore()
+        editorModel.generationHasKey = { keys.hasKey(for: $0) }
+        editorModel.clipGenerator = makeClipGenerator()
+        let current = editorModel.generationDefaults.modelPreset
+        if !keys.hasKey(for: current.provider),
+           let usable = VideoModelPreset.catalog.first(where: { !$0.isCustom && keys.hasKey(for: $0.provider) }) {
+            editorModel.generationDefaults.preset = usable.id
+        }
+    }
+
+    private func makeClipGenerator() -> ClipGenerator {
+        { [weak self] request, progress in
+            guard let self else { throw CancellationError() }
+            let preset = request.options.modelPreset
+            guard let key = ProviderKeyStore().key(for: preset.provider) else {
+                throw GenerationError.missingKey(preset.provider)
+            }
+            let store = self.dependencies.projectStore
+            let projectID = self.editorModel.project.id
+            guard let media = try? await store.mediaDirectory(for: projectID) else {
+                throw GenerationError.failed(String(localized: "workflow.skip.exportFailed"))
+            }
+            let staging = media.appending(path: "generated", directoryHint: .isDirectory)
+            let file = try await VideoGenerationService().generate(
+                VideoGenerationRequest.fitted(request.options, prompt: request.prompt),
+                provider: preset.provider,
+                key: key,
+                into: staging,
+                progress: progress
+            )
+            defer { try? FileManager.default.removeItem(at: file) }
+            let clip = try await MediaImporter().importClip(from: file, into: media)
+            let thumbnail = await AppModel.thumbnail(of: file)
+            return GeneratedClip(recording: clip.recording, take: clip.take, thumbnail: thumbnail)
+        }
+    }
+
     private struct GenerationJob {
         var prompt: String
         /// The planned section this video fills, when it was made from one.

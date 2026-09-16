@@ -134,6 +134,11 @@ struct AIEditPanel: View {
 /// comes up; here the words stay in view, and sending closes it.
 struct AIPromptBar: View {
     @Binding var text: String
+    var title: LocalizedStringKey = "editor.ai.compose"
+    var placeholder: String = String(localized: "editor.ai.placeholder", bundle: .module)
+    var suggestions: [String] = AIEditPanel.suggestions
+    var sendSymbol = "arrow.up"
+    var tint: Color = AIPalette.blue
     let onSend: () -> Void
     let onCancel: () -> Void
 
@@ -147,7 +152,7 @@ struct AIPromptBar: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 AISparkle(size: 12)
-                Text("editor.ai.compose", bundle: .module)
+                Text(title, bundle: .module)
                     .dsFont(.sans, .semibold, 12)
                     .foregroundStyle(DS.Palette.ink(0.7))
                 Spacer(minLength: 0)
@@ -165,11 +170,11 @@ struct AIPromptBar: View {
             }
 
             HStack(alignment: .bottom, spacing: 8) {
-                TextField(String(localized: "editor.ai.placeholder", bundle: .module), text: $text, axis: .vertical)
+                TextField(placeholder, text: $text, axis: .vertical)
                     .lineLimit(1...5)
                     .dsFont(.sans, .regular, 15)
                     .foregroundStyle(DS.Palette.ink)
-                    .tint(AIPalette.blue)
+                    .tint(tint)
                     .focused($focused)
                     .submitLabel(.send)
                     .onSubmit { if canSend { onSend() } }
@@ -178,15 +183,15 @@ struct AIPromptBar: View {
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.08)))
                     .overlay {
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(AIPalette.blue.opacity(0.6), lineWidth: 1)
+                            .strokeBorder(tint.opacity(0.6), lineWidth: 1)
                     }
 
                 Button(action: onSend) {
-                    Image(systemName: "arrow.up")
+                    Image(systemName: sendSymbol)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(canSend ? Color.white : DS.Palette.ink(0.35))
                         .frame(width: 44, height: 44)
-                        .background(Circle().fill(canSend ? AIPalette.blue : DS.Palette.hairline(0.1)))
+                        .background(Circle().fill(canSend ? tint : DS.Palette.hairline(0.1)))
                 }
                 .buttonStyle(.dsPressIcon)
                 .disabled(!canSend)
@@ -194,7 +199,7 @@ struct AIPromptBar: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: 6) {
-                    ForEach(AIEditPanel.suggestions, id: \.self) { suggestion in
+                    ForEach(suggestions, id: \.self) { suggestion in
                         Button { text = suggestion } label: {
                             Text(suggestion)
                                 .dsFont(.sans, .medium, 11)
@@ -218,7 +223,7 @@ struct AIPromptBar: View {
                 .ignoresSafeArea(edges: .top)
         }
         .overlay(alignment: .bottom) {
-            Rectangle().fill(AIPalette.blue.opacity(0.35)).frame(height: 1)
+            Rectangle().fill(tint.opacity(0.35)).frame(height: 1)
         }
         .onAppear { focused = true }
         .transition(.move(edge: .top).combined(with: .opacity))

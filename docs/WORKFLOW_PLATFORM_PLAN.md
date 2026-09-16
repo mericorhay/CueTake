@@ -241,6 +241,10 @@ protocol StepExecutor {
 
 **16 Eylül 2026 — kullanıcı kendi anahtarını bağlar (BYOK).** Üretim sağlayıcıları (fal.ai / Seedance ve fal'daki her model, Google Veo, OpenAI Sora, Replicate'teki her model) kullanıcının kendi API anahtarıyla, telefondan doğrudan çağrılır. Anahtarlar Keychain'de, yalnız bu cihazda. Sunucu kredisi şimdilik yok. İlk teslim: `GenerationEngine`, Ayarlar → API anahtarları, workflow'da "Video üret" adımı.
 
+**16 Eylül 2026 — aylık dump yan özellik.** Öne çıkarılmaz; şablon galerisinde "Diğer şablonlar" altında durur, onboarding ve ana ekranda anılmaz. Faz 1 önceliği düşer; ana odak üretilen videoların workflow **ve editörde** kullanılması.
+
+**16 Eylül 2026 — editörde üretim.** Editörde "Üret" aracı: istem → kullanıcının modeli → videonun üstüne (B-roll, sessiz) ya da klip olarak, oynatma çizgisine. Arka planda çalışır, zaman çizelgesinde yer tutucu gösterir, kendini yerleştirir, geri alınabilir. AI kurgu da `generateVideo` ile B-roll üretebilir (en fazla 3, yalnız model bağlıysa).
+
 ## Açık kararlar (ilk sürümdeki öneriler)
 
 1. **Üretim ve ödeme:** Seedance'ı kendi sunucumuz üzerinden, kredi (uygulama içi satın alma) ile mi sunalım, yoksa ilk aşamada yalnız kendi hesabımızla mı test edelim?

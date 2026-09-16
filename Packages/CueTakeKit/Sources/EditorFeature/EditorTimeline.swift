@@ -85,7 +85,8 @@ struct EditorTimeline: View {
             ? CameraMotionLane.height + 7
             : 0
         let tracks = model.subjectTrackSpans.isEmpty ? 0 : SubjectTrackLane.height + 7
-        return audio + overlays + captions + effects + videoLayers + camera + tracks
+        let generating = model.generationJobs.isEmpty ? 0 : GenerationGhostLane.height + 7
+        return audio + overlays + captions + effects + videoLayers + camera + tracks + generating
     }
 
     private var hasCaptions: Bool {
@@ -187,6 +188,10 @@ struct EditorTimeline: View {
                     SubjectTrackLane(model: model, scale: scale, onSeek: { jump(to: $0) })
                 }
                 clipRow
+                if !model.generationJobs.isEmpty {
+                    GenerationGhostLane(model: model, scale: scale)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
                 if !model.project.videoLayers.isEmpty {
                     VideoLayerLane(model: model, scale: scale)
                 }

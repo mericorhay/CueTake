@@ -17,6 +17,9 @@ struct ToolDock: View {
     /// What is being written to the AI, and the bar at the top where it is written.
     var aiDraft: Binding<String> = .constant("")
     var onComposeAI: () -> Void = {}
+    /// The prompt for a generated video, and the bar at the top where it is written.
+    var generateDraft: Binding<String> = .constant("")
+    var onComposeGenerate: () -> Void = {}
     /// Turns cloud AI on from the AI panel. Nil in a build without the assistant.
     var onAllowCloudAI: (() -> Void)? = nil
     var onAddImage: () -> Void = {}
@@ -28,11 +31,11 @@ struct ToolDock: View {
     var inlineTimeline: AnyView? = nil
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, split, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, generate, split, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .ai, .zoom, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .ai, .generate, .zoom, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -95,7 +98,8 @@ struct ToolDock: View {
         .scrollClipDisabled()
     }
 
-    private var visibleItems: [Item] { Item.allCases }
+    /// Generating needs the app's help; a build without it shows no such tool.
+    private var visibleItems: [Item] { Item.allCases.filter { $0 != .generate || model.canGenerate } }
 
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
@@ -108,7 +112,7 @@ struct ToolDock: View {
             index.map { model.project.segments[$0].selectedTake != nil } ?? false
         case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index != nil && model.project.segments.count > 1
-        case .captions, .audio, .video, .more, .ai, .text, .image: true
+        case .captions, .audio, .video, .more, .ai, .generate, .text, .image: true
         }
     }
 
@@ -157,6 +161,21 @@ struct ToolDock: View {
                 .strokeBorder(open == item ? (ai ? AIPalette.blue : DS.Palette.lime) : .clear, lineWidth: 2)
                 .allowsHitTesting(false)
         }
+        .overlay(alignment: .topTrailing) {
+            let working = model.generationJobs.filter { $0.phase == .working }.count
+            if item == .generate, working > 0 {
+                Text(verbatim: "\(working)")
+                    .dsFont(.mono, .semibold, 9)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(minWidth: 16, minHeight: 16)
+                    .background(Circle().fill(DS.Palette.lime))
+                    .contentTransition(.numericText(value: Double(working)))
+                    .offset(x: 4, y: -4)
+                    .transition(.scale.combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
+        .animation(DS.Motion.snap, value: model.generationJobs.filter { $0.phase == .working }.count)
         .accessibilityAddTraits(open == item ? .isSelected : [])
     }
 
@@ -170,6 +189,10 @@ struct ToolDock: View {
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
+        case .generate:
+            glyph
+                .symbolEffect(.bounce, value: count)
+                .symbolEffect(.variableColor.iterative, options: .repeating, isActive: !model.generationJobs.filter { $0.phase == .working }.isEmpty)
         case .background, .reframe, .zoom: glyph.symbolEffect(.bounce, value: count)
         case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .filter: glyph.symbolEffect(.bounce, value: count)
@@ -181,6 +204,7 @@ struct ToolDock: View {
     private func symbol(_ item: Item) -> String {
         switch item {
         case .ai: "sparkles"
+        case .generate: "wand.and.stars"
         case .background: "person.crop.rectangle"
         case .reframe: "viewfinder"
         case .zoom: "plus.magnifyingglass"
@@ -202,6 +226,7 @@ struct ToolDock: View {
     private func title(_ item: Item) -> String {
         switch item {
         case .ai: String(localized: "editor.dock.ai", bundle: .module)
+        case .generate: String(localized: "editor.dock.generate", bundle: .module)
         case .background: String(localized: "editor.dock.background", bundle: .module)
         case .reframe: String(localized: "editor.track.title", bundle: .module)
         case .zoom: String(localized: "editor.zoom.title", bundle: .module)
@@ -271,7 +296,7 @@ struct ToolDock: View {
         case .audio: onAddAudio()
         case .more: onMore()
         case .reframe: onTrack()
-        case .trim, .speed, .ai, .zoom, .background, .filter, .sound: break
+        case .trim, .speed, .ai, .generate, .zoom, .background, .filter, .sound: break
         }
     }
 
@@ -286,7 +311,7 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if item != .ai, let index {
+                if item != .ai, item != .generate, let index {
                     Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.4))
@@ -322,6 +347,8 @@ struct ToolDock: View {
                     } else {
                         aiConsentPanel
                     }
+                } else if item == .generate {
+                    GeneratePanel(model: model, draft: generateDraft, onCompose: onComposeGenerate)
                 } else if item == .reframe {
                     mainReframePanel
                 } else if item == .zoom {

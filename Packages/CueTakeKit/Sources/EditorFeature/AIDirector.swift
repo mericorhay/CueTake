@@ -151,7 +151,8 @@ extension EditorModel {
         aiTask = Task { [weak self] in
             do {
                 // Written off the main thread: on a long video it is enough work to drop frames.
-                let document = await Task.detached(priority: .userInitiated) { EditDocument(project: project) }.value
+                var document = await Task.detached(priority: .userInitiated) { EditDocument(project: project) }.value
+                document.videoModel = self?.aiVideoModel
                 var plan = try await request(document, text)
                 guard let self, !Task.isCancelled else { return }
                 // A plan that would change nothing gets one more try, told why.
@@ -187,7 +188,8 @@ extension EditorModel {
             aiSession?.phase = .thinking
         }
         let result = project
-        let document = await Task.detached(priority: .userInitiated) { EditDocument(project: result) }.value
+        var document = await Task.detached(priority: .userInitiated) { EditDocument(project: result) }.value
+        document.videoModel = aiVideoModel
         let note = """
 
         [Second pass. You already made these changes: \(plan.summary) The document now shows the video after them, with new ids. \
@@ -959,6 +961,28 @@ extension EditorModel {
             case .removeTrack(let clip):
                 if let clip, index(ofClip: clip) == nil { skipped.append(op.type); continue }
                 add("scope", describe(op), op) { m in m.aiRemoveTracks(clip) }
+            case .generateVideo(let request):
+                guard aiVideoModel != nil else { skipped.append(op.type); continue }
+                let box = AIGeneratedClipBox()
+                steps.append(AIStep(
+                    info: AIStepInfo(id: steps.count, symbol: "wand.and.stars", text: describe(op)),
+                    types: [op.type],
+                    locate: { m in
+                        let at = request.at ?? m.playhead
+                        return (at + 0.05, at...(at + (request.seconds ?? 4)))
+                    },
+                    perform: { m in
+                        guard let clip = box.clip else { return nil }
+                        return m.layInGenerated(
+                            clip,
+                            prompt: request.prompt,
+                            at: request.at ?? m.playhead,
+                            placement: request.asClip ? .clip : .broll,
+                            recordingEdit: false
+                        ).map { [$0, .recording(clip.recording.id)] }
+                    },
+                    prepare: { m in box.clip = await m.aiGenerate(request) }
+                ))
             default:
                 continue
             }
@@ -1554,6 +1578,7 @@ extension EditorModel {
         case .cameraMove: "plus.magnifyingglass"
         case .removeCameraMove: "minus.magnifyingglass"
         case .trackFace, .removeTrack: "scope"
+        case .generateVideo: "wand.and.stars"
         case .unknown: "questionmark"
         }
     }
@@ -1664,6 +1689,8 @@ extension EditorModel {
             L("editor.ai.op.trackFace \(clip.map(clipNumber) ?? "*")")
         case .removeTrack(let clip):
             L("editor.ai.op.removeTrack \(clip.map(clipNumber) ?? "*")")
+        case .generateVideo(let request):
+            L("editor.ai.op.generateVideo \(String(request.prompt.prefix(40)))")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

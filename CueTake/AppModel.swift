@@ -447,6 +447,7 @@ final class AppModel {
 
     /// The editor asks for playback; only this layer knows where the project's media lives.
     func prepareEditorPlayback() async {
+        connectEditorGeneration()
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
 
         // Reversing is the one thing here that writes a file, and the first build of a reversed

@@ -1463,6 +1463,23 @@
         }
       }
     },
+    "editor.ai.op.generateVideo %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate video: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video üret: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.layout": {
       "extractionState": "manual",
       "localizations": {
@@ -3554,6 +3571,23 @@
         }
       }
     },
+    "editor.change.generated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generated video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üretilen video"
+          }
+        }
+      }
+    },
     "editor.change.merge": {
       "extractionState": "manual",
       "localizations": {
@@ -4353,6 +4387,23 @@
         }
       }
     },
+    "editor.dock.generate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üret"
+          }
+        }
+      }
+    },
     "editor.dock.image": {
       "extractionState": "manual",
       "localizations": {
@@ -5097,6 +5148,329 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sıcaklık"
+          }
+        }
+      }
+    },
+    "editor.generate.arrived": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the timeline"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zaman çizelgesinde"
+          }
+        }
+      }
+    },
+    "editor.generate.broll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over the video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videonun üstüne"
+          }
+        }
+      }
+    },
+    "editor.generate.broll.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B-roll, your voice keeps going"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "B-roll, sesin devam eder"
+          }
+        }
+      }
+    },
+    "editor.generate.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İptal"
+          }
+        }
+      }
+    },
+    "editor.generate.clip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As a clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klip olarak"
+          }
+        }
+      }
+    },
+    "editor.generate.clip.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After the clip at the playhead"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynatma çizgisindeki klipten sonra"
+          }
+        }
+      }
+    },
+    "editor.generate.compose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe the video to make"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üretilecek videoyu tarif et"
+          }
+        }
+      }
+    },
+    "editor.generate.dismiss": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        }
+      }
+    },
+    "editor.generate.makesSound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Makes its own sound"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kendi sesini üretir"
+          }
+        }
+      }
+    },
+    "editor.generate.noKey %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No API key for %@ — add it in Settings → API keys."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ için API anahtarı yok — Ayarlar → API anahtarları bölümünden ekle."
+          }
+        }
+      }
+    },
+    "editor.generate.noRoom": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No room for another video layer — remove one or add it as a clip."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni video katmanına yer yok — birini sil ya da klip olarak ekle."
+          }
+        }
+      }
+    },
+    "editor.generate.note %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s at the playhead. Keep editing — it lands by itself when it's ready. Billed to your provider account."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oynatma çizgisine %lld sn. Düzenlemeye devam et — hazır olunca kendini yerleştirir. Ücret sağlayıcı hesabına yansır."
+          }
+        }
+      }
+    },
+    "editor.generate.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A shot: subject, action, place, camera, light"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir çekim: özne, hareket, mekân, kamera, ışık"
+          }
+        }
+      }
+    },
+    "editor.generate.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrar dene"
+          }
+        }
+      }
+    },
+    "editor.generate.send": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üret"
+          }
+        }
+      }
+    },
+    "editor.generate.suggest.abstract": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abstract colorful ink flowing in water, macro"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suda akan renkli mürekkep, soyut, makro"
+          }
+        }
+      }
+    },
+    "editor.generate.suggest.city": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slow aerial over a city at golden hour, cinematic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Altın saatte şehrin üzerinde yavaş havadan çekim, sinematik"
+          }
+        }
+      }
+    },
+    "editor.generate.suggest.nature": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waves rolling onto a beach, slow motion, drone shot"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kumsala vuran dalgalar, ağır çekim, drone"
+          }
+        }
+      }
+    },
+    "editor.generate.suggest.product": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close-up of hands using a phone on a wooden desk, soft light"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahşap masada telefonu kullanan eller, yakın plan, yumuşak ışık"
           }
         }
       }

@@ -79,6 +79,8 @@ public struct EditorScreen: View {
     /// What is being written to the AI, and whether its bar is open at the top.
     @State private var aiDraft = ""
     @State private var composingAI = false
+    @State private var generateDraft = ""
+    @State private var composingGenerate = false
 
     /// Changes when a script is edited, a take is selected, or transcription finishes.
     private var roleAnalysisInput: [String] {
@@ -163,9 +165,45 @@ public struct EditorScreen: View {
             }
         }
         .animation(DS.Motion.settle, value: typing)
+        .overlay(alignment: .top) {
+            if composingGenerate {
+                ZStack(alignment: .top) {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation(DS.Motion.settle) { composingGenerate = false } }
+                    AIPromptBar(
+                        text: $generateDraft,
+                        title: "editor.generate.compose",
+                        placeholder: String(localized: "editor.generate.placeholder", bundle: .module),
+                        suggestions: Self.generateSuggestions,
+                        sendSymbol: "wand.and.stars",
+                        tint: DS.Palette.lime,
+                        onSend: {
+                            let text = generateDraft
+                            guard model.generateClip(prompt: text) != nil else { return }
+                            generateDraft = ""
+                            withAnimation(DS.Motion.settle) { composingGenerate = false }
+                        },
+                        onCancel: { withAnimation(DS.Motion.settle) { composingGenerate = false } }
+                    )
+                }
+                .transition(.opacity)
+            }
+        }
         .animation(DS.Motion.settle, value: composingAI)
+        .animation(DS.Motion.settle, value: composingGenerate)
         .onAppear { model.autoAssignSegmentRoles() }
         .onChange(of: roleAnalysisInput) { _, _ in model.autoAssignSegmentRoles() }
+    }
+
+    /// Shots that work as B-roll under a talking video.
+    static var generateSuggestions: [String] {
+        [
+            String(localized: "editor.generate.suggest.city", bundle: .module),
+            String(localized: "editor.generate.suggest.product", bundle: .module),
+            String(localized: "editor.generate.suggest.nature", bundle: .module),
+            String(localized: "editor.generate.suggest.abstract", bundle: .module),
+        ]
     }
 
     private func typingTitle(_ target: TextEntryTarget) -> String {
@@ -869,6 +907,11 @@ public struct EditorScreen: View {
                     onMore: { showsTools = true },
                     aiRequest: onAIEdit,
                     aiDraft: $aiDraft,
+                    generateDraft: $generateDraft,
+                    onComposeGenerate: {
+                        model.pause()
+                        withAnimation(DS.Motion.settle) { composingGenerate = true }
+                    },
                     onComposeAI: {
                         model.pause()
                         withAnimation(DS.Motion.settle) { composingAI = true }

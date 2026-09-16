@@ -128,3 +128,23 @@ extension EditDocument {
         return (true, lost)
     }
 }
+
+/// A video the model wants made and laid in.
+public struct GenerateClipRequest: Hashable, Sendable {
+    public var prompt: String
+    /// The moment of the finished video it goes to; nil is the playhead.
+    public var at: Double?
+    public var seconds: Double?
+    /// A clip of its own instead of B-roll over the video.
+    public var asClip: Bool
+    /// A `VideoModelPreset` id; nil uses the model the user last chose.
+    public var model: String?
+
+    public init(prompt: String, at: Double? = nil, seconds: Double? = nil, asClip: Bool = false, model: String? = nil) {
+        self.prompt = prompt
+        self.at = at
+        self.seconds = seconds
+        self.asClip = asClip
+        self.model = model
+    }
+}

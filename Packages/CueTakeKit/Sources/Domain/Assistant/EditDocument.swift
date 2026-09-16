@@ -43,6 +43,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var beats: [Beat]?
     /// Camera moves (zooms) on the finished video.
     public var cameraMoves: [CameraMove]?
+    /// The video model `generateVideo` will use, when the user has connected one.
+    public var videoModel: String?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.
