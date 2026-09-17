@@ -181,7 +181,9 @@ struct RootView: View {
                 project: $model.project,
                 onBack: { model.go(to: model.scriptReturn == .blueprint && !model.project.segments.isEmpty ? .blueprint : .create) },
                 onOpenStudio: { model.openStudioFromPlan() },
-                serverRewrite: scriptRewrite
+                serverRewrite: scriptRewrite,
+                library: model.scriptLibrary,
+                writer: { [model] brief in try await model.writeScriptDraft(brief) }
             )
 
         case .studio:

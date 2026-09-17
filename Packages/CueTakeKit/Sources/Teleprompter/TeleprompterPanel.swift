@@ -65,6 +65,7 @@ public struct TeleprompterPanel: View {
         )
         // Added after the gestures so the corner wins the touch it is under.
         .overlay(alignment: .bottomTrailing) { resizeHandle }
+        .overlay(alignment: .top) { progressLine.padding(.top, 1) }
         .overlay(alignment: .top) { readout }
         .shadow(
             color: .black.opacity(0.5),
@@ -77,6 +78,11 @@ public struct TeleprompterPanel: View {
         .dsMotion(DS.Motion.settle, reduced: reduceMotion, value: model.isDragging)
         .position(x: rect.midX, y: rect.midY)
         .animation(model.isDragging ? nil : DS.Easing.standard(0.5), value: model.frame)
+        // Kept for the next take and the next launch, once a drag has let go.
+        .onChange(of: model.preferences) { _, _ in model.save() }
+        .onChange(of: model.isDragging) { _, dragging in
+            if !dragging { model.save() }
+        }
     }
 
     /// Says what is happening while it happens, then gets out of the way. Direct manipulation on a
@@ -116,6 +122,8 @@ public struct TeleprompterPanel: View {
                 size: 9,
                 color: segmentColor
             )
+
+            status
 
             Spacer(minLength: 0)
 
@@ -168,59 +176,83 @@ public struct TeleprompterPanel: View {
     // MARK: - Script
 
     private var script: some View {
-        VStack(alignment: model.alignment == .center ? .center : .leading, spacing: 8) {
-            FlowLayout(
-                horizontalSpacing: 0,
-                verticalSpacing: 0,
-                alignment: model.alignment == .center ? .center : .leading
-            ) {
-                ForEach(model.wordStyles(
-                    accent: DS.Palette.accent,
-                    ink: DS.Palette.ink,
-                    inkInverse: DS.Palette.inkInverse,
-                    lime: DS.Palette.lime
-                )) { word in
-                    Text(word.text + " ")
-                        .dsFont(.sans, .medium, model.textSize, lineHeight: 1.45)
-                        .foregroundStyle(word.color)
-                        .padding(.horizontal, 2)
-                        .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(word.background))
-                        .opacity(word.opacity)
-                        // The word under the voice is the one thing the eye tracks continuously,
-                        // so it is the one thing allowed to move. Scale rather than colour: the
-                        // highlight already carries colour, and a second colour cue would fight it.
-                        .scaleEffect(word.isActive && !reduceMotion ? 1.07 : 1)
-                        .animation(DS.Easing.ease(0.22), value: word.color)
-                        .animation(DS.Easing.ease(0.22), value: word.opacity)
-                        .animation(DS.Motion.bloom, value: word.isActive)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: model.alignment == .center ? .center : .leading)
-
-            if let next = model.nextSegment {
-                Text(next.script)
-                    .dsFont(.sans, .regular, max(11, model.textSize - 6), lineHeight: 1.4)
-                    .foregroundStyle(DS.Palette.ink(0.26))
-                    .multilineTextAlignment(model.alignment == .center ? .center : .leading)
-                    .frame(maxWidth: .infinity, alignment: model.alignment == .center ? .center : .leading)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .scaleEffect(x: model.isMirrored ? -1 : 1, y: 1)
+        PrompterScript(
+            words: model.wordStyles(
+                accent: DS.Palette.accent,
+                ink: DS.Palette.ink,
+                inkInverse: DS.Palette.inkInverse,
+                lime: DS.Palette.lime
+            ),
+            activeIndex: model.activeWordIndex,
+            textSize: model.textSize,
+            isCentered: model.alignment == .center,
+            readingLine: model.readingLine,
+            isMirrored: model.isMirrored,
+            notes: model.currentSegment?.teleprompter.speakerNotes,
+            upNext: model.nextSegment?.script,
+            lineColor: segmentColor
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .clipped()
-        // mask-image: linear-gradient(180deg, #000 78%, transparent)
-        .mask(
-            LinearGradient(
-                stops: [
-                    .init(color: .black, location: 0.78),
-                    .init(color: .clear, location: 1),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+    }
+
+    /// How far through the script, and how the reading is going: time left and the pace, coloured
+    /// only when it is worth a glance.
+    @ViewBuilder
+    private var status: some View {
+        if model.remaining != nil || model.paceVerdict != nil {
+            HStack(spacing: 6) {
+                if let remaining = model.remaining {
+                    Text(ScriptTiming.label(remaining))
+                        .dsFont(.mono, .medium, 9, letterSpacing: 0.04)
+                        .foregroundStyle(DS.Palette.ink(0.55))
+                        .contentTransition(.numericText())
+                }
+                if let verdict = model.paceVerdict, let pace = model.pace {
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Self.paceColor(verdict))
+                            .frame(width: 5, height: 5)
+                        Text(Self.paceText(verdict, pace: pace))
+                            .dsFont(.mono, .medium, 9, letterSpacing: 0.04)
+                    }
+                    .foregroundStyle(verdict == .good ? DS.Palette.ink(0.55) : Self.paceColor(verdict))
+                    .transition(.opacity)
+                }
+            }
+            .lineLimit(1)
+            .layoutPriority(-1)
+        }
+    }
+
+    static func paceColor(_ verdict: PaceMeter.Verdict) -> Color {
+        switch verdict {
+        case .good: DS.Palette.lime
+        case .fast: DS.Palette.accent
+        case .slow: DS.Palette.accentWarm
+        }
+    }
+
+    static func paceText(_ verdict: PaceMeter.Verdict, pace: Double) -> String {
+        let words = Int(pace.rounded())
+        switch verdict {
+        case .good: return String(localized: "teleprompter.pace.good \(words)", bundle: .module)
+        case .fast: return String(localized: "teleprompter.pace.fast \(words)", bundle: .module)
+        case .slow: return String(localized: "teleprompter.pace.slow \(words)", bundle: .module)
+        }
+    }
+
+    /// A hairline along the top edge that fills as the script is read.
+    private var progressLine: some View {
+        GeometryReader { proxy in
+            Capsule()
+                .fill(segmentColor.opacity(0.9))
+                .frame(width: proxy.size.width * min(1, max(0, model.progress)), height: 2)
+                .animation(DS.Easing.ease(0.4), value: model.progress)
+        }
+        .frame(height: 2)
+        .padding(.horizontal, 18)
+        .opacity(model.progress > 0 ? 1 : 0)
     }
 
     // MARK: - Handles

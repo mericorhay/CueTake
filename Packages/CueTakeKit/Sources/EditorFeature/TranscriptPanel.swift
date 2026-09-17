@@ -18,6 +18,8 @@ struct TranscriptPanel: View {
     /// Runs transcription for takes that have none. Owned by the app layer, which knows where the
     /// media is.
     let onTranscribe: () -> Void
+    /// Opens the retake screen for a clip. Nil where retakes are not offered.
+    var onRetake: ((Segment.ID) -> Void)? = nil
     let onClose: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -43,6 +45,10 @@ struct TranscriptPanel: View {
             } else {
                 CleanupBanner(model: model, index: index)
                 actions
+                if selection != nil {
+                    sentenceActions
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
                 text
             }
         }
@@ -154,6 +160,51 @@ struct TranscriptPanel: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 14)
+    }
+
+    /// For a selection: grow it to the whole sentence, or shoot that stretch again with the
+    /// prompter showing the script's own words.
+    private var sentenceActions: some View {
+        HStack(spacing: 8) {
+            action(
+                "editor.transcript.selectSentence",
+                symbol: "text.line.first.and.arrowtriangle.forward",
+                enabled: sentenceRange != nil && sentenceRange != selection
+            ) {
+                guard let sentenceRange else { return }
+                anchor = sentenceRange.lowerBound
+                head = sentenceRange.upperBound
+            }
+
+            if let onRetake {
+                action(
+                    "editor.transcript.retakeSentence",
+                    symbol: "video.badge.waveform",
+                    enabled: selection != nil
+                ) {
+                    guard let selection else { return }
+                    model.pulse(.split)
+                    let id = withAnimation(reduceMotion ? .easeOut(duration: 0.15) : DS.Motion.settle) {
+                        model.isolateForRetake(at: index, words: selection)
+                    }
+                    anchor = nil
+                    head = nil
+                    if let id { onRetake(id) }
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 14)
+    }
+
+    /// The sentence around the selection, by the punctuation the listener wrote.
+    private var sentenceRange: ClosedRange<Int>? {
+        guard let selection else { return nil }
+        let texts = words.map(\.text)
+        guard let first = ScriptText.sentence(around: selection.lowerBound, in: texts),
+              let last = ScriptText.sentence(around: selection.upperBound, in: texts)
+        else { return nil }
+        return first.lowerBound...last.upperBound
     }
 
     /// The words themselves.

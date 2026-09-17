@@ -49,7 +49,8 @@ extension AppModel {
             return
         }
         do {
-            let draft = try await dependencies.assistantClient.writeScript(brief, localeIdentifier: localeIdentifier)
+            let written = try await dependencies.assistantClient.writeScript(brief, localeIdentifier: localeIdentifier)
+            let draft = ScriptBudget.fit(written, seconds: brief.targetDuration.seconds, localeIdentifier: localeIdentifier)
             promptModel.advance(to: 3)
             var fresh = Project(title: draft.title, format: promptModel.platform.defaultFormat, localeIdentifier: localeIdentifier)
             fresh.segments = draft.segments.map(Segment.init(draft:))
@@ -64,6 +65,42 @@ extension AppModel {
             go(to: .blueprint)
         } catch {
             promptModel.fail(Self.assistantFailureMessage(error))
+        }
+    }
+
+    /// A short script for the script screen: the phone's own model when it has one, the server
+    /// otherwise, cut to the length asked for.
+    func writeScriptDraft(_ brief: ScriptBrief) async throws -> ScriptDraft {
+        let locale = brief.localeIdentifier ?? project.localeIdentifier
+        if let writer = await dependencies.ai.provider(
+            .scriptWriting,
+            as: (any ScriptWriting).self,
+            localeIdentifier: locale
+        ) {
+            var draft: ScriptDraft?
+            do {
+                for try await partial in writer.writeScript(brief, localeIdentifier: locale) {
+                    draft = partial
+                }
+            } catch {
+                throw DescribedError(message: String(localized: "prompt.failed.generic"))
+            }
+            guard let draft, !draft.segments.isEmpty else {
+                throw DescribedError(message: String(localized: "prompt.failed.empty"))
+            }
+            return ScriptBudget.fit(draft, seconds: brief.targetDuration.seconds, localeIdentifier: locale)
+        }
+        guard dependencies.assistantClient.isConfigured else {
+            throw DescribedError(message: String(localized: "prompt.failed.unavailable"))
+        }
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+        }
+        do {
+            let written = try await dependencies.assistantClient.writeScript(brief, localeIdentifier: locale)
+            return ScriptBudget.fit(written, seconds: brief.targetDuration.seconds, localeIdentifier: locale)
+        } catch {
+            throw DescribedError(message: Self.assistantFailureMessage(error))
         }
     }
 

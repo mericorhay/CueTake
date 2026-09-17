@@ -25,21 +25,30 @@ public struct ScriptScreen: View {
 
     /// The text, the direction, the beat's role, the whole script, the language.
     public typealias ServerRewrite = (String, String, String, String, String) async throws -> String
+    /// Writes a short script from a brief, on the phone or on the server.
+    public typealias Writer = @MainActor @Sendable (ScriptBrief) async throws -> ScriptDraft
 
-    /// What is typed or pasted before the script has any beats.
-    @State private var pasted = ""
-    @FocusState private var pasteFocused: Bool
+    /// Scripts kept for reuse and the brand voice. Nil hides both.
+    private let library: ScriptLibraryStore?
+    /// Nil when there is no AI to write with.
+    private let writer: Writer?
+    @State private var editingBrand = false
+    @State private var notice: String?
 
     public init(
         project: Binding<Project>,
         onBack: @escaping () -> Void,
         onOpenStudio: @escaping () -> Void,
-        serverRewrite: ServerRewrite? = nil
+        serverRewrite: ServerRewrite? = nil,
+        library: ScriptLibraryStore? = nil,
+        writer: Writer? = nil
     ) {
         self._project = project
         self.onBack = onBack
         self.onOpenStudio = onOpenStudio
         self.serverRewrite = serverRewrite
+        self.library = library
+        self.writer = writer
     }
 
     private var canRewrite: Bool { ScriptRewriter.isAvailable || serverRewrite != nil }
@@ -57,7 +66,13 @@ public struct ScriptScreen: View {
                 ScrollView {
                     VStack(spacing: 11) {
                         if isBlank {
-                            pasteCard
+                            ScriptStartCard(
+                                localeIdentifier: project.localeIdentifier,
+                                library: library,
+                                writer: writer,
+                                onBeats: { beats, title in apply(beats, title: title) },
+                                onEditBrand: { editingBrand = true }
+                            )
                         }
 
                         ForEach(Array(project.segments.enumerated()), id: \.element.id) { index, segment in
@@ -91,7 +106,15 @@ public struct ScriptScreen: View {
                     .transition(.opacity)
             }
 
-            if focused == nil, !pasteFocused, !isBlank {
+            if let notice {
+                Text(notice)
+                    .dsFont(.sans, .medium, 12)
+                    .foregroundStyle(DS.Palette.lime)
+                    .padding(.top, 6)
+                    .transition(.opacity)
+            }
+
+            if focused == nil, !isBlank {
                 DSPrimaryButton(
                     String(localized: "script.studio", bundle: .module),
                     verticalPadding: 18,
@@ -108,7 +131,18 @@ public struct ScriptScreen: View {
         .background(DS.Palette.screen)
         .animation(DS.Motion.settle, value: focused)
         .animation(DS.Motion.settle, value: failure)
+        .animation(DS.Motion.settle, value: notice)
         .dsEnter(.screen())
+        .sheet(isPresented: $editingBrand) {
+            if let library {
+                BrandVoiceSheet(
+                    initial: library.brand,
+                    onSave: { library.setBrand($0) },
+                    onClose: { editingBrand = false }
+                )
+                .presentationDetents([.medium, .large])
+            }
+        }
     }
 
     private var header: some View {
@@ -131,6 +165,8 @@ public struct ScriptScreen: View {
                 }
                 .buttonStyle(.dsPress)
                 .transition(.scale.combined(with: .opacity))
+            } else if library != nil {
+                libraryMenu
             } else {
                 Color.clear.frame(width: 36, height: 36)
             }
@@ -316,67 +352,54 @@ public struct ScriptScreen: View {
         .opacity(enabled ? 1 : 0.4)
     }
 
-    /// The whole script in one go: pasted from notes, or typed, then cut into beats.
-    private var pasteCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("script.paste.title", bundle: .module)
-                    .dsFont(.sans, .semibold, 15)
-                    .foregroundStyle(DS.Palette.ink)
-                Spacer(minLength: 0)
-                PasteButton(payloadType: String.self) { strings in
-                    guard let text = strings.first else { return }
-                    Task { @MainActor in pasted = text }
-                }
-                .buttonBorderShape(.capsule)
-                .labelStyle(.titleAndIcon)
-                .tint(DS.Palette.lime)
-                .controlSize(.small)
+    /// Keep this script for reuse, or set the brand voice the AI writes in.
+    private var libraryMenu: some View {
+        Menu {
+            Button {
+                guard let library, library.save(project.scriptText, title: project.title) != nil else { return }
+                show(String(localized: "script.library.savedNotice", bundle: .module))
+            } label: {
+                Label(String(localized: "script.library.saveScript", bundle: .module), systemImage: "bookmark")
             }
+            .disabled(isBlank)
 
-            TextField(String(localized: "script.paste.placeholder", bundle: .module), text: $pasted, axis: .vertical)
-                .lineLimit(6...14)
-                .dsFont(.sans, .regular, 15, lineHeight: 1.45)
-                .foregroundStyle(DS.Palette.ink)
-                .tint(DS.Palette.lime)
-                .focused($pasteFocused)
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.05)))
-
-            Text("script.paste.hint", bundle: .module)
-                .dsFont(.sans, .regular, 12, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
-
-            DSPrimaryButton(
-                String(localized: "script.paste.split", bundle: .module),
-                verticalPadding: 14,
-                fontSize: 15,
-                glow: false
-            ) {
-                splitPasted()
+            Button {
+                editingBrand = true
+            } label: {
+                Label(String(localized: "script.brand.title", bundle: .module), systemImage: "seal")
             }
-            .disabled(pasted.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .opacity(pasted.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.45 : 1)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(DS.Palette.ink(0.75))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(DS.Palette.hairline(0.07)))
         }
-        .padding(16)
-        .dsCard(radius: DS.Radius.card)
-        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
-    private func splitPasted() {
-        let beats = ScriptText.beats(from: pasted, localeIdentifier: project.localeIdentifier)
+    private func show(_ text: String) {
+        notice = text
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2.5))
+            if notice == text { notice = nil }
+        }
+    }
+
+    /// Puts beats in the script: pasted and cut, or written by the AI.
+    private func apply(_ beats: [SegmentDraft], title: String?) {
         guard !beats.isEmpty else { return }
-        pasteFocused = false
         withAnimation(DS.Motion.settle) {
             // Beats with footage stay; only the empty placeholders are replaced.
             project.segments.removeAll { $0.takes.isEmpty && $0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             project.segments.append(contentsOf: beats.map(Segment.init(draft:)))
-            // A project with no footage yet is named after its opening words.
+            // A project with no footage yet is named after the AI's title or its opening words.
             if project.recordings.isEmpty {
-                project.title = String(ScriptText.words(in: beats[0].script).prefix(5).joined(separator: " "))
+                let given = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                project.title = given.isEmpty
+                    ? String(ScriptText.words(in: beats[0].script).prefix(5).joined(separator: " "))
+                    : given
             }
             project.updatedAt = .now
-            pasted = ""
         }
     }
 

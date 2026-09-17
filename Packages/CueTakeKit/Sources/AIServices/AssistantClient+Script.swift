@@ -13,6 +13,8 @@ extension AssistantClient {
         var platform: String
         var tone: String
         var locale: String
+        var maxWords: Int
+        var brand: String?
     }
 
     private struct ScriptResponse: Decodable {
@@ -38,7 +40,9 @@ extension AssistantClient {
                 seconds: brief.targetDuration.seconds,
                 platform: brief.platform.rawValue,
                 tone: brief.tone ?? "",
-                locale: localeIdentifier
+                locale: localeIdentifier,
+                maxWords: ScriptBudget.maxWords(seconds: brief.targetDuration.seconds, localeIdentifier: localeIdentifier),
+                brand: brief.brand.flatMap { $0.isEmpty ? nil : $0.briefText }
             ),
             timeout: 90
         )

@@ -130,22 +130,32 @@ extension EditorModel {
         alignment: ScriptAlignment
     ) -> [String] {
         let scriptWords = ScriptText.words(in: script)
-        var result: [String] = []
-        var next = 0
-        for (n, span) in kept.enumerated() {
-            let inside = words.indices.filter {
+        let insides = kept.map { span in
+            words.indices.filter {
                 words[$0].range.start.seconds >= span.lowerBound - 0.001
                     && words[$0].range.end.seconds <= span.upperBound + 0.001
             }
+        }
+        let lows = insides.map { inside in inside.compactMap { alignment.scriptIndex(ofSpoken: $0) }.min() }
+        var result: [String] = []
+        var next = 0
+        for (n, inside) in insides.enumerated() {
             let matched = inside.compactMap { alignment.scriptIndex(ofSpoken: $0) }
             guard let low = matched.min(), let high = matched.max(), !scriptWords.isEmpty else {
                 result.append(inside.map { words[$0].text }.joined(separator: " "))
                 continue
             }
-            // Words the reader skipped belong to the piece that follows them; the last piece takes
-            // whatever is left of the script.
+            // Script words nobody said go with the piece that ends in words the script does not
+            // have — that is where they were misread — and otherwise with the piece that follows.
+            // The last piece takes whatever is left.
             let lower = min(next, low)
-            let upper = n == kept.count - 1 ? scriptWords.count - 1 : high
+            var upper = high
+            if n == insides.count - 1 {
+                upper = scriptWords.count - 1
+            } else if let last = inside.last, alignment.isExtra(last) {
+                let following = lows[(n + 1)...].compactMap { $0 }.first ?? scriptWords.count
+                upper = max(high, following - 1)
+            }
             guard lower <= upper, upper < scriptWords.count else {
                 result.append(inside.map { words[$0].text }.joined(separator: " "))
                 continue
@@ -169,5 +179,61 @@ extension EditorModel {
     public func takeScore(_ take: Take, at index: Int) -> TakeScore? {
         guard project.segments.indices.contains(index) else { return nil }
         return TakeScore.score(take, script: project.segments[index].script, localeIdentifier: project.localeIdentifier)
+    }
+}
+
+extension EditorModel {
+    /// Makes one stretch of speech a clip of its own, so it can be shot again without touching the
+    /// words around it. Returns that clip's identifier.
+    ///
+    /// The cuts fall in the silence either side, and the new clip's script is the script's own
+    /// sentence where the take lines up with it, so the prompter shows what should have been said
+    /// rather than what was.
+    @discardableResult
+    public func isolateForRetake(at index: Int, words range: ClosedRange<Int>) -> Segment.ID? {
+        guard project.segments.indices.contains(index),
+              let take = project.segments[index].selectedTake
+        else { return nil }
+        let spoken = spokenWords(at: index)
+        guard spoken.indices.contains(range.lowerBound), spoken.indices.contains(range.upperBound) else { return nil }
+
+        let total = take.sourceRange.duration.seconds
+        let lower = range.lowerBound
+        let upper = range.upperBound
+        let before = lower > 0
+            ? (spoken[lower - 1].range.end.seconds + spoken[lower].range.start.seconds) / 2
+            : 0
+        let after = upper < spoken.count - 1
+            ? (spoken[upper].range.end.seconds + spoken[upper + 1].range.start.seconds) / 2
+            : total
+
+        var spans: [ClosedRange<Double>] = []
+        var middle = 0
+        if before > 0.13 {
+            spans.append(0...before)
+            middle = 1
+        }
+        spans.append(before...min(total, max(before, after)))
+        if total - after > 0.13 {
+            spans.append(after...total)
+        }
+        let segment = project.segments[index]
+        guard spans.count > 1 else { return segment.id }
+
+        let alignment = ScriptAlignment.align(spoken, script: segment.script, locale: Locale(identifier: project.localeIdentifier))
+        let scripts: [String]
+        if alignment.isUsable {
+            scripts = Self.scripts(for: spans, words: spoken, script: segment.script, alignment: alignment)
+        } else {
+            scripts = spans.map { span in
+                spoken
+                    .filter { $0.range.start.seconds >= span.lowerBound - 0.001 && $0.range.end.seconds <= span.upperBound + 0.001 }
+                    .map(\.text)
+                    .joined(separator: " ")
+            }
+        }
+        rebuild(segmentAt: index, keeping: spans, scripts: scripts)
+        let target = index + middle
+        return project.segments.indices.contains(target) ? project.segments[target].id : nil
     }
 }

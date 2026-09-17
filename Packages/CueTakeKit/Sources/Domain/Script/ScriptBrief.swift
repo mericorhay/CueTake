@@ -10,19 +10,23 @@ public struct ScriptBrief: Hashable, Sendable, Codable {
     public var tone: String?
     /// Nil means "use the project's language".
     public var localeIdentifier: String?
+    /// Whose voice to write in. Nil for none.
+    public var brand: BrandVoice?
 
     public init(
         topic: String?,
         targetDuration: MediaTime,
         platform: TargetPlatform,
         tone: String? = nil,
-        localeIdentifier: String? = nil
+        localeIdentifier: String? = nil,
+        brand: BrandVoice? = nil
     ) {
         self.topic = topic
         self.targetDuration = targetDuration
         self.platform = platform
         self.tone = tone
         self.localeIdentifier = localeIdentifier
+        self.brand = brand
     }
 }
 

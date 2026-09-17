@@ -9932,6 +9932,23 @@
         }
       }
     },
+    "editor.transcript.retakeSentence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reshoot this"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bunu yeniden çek"
+          }
+        }
+      }
+    },
     "editor.transcript.run": {
       "extractionState": "manual",
       "localizations": {
@@ -9962,6 +9979,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "İki kelimeye dokun"
+          }
+        }
+      }
+    },
+    "editor.transcript.selectSentence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole sentence"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm cümle"
           }
         }
       }

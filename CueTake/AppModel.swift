@@ -59,6 +59,8 @@ final class AppModel {
     private(set) var dependencies = AppDependencies.live
 
     let promptModel = PromptModel()
+    /// Scripts kept for reuse and the brand voice the AI writes in.
+    let scriptLibrary = ScriptLibraryStore()
     let exportModel = ExportModel()
     let settingsModel: SettingsModel
 
@@ -748,7 +750,8 @@ final class AppModel {
                     targetDuration: MediaTime(seconds: Double(promptModel.lengthSeconds)),
                     platform: promptModel.platform,
                     tone: promptModel.tone.briefValue,
-                    localeIdentifier: locale
+                    localeIdentifier: locale,
+                    brand: scriptLibrary.activeBrand
                 )
                 await generateScriptOnServer(brief, localeIdentifier: locale)
                 return
@@ -769,7 +772,8 @@ final class AppModel {
             targetDuration: MediaTime(seconds: Double(promptModel.lengthSeconds)),
             platform: promptModel.platform,
             tone: promptModel.tone.briefValue,
-            localeIdentifier: locale
+            localeIdentifier: locale,
+            brand: scriptLibrary.activeBrand
         )
 
         do {
@@ -777,7 +781,10 @@ final class AppModel {
             for try await partial in writer.writeScript(brief, localeIdentifier: locale) {
                 draft = partial
             }
-            guard let draft, !draft.segments.isEmpty else {
+            // The length asked for is the length delivered.
+            guard let draft = draft.map({ ScriptBudget.fit($0, seconds: brief.targetDuration.seconds, localeIdentifier: locale) }),
+                  !draft.segments.isEmpty
+            else {
                 promptModel.fail(String(localized: "prompt.failed.empty"))
                 return
             }
@@ -811,7 +818,7 @@ final class AppModel {
             path: "\(UUID().uuidString).mov",
             directoryHint: .notDirectory
         )
-        // Three seconds to get back into frame, then rolling.
+        // The countdown the reader chose, to get back into frame, then rolling.
         studio.beginCountdown(writingTo: url)
     }
 
@@ -1039,6 +1046,13 @@ final class AppModel {
                 words: Self.words(of: transcript, within: take.sourceRange)
             )
             project.segments[index].takes[takeIndex].transcript = aligned
+            if project.segments[index].metadata[Self.trimToSpeechKey] == take.id.uuidString {
+                project.segments[index].metadata[Self.trimToSpeechKey] = nil
+                if let trimmed = project.segments[index].takes[takeIndex].trimmedToSpeech() {
+                    project.segments[index].takes[takeIndex] = trimmed
+                    project.segments[index].estimatedDuration = trimmed.sourceRange.duration
+                }
+            }
             project.segments[index].refreshCaptions(maxWordsPerCue: maxWords, carrying: project.segments[index].captions)
             captioned += project.segments[index].captions.count
             // The script is what the prompter shows; for imported footage there was none, so what
@@ -1132,6 +1146,9 @@ final class AppModel {
         project = editorModel.project
     }
 
+    /// Marks a kept retake whose silence before and after the speech is still to be trimmed.
+    static let trimToSpeechKey = "retake.trimToSpeech"
+
     func startRetake(of segmentID: Segment.ID) {
         guard let segment = project.segment(id: segmentID) else { return }
         retakeModel = RetakeModel(segment: segment, localeIdentifier: project.localeIdentifier)
@@ -1178,6 +1195,8 @@ final class AppModel {
             project.recordings.append(recording)
             project.segments[index].takes.append(take)
             project.segments[index].selectedTakeID = take.id
+            // Once its words are known, the reach to the shutter and back is trimmed off.
+            project.segments[index].metadata[Self.trimToSpeechKey] = take.id.uuidString
             project.updatedAt = .now
             scheduleSave()
         }

@@ -1010,6 +1010,227 @@
         }
       }
     },
+    "script.brand.about": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What it is and does"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ne yapıyor, ne satıyor"
+          }
+        }
+      }
+    },
+    "script.brand.add": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your brand voice"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marka sesini ekle"
+          }
+        }
+      }
+    },
+    "script.brand.audience": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Who the videos are for"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videolar kime hitap ediyor"
+          }
+        }
+      }
+    },
+    "script.brand.avoid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Never say"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asla geçmesin"
+          }
+        }
+      }
+    },
+    "script.brand.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vazgeç"
+          }
+        }
+      }
+    },
+    "script.brand.edit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Düzenle"
+          }
+        }
+      }
+    },
+    "script.brand.footer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The AI uses this when it writes your scripts. It stays on this phone and is sent only with a script request."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI, script yazarken bunu kullanır. Bu telefonda kalır; yalnızca script isteğiyle birlikte gönderilir."
+          }
+        }
+      }
+    },
+    "script.brand.mustSay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always say (slogan, sign-off)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mutlaka geçsin (slogan, kapanış)"
+          }
+        }
+      }
+    },
+    "script.brand.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand or creator name"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marka ya da içerik üretici adı"
+          }
+        }
+      }
+    },
+    "script.brand.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydet"
+          }
+        }
+      }
+    },
+    "script.brand.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brand voice"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marka sesi"
+          }
+        }
+      }
+    },
+    "script.brand.unnamed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "my brand"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "markam"
+          }
+        }
+      }
+    },
+    "script.brand.use %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write as %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sesiyle yaz"
+          }
+        }
+      }
+    },
     "script.delete": {
       "extractionState": "manual",
       "localizations": {
@@ -1075,6 +1296,125 @@
           "stringUnit": {
             "state": "translated",
             "value": "SCRIPT · %lld KELİME"
+          }
+        }
+      }
+    },
+    "script.library.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sil"
+          }
+        }
+      }
+    },
+    "script.library.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep for later"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydet"
+          }
+        }
+      }
+    },
+    "script.library.saveScript": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep this script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu metni kaydet"
+          }
+        }
+      }
+    },
+    "script.library.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kept"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydedildi"
+          }
+        }
+      }
+    },
+    "script.library.savedNotice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kept in your scripts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazır metinlerine kaydedildi"
+          }
+        }
+      }
+    },
+    "script.library.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your scripts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazır metinlerim"
+          }
+        }
+      }
+    },
+    "script.library.words %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld kelime"
           }
         }
       }
@@ -1301,6 +1641,40 @@
         }
       }
     },
+    "script.start.paste": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste a script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metni yapıştır"
+          }
+        }
+      }
+    },
+    "script.start.write": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write with AI"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI yazsın"
+          }
+        }
+      }
+    },
     "script.studio": {
       "extractionState": "manual",
       "localizations": {
@@ -1331,6 +1705,142 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri al"
+          }
+        }
+      }
+    },
+    "script.write.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The AI came back with nothing. Try a clearer idea."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI boş döndü. Fikri biraz daha açık yazmayı dene."
+          }
+        }
+      }
+    },
+    "script.write.go": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write the script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script'i yaz"
+          }
+        }
+      }
+    },
+    "script.write.length": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Length"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzunluk"
+          }
+        }
+      }
+    },
+    "script.write.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Three mistakes people make with their first espresso machine"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ör. İlk espresso makinesini alanların yaptığı üç hata"
+          }
+        }
+      }
+    },
+    "script.write.seconds %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sn"
+          }
+        }
+      }
+    },
+    "script.write.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What is the video about?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video ne hakkında?"
+          }
+        }
+      }
+    },
+    "script.write.words %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "up to %lld words"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "en fazla %lld kelime"
+          }
+        }
+      }
+    },
+    "script.write.working": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writing…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazılıyor…"
           }
         }
       }

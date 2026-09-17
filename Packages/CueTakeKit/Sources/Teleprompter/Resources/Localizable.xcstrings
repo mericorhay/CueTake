@@ -35,6 +35,40 @@
         }
       }
     },
+    "teleprompter.countdown.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hemen"
+          }
+        }
+      }
+    },
+    "teleprompter.countdown.seconds %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld s"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sn"
+          }
+        }
+      }
+    },
     "teleprompter.hint": {
       "extractionState": "manual",
       "localizations": {
@@ -133,6 +167,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kelime"
+          }
+        }
+      }
+    },
+    "teleprompter.pace.fast %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld wpm · slow down"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld k/dk · yavaşla"
+          }
+        }
+      }
+    },
+    "teleprompter.pace.good %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld wpm"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld k/dk"
+          }
+        }
+      }
+    },
+    "teleprompter.pace.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "teleprompter.pace.on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık"
+          }
+        }
+      }
+    },
+    "teleprompter.pace.slow %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld wpm · pick up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld k/dk · hızlan"
           }
         }
       }
@@ -239,6 +358,23 @@
         }
       }
     },
+    "teleprompter.row.countdown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start after"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlama"
+          }
+        }
+      }
+    },
     "teleprompter.row.highlight": {
       "extractionState": "manual",
       "localizations": {
@@ -269,6 +405,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ayna"
+          }
+        }
+      }
+    },
+    "teleprompter.row.pace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pace coach"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hız koçu"
           }
         }
       }
@@ -320,6 +473,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saydamlık"
+          }
+        }
+      }
+    },
+    "teleprompter.slider.readingLine": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read line"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Okuma yeri"
           }
         }
       }

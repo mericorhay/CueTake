@@ -162,7 +162,17 @@ public struct TeleprompterSettingsSheet: View {
             sliderRow(String(localized: "teleprompter.slider.lookAhead", bundle: .module), value: lookAheadBinding, in: 0...4, step: 1) {
                 "\(model.lookAhead)w"
             }
+            sliderRow(String(localized: "teleprompter.slider.readingLine", bundle: .module), value: readingLineBinding, in: 15...60, step: 1) {
+                "\(Int((model.readingLine * 100).rounded()))%"
+            }
         }
+    }
+
+    private var readingLineBinding: Binding<Double> {
+        Binding(
+            get: { model.readingLine * 100 },
+            set: { model.readingLine = $0 / 100 }
+        )
     }
 
     private var lookAheadBinding: Binding<Double> {
@@ -231,6 +241,24 @@ public struct TeleprompterSettingsSheet: View {
                 label: { $0.label },
                 isOn: { model.mode == $0 },
                 select: { model.mode = $0 }
+            )
+            segmentedRow(
+                String(localized: "teleprompter.row.pace", bundle: .module),
+                options: [true, false],
+                label: { $0 ? String(localized: "teleprompter.pace.on", bundle: .module) : String(localized: "teleprompter.pace.off", bundle: .module) },
+                isOn: { model.coachesPace == $0 },
+                select: { model.coachesPace = $0 }
+            )
+            segmentedRow(
+                String(localized: "teleprompter.row.countdown", bundle: .module),
+                options: TeleprompterModel.countdownChoices,
+                label: { seconds in
+                    seconds == 0
+                        ? String(localized: "teleprompter.countdown.none", bundle: .module)
+                        : String(localized: "teleprompter.countdown.seconds \(seconds)", bundle: .module)
+                },
+                isOn: { model.countdown == $0 },
+                select: { model.countdown = $0 }
             )
         }
     }

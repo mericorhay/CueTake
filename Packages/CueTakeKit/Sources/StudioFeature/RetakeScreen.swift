@@ -8,6 +8,7 @@ import Domain
 import Observation
 import SpeechEngine
 import SwiftUI
+import Teleprompter
 import UIKit
 
 /// Re-records exactly one segment. The rest of the cut is never touched — that is the whole point
@@ -28,9 +29,13 @@ public final class RetakeModel {
 
     public private(set) var state: State = .ready
     public private(set) var wordIndex = 0
+    /// Seconds left before rolling, or nil when no countdown is running.
+    public private(set) var countdown: Int?
     public var choice: Choice = .new
 
     public let segment: Segment
+    /// The reader's prompter settings, the same ones the studio uses. Read, never changed here.
+    public let prompter = TeleprompterModel()
     /// What the rest of the project was shot at, so a retake matches it.
     public var format: VideoFormat = .vertical1080
     private var task: Task<Void, Never>?
@@ -81,6 +86,7 @@ public final class RetakeModel {
 
     public func failCapture(_ key: String.LocalizationValue) {
         captureError = String(localized: key, bundle: .module)
+        countdown = nil
         isStarting = false
         state = .ready
     }
@@ -93,6 +99,30 @@ public final class RetakeModel {
             guard let self, state == .rolling else { return }
             wordIndex = position.word
         }
+        let hint = min(max(segment.teleprompter.speedMultiplier, 0.25), 4)
+        driver.speedMultiplier = { [weak self] in
+            guard let self else { return 1 }
+            return (0.6 + self.prompter.speed / 100) * hint
+        }
+        prompter.targetPace = SpeakingRate.wordsPerMinute(forLocaleIdentifier: localeIdentifier)
+    }
+
+    /// How fast the voice is reading, and what that means, while it is followed.
+    public var paceVerdict: PaceMeter.Verdict? {
+        guard prompter.coachesPace, let pace = driver.wordsPerMinute else { return nil }
+        return PaceMeter.verdict(pace, target: prompter.targetPace)
+    }
+
+    public var wordsPerMinute: Double? { driver.wordsPerMinute }
+
+    /// The script as it is read, without the writer's emphasis marks.
+    public var readableScript: String {
+        words.map { ScriptText.emphasis($0).text }.joined(separator: " ")
+    }
+
+    /// Roughly how long the line takes to say.
+    public var estimatedSeconds: Double {
+        ScriptTiming.remainingSeconds(scripts: [segment.script], segment: 0, word: -1, wordsPerMinute: prompter.targetPace)
     }
 
     /// The last word has been reached; the take rolls on until stop.
@@ -109,8 +139,19 @@ public final class RetakeModel {
     public func start(writingTo url: URL? = nil) {
         guard isStarting, state == .ready else { return }
         guard let url else { failCapture("studio.capture.storage"); return }
-        Task { [weak self] in
+        let seconds = prompter.countdown
+        task?.cancel()
+        task = Task { [weak self] in
+            // The same countdown as the studio: time to get back into frame.
+            for left in stride(from: seconds, to: 0, by: -1) {
+                guard let model = self, model.isStarting else { return }
+                model.countdown = left
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+            }
             guard let self else { return }
+            countdown = nil
+            guard isStarting else { return }
             let started = await camera.startRecording(to: url)
             guard isStarting else {
                 if started { _ = await camera.stopRecording() }
@@ -141,6 +182,7 @@ public final class RetakeModel {
     /// clears its intervals on every navigation.
     public func stopTimers() {
         isStarting = false
+        countdown = nil
         task?.cancel()
         task = nil
         if state == .rolling { finish() }
@@ -287,7 +329,7 @@ public struct RetakeScreen: View {
                     color: segmentColor
                 )
 
-                Text(model.segment.script)
+                Text(model.readableScript)
                     .dsFont(.sans, .regular, 17, lineHeight: 1.45)
                     .foregroundStyle(DS.Palette.ink)
                     .padding(.top, 10)
@@ -324,7 +366,27 @@ public struct RetakeScreen: View {
             .buttonStyle(.dsPress)
             .disabled(model.isStarting)
             .accessibilityLabel(Text("studio.record", bundle: .module))
-            if model.isStarting {
+            if let countdown = model.countdown {
+                HStack(spacing: 10) {
+                    Text(verbatim: "\(countdown)")
+                        .dsFont(.archivo, .bold, 34)
+                        .foregroundStyle(DS.Palette.ink)
+                        .contentTransition(.numericText(countsDown: true))
+                        .animation(DS.Motion.snap, value: countdown)
+                    Button {
+                        model.stopTimers()
+                    } label: {
+                        Text("studio.countdown.cancel", bundle: .module)
+                            .dsFont(.sans, .semibold, 13)
+                            .foregroundStyle(DS.Palette.ink(0.8))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .dsGlass(tint: DS.Palette.glass(0.7), in: Capsule())
+                    }
+                    .buttonStyle(.dsPress)
+                }
+                .padding(.top, 12)
+            } else if model.isStarting {
                 ProgressView(String(localized: "studio.capture.preparing", bundle: .module))
                     .tint(DS.Palette.ink)
                     .padding(.top, 12)
@@ -337,15 +399,28 @@ public struct RetakeScreen: View {
 
     private var rollingState: some View {
         VStack(spacing: 0) {
-            FlowLayout(horizontalSpacing: 0, verticalSpacing: 0) {
-                ForEach(Array(model.words.enumerated()), id: \.offset) { index, word in
-                    Text(word + " ")
-                        .dsFont(.sans, .medium, 17, lineHeight: 1.5)
-                        .foregroundStyle(index == model.wordIndex ? DS.Palette.lime : DS.Palette.ink)
-                        .opacity(index < model.wordIndex ? 0.32 : 1)
-                        .animation(DS.Easing.ease(0.25), value: model.wordIndex)
-                }
-            }
+            // The same prompter as the studio, with the reader's own settings, so a retake reads
+            // exactly like the take it replaces.
+            PrompterScript(
+                words: TeleprompterModel.wordStyles(
+                    script: model.segment.script,
+                    active: model.wordIndex,
+                    mode: model.prompter.mode,
+                    lookAhead: model.prompter.lookAhead,
+                    accent: DS.Palette.accent,
+                    ink: DS.Palette.ink,
+                    inkInverse: DS.Palette.inkInverse,
+                    lime: DS.Palette.lime
+                ),
+                activeIndex: model.wordIndex,
+                textSize: min(max(model.prompter.textSize, 17), 40),
+                isCentered: model.prompter.alignment == .center,
+                readingLine: model.prompter.readingLine,
+                isMirrored: model.prompter.isMirrored,
+                notes: model.segment.teleprompter.speakerNotes,
+                lineColor: segmentColor
+            )
+            .frame(height: 220)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18)
             .dsGlass(
@@ -354,6 +429,23 @@ public struct RetakeScreen: View {
                 border: DS.Palette.accent(0.4)
             )
             .padding(.bottom, model.reachedEnd ? 10 : 20)
+
+            if let verdict = model.paceVerdict, verdict != .good {
+                Group {
+                    if verdict == .fast {
+                        Text("retake.pace.fast", bundle: .module)
+                    } else {
+                        Text("retake.pace.slow", bundle: .module)
+                    }
+                }
+                    .dsFont(.sans, .semibold, 12)
+                    .foregroundStyle(verdict == .fast ? DS.Palette.accent : DS.Palette.accentWarm)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .dsGlass(tint: DS.Palette.glass(0.7), in: Capsule())
+                    .padding(.bottom, 10)
+                    .transition(.opacity)
+            }
 
             if model.reachedEnd {
                 Text("studio.end.hint", bundle: .module)

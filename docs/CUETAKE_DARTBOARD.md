@@ -22,7 +22,7 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 17 Eylül 2026, build 90. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 17 Eylül 2026, build 91. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
@@ -62,7 +62,16 @@ Son güncelleme: 17 Eylül 2026, build 90. ✅ bitti · 🟢 kodu bitti, cihazda
 - Kesimden sonra üstteki yazı ve efektler kayar (ripple). Geçiş, klibin sonunda kalır.
 - Apple'ın cihaz içi tanıyıcısı "ııı/um" seslerini çoğu zaman yazmaz. Bulut dinleyici (Whisper) daha çok yakalar; dolgu tespiti bu yüzden transcript kalitesine bağlı.
 
-**Sıradaki:** Cihaz kontrolü (H1, H2, H3). Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
+**Teleprompter turu (build 91):**
+- Metin artık okunan satırı sabit bir "okuma yerinde" tutarak kayıyor; uzun script'te yer kaybolmuyor.
+- Ayarlar (boyut, mod, konum, hız, ayna) uygulama kapansa da kalıyor.
+- Canlı konuşma hızı (kelime/dk) ve hız koçu, kalan süre, ilerleme çizgisi.
+- `*kelime*` vurgusu, konuşmacı notları ve editördeki klip hızı artık prompter'da.
+- Tekrar çekim ekranı stüdyo ile aynı prompter'ı ve ayarları kullanıyor.
+- Editörde metinden seçilen cümle tek başına yeniden çekilebiliyor; prompter script'teki doğru cümleyi gösteriyor. Tutulan yeniden çekim, konuşmaya göre kendiliğinden kırpılıyor.
+- Eksik: prova modu (kayıtsız dinleme), uzaktan kumanda / ikinci ekran.
+
+**Sıradaki:** Cihaz kontrolü (H1, H2, H3, teleprompter). Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
 
 ## 1. Kısa cevap: aramızda ne kaldı
 

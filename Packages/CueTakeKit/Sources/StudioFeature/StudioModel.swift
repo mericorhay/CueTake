@@ -133,8 +133,38 @@ public final class StudioModel {
         teleprompter.load(project.segments)
         driver.onMove = { [weak self] position in self?.move(to: position) }
         driver.isPaused = { [weak self] in self?.teleprompter.isPaused ?? false }
-        // The prompter's speed control, 0–100, shown as 0.6×–1.6×, now means what it says.
-        driver.speedMultiplier = { [weak self] in 0.6 + (self?.teleprompter.speed ?? 40) / 100 }
+        // The prompter's speed control, 0–100, shown as 0.6×–1.6×, now means what it says; a
+        // segment set to read faster or slower in the editor scales it again.
+        driver.speedMultiplier = { [weak self] in
+            guard let self else { return 1 }
+            let segment = self.currentSegment?.teleprompter.speedMultiplier ?? 1
+            return (0.6 + self.teleprompter.speed / 100) * min(max(segment, 0.25), 4)
+        }
+        teleprompter.targetPace = SpeakingRate.wordsPerMinute(forLocaleIdentifier: project.localeIdentifier)
+        updateTiming()
+    }
+
+    /// Time left, progress and pace, for the prompter's status line.
+    private func updateTiming() {
+        let scripts = project.segments.map(\.script)
+        let total = ScriptTiming.wordCount(scripts)
+        guard total > 0 else {
+            teleprompter.remaining = nil
+            teleprompter.progress = 0
+            teleprompter.pace = nil
+            return
+        }
+        let reading = phase == .recording
+        let pace = reading ? driver.wordsPerMinute : nil
+        teleprompter.pace = pace
+        teleprompter.remaining = ScriptTiming.remainingSeconds(
+            scripts: scripts,
+            segment: reading ? segmentIndex : 0,
+            word: reading ? wordIndex : -1,
+            wordsPerMinute: pace ?? teleprompter.targetPace
+        )
+        let done = reading ? ScriptTiming.globalWord(scripts: scripts, segment: segmentIndex, word: wordIndex) + 1 : 0
+        teleprompter.progress = min(1, Double(done) / Double(total))
     }
 
     /// How the text is moving right now: following the voice, waiting for it, or by pace.
@@ -167,14 +197,20 @@ public final class StudioModel {
         return min(1, Double(wordIndex) / Double(words))
     }
 
-    /// Three seconds to put the phone on the tripod and find the lens.
+    /// A few seconds to put the phone on the tripod and find the lens — as many as the reader
+    /// chose in the prompter settings, or none.
     ///
     /// Every recording teleprompter ships this, and the reason is not politeness: without it the
     /// first seconds of every take are the reader reaching back from the shutter, which is exactly
     /// the footage they then have to trim.
-    public func beginCountdown(from seconds: Int = 3, writingTo url: URL? = nil) {
+    public func beginCountdown(from chosen: Int? = nil, writingTo url: URL? = nil) {
         guard task == nil, phase == .preparing else { return }
         teleprompter.isSettingsOpen = false
+        let seconds = chosen ?? teleprompter.countdown
+        guard seconds > 0 else {
+            startRecording(writingTo: url)
+            return
+        }
         pendingRecordingURL = url
         countdown = seconds
         task = Task { [weak self] in
@@ -244,6 +280,7 @@ public final class StudioModel {
         teleprompter.isPaused = false
         teleprompter.isSettingsOpen = false
         publishPosition()
+        updateTiming()
 
         recordingURL = url
         recordingStart = .now
@@ -266,6 +303,7 @@ public final class StudioModel {
         clock?.cancel()
         clock = nil
 
+        teleprompter.pace = nil
         let duration = recordingStart.map { Date.now.timeIntervalSince($0) } ?? elapsed
         let starts = segmentStarts
         let url = recordingURL
@@ -322,6 +360,7 @@ public final class StudioModel {
         recordingURL = nil
         recordingStart = nil
         segmentStarts = []
+        updateTiming()
     }
 
     /// A place in the script from outside, by segment identifier.
@@ -345,6 +384,7 @@ public final class StudioModel {
         segmentIndex = position.segment
         wordIndex = position.word
         publishPosition()
+        updateTiming()
     }
 
     private func publishPosition() {

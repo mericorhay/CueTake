@@ -30,6 +30,9 @@ final class PrompterDriver {
 
     private(set) var mode: Mode = .waiting
     private(set) var reachedEnd = false
+    /// How fast the voice is reading, while it is being followed.
+    private(set) var wordsPerMinute: Double?
+    private var paceMeter = PaceMeter()
 
     /// Where the place moved to, whoever moved it.
     @ObservationIgnored var onMove: ((ScriptFollower.Position) -> Void)?
@@ -72,6 +75,8 @@ final class PrompterDriver {
         startedAt = .now
         lastWordAt = nil
         paceCarry = 0
+        paceMeter.reset()
+        wordsPerMinute = nil
 
         if let camera, CameraSession.tapsAudio {
             let (frames, continuation) = AsyncStream<SpeechAudioFrame>.makeStream(bufferingPolicy: .bufferingNewest(128))
@@ -133,15 +138,30 @@ final class PrompterDriver {
             // its place a little behind.
             if mode == .pacing { follower.rewind(words: 12) }
             mode = .following
+            paceMeter.reset()
         }
-        guard !isPaused(), let moved = follower.hear(words) else { return }
+        if isPaused() {
+            // Held while ad-libbing: the pause is not slow reading.
+            paceMeter.reset()
+            wordsPerMinute = nil
+            return
+        }
+        guard let moved = follower.hear(words) else { return }
         reachedEnd = follower.isAtEnd
+        if let startedAt {
+            paceMeter.record(
+                word: ScriptTiming.globalWord(scripts: scripts, segment: moved.segment, word: moved.word),
+                at: Date.now.timeIntervalSince(startedAt)
+            )
+            wordsPerMinute = paceMeter.wordsPerMinute
+        }
         onMove?(moved)
     }
 
     private func listeningEnded() {
         guard ticking != nil else { return }
         mode = .pacing
+        wordsPerMinute = nil
     }
 
     private func tick(seconds: Double, now: Date) {

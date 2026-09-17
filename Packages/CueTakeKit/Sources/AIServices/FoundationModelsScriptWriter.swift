@@ -126,6 +126,12 @@ public struct FoundationModelsScriptWriter: ScriptWriting, ScriptSegmenting {
         if let tone = brief.tone, !tone.isEmpty {
             lines.append("Tone: \(tone)")
         }
+        let words = ScriptBudget.maxWords(seconds: brief.targetDuration.seconds, localeIdentifier: localeIdentifier)
+        lines.append("At most \(words) words in total. Short and spoken, not an essay.")
+        if let brand = brief.brand, !brand.isEmpty {
+            lines.append("Write in this brand's voice. Use the must-say phrases naturally and never the words to avoid.")
+            lines.append(brand.briefText)
+        }
         return lines.joined(separator: "\n")
     }
 

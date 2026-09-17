@@ -294,6 +294,40 @@
         }
       }
     },
+    "retake.pace.fast": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little fast — take a breath"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biraz hızlı — nefes al"
+          }
+        }
+      }
+    },
+    "retake.pace.slow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little slow — keep it moving"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Biraz yavaş — akışı koru"
+          }
+        }
+      }
+    },
     "retake.preview.audio": {
       "extractionState": "manual",
       "localizations": {

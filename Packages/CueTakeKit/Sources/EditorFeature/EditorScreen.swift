@@ -346,6 +346,10 @@ public struct EditorScreen: View {
                     model: model,
                     index: index,
                     onTranscribe: onTranscribe,
+                    onRetake: { id in
+                        showsTranscript = false
+                        onRetake(id)
+                    },
                     onClose: { showsTranscript = false }
                 )
                 .presentationDetents([.medium, .large])

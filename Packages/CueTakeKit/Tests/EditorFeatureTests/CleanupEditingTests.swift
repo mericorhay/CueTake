@@ -115,3 +115,49 @@ struct CleanupEditingTests {
         #expect(model.project.segments[0].selectedTake?.transcript?.words.first?.text == "this")
     }
 }
+
+/// Shooting one sentence again.
+@MainActor
+struct SentenceRetakeTests {
+    private func word(_ text: String, _ start: Double) -> TimedWord {
+        TimedWord(text: text, range: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: 0.4)))
+    }
+
+    private func model() -> EditorModel {
+        let recording = Recording(relativePath: "media/a.mov", format: .vertical1080, camera: .front, duration: MediaTime(seconds: 20))
+        let transcript = Transcript(localeIdentifier: "en", words: [
+            word("Hello", 0.2),
+            word("there.", 0.7),
+            word("This", 1.6),
+            word("is", 2.1),
+            word("wrong.", 2.6),
+            word("Bye", 3.6),
+        ])
+        let take = Take(
+            recordingID: recording.id,
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 5)),
+            status: .ready,
+            transcript: transcript
+        )
+        let segment = Segment(role: .hook, script: "Hello there. This is right. Bye", takes: [take], selectedTakeID: take.id)
+        return EditorModel(project: Project(title: "t", localeIdentifier: "en", segments: [segment], recordings: [recording]))
+    }
+
+    @Test func aSentenceBecomesItsOwnClipWithTheScriptsWords() throws {
+        let model = model()
+        let id = try #require(model.isolateForRetake(at: 0, words: 2...4))
+        let segments = model.project.segments
+        #expect(segments.count == 3)
+        #expect(segments[1].id == id)
+        // Cut in the silences: between "there." (ends 1.1) and "This" (1.6), and after "wrong.".
+        #expect(abs((segments[1].selectedTake?.sourceRange.start.seconds ?? 0) - 1.35) < 0.001)
+        #expect(abs((segments[1].selectedTake?.sourceRange.duration.seconds ?? 0) - 1.95) < 0.001)
+        // The prompter will show what the script says, not the misreading.
+        #expect(segments[1].script == "This is right.")
+        #expect(segments[0].script == "Hello there.")
+
+        // A selection that is the whole clip is the clip.
+        let whole = model.project.segments[0].id
+        #expect(model.isolateForRetake(at: 0, words: 0...1) == whole)
+    }
+}
