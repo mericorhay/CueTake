@@ -160,7 +160,11 @@ public enum HighlightFinder {
             best = [candidate(from: 0, to: last, in: sentences, length: length, locale: locale)]
         }
         var chosen: [HighlightCandidate] = []
-        for candidate in best.sorted(by: { $0.scores.total > $1.scores.total }) {
+        // Best first; near-equal scores keep the order they were said in, so the list is stable.
+        let ranked = best.sorted { a, b in
+            abs(a.scores.total - b.scores.total) > 0.000_001 ? a.scores.total > b.scores.total : a.start < b.start
+        }
+        for candidate in ranked {
             guard !chosen.contains(where: { $0.overlaps(candidate) }) else { continue }
             chosen.append(candidate)
             if chosen.count == count { break }

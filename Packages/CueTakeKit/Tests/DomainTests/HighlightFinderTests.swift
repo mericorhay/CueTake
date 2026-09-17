@@ -51,7 +51,9 @@ struct HighlightFinderTests {
             }
         }
         // Best first, and the best opens with the question.
-        #expect(found == found.sorted { $0.scores.total >= $1.scores.total })
+        for (a, b) in zip(found, found.dropFirst()) {
+            #expect(a.scores.total >= b.scores.total - 0.000_001)
+        }
         #expect(found[0].title.hasPrefix("Why do"))
         #expect(found[0].scores.hook > 0.8)
     }

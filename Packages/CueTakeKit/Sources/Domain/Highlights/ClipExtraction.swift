@@ -58,9 +58,15 @@ extension Project {
         }
 
         let used = Set(segments.compactMap { $0.selectedTake?.recordingID })
+        // As sharp as the footage it is cut from: a short from 4K video is a 4K short.
+        let sharpest = recordings
+            .filter { used.contains($0.id) }
+            .map(\.format.resolution)
+            .max { $0.shortEdge < $1.shortEdge }
+        let resolution = [format.resolution, sharpest].compactMap { $0 }.max { $0.shortEdge < $1.shortEdge } ?? format.resolution
         var clip = Project(
             title: title,
-            format: VideoFormat(aspectRatio: .portrait9x16, resolution: format.resolution, frameRate: format.frameRate),
+            format: VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: format.frameRate),
             localeIdentifier: localeIdentifier,
             segments: segments,
             recordings: recordings.filter { used.contains($0.id) },
