@@ -161,7 +161,7 @@ extension EditorModel {
 }
 
 /// Film names handed from the renderer to the editor, collected until the editor looks.
-private final class TransitionInbox: @unchecked Sendable {
+private nonisolated final class TransitionInbox: @unchecked Sendable {
     private let lock = NSLock()
     private var names: [String] = []
 
