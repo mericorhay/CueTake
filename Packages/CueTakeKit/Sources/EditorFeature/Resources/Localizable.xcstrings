@@ -4727,6 +4727,23 @@
         }
       }
     },
+    "editor.change.mainPlacement": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video placed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video yerleştirildi"
+          }
+        }
+      }
+    },
     "editor.change.merge": {
       "extractionState": "manual",
       "localizations": {
@@ -4961,6 +4978,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bölündü"
+          }
+        }
+      }
+    },
+    "editor.change.stageSwap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Places swapped"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yerler değişti"
           }
         }
       }
@@ -11241,6 +11275,23 @@
         }
       }
     },
+    "editor.video.main": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Senin videon"
+          }
+        }
+      }
+    },
     "editor.video.mirror": {
       "extractionState": "manual",
       "localizations": {
@@ -11666,6 +11717,40 @@
         }
       }
     },
+    "editor.video.stage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ON SCREEN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EKRANDA"
+          }
+        }
+      }
+    },
+    "editor.video.swap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap places"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yer değiştir"
+          }
+        }
+      }
+    },
     "editor.video.volume": {
       "extractionState": "manual",
       "localizations": {
@@ -11696,6 +11781,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nerede"
+          }
+        }
+      }
+    },
+    "editor.video.wholeFrame": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill the whole frame"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm ekranı kapla"
           }
         }
       }

@@ -695,7 +695,7 @@ public struct EditorScreen: View {
         .overlay { OverlayCanvas(model: model) }
         // An added video being worked on is placed right here, beside its timeline.
         .overlay {
-            if model.selectedVideoLayer != nil {
+            if model.placedPiece != nil {
                 VideoLayerCanvas(model: model)
             }
         }
@@ -902,11 +902,16 @@ public struct EditorScreen: View {
                 )
             }
             .scrollBounceBehavior(.basedOnSize)
-        } else if model.selectedVideoLayerValue != nil {
+        } else if model.selectedVideoLayerValue != nil || model.isPlacingMainVideo {
             VideoLayerPanel(
                 model: model,
                 onOpenPlacementEditor: { showsVideoPlacementEditor = true },
-                onClose: { withAnimation(DS.Motion.settle) { model.select(videoLayer: nil) } }
+                onClose: {
+                    withAnimation(DS.Motion.settle) {
+                        model.placeMainVideo(false)
+                        model.select(videoLayer: nil)
+                    }
+                }
             )
         } else if let clip = model.selectedAudioClip {
             audioPanel(clip)

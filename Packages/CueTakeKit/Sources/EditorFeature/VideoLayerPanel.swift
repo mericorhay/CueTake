@@ -19,9 +19,10 @@ struct VideoLayerPanel: View {
         VStack(alignment: .leading, spacing: 12) {
             header
 
-            if let layer {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    stage
+                    if let layer {
                         VStack(alignment: .leading, spacing: 8) {
                             DSKicker(String(localized: "editor.video.part", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
                             VideoLayerTrimStrip(model: model, layer: layer)
@@ -46,11 +47,13 @@ struct VideoLayerPanel: View {
                         }
                         placement(layer)
                         sound(layer)
+                    } else {
+                        mainPicture
                     }
-                    .padding(.bottom, 10)
                 }
-                .scrollIndicators(.hidden)
+                .padding(.bottom, 10)
             }
+            .scrollIndicators(.hidden)
         }
         .padding(.horizontal, 16)
         .padding(.top, 14)
@@ -65,13 +68,16 @@ struct VideoLayerPanel: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: "rectangle.inset.filled")
+            Image(systemName: layer == nil ? "person.crop.rectangle" : "rectangle.inset.filled")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(DS.Palette.inkInverse)
                 .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(VideoLayerLane.tint))
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(layer == nil ? DS.Palette.lime : VideoLayerLane.tint)
+                )
             VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: layer?.title ?? "")
+                Text(verbatim: layer?.title ?? String(localized: "editor.video.main", bundle: .module))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
                     .lineLimit(1)
@@ -94,6 +100,138 @@ struct VideoLayerPanel: View {
             .buttonStyle(.dsPressIcon)
             .accessibilityLabel(Text("editor.done", bundle: .module))
         }
+    }
+
+    // MARK: - The stage
+
+    /// Which of the pictures on screen the fingers are placing. The shot video is one of them:
+    /// a split screen is two pictures sharing a frame, and either of them may be the small one.
+    @ViewBuilder
+    private var stage: some View {
+        if !model.project.videoLayers.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                DSKicker(String(localized: "editor.video.stage", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                ScrollView(.horizontal) {
+                    HStack(spacing: 7) {
+                        piece(
+                            title: String(localized: "editor.video.main", bundle: .module),
+                            symbol: "person.crop.rectangle",
+                            tint: DS.Palette.lime,
+                            isOn: model.isPlacingMainVideo
+                        ) {
+                            withAnimation(DS.Motion.snap) { model.placeMainVideo(true) }
+                        }
+                        ForEach(model.project.videoLayers) { other in
+                            piece(
+                                title: other.title,
+                                symbol: "rectangle.inset.filled",
+                                tint: VideoLayerLane.tint,
+                                isOn: model.selectedVideoLayer == other.id
+                            ) {
+                                withAnimation(DS.Motion.snap) { model.select(videoLayer: other.id) }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 1)
+                }
+                .scrollIndicators(.hidden)
+                .scrollClipDisabled()
+
+                if let together = layer ?? model.project.videoLayers.first {
+                    HStack(spacing: 7) {
+                        splitButton(.sideBySide, "rectangle.split.2x1", with: together)
+                        splitButton(.stacked, "rectangle.split.1x2", with: together)
+                        splitButton(.pictureInPicture, "rectangle.inset.filled", with: together)
+                        Button {
+                            withAnimation(DS.Motion.settle) { model.swapStage(with: together.id) }
+                        } label: {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(DS.Palette.ink)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(DS.Palette.hairline(0.08)))
+                        }
+                        .buttonStyle(.dsPress(radius: 11))
+                        .accessibilityLabel(Text("editor.video.swap", bundle: .module))
+                    }
+                }
+            }
+        }
+    }
+
+    /// The shot video's own size and brightness, for when it is the one being placed.
+    private var mainPicture: some View {
+        let current = model.project.mainVideoPlacement.bounded
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                Text("editor.video.placeOnPicture", bundle: .module)
+                    .dsFont(.sans, .regular, 10)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+            }
+            slider("editor.video.size", symbol: "square.resize", value: current.width, range: 0.1...1) { value in
+                model.setMainVideoPlacement(current.resized(width: value))
+            }
+            Button {
+                withAnimation(DS.Motion.settle) { model.fillFrameWithMainVideo() }
+            } label: {
+                Label {
+                    Text("editor.video.wholeFrame", bundle: .module)
+                } icon: {
+                    Image(systemName: "rectangle")
+                }
+                .dsFont(.sans, .medium, 12)
+                .foregroundStyle(DS.Palette.ink(0.75))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.07)))
+            }
+            .buttonStyle(.dsPress(radius: 14))
+            .disabled(model.isMainVideoWholeFrame)
+            .opacity(model.isMainVideoWholeFrame ? 0.4 : 1)
+        }
+    }
+
+    private func piece(
+        title: String,
+        symbol: String,
+        tint: Color,
+        isOn: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: symbol)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(verbatim: title)
+                    .dsFont(.sans, .medium, 11)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .frame(maxWidth: 150)
+            .background(Capsule().fill(isOn ? tint : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 17))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    private func splitButton(_ layout: VideoLayout, _ symbol: String, with other: VideoLayer) -> some View {
+        Button {
+            withAnimation(DS.Motion.settle) { model.splitScreen(layout, with: other.id) }
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(DS.Palette.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(DS.Palette.hairline(0.08)))
+        }
+        .buttonStyle(.dsPress(radius: 11))
+        .accessibilityLabel(Text(layoutLabel(layout)))
     }
 
     // MARK: - Actions

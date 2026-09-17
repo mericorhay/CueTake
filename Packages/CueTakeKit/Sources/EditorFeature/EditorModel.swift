@@ -107,6 +107,8 @@ public final class EditorModel {
     public var selectedEffect: TimelineEffect.ID?
     /// The additional movie being positioned above the main cut.
     public var selectedVideoLayer: VideoLayer.ID?
+    /// The shot video itself is being placed on the canvas — see StagePiece.
+    public var isPlacingMainVideo = false
     /// Makes videos with a model, on the user's own key. Set by the app.
     @ObservationIgnored public var clipGenerator: ClipGenerator?
     /// Whether a provider has a key, for the generate panel. Set by the app.
@@ -1104,6 +1106,7 @@ extension EditorModel {
         selectedVideoLayer = id
         subjectTracking = .idle
         if id != nil {
+            isPlacingMainVideo = false
             selectedCameraMotion = nil
             selectedSubjectTrack = nil
             inspectedSegment = nil

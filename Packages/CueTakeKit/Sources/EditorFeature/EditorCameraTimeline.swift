@@ -47,6 +47,7 @@ extension EditorModel {
         selectedOverlay = nil
         selectedEffect = nil
         selectedVideoLayer = nil
+        isPlacingMainVideo = false
     }
 
     /// The selected move, with the recording it belongs to. Nil once it is gone.
