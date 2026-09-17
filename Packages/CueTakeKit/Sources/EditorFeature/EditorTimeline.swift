@@ -153,6 +153,14 @@ struct EditorTimeline: View {
             }
         }
         .onChange(of: model.pointsPerSecond) { follow() }
+        // Taken off screen mid-scrub (a panel opening swaps the timeline): the scrub ends with it,
+        // or the playhead stays deaf to playback.
+        .onDisappear {
+            if userScrolling {
+                userScrolling = false
+                model.endScrub()
+            }
+        }
         .overlay { centreLine }
         .overlay {
             if model.aiSession?.phase == .thinking {

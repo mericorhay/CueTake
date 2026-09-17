@@ -472,10 +472,19 @@ public final class EditorModel {
             return
         }
         isPlaying = true
+        // A press on Play is not a finger on the timeline. A scrub the timeline never ended (its
+        // view rebuilt mid-gesture) kept the playhead from following the picture, so every
+        // pause-and-play jumped back to wherever that scrub had left it.
+        isScrubbing = false
 
         if let player {
             PlaybackAudio.activate()
-            player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600)) { _ in }
+            // Only a playhead that was moved while paused is sought to; otherwise the player
+            // carries on from its own frame.
+            let current = player.currentTime().seconds
+            if !current.isFinite || abs(current - playhead) > 0.04 {
+                player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
+            }
             player.play()
             return
         }
@@ -498,6 +507,14 @@ public final class EditorModel {
     }
 
     public func pause() {
+        if isPlaying, let player {
+            player.pause()
+            // Where the picture actually stopped is where Play carries on from.
+            let current = player.currentTime().seconds
+            if current.isFinite, !isScrubbing {
+                playhead = min(max(0, current), duration)
+            }
+        }
         isPlaying = false
         player?.pause()
         task?.cancel()
