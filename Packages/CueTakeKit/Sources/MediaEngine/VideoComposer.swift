@@ -92,6 +92,9 @@ public struct VideoComposer: Sendable {
             else { continue }
 
             let playback = segment.playback
+            // Tracked or moved anywhere: every clip cut from this recording is framed the same way,
+            // not just the one whose range the track falls in.
+            let recordingMoves = !(recording.reframe ?? []).isEmpty || !(recording.cameraMotions ?? []).isEmpty
             var url = mediaDirectory.appending(
                 path: (recording.relativePath as NSString).lastPathComponent,
                 directoryHint: .notDirectory
@@ -258,7 +261,7 @@ public struct VideoComposer: Sendable {
                     let geometry = VideoFrameGeometry(
                         natural: trackNatural,
                         preferred: trackPreferred,
-                        placement: Self.framed(project.mainVideoPlacement, natural: trackNatural, preferred: trackPreferred, render: renderSize),
+                        placement: Self.framed(project.mainVideoPlacement, natural: trackNatural, preferred: trackPreferred, render: renderSize, moving: recordingMoves),
                         render: renderSize
                     )
                     layer.setTransform(geometry.transform, at: pieceCursor)
@@ -296,7 +299,7 @@ public struct VideoComposer: Sendable {
                         return VideoFrameGeometry(
                             natural: trackNatural,
                             preferred: trackPreferred,
-                            placement: Self.framed(placement, natural: trackNatural, preferred: trackPreferred, render: renderSize),
+                            placement: Self.framed(placement, natural: trackNatural, preferred: trackPreferred, render: renderSize, moving: recordingMoves),
                             render: renderSize
                         )
                     }
@@ -375,7 +378,7 @@ public struct VideoComposer: Sendable {
                         return VideoFrameGeometry(
                             natural: natural,
                             preferred: preferred,
-                            placement: Self.framed(placement, natural: natural, preferred: preferred, render: renderSize),
+                            placement: Self.framed(placement, natural: natural, preferred: preferred, render: renderSize, moving: recordingMoves),
                             render: renderSize
                         )
                     }
@@ -530,8 +533,17 @@ public struct VideoComposer: Sendable {
     /// shape than the video — imported, or shot 3:4 — then sat small inside black bars next to
     /// its filled neighbours, as if zoomed out to 0.5×. Only a very different shape (landscape in
     /// a vertical video) is still fitted, because filling would keep a third of it.
-    static func framed(_ placement: VideoPlacement, natural: CGSize, preferred: CGAffineTransform, render: CGSize) -> VideoPlacement {
+    ///
+    /// A recording that is tracked or moved anywhere is filled in every clip cut from it. The
+    /// track sits in one clip's range; the rest of the same video, fitted, shrank to a picture in
+    /// bars the moment the cut came — worst of all across a transition.
+    static func framed(_ placement: VideoPlacement, natural: CGSize, preferred: CGAffineTransform, render: CGSize, moving: Bool = false) -> VideoPlacement {
         guard !placement.fillsFrame else { return placement }
+        if moving {
+            var filled = placement
+            filled.fillsFrame = true
+            return filled
+        }
         let oriented = CGRect(origin: .zero, size: natural).applying(preferred)
         let bounds = placement.bounded
         let source = abs(oriented.width) / max(1, abs(oriented.height))

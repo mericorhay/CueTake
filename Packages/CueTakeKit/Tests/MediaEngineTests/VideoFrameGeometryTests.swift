@@ -128,6 +128,9 @@ struct VideoFrameGeometryTests {
         // Landscape in a vertical video would keep a third: fitted.
         let landscape = VideoComposer.framed(.full, natural: CGSize(width: 1920, height: 1080), preferred: .identity, render: render)
         #expect(!landscape.fillsFrame)
+        // …unless the recording is tracked or moved somewhere: then every part of it fills.
+        let tracked = VideoComposer.framed(.full, natural: CGSize(width: 1920, height: 1080), preferred: .identity, render: render, moving: true)
+        #expect(tracked.fillsFrame)
         // A choice already made is kept.
         let chosen = VideoComposer.framed(VideoPlacement(fillsFrame: true), natural: CGSize(width: 1920, height: 1080), preferred: .identity, render: render)
         #expect(chosen.fillsFrame)
