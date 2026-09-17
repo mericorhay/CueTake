@@ -39,13 +39,12 @@ struct TransitionRendererTests {
         await TransitionRenderer.renderMissing(for: project, in: folder, renderBackgrounds: false)
         #expect(job.isReady, "\(kind.rawValue) wrote no film")
 
-        let film = AVURLAsset(url: job.destination)
-        let length = try await film.load(.duration).seconds
+        let length = try await AVURLAsset(url: job.destination).load(.duration).seconds
         #expect(abs(length - 0.6) < 0.1, "\(kind.rawValue) lasts \(length)")
 
-        let first = try await Self.averageColour(of: film, at: 0)
-        let middle = try await Self.averageColour(of: film, at: length / 2)
-        let last = try await Self.averageColour(of: film, at: max(0, length - 0.05))
+        let first = try await Self.averageColour(of: job.destination, at: 0)
+        let middle = try await Self.averageColour(of: job.destination, at: length / 2)
+        let last = try await Self.averageColour(of: job.destination, at: max(0, length - 0.05))
 
         // It starts on the leaving clip and ends on the arriving one.
         #expect(first.red > 0.8 && first.blue < 0.2, "\(kind.rawValue) starts on \(first)")
@@ -64,16 +63,10 @@ struct TransitionRendererTests {
         // Laid over its cut in the composition, and the composition plays.
         let assembled = try await VideoComposer().compose(project: project, mediaDirectory: folder, renderBackgrounds: false)
         #expect(assembled.composition.tracks(withMediaType: .video).count == 2)
-        let generator = AVAssetImageGenerator(asset: assembled.composition)
-        generator.videoComposition = assembled.videoComposition
-        generator.requestedTimeToleranceBefore = .zero
-        generator.requestedTimeToleranceAfter = .zero
-        let atCut = try await generator.image(at: CMTime(seconds: job.cut, preferredTimescale: 600)).image
-        let cutColour = Self.average(CIImage(cgImage: atCut))
+        let cutColour = try await Self.averageColour(of: assembled, at: job.cut)
         let plainCutIsBlue = cutColour.blue > 0.9 && cutColour.red < 0.1
         #expect(!plainCutIsBlue, "\(kind.rawValue) is not shown over the cut: \(cutColour)")
-        let after = try await generator.image(at: CMTime(seconds: 3.5, preferredTimescale: 600)).image
-        let afterColour = Self.average(CIImage(cgImage: after))
+        let afterColour = try await Self.averageColour(of: assembled, at: 3.5)
         #expect(afterColour.blue > 0.8 && afterColour.red < 0.2, "the clip after \(kind.rawValue) is \(afterColour)")
     }
 
@@ -126,8 +119,19 @@ struct TransitionRendererTests {
         #expect(writer.status == .completed)
     }
 
-    static func averageColour(of asset: AVAsset, at seconds: Double) async throws -> Colour {
-        let generator = AVAssetImageGenerator(asset: asset)
+    @concurrent
+    static func averageColour(of assembled: VideoComposer.Assembled, at seconds: Double) async throws -> Colour {
+        let generator = AVAssetImageGenerator(asset: assembled.composition)
+        generator.videoComposition = assembled.videoComposition
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
+        let image = try await generator.image(at: CMTime(seconds: seconds, preferredTimescale: 600)).image
+        return average(CIImage(cgImage: image))
+    }
+
+    @concurrent
+    static func averageColour(of url: URL, at seconds: Double) async throws -> Colour {
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
         generator.requestedTimeToleranceBefore = .zero
         generator.requestedTimeToleranceAfter = .zero
         let image = try await generator.image(at: CMTime(seconds: seconds, preferredTimescale: 600)).image
