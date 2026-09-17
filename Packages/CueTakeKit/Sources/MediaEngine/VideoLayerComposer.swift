@@ -59,7 +59,7 @@ extension VideoComposer {
         let videoEnd = base.last?.timeRange.end.seconds
         for original in project.videoLayers {
             guard let recording = project.recording(id: original.recordingID) else { throw ComposeError.missingMedia(original.recordingID) }
-            let asset = AVURLAsset(url: directory.appending(path: (recording.relativePath as NSString).lastPathComponent))
+            let asset = AssetCache.shared.asset(for: directory.appending(path: (recording.relativePath as NSString).lastPathComponent))
             guard let source = try await asset.loadTracks(withMediaType: .video).first else { throw ComposeError.noVideoTrack(recording.id) }
             let duration = try await asset.load(.duration)
             let start = CMTime(seconds: max(0, original.sourceRange.start.seconds), preferredTimescale: 600)

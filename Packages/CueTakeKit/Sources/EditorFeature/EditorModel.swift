@@ -215,6 +215,7 @@ public final class EditorModel {
     /// The player's item failed while a background render was running; rebuild when it ends.
     @ObservationIgnored var recoverAfterBackgrounds = false
     @ObservationIgnored private var itemStatus: NSKeyValueObservation?
+    @ObservationIgnored private var itemEnd: (any NSObjectProtocol)?
     @ObservationIgnored private var playbackRetries = 0
     private var timeObserver: Any?
 
@@ -311,6 +312,20 @@ public final class EditorModel {
     /// composition had not changed, so nothing ever rebuilt it.
     private func watch(_ item: AVPlayerItem) {
         let id = ObjectIdentifier(item)
+        if let itemEnd { NotificationCenter.default.removeObserver(itemEnd) }
+        // At the end the player stops by itself. The editor has to know, or Play would pause a
+        // player that is not playing and the button would say the opposite of what is happening.
+        itemEnd = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.didPlayToEndTimeNotification,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.isPlaying else { return }
+                self.isPlaying = false
+                self.playhead = self.duration
+            }
+        }
         itemStatus = item.observe(\.status, options: [.new]) { @Sendable [weak self] observed, _ in
             let status = observed.status
             let message = observed.error.map { EditorModel.describe($0) } ?? "AVPlayerItem failed"
@@ -450,6 +465,10 @@ public final class EditorModel {
             return
         }
         isPlaying = true
+        // Play at the end starts again from the beginning.
+        if playhead >= duration - 0.05 {
+            playhead = 0
+        }
         // A press on Play is not a finger on the timeline. A scrub the timeline never ended (its
         // view rebuilt mid-gesture) kept the playhead from following the picture, so every
         // pause-and-play jumped back to wherever that scrub had left it.

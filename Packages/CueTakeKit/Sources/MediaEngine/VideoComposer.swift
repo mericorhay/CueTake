@@ -110,7 +110,7 @@ public struct VideoComposer: Sendable {
             let sourceLength = CMTime(seconds: take.sourceRange.duration.seconds, preferredTimescale: 600)
             // The recording itself, for the sound: a clip whose picture is a processed copy (reversed,
             // background replaced) still speaks with the voice it was recorded with.
-            let original = AVURLAsset(url: url)
+            let original = AssetCache.shared.asset(for: url)
             let originalStart = sourceStart
             var pictureReplaced = false
 
@@ -141,7 +141,7 @@ public struct VideoComposer: Sendable {
                 }
             }
 
-            let asset = AVURLAsset(url: url)
+            let asset = AssetCache.shared.asset(for: url)
 
             guard let sourceVideo = try await asset.loadTracks(withMediaType: .video).first else {
                 throw ComposeError.noVideoTrack(recording.id)

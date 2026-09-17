@@ -101,15 +101,19 @@ extension EditorModel {
 }
 
 extension EditorModel {
-    /// Writes the transition films the edit needs, below everything else, and rebuilds the preview
-    /// as they arrive. Until then the preview plays those cuts as cuts.
+    /// Writes the transition films the edit needs, below everything else, and shows them as they
+    /// arrive. Until then the preview plays those cuts as cuts.
+    ///
+    /// The cut nearest the playhead is drawn first, and finished films are shown a few at a time:
+    /// a preview rebuilt after every one of fifty would never stop blinking.
     func prepareTransitions() {
         guard let mediaDirectory else { return }
         let jobs = TransitionRenderer.jobs(for: project, in: mediaDirectory)
-        for job in jobs where job.isReady && !readyTransitions.contains(job.name) {
-            readyTransitions.insert(job.name)
+        let ready = Set(jobs.filter(\.isReady).map(\.name))
+        if !ready.isSubset(of: readyTransitions) {
+            readyTransitions.formUnion(ready)
         }
-        let missing = jobs.filter { !$0.isReady }
+        let missing = jobs.filter { !ready.contains($0.name) }
         let key = missing.map(\.name).joined(separator: ",")
         guard !missing.isEmpty else {
             transitionJob?.cancel()
@@ -121,17 +125,54 @@ extension EditorModel {
         transitionJob?.cancel()
         transitionJobKey = key
         let snapshot = project
+        let nearest = playhead
+        let inbox = TransitionInbox()
         transitionJob = Task(priority: .utility) { [weak self] in
             // A moment's wait: a duration slider sends many values, and only the last is drawn.
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled else { return }
-            await TransitionRenderer.renderMissing(for: snapshot, in: mediaDirectory, renderBackgrounds: false)
+            let flusher = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(2))
+                    guard let self, self.transitionJobKey == key else { return }
+                    self.showTransitions(inbox.take())
+                }
+            }
+            await TransitionRenderer.renderMissing(
+                for: snapshot,
+                in: mediaDirectory,
+                renderBackgrounds: false,
+                nearest: nearest,
+                onFilm: { inbox.add($0) }
+            )
+            flusher.cancel()
             guard !Task.isCancelled, let self, self.transitionJobKey == key else { return }
             self.transitionJob = nil
             self.transitionJobKey = ""
-            for job in jobs where job.isReady {
-                self.readyTransitions.insert(job.name)
-            }
+            self.showTransitions(inbox.take())
+        }
+    }
+
+    private func showTransitions(_ names: [String]) {
+        let fresh = Set(names).subtracting(readyTransitions)
+        guard !fresh.isEmpty else { return }
+        readyTransitions.formUnion(fresh)
+    }
+}
+
+/// Film names handed from the renderer to the editor, collected until the editor looks.
+private final class TransitionInbox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var names: [String] = []
+
+    func add(_ name: String) {
+        lock.withLock { names.append(name) }
+    }
+
+    func take() -> [String] {
+        lock.withLock {
+            defer { names.removeAll() }
+            return names
         }
     }
 }

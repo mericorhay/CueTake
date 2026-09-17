@@ -47,9 +47,14 @@ public enum TransitionRenderer {
     }
 
     /// Every transition film the project needs, whether written yet or not.
+    ///
+    /// Each film is named after what its own frames depend on — the two clips either side of it,
+    /// their footage, the framing, and whatever added video or background lies over it — so
+    /// editing one clip of fifty redraws only the transitions touching it.
     public static func jobs(for project: Project, in directory: URL) -> [Job] {
         guard !project.transitions.isEmpty, project.segments.count > 1 else { return [] }
-        let fingerprint = fingerprint(of: base(of: project))
+        let picture = Self.base(of: project)
+        let shared = encoded(Shared(format: picture.format, placement: picture.mainVideoPlacement))
         var jobs: [Job] = []
         var time = 0.0
         var lastEnd = 0.0
@@ -67,7 +72,16 @@ public enum TransitionRenderer {
             guard start >= lastEnd - 0.0001 else { continue }
             let end = time + seconds / 2
             lastEnd = end
-            let token = hex("\(fingerprint)|\(index)|\(transition.kind.rawValue)|\(Int((seconds * 1000).rounded()))").prefix(20)
+            let token = hex(cutKey(
+                base: picture,
+                shared: shared,
+                outgoing: outgoing,
+                incoming: incoming,
+                start: start,
+                end: end,
+                kind: transition.kind,
+                seconds: seconds
+            )).prefix(24)
             let name = "transition-\(token).mov"
             jobs.append(Job(
                 name: name,
@@ -114,25 +128,34 @@ public enum TransitionRenderer {
 
     /// Writes the films that are missing. Failures are skipped: a cut is a fine fallback.
     /// Off the caller's actor: the editor asks from the main one.
+    ///
+    /// - Parameter nearest: the cuts closest to this moment are drawn first, so the one being
+    ///   looked at is ready soonest on a long edit.
+    /// - Parameter onFilm: told the name of each film as it is written.
     @concurrent
     public static func renderMissing(
         for project: Project,
         in directory: URL,
         renderBackgrounds: Bool = true,
-        progress: (@Sendable (Double) -> Void)? = nil
+        nearest: Double? = nil,
+        onFilm: (@Sendable (String) -> Void)? = nil
     ) async {
-        let missing = jobs(for: project, in: directory).filter { !$0.isReady }
+        var missing = jobs(for: project, in: directory).filter { !$0.isReady }
         guard !missing.isEmpty else { return }
+        if let nearest {
+            missing.sort { abs($0.cut - nearest) < abs($1.cut - nearest) }
+        }
         guard var assembled = try? await VideoComposer().compose(
             project: base(of: project),
             mediaDirectory: directory,
             renderBackgrounds: renderBackgrounds
         ) else { return }
         VideoComposer.pruneEmptyTracks(&assembled)
-        for (index, job) in missing.enumerated() {
+        for job in missing {
             if Task.isCancelled { return }
-            _ = try? await render(job, from: assembled)
-            progress?(Double(index + 1) / Double(missing.count))
+            if (try? await render(job, from: assembled)) != nil {
+                onFilm?(job.name)
+            }
         }
     }
 
@@ -290,31 +313,51 @@ public enum TransitionRenderer {
         return placed.cropped(to: bounds)
     }
 
-    /// What the finished picture of an edit depends on, as a short stable string. Anything that
-    /// cannot change a frame (titles, dates, captions, sound) is left out, so editing those does
-    /// not redraw the transitions.
-    static func fingerprint(of project: Project) -> String {
-        var stripped = project
-        stripped.title = ""
-        stripped.createdAt = Date(timeIntervalSince1970: 0)
-        stripped.updatedAt = Date(timeIntervalSince1970: 0)
-        stripped.metadata = [:]
-        stripped.aiConversations = []
-        stripped.audio = []
-        stripped.overlays = []
-        stripped.captionWindow = nil
-        stripped.effects = project.effects.filter { $0.background != nil }
-        for index in stripped.segments.indices {
-            stripped.segments[index].captions = []
+    private struct Shared: Encodable {
+        var format: VideoFormat
+        var placement: VideoPlacement
+    }
+
+    /// What one cut's frames depend on. Captions, titles, dates and sound are left out: editing
+    /// those does not redraw anything. Where the cut sits on the video matters only when
+    /// something pinned to the video's clock — an added video, a background — lies over it.
+    static func cutKey(
+        base: Project,
+        shared: String,
+        outgoing: Segment,
+        incoming: Segment,
+        start: Double,
+        end: Double,
+        kind: ClipTransition.Kind,
+        seconds: Double
+    ) -> String {
+        func picture(_ segment: Segment) -> String {
+            var copy = segment
+            copy.captions = []
+            let selected = segment.selectedTakeID
+            copy.takes = segment.takes.filter { $0.id == selected }
+            for index in copy.takes.indices { copy.takes[index].transcript = nil }
+            var key = encoded(copy)
+            if let take = copy.selectedTake, var recording = base.recording(id: take.recordingID) {
+                recording.speech = nil
+                key += encoded(recording)
+            }
+            return key
         }
-        for index in stripped.recordings.indices {
-            stripped.recordings[index].speech = nil
+        let layers = base.videoLayers.filter { $0.start.seconds < end && $0.end > start }
+        let backgrounds = base.effects.filter { $0.background != nil && $0.start.seconds < end && $0.end > start }
+        var key = [shared, picture(outgoing), picture(incoming), kind.rawValue, String(Int((seconds * 1000).rounded()))]
+        if !layers.isEmpty || !backgrounds.isEmpty {
+            key += [encoded(layers), encoded(backgrounds), String(Int((start * 1000).rounded()))]
         }
+        return key.joined(separator: "|")
+    }
+
+    static func encoded<Value: Encodable>(_ value: Value) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         encoder.dateEncodingStrategy = .secondsSince1970
-        let data = (try? encoder.encode(stripped)) ?? Data()
-        return hex(data)
+        return (try? encoder.encode(value)).map { String(decoding: $0, as: UTF8.self) } ?? ""
     }
 
     static func hex(_ text: String) -> String {
