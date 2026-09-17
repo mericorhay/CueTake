@@ -105,7 +105,18 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         _ audio: AsyncStream<SpeechAudioFrame>,
         localeIdentifier: String
     ) -> AsyncThrowingStream<TranscriptUpdate, any Error> {
-        AsyncThrowingStream { continuation in
+        transcribe(audio, localeIdentifier: localeIdentifier, hints: [])
+    }
+
+    /// The names, brands and numbers of the script, given to the recogniser before it listens, so
+    /// it spells them the way the script does.
+    public func transcribe(
+        _ audio: AsyncStream<SpeechAudioFrame>,
+        localeIdentifier: String,
+        hints: [String]
+    ) -> AsyncThrowingStream<TranscriptUpdate, any Error> {
+        let hints = Array(hints.prefix(SpeechHints.limit))
+        return AsyncThrowingStream { continuation in
             let work = Task {
                 let recognizer: Recognizer
                 let format: AVAudioFormat
@@ -117,7 +128,7 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
                     format = best
                 } catch {
                     do {
-                        try await LegacySpeech.follow(audio, localeIdentifier: localeIdentifier, into: continuation)
+                        try await LegacySpeech.follow(audio, localeIdentifier: localeIdentifier, hints: hints, into: continuation)
                         continuation.finish()
                     } catch {
                         continuation.finish(throwing: error)
@@ -127,6 +138,7 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
 
                 do {
                     let analyzer = SpeechAnalyzer(modules: [recognizer.module])
+                    await Self.give(hints, to: analyzer)
                     let (inputs, feed) = AsyncStream<AnalyzerInput>.makeStream()
                     try await analyzer.start(inputSequence: inputs)
 
@@ -157,7 +169,7 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
                         // Eight seconds of sound and not one word: hand over to the older
                         // recogniser for the rest of the take.
                         if !heardSomething.isSet, Date.now.timeIntervalSince(started) > 8 {
-                            fallback = try? await LegacySpeech.LiveSession(localeIdentifier: localeIdentifier, into: continuation)
+                            fallback = try? await LegacySpeech.LiveSession(localeIdentifier: localeIdentifier, hints: hints, into: continuation)
                             if fallback != nil {
                                 feed.finish()
                                 reader.cancel()
@@ -184,20 +196,25 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
     /// Every word of a file, newest recogniser first, the older one if the new ones refuse the
     /// language, fail, or come back with nothing.
     public func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
+        try await transcribeFile(at: url, localeIdentifier: localeIdentifier, hints: [])
+    }
+
+    public func transcribeFile(at url: URL, localeIdentifier: String, hints: [String]) async throws -> Transcript {
+        let hints = Array(hints.prefix(SpeechHints.limit))
         // A video is read through its sound. `AVAudioFile` opens audio files; handed a .mov it
         // can fail outright, which is half of why listening to footage used to hear nothing.
         let audioURL = try await Self.audioFile(for: url)
 
         var modernError: (any Error)?
         do {
-            let transcript = try await Self.analyzerTranscript(of: audioURL, localeIdentifier: localeIdentifier)
+            let transcript = try await Self.analyzerTranscript(of: audioURL, localeIdentifier: localeIdentifier, hints: hints)
             if !transcript.words.isEmpty { return transcript }
         } catch {
             modernError = error
         }
 
         do {
-            return try await LegacySpeech.transcribeFile(at: audioURL, localeIdentifier: localeIdentifier)
+            return try await LegacySpeech.transcribeFile(at: audioURL, localeIdentifier: localeIdentifier, hints: hints)
         } catch {
             // The more useful of the two failures: a language the new model does not have is
             // explained better by the older recogniser's answer.
@@ -205,9 +222,19 @@ public struct SystemSpeechTranscriber: SpeechTranscribing {
         }
     }
 
-    private static func analyzerTranscript(of audioURL: URL, localeIdentifier: String) async throws -> Transcript {
+    /// Tells the analyzer which words to expect. Best effort: a context it refuses is a context
+    /// it listens without.
+    static func give(_ hints: [String], to analyzer: SpeechAnalyzer) async {
+        guard !hints.isEmpty else { return }
+        let context = AnalysisContext()
+        context.contextualStrings[.general] = hints
+        try? await analyzer.setContext(context)
+    }
+
+    private static func analyzerTranscript(of audioURL: URL, localeIdentifier: String, hints: [String]) async throws -> Transcript {
         let recognizer = try await Recognizer.make(localeIdentifier: localeIdentifier, live: false)
         let analyzer = SpeechAnalyzer(modules: [recognizer.module])
+        await give(hints, to: analyzer)
         let file = try AVAudioFile(forReading: audioURL)
 
         // Collect on a task of its own: results arrive while the analyzer is still reading, and
@@ -410,11 +437,12 @@ enum LegacySpeech {
     /// nothing at all when the file opened on a moment of silence ("no speech detected" for that
     /// first stretch). Every final result is kept now, and the answer is given when the task says
     /// it has finished.
-    static func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript {
+    static func transcribeFile(at url: URL, localeIdentifier: String, hints: [String] = []) async throws -> Transcript {
         let recognizer = try await recognizer(for: localeIdentifier)
         let request = SFSpeechURLRecognitionRequest(url: url)
         request.shouldReportPartialResults = false
         request.addsPunctuation = true
+        request.contextualStrings = hints
         // On device where the phone can: no length limit, no network, nothing leaves the phone.
         if recognizer.supportsOnDeviceRecognition {
             request.requiresOnDeviceRecognition = true
@@ -493,9 +521,10 @@ enum LegacySpeech {
     static func follow(
         _ audio: AsyncStream<SpeechAudioFrame>,
         localeIdentifier: String,
+        hints: [String] = [],
         into continuation: AsyncThrowingStream<TranscriptUpdate, any Error>.Continuation
     ) async throws {
-        let session = try await LiveSession(localeIdentifier: localeIdentifier, into: continuation)
+        let session = try await LiveSession(localeIdentifier: localeIdentifier, hints: hints, into: continuation)
         for await frame in audio {
             if Task.isCancelled { break }
             session.append(frame.buffer)
@@ -510,10 +539,12 @@ enum LegacySpeech {
 
         init(
             localeIdentifier: String,
+            hints: [String] = [],
             into continuation: AsyncThrowingStream<TranscriptUpdate, any Error>.Continuation
         ) async throws {
             let recognizer = try await LegacySpeech.recognizer(for: localeIdentifier)
             request.shouldReportPartialResults = true
+            request.contextualStrings = hints
             if recognizer.supportsOnDeviceRecognition {
                 request.requiresOnDeviceRecognition = true
             }

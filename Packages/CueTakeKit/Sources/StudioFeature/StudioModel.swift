@@ -144,6 +144,11 @@ public final class StudioModel {
         updateTiming()
     }
 
+    /// Terms the recogniser should expect beyond the script's own, such as the brand's name.
+    public func setSpeechHints(_ hints: [String]) {
+        driver.extraHints = hints
+    }
+
     /// Time left, progress and pace, for the prompter's status line.
     private func updateTiming() {
         let scripts = project.segments.map(\.script)

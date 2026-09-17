@@ -4,6 +4,22 @@ import SwiftUI
 
 /// The two listeners' versions of what was said, where a caption is being edited.
 extension EditorModel {
+    /// A benchmark sample of the recording behind a clip, as JSON: both listeners and the chosen
+    /// words, for a person to correct into a reference. Nil when the recording was never heard.
+    public func speechSample(at index: Int) -> String? {
+        guard project.segments.indices.contains(index),
+              let take = project.segments[index].selectedTake,
+              let recording = project.recording(id: take.recordingID),
+              let versions = recording.speech
+        else { return nil }
+        let name = (recording.relativePath as NSString).lastPathComponent
+        let fixture = SpeechBenchmark.Fixture(name: name, versions: versions)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        guard let data = try? encoder.encode(fixture) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
     /// The passage a caption was read from, with the recording it belongs to.
     public func speechPassage(forCaption id: CaptionCue.ID) -> (recording: Recording.ID, passage: TranscriptPassage)? {
         guard let index = segmentIndex(ofCaption: id),

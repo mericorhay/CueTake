@@ -93,4 +93,102 @@ public struct VoiceActivity: Sendable {
     public func voiced(_ words: [TimedWord]) -> [TimedWord] {
         words.filter { hasSound(from: $0.range.start.seconds, to: $0.range.end.seconds) }
     }
+
+    func isLoud(at seconds: Double, above extra: Float = 0) -> Bool {
+        // A hair added so a time built by adding windows lands in the window it names.
+        let index = Int(seconds / window + 0.0001)
+        guard levels.indices.contains(index) else { return false }
+        return levels[index] > threshold + extra
+    }
+
+    /// Word edges moved onto the sound.
+    ///
+    /// A recogniser's word times can be a tenth of a second out, which is the difference between a
+    /// cut in the silence before a word and a cut through its first consonant. Each start moves
+    /// back while the sound before it is still voice, or forward to where the voice begins; each
+    /// end the same way. Words never cross their neighbours.
+    public func snapped(_ words: [TimedWord]) -> [TimedWord] {
+        var result: [TimedWord] = []
+        result.reserveCapacity(words.count)
+        for (index, word) in words.enumerated() {
+            let floor = max(0, result.last?.range.end.seconds ?? 0)
+            let ceiling = index + 1 < words.count ? words[index + 1].range.start.seconds : Double(levels.count) * window
+            var start = max(word.range.start.seconds, floor)
+            var end = max(word.range.end.seconds, start + 0.05)
+
+            if isLoud(at: start) {
+                var step = 0
+                while step < 6, start - window >= floor, isLoud(at: start - window) {
+                    start -= window
+                    step += 1
+                }
+            } else {
+                var probe = start
+                let limit = min(word.range.start.seconds + 0.15, end - 0.05)
+                while !isLoud(at: probe), probe + window <= limit {
+                    probe += window
+                }
+                if isLoud(at: probe) { start = probe }
+            }
+
+            if isLoud(at: end - window) {
+                var step = 0
+                while step < 7, end + window <= ceiling, isLoud(at: end) {
+                    end += window
+                    step += 1
+                }
+            } else {
+                var probe = end
+                while probe - window > max(start + 0.05, word.range.end.seconds - 0.15), !isLoud(at: probe - window) {
+                    probe -= window
+                }
+                end = probe
+            }
+
+            var moved = word
+            moved.range = MediaTimeRange(
+                start: MediaTime(seconds: start),
+                duration: MediaTime(seconds: max(0.05, end - start))
+            )
+            result.append(moved)
+        }
+        return result
+    }
+
+    /// Stretches between words where there is clearly voice — louder than a breath — but no word:
+    /// the "ııı"s and "hmm"s recognisers leave out. `words` may come from several listeners.
+    public func unheardSounds(between words: [TimedWord], shortest: Double = 0.12, longest: Double = 1.5) -> [ClosedRange<Double>] {
+        let sorted = words.sorted { $0.range.start.seconds < $1.range.start.seconds }
+        var sounds: [ClosedRange<Double>] = []
+        for (left, right) in zip(sorted, sorted.dropFirst()) {
+            let from = left.range.end.seconds + 0.05
+            let to = right.range.start.seconds - 0.05
+            guard to - from >= shortest else { continue }
+            var runs: [ClosedRange<Double>] = []
+            var runStart: Double?
+            var time = from
+            while time < to {
+                if isLoud(at: time, above: 6) {
+                    if runStart == nil { runStart = time }
+                } else if let begun = runStart {
+                    runs.append(begun...time)
+                    runStart = nil
+                }
+                time += window
+            }
+            if let begun = runStart { runs.append(begun...to) }
+
+            // Runs a moment apart are one sound.
+            var merged: [ClosedRange<Double>] = []
+            for run in runs {
+                if let last = merged.last, run.lowerBound - last.upperBound < 0.1 {
+                    merged[merged.count - 1] = last.lowerBound...run.upperBound
+                } else {
+                    merged.append(run)
+                }
+            }
+            sounds += merged.filter { ($0.upperBound - $0.lowerBound) >= shortest && ($0.upperBound - $0.lowerBound) <= longest }
+        }
+        return sounds
+    }
 }

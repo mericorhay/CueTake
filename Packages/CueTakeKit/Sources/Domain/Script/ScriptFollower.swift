@@ -29,6 +29,8 @@ public struct ScriptFollower: Sendable {
 
     private let entries: [Entry]
     private let locale: Locale
+    /// The script has numbers written as digits, so numbers heard as words are read as digits.
+    private let expectsNumbers: Bool
     /// Index into `entries` of the last word matched, or -1 before the first.
     public private(set) var cursor = -1
     /// What was heard last time. A recogniser re-sends the same guess many times while it firms
@@ -42,11 +44,13 @@ public struct ScriptFollower: Sendable {
 
     public init(scripts: [String], locale: Locale) {
         self.locale = locale
-        entries = scripts.enumerated().flatMap { segment, script in
+        let built = scripts.enumerated().flatMap { segment, script in
             ScriptText.words(in: script).enumerated().map { word, text in
                 Entry(segment: segment, word: word, key: ScriptText.matchKey(for: text, locale: locale))
             }
         }
+        entries = built
+        expectsNumbers = built.contains { entry in entry.key.contains { $0.isNumber } }
     }
 
     public var position: Position? {
@@ -85,10 +89,13 @@ public struct ScriptFollower: Sendable {
     /// Feeds the words heard most recently, oldest first. Returns the new place when it moved.
     @discardableResult
     public mutating func hear(_ words: [String]) -> Position? {
-        let heard = words
+        var keys = words
             .map { ScriptText.matchKey(for: $0, locale: locale) }
             .filter { !$0.isEmpty }
-            .suffix(tail)
+        if expectsNumbers {
+            keys = SpokenNumbers.collapse(keys, locale: locale)
+        }
+        let heard = keys.suffix(tail)
         guard !heard.isEmpty, !entries.isEmpty else { return nil }
         let recent = Array(heard)
         guard recent != lastHeard else { return nil }
@@ -143,6 +150,8 @@ public struct ScriptFollower: Sendable {
     /// in a longer word, or the same stem ("record" / "recording").
     static func matches(_ heard: String, _ script: String) -> Bool {
         if heard == script { return true }
+        // "kameranin" for "kameranın": the recogniser bent a letter, not the word.
+        if heard.count >= 3, script.count >= 3, ScriptAlignment.fold(heard) == ScriptAlignment.fold(script) { return true }
         guard heard.count >= 4, script.count >= 4 else { return false }
         if heard.hasPrefix(script) || script.hasPrefix(heard) {
             return min(heard.count, script.count) >= 4

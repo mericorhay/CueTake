@@ -22,7 +22,7 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 17 Eylül 2026, build 91. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 17 Eylül 2026, build 92. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
@@ -71,7 +71,15 @@ Son güncelleme: 17 Eylül 2026, build 91. ✅ bitti · 🟢 kodu bitti, cihazda
 - Editörde metinden seçilen cümle tek başına yeniden çekilebiliyor; prompter script'teki doğru cümleyi gösteriyor. Tutulan yeniden çekim, konuşmaya göre kendiliğinden kırpılıyor.
 - Eksik: prova modu (kayıtsız dinleme), uzaktan kumanda / ikinci ekran.
 
-**Sıradaki:** Cihaz kontrolü (H1, H2, H3, teleprompter). Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
+**Ses algılama turu (build 92):**
+- Ölçüm: `Tests/SpeechBenchmarks/*.json` her CI'da kelime hata oranı, kelime başı sapması ve dolgu yakalama oranıyla puanlanıyor. Uygulamada transcript panelinden "Konuşma örneğini dışa aktar" ile gerçek kayıt örneği alınıyor; referans elle düzeltilip klasöre konuyor. Şu an yalnızca uydurma bir örnek var.
+- İpuçları: script'teki isimler, markalar, sayılar ve marka sesindeki ifadeler hem telefondaki tanıyıcıya (canlı ve dosya) hem Whisper'a veriliyor.
+- Dolgu: Whisper'a dolgu içeren bir ipucu metni gidiyor. Ayrıca iki dinleyicinin de yazmadığı ama sesin olduğu kısa yerler temizlik listesine "…" olarak geliyor.
+- Kelime sınırları sesin başladığı ve bittiği yere oturtuluyor; kesimler sessizliğe düşüyor.
+- Canlı takip: söylenen sayılar rakamla eşleşiyor ("iki bin yirmi altı" → 2026), aksan farkı eşleşmeyi bozmuyor, metin tanıyıcı sonuçları arasında ölçülen hızla en fazla 2 kelime önden kayıyor.
+- Cihazda doğrulanmadı; özellikle SpeechAnalyzer bağlam (contextual strings) desteği denenmeli.
+
+**Sıradaki:** Cihaz kontrolü (H1, H2, H3, teleprompter, ses). Gerçek kayıtlarla ölçüm seti. Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
 
 ## 1. Kısa cevap: aramızda ne kaldı
 

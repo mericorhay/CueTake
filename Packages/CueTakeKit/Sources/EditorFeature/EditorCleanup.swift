@@ -12,8 +12,22 @@ extension EditorModel {
         return CleanupPlanner.plan(
             for: project.segments[index],
             localeIdentifier: project.localeIdentifier,
-            options: options
+            options: options,
+            sounds: unheardSounds(at: index)
         )
+    }
+
+    /// Voice in a clip's take that no listener wrote down, relative to the take's start.
+    func unheardSounds(at index: Int) -> [ClosedRange<Double>] {
+        guard let take = project.segments[index].selectedTake,
+              let sounds = project.recording(id: take.recordingID)?.speech?.unheardSounds
+        else { return [] }
+        let start = take.sourceRange.start.seconds
+        let end = take.sourceRange.end.seconds
+        return sounds.compactMap { sound in
+            guard sound.lowerBound >= start, sound.upperBound <= end else { return nil }
+            return (sound.lowerBound - start)...(sound.upperBound - start)
+        }
     }
 
     /// Cuts the chosen items out of their clip. Returns the seconds removed.

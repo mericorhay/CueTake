@@ -77,6 +77,10 @@ struct TranscriptPanel: View {
 
             Spacer(minLength: 0)
 
+            if !cleaning {
+                SpeechSampleShare(model: model, index: index)
+            }
+
             Button {
                 if cleaning {
                     cleaning = false
@@ -299,5 +303,28 @@ struct TranscriptPanel: View {
         }
         .buttonStyle(.dsPress(radius: 14))
         .disabled(!enabled)
+    }
+}
+
+/// Shares the recording's two transcripts as a benchmark sample. Its own view, so the JSON is
+/// only rebuilt when the project changes, not on every tick of the playhead.
+private struct SpeechSampleShare: View {
+    let model: EditorModel
+    let index: Int
+
+    var body: some View {
+        if let sample = model.speechSample(at: index) {
+            ShareLink(
+                item: sample,
+                preview: SharePreview(String(localized: "editor.transcript.exportSample", bundle: .module))
+            ) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.6))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(DS.Palette.hairline(0.08)))
+            }
+            .accessibilityLabel(Text("editor.transcript.exportSample", bundle: .module))
+        }
     }
 }

@@ -818,6 +818,7 @@ final class AppModel {
             path: "\(UUID().uuidString).mov",
             directoryHint: .notDirectory
         )
+        studio.setSpeechHints(brandSpeechHints)
         // The countdown the reader chose, to get back into frame, then rolling.
         studio.beginCountdown(writingTo: url)
     }
@@ -934,6 +935,7 @@ final class AppModel {
             retakeModel.failCapture("studio.capture.storage")
             return
         }
+        retakeModel.setSpeechHints(brandSpeechHints)
         retakeModel.start(
             writingTo: mediaDirectory.appending(path: "\(UUID().uuidString).mov", directoryHint: .notDirectory)
         )
@@ -1144,6 +1146,11 @@ final class AppModel {
             settingsModel.update(\.voiceEffects, to: editorModel.project.voiceEffects)
         }
         project = editorModel.project
+    }
+
+    /// The brand's own words, for the listeners to expect.
+    var brandSpeechHints: [String] {
+        SpeechHints.terms(scripts: [], brand: scriptLibrary.activeBrand, localeIdentifier: project.localeIdentifier)
     }
 
     /// Marks a kept retake whose silence before and after the speech is still to be trimmed.

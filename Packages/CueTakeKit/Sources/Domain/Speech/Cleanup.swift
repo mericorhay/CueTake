@@ -161,7 +161,13 @@ public struct CleanupPlan: Hashable, Sendable {
 }
 
 public enum CleanupPlanner {
-    public static func plan(for segment: Segment, localeIdentifier: String, options: CleanupOptions = CleanupOptions()) -> CleanupPlan? {
+    /// - Parameter sounds: take-relative stretches of voice no listener wrote down.
+    public static func plan(
+        for segment: Segment,
+        localeIdentifier: String,
+        options: CleanupOptions = CleanupOptions(),
+        sounds: [ClosedRange<Double>] = []
+    ) -> CleanupPlan? {
         guard let take = segment.selectedTake,
               let words = take.transcript?.words, !words.isEmpty
         else { return nil }
@@ -171,7 +177,8 @@ public enum CleanupPlanner {
             total: take.sourceRange.duration.seconds,
             segmentID: segment.id,
             locale: Locale(identifier: localeIdentifier),
-            options: options
+            options: options,
+            sounds: sounds
         )
     }
 
@@ -181,7 +188,8 @@ public enum CleanupPlanner {
         total: Double,
         segmentID: Segment.ID,
         locale: Locale,
-        options: CleanupOptions = CleanupOptions()
+        options: CleanupOptions = CleanupOptions(),
+        sounds: [ClosedRange<Double>] = []
     ) -> CleanupPlan {
         let keys = words.map { ScriptAlignment.key($0.text, locale: locale) }
         let aligned = ScriptAlignment.align(words, script: script, locale: locale)
@@ -322,6 +330,23 @@ public enum CleanupPlanner {
             let upper = index == edges.count - 1 ? to : to - options.pad
             guard upper - lower > 0.05 else { continue }
             items.append(CleanupItem(kind: .pause, start: lower, end: upper, words: nil, text: "", isOn: true))
+        }
+
+        // Voice with no word on it: an "ııı" the listeners left out. Short ones are cut; a longer
+        // one may be a word nobody wrote, so it is only offered.
+        for sound in sounds {
+            let overlapsWord = words.contains { word in
+                min(word.range.end.seconds, sound.upperBound) - max(word.range.start.seconds, sound.lowerBound) > 0.05
+            }
+            guard !overlapsWord, sound.upperBound - sound.lowerBound >= 0.12 else { continue }
+            items.append(CleanupItem(
+                kind: .filler,
+                start: max(0, sound.lowerBound - 0.04),
+                end: min(total, sound.upperBound + 0.04),
+                words: nil,
+                text: "…",
+                isOn: sound.upperBound - sound.lowerBound <= 0.8
+            ))
         }
 
         items.sort { $0.start < $1.start }

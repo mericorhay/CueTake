@@ -9915,6 +9915,23 @@
         }
       }
     },
+    "editor.transcript.exportSample": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export speech sample"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşma örneğini dışa aktar"
+          }
+        }
+      }
+    },
     "editor.transcript.noPauses": {
       "extractionState": "manual",
       "localizations": {

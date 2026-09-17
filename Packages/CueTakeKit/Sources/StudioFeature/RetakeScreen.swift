@@ -107,6 +107,11 @@ public final class RetakeModel {
         prompter.targetPace = SpeakingRate.wordsPerMinute(forLocaleIdentifier: localeIdentifier)
     }
 
+    /// Terms the recogniser should expect beyond the script's own, such as the brand's name.
+    public func setSpeechHints(_ hints: [String]) {
+        driver.extraHints = hints
+    }
+
     /// How fast the voice is reading, and what that means, while it is followed.
     public var paceVerdict: PaceMeter.Verdict? {
         guard prompter.coachesPace, let pace = driver.wordsPerMinute else { return nil }

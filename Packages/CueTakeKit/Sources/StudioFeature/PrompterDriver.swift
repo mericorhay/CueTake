@@ -39,6 +39,15 @@ final class PrompterDriver {
     /// The prompter's pause and speed, read live so changing them mid-take takes effect.
     @ObservationIgnored var isPaused: () -> Bool = { false }
     @ObservationIgnored var speedMultiplier: () -> Double = { 1 }
+    /// Words to tell the recogniser about beyond the script's own: the brand's name and phrases.
+    @ObservationIgnored var extraHints: [String] = []
+
+    /// Where the voice was last found, and how many words the text has glided past it since.
+    private var heardPosition: ScriptFollower.Position?
+    private var heardAt: Date?
+    private var lead = 0
+    /// Words the text may run ahead of the voice on its own.
+    static let maximumLead = 2
 
     private var follower: ScriptFollower
     private let scripts: [String]
@@ -77,6 +86,9 @@ final class PrompterDriver {
         paceCarry = 0
         paceMeter.reset()
         wordsPerMinute = nil
+        heardPosition = nil
+        heardAt = nil
+        lead = 0
 
         if let camera, CameraSession.tapsAudio {
             let (frames, continuation) = AsyncStream<SpeechAudioFrame>.makeStream(bufferingPolicy: .bufferingNewest(128))
@@ -112,7 +124,8 @@ final class PrompterDriver {
     }
 
     private func listen(to frames: AsyncStream<SpeechAudioFrame>) {
-        let updates = speech.transcribe(frames, localeIdentifier: localeIdentifier)
+        let hints = extraHints + SpeechHints.terms(scripts: scripts, localeIdentifier: localeIdentifier)
+        let updates = speech.transcribe(frames, localeIdentifier: localeIdentifier, hints: hints)
         listening = Task { [weak self] in
             var settled: [String] = []
             do {
@@ -155,6 +168,16 @@ final class PrompterDriver {
             )
             wordsPerMinute = paceMeter.wordsPerMinute
         }
+        // The text may already be showing this word, having glided ahead of the recogniser. Then
+        // it stays where it is instead of stepping back.
+        let shown = heardPosition.map { (segment: $0.segment, word: $0.word + lead) }
+        heardPosition = moved
+        heardAt = .now
+        if let shown, shown.segment == moved.segment, moved.word < shown.word, moved.word >= shown.word - Self.maximumLead {
+            lead = shown.word - moved.word
+            return
+        }
+        lead = 0
         onMove?(moved)
     }
 
@@ -167,6 +190,7 @@ final class PrompterDriver {
     private func tick(seconds: Double, now: Date) {
         switch mode {
         case .following:
+            glide(now: now)
             return
         case .waiting:
             guard let startedAt, now.timeIntervalSince(startedAt) >= Self.patience else { return }
@@ -181,6 +205,24 @@ final class PrompterDriver {
         guard paceCarry >= 1 else { return }
         paceCarry -= 1
         step()
+    }
+
+    /// Moves the text on between the recogniser's answers, at the pace the voice is reading.
+    ///
+    /// Results arrive a few hundred milliseconds after the sound, in bursts, so text that only
+    /// follows them jumps. Between two answers it runs ahead by a word or two at the measured pace,
+    /// never past the end of the segment, and the next answer settles it.
+    private func glide(now: Date) {
+        guard !isPaused(), let base = heardPosition, let heardAt,
+              let pace = wordsPerMinute, pace > 40
+        else { return }
+        let due = Int(now.timeIntervalSince(heardAt) / (60 / pace))
+        let wanted = min(Self.maximumLead, due)
+        guard wanted > lead else { return }
+        let count = scripts.indices.contains(base.segment) ? ScriptText.words(in: scripts[base.segment]).count : 0
+        guard base.word + wanted < count else { return }
+        lead = wanted
+        onMove?(.init(segment: base.segment, word: base.word + wanted))
     }
 
     /// One word forward by pace, or by a tap on the prompter.

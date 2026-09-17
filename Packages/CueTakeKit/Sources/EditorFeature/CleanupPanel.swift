@@ -172,13 +172,13 @@ struct CleanupPanel: View {
                 }
                 .buttonStyle(.dsPress(radius: 6))
 
-                if let gap = pausesAfter[position] {
+                ForEach(pausesAfter[position] ?? []) { gap in
                     let cutGap = chosen.contains(gap.id)
                     Button {
                         toggle(gap.id, in: chosen)
                     } label: {
                         HStack(spacing: 3) {
-                            Image(systemName: "pause.fill")
+                            Image(systemName: gap.kind == .pause ? "pause.fill" : "waveform")
                                 .font(.system(size: 7, weight: .bold))
                             Text(verbatim: Self.seconds(gap.duration))
                                 .dsFont(.mono, .medium, 10)
@@ -187,7 +187,7 @@ struct CleanupPanel: View {
                         .padding(.horizontal, 6)
                         .padding(.vertical, 4)
                         .background(
-                            Capsule().fill(cutGap ? Self.tint(.pause) : DS.Palette.hairline(0.08))
+                            Capsule().fill(cutGap ? Self.tint(gap.kind) : DS.Palette.hairline(0.08))
                         )
                     }
                     .buttonStyle(.dsPress(radius: 10))
@@ -271,12 +271,13 @@ struct CleanupPanel: View {
         return result
     }
 
-    /// Each pause, placed after the word it follows. A pause before the first word shows after it.
-    static func pausesAfterWord(_ plan: CleanupPlan, words: [TimedWord]) -> [Int: CleanupItem] {
-        var result: [Int: CleanupItem] = [:]
-        for item in plan.items where item.kind == .pause {
+    /// Each pause or wordless sound, placed after the word it follows. One before the first word
+    /// shows after it.
+    static func pausesAfterWord(_ plan: CleanupPlan, words: [TimedWord]) -> [Int: [CleanupItem]] {
+        var result: [Int: [CleanupItem]] = [:]
+        for item in plan.items where item.words == nil {
             let before = words.lastIndex { $0.range.end.seconds <= item.start + 0.2 } ?? 0
-            result[before] = item
+            result[before, default: []].append(item)
         }
         return result
     }

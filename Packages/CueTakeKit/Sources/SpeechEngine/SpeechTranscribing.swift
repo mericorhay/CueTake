@@ -40,6 +40,21 @@ public protocol SpeechTranscribing: Sendable {
     func transcribe(_ audio: AsyncStream<SpeechAudioFrame>, localeIdentifier: String) -> AsyncThrowingStream<TranscriptUpdate, any Error>
     /// Final, accurate pass over a finished recording.
     func transcribeFile(at url: URL, localeIdentifier: String) async throws -> Transcript
+    /// Live transcription, told in advance which unusual words to expect.
+    func transcribe(_ audio: AsyncStream<SpeechAudioFrame>, localeIdentifier: String, hints: [String]) -> AsyncThrowingStream<TranscriptUpdate, any Error>
+    /// A file, told in advance which unusual words to expect.
+    func transcribeFile(at url: URL, localeIdentifier: String, hints: [String]) async throws -> Transcript
+}
+
+extension SpeechTranscribing {
+    /// A transcriber that cannot take hints hears without them.
+    public func transcribe(_ audio: AsyncStream<SpeechAudioFrame>, localeIdentifier: String, hints: [String]) -> AsyncThrowingStream<TranscriptUpdate, any Error> {
+        transcribe(audio, localeIdentifier: localeIdentifier)
+    }
+
+    public func transcribeFile(at url: URL, localeIdentifier: String, hints: [String]) async throws -> Transcript {
+        try await transcribeFile(at: url, localeIdentifier: localeIdentifier)
+    }
 }
 
 /// Follows the speaker through the script in real time and drives the teleprompter.

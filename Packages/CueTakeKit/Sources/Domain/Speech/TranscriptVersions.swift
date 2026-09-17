@@ -71,6 +71,9 @@ public struct TranscriptVersions: Hashable, Sendable, Codable {
     public var passages: [TranscriptPassage]
     /// Whether the server listener answered at all. Without it there is nothing to compare.
     public var hasCloud: Bool
+    /// Stretches, in recording seconds, where there is voice but neither listener wrote a word:
+    /// "ııı"s, "hmm"s and false starts the recognisers leave out.
+    public var unheardSounds: [ClosedRange<Double>]? = nil
 
     public init(localeIdentifier: String, passages: [TranscriptPassage], hasCloud: Bool) {
         self.localeIdentifier = localeIdentifier
