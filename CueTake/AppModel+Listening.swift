@@ -2,6 +2,7 @@ import AIServices
 import Domain
 import Foundation
 import MediaEngine
+import ScriptFeature
 import SettingsFeature
 import SpeechEngine
 
