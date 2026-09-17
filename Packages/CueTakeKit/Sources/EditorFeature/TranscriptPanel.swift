@@ -23,6 +23,7 @@ struct TranscriptPanel: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var anchor: Int?
     @State private var head: Int?
+    @State private var cleaning = false
 
     private var words: [TimedWord] { model.spokenWords(at: index) }
 
@@ -37,7 +38,10 @@ struct TranscriptPanel: View {
 
             if words.isEmpty {
                 empty
+            } else if cleaning {
+                CleanupPanel(model: model, index: index) { cleaning = false }
             } else {
+                CleanupBanner(model: model, index: index)
                 actions
                 text
             }
@@ -50,7 +54,11 @@ struct TranscriptPanel: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                DSKicker(String(localized: "editor.transcript.title", bundle: .module))
+                DSKicker(
+                    cleaning
+                        ? String(localized: "editor.cleanup.title", bundle: .module)
+                        : String(localized: "editor.transcript.title", bundle: .module)
+                )
                 Text(
                     String(
                         localized: "editor.transcript.count \(words.count)",
@@ -63,8 +71,14 @@ struct TranscriptPanel: View {
 
             Spacer(minLength: 0)
 
-            Button(action: onClose) {
-                Image(systemName: "xmark")
+            Button {
+                if cleaning {
+                    cleaning = false
+                } else {
+                    onClose()
+                }
+            } label: {
+                Image(systemName: cleaning ? "chevron.left" : "xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)
@@ -110,9 +124,7 @@ struct TranscriptPanel: View {
     }
 
     private var actions: some View {
-        let gaps = model.silenceGaps(at: index)
-
-        return HStack(spacing: 8) {
+        HStack(spacing: 8) {
             action(
                 selection == nil ? "editor.transcript.selectHint" : "editor.transcript.delete",
                 symbol: "trash",
@@ -131,18 +143,13 @@ struct TranscriptPanel: View {
             }
 
             action(
-                gaps.isEmpty
-                    ? "editor.transcript.noPauses"
-                    : "editor.transcript.tighten \(gaps.count)",
-                symbol: "arrow.right.and.line.vertical.and.arrow.left",
-                enabled: !gaps.isEmpty
+                "editor.cleanup.open",
+                symbol: "wand.and.stars",
+                enabled: true
             ) {
-                model.pulse(.split)
-                withAnimation(reduceMotion ? .easeOut(duration: 0.15) : DS.Motion.settle) {
-                    model.tightenSilences(at: index)
-                }
                 anchor = nil
                 head = nil
+                cleaning = true
             }
         }
         .padding(.horizontal, 20)

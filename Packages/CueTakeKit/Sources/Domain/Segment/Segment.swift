@@ -27,6 +27,8 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     /// Builds 55–56 kept crop targets here, in seconds from the take's start. Read once on open
     /// and moved to the recording (`Recording.reframe`); nothing reads it after that.
     public var smartReframe: [VideoFocusKeyframe] = []
+    /// Set on the pieces a cleanup cut this clip into, so the cut can be opened again.
+    public var cleanup: CleanupOrigin? = nil
     public var metadata: [String: String]
 
     public init(
@@ -71,6 +73,7 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         playback = try container.decodeIfPresent(ClipPlayback.self, forKey: .playback) ?? .normal
         background = try? container.decodeIfPresent(ClipBackground.self, forKey: .background)
         smartReframe = try container.decodeIfPresent([VideoFocusKeyframe].self, forKey: .smartReframe) ?? []
+        cleanup = try? container.decodeIfPresent(CleanupOrigin.self, forKey: .cleanup)
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 

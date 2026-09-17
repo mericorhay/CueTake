@@ -4183,6 +4183,23 @@
         }
       }
     },
+    "editor.change.cleanup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizlik"
+          }
+        }
+      }
+    },
     "editor.change.delete": {
       "extractionState": "manual",
       "localizations": {
@@ -4451,6 +4468,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aralığa hız uygulandı"
+          }
+        }
+      }
+    },
+    "editor.change.restoreCleanup": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore cut"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kesimi geri aç"
           }
         }
       }
@@ -5097,6 +5131,295 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri al"
+          }
+        }
+      }
+    },
+    "editor.cleanup.allDone %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cleaned %1$lld clips · %2$@ shorter"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld klip temizlendi · %2$@ kısaldı"
+          }
+        }
+      }
+    },
+    "editor.cleanup.apply": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean this clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu klibi temizle"
+          }
+        }
+      }
+    },
+    "editor.cleanup.applyAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean every clip the same way"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm klipleri aynı şekilde temizle"
+          }
+        }
+      }
+    },
+    "editor.cleanup.cleaned %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cleaned · %@ taken out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizlendi · %@ çıkarıldı"
+          }
+        }
+      }
+    },
+    "editor.cleanup.kind.filler": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fillers"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dolgu sözcükleri"
+          }
+        }
+      }
+    },
+    "editor.cleanup.kind.offScript": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script dışı"
+          }
+        }
+      }
+    },
+    "editor.cleanup.kind.pause": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauses"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duraklamalar"
+          }
+        }
+      }
+    },
+    "editor.cleanup.kind.repeated": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeats"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tekrarlar"
+          }
+        }
+      }
+    },
+    "editor.cleanup.kind.restart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restarts"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden başlamalar"
+          }
+        }
+      }
+    },
+    "editor.cleanup.nothing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This clip has no words to clean yet. Read its speech first."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu klipte temizlenecek konuşma yok. Önce konuşmayı yazıya dökün."
+          }
+        }
+      }
+    },
+    "editor.cleanup.open": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizle"
+          }
+        }
+      }
+    },
+    "editor.cleanup.pauseLength": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cut pauses longer than"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şundan uzun duraklamaları kes"
+          }
+        }
+      }
+    },
+    "editor.cleanup.restore": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri aç"
+          }
+        }
+      }
+    },
+    "editor.cleanup.scripted %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked against the script · %lld%% as written"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script'e göre kontrol edildi · %%%lld birebir"
+          }
+        }
+      }
+    },
+    "editor.cleanup.summary %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld cuts · %2$@ shorter"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld kesim · %2$@ kısalır"
+          }
+        }
+      }
+    },
+    "editor.cleanup.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizle"
+          }
+        }
+      }
+    },
+    "editor.cleanup.unscripted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matching script · only sounds and pauses are cut"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eşleşen script yok · yalnızca sesler ve duraklamalar kesilir"
           }
         }
       }
@@ -8211,6 +8534,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "KAYIT"
+          }
+        }
+      }
+    },
+    "editor.take.useBest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the best take"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En iyi çekimi kullan"
           }
         }
       }

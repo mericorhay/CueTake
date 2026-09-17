@@ -647,15 +647,12 @@ public struct VideoComposer: Sendable {
         // whatever the mix decides, and a track nobody described is a track that can surprise you.
         let voice = AVMutableAudioMixInputParameters(track: voiceTrack)
         let mainVolume = Float(min(max(project.mainVideoVolume, 0), 1))
-        voice.setVolume(mainVolume, at: .zero)
-        // Sound effects raise or lower the voice over their stretch.
-        var lastTime = CMTime.negativeInfinity
-        var lastGain: Float = 1
-        for level in voiceLevels.sorted(by: { $0.time < $1.time }) where level.time > lastTime && level.gain != lastGain {
-            voice.setVolume(mainVolume * level.gain, at: level.time)
-            lastTime = level.time
-            lastGain = level.gain
-        }
+        // Sound effects raise or lower the voice over their stretch, and every join dips for a
+        // moment so a cut pause or filler does not click.
+        let envelope = VoiceSplices.envelope(
+            levels: voiceLevels.map { (time: $0.time.seconds, gain: Double($0.gain)) }
+        )
+        VoiceSplices.apply(envelope, volume: mainVolume, to: voice)
         parameters.append(voice)
 
         let audioMix = AVMutableAudioMix()

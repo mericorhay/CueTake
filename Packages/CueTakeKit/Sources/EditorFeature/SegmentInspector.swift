@@ -239,8 +239,33 @@ struct SegmentInspector: View {
             if segment.takes.isEmpty {
                 empty("editor.take.empty", "editor.take.hint", symbol: "video.badge.plus")
             } else {
+                let best = segment.bestTake(localeIdentifier: model.project.localeIdentifier)
+                if let better = model.betterTake(at: index) {
+                    Button {
+                        model.selectTake(better.id, at: index)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 11, weight: .semibold))
+                            Text("editor.take.useBest", bundle: .module)
+                                .dsFont(.sans, .semibold, 12)
+                            Spacer(minLength: 0)
+                            Text(verbatim: "\(Int((better.score.total * 100).rounded()))")
+                                .dsFont(.mono, .medium, 11)
+                        }
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .background(
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .fill(DS.Palette.lime)
+                        )
+                    }
+                    .buttonStyle(.dsPress(radius: 13))
+                }
                 ForEach(Array(segment.takes.enumerated()), id: \.element.id) { number, take in
                     let isOn = segment.selectedTakeID == take.id
+                    let score = segment.takes.count > 1 ? model.takeScore(take, at: index) : nil
 
                     Button {
                         model.selectTake(take.id, at: index)
@@ -265,9 +290,22 @@ struct SegmentInspector: View {
 
                             Spacer(minLength: 0)
 
-                            Text(String(localized: SegmentInspector.statusLabel(take.status), bundle: .module))
-                                .dsFont(.mono, .medium, 9)
-                                .foregroundStyle(DS.Palette.ink(0.4))
+                            if let score {
+                                HStack(spacing: 3) {
+                                    if best?.id == take.id {
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .foregroundStyle(DS.Palette.lime)
+                                    }
+                                    Text(verbatim: "\(Int((score.total * 100).rounded()))")
+                                        .dsFont(.mono, .medium, 11)
+                                        .foregroundStyle(DS.Palette.ink(0.75))
+                                }
+                            } else {
+                                Text(String(localized: SegmentInspector.statusLabel(take.status), bundle: .module))
+                                    .dsFont(.mono, .medium, 9)
+                                    .foregroundStyle(DS.Palette.ink(0.4))
+                            }
                         }
                         .padding(.horizontal, 11)
                         .padding(.vertical, 9)

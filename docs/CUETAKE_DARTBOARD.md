@@ -22,13 +22,13 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 17 Eylül 2026, build 88. ✅ bitti · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 17 Eylül 2026, build 90. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
-| H1 Animasyonlu altyazı + stil paketleri | ⬜ | Altyazı var; stil DSL'i, animasyon, paketler yok |
-| H2 Long-to-short + reframe | ⬜ | Takip motoru hazır; uzun içe aktarma, an seçimi, skor yok |
-| H3 Script hizalı temizlik | ⬜ | Konuşma algılama var; hizalama, dolgu/tekrar, en iyi çekim yok |
+| H1 Animasyonlu altyazı + stil paketleri | 🟢 | Kelime bazlı animasyon motoru (önizleme = export), 20 görünüm, 6 stil paketi, anahtar kelime/emoji, okunabilirlik uyarısı, yüzden kaçan konum. Cihazda denenmedi |
+| H2 Long-to-short + reframe | 🟢 | Cümle bazlı an bulucu + puan, AI seçimi (`/highlights`), tek dokunuşla dikey kısa proje (dosyalar hard link), geniş videoda yüz takibi. Cihazda denenmedi |
+| H3 Script hizalı temizlik | 🟢 | Script hizalaması (NW + bulanık eşleşme), dolgu/tekrar/yeniden başlama/script dışı, duraklama eşiği, tüm kliplere tek geri alma, geri açılabilir kesim, kesimde ses tıkı giderme, çekim puanı + en iyi çekim. Eksik: cümle bazında yeniden çekim, ses kalitesi/göz puanı, timeline'da hayalet aralık |
 | H4 Göz teması | ⬜ | — |
 | H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
 | H6 Şablon/efekt/geçiş/görünüm | 🟡 | **15 geçiş bitti:** önceden çizilen geçiş filmleri, her biri CI'da gerçek videoyla test ediliyor. Şablon, LUT/görünüm, Metal efekt yok |
@@ -57,7 +57,12 @@ Son güncelleme: 17 Eylül 2026, build 88. ✅ bitti · 🟡 kısmen · ⬜ baş
 - Geçişler artık kısa film olarak önceden çiziliyor ve "eklenen video" yolundan konuyor.
 - Başı ve sonu aynı olan rampa hiçbir yerde kullanılmıyor.
 
-**Sıradaki:** Faz 1 (H1 + H3). Önce build 88'in cihaz kontrolü: geçişler, 50 kliplik proje, durdur/oynat.
+**H3 notları:**
+- Kesim, mevcut "klibi parçalara böl" yolunu kullanır. Parçalar `Segment.cleanup` ile gruplanır; "Geri aç" klibi çekildiği hâline döndürür.
+- Kesimden sonra üstteki yazı ve efektler kayar (ripple). Geçiş, klibin sonunda kalır.
+- Apple'ın cihaz içi tanıyıcısı "ııı/um" seslerini çoğu zaman yazmaz. Bulut dinleyici (Whisper) daha çok yakalar; dolgu tespiti bu yüzden transcript kalitesine bağlı.
+
+**Sıradaki:** Cihaz kontrolü (H1, H2, H3). Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
 
 ## 1. Kısa cevap: aramızda ne kaldı
 

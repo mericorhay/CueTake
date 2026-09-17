@@ -124,6 +124,38 @@ extension Project {
     }
 }
 
+extension Project {
+    /// Makes room for footage coming back: everything that starts at or after `time` moves later
+    /// by `length`. What crosses the moment keeps its start and length.
+    public mutating func openGap(at time: Double, length: Double) {
+        guard length > 0.0001, time.isFinite else { return }
+        let tolerance = 0.001
+        func moved(_ start: MediaTime) -> MediaTime? {
+            start.seconds >= time - tolerance ? MediaTime(seconds: start.seconds + length) : nil
+        }
+        for i in overlays.indices {
+            if let start = moved(overlays[i].start) { overlays[i].start = start }
+        }
+        for i in effects.indices {
+            if let start = moved(effects[i].start) { effects[i].start = start }
+        }
+        for i in audio.indices {
+            if let start = moved(audio[i].start) { audio[i].start = start }
+        }
+        for i in videoLayers.indices {
+            if let start = moved(videoLayers[i].start) { videoLayers[i].start = start }
+        }
+        if var window = captionWindow {
+            if let start = moved(window.start) {
+                window.start = start
+            } else if window.end.seconds > time {
+                window.duration = MediaTime(seconds: window.duration.seconds + length)
+            }
+            captionWindow = window
+        }
+    }
+}
+
 /// A stretch of the finished video that is going away.
 struct RippleGap {
     var start: Double

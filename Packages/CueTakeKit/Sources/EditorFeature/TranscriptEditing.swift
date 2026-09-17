@@ -28,7 +28,15 @@ extension EditorModel {
     /// range — the same shape a split produces, and for the same reason: nothing is copied,
     /// nothing is re-encoded, and the file on disk is never touched. The first piece keeps the
     /// original's identity so the timeline does not lose its place.
-    public func rebuild(segmentAt index: Int, keeping spans: [ClosedRange<Double>]) {
+    ///
+    /// `scripts`, when given, is the script for each kept span; otherwise a piece's script becomes
+    /// the words it kept. `origin` marks the pieces as one cleanup that can be opened again.
+    public func rebuild(
+        segmentAt index: Int,
+        keeping spans: [ClosedRange<Double>],
+        scripts: [String]? = nil,
+        origin: CleanupOrigin? = nil
+    ) {
         guard project.segments.indices.contains(index),
               let take = project.segments[index].selectedTake
         else { return }
@@ -49,6 +57,7 @@ extension EditorModel {
         record("editor.change.transcript", symbol: "text.cursor")
 
         let original = project.segments[index]
+        let clipStart = start(at: index)
         let words = take.transcript?.words ?? []
         var rebuilt: [Segment] = []
 
@@ -94,14 +103,54 @@ extension EditorModel {
             )
             // The script follows the speech. It is what the prompter shows and what alignment
             // works against, and after a cut the old script describes a take that no longer exists.
-            if !kept.isEmpty {
+            if let scripts, scripts.indices.contains(offset) {
+                piece.script = scripts[offset]
+            } else if !kept.isEmpty {
                 piece.script = kept.map(\.text).joined(separator: " ")
+            }
+            if var origin {
+                // The first piece carries what the clip was, the rest only which cut they belong to.
+                if offset != 0 {
+                    origin.takes = nil
+                    origin.selectedTakeID = nil
+                }
+                piece.cleanup = origin
+            } else if offset != 0 {
+                piece.cleanup = original.cleanup.map {
+                    var shared = $0
+                    shared.takes = nil
+                    shared.selectedTakeID = nil
+                    return shared
+                }
             }
 
             rebuilt.append(piece)
         }
 
         project.segments.replaceSubrange(index...index, with: rebuilt)
+        // A transition belonged after the whole clip; left on the first piece it would play in the
+        // middle of the sentence.
+        if let last = rebuilt.last, last.id != original.id {
+            for t in project.transitions.indices where project.transitions[t].after == original.id {
+                project.transitions[t].after = last.id
+            }
+        }
+        // Titles, stickers and effects laid over later moments stay on the pictures they were laid
+        // on. Closed from the last gap back, so each gap is measured before the ones after it move.
+        if !original.playback.isReversed {
+            var gaps: [ClosedRange<Double>] = []
+            var cursor = 0.0
+            for span in clean {
+                if span.lowerBound - cursor > 0.001 { gaps.append(cursor...span.lowerBound) }
+                cursor = max(cursor, span.upperBound)
+            }
+            if total - cursor > 0.001 { gaps.append(cursor...total) }
+            for gap in gaps.reversed() {
+                let from = original.playback.timelineSeconds(forSource: gap.lowerBound)
+                let to = original.playback.timelineSeconds(forSource: gap.upperBound)
+                project.closeGap(from: clipStart + from, length: to - from)
+            }
+        }
         project.updatedAt = .now
         inspectedSegment = rebuilt.first?.id
         seek(to: min(playhead, duration))
