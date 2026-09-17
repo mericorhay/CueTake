@@ -36,7 +36,7 @@ extension EditorModel {
     /// Snapshots rather than inverse operations. Inverse operations are smaller and faster and
     /// wrong the first time someone adds an edit and forgets to write its opposite; a whole
     /// project is a few kilobytes of value types, and copying one is cheaper than the bug.
-    func record(_ label: String.LocalizationValue, symbol: String, coalescing key: String? = nil) {
+    public func record(_ label: String.LocalizationValue, symbol: String, coalescing key: String? = nil) {
         // A plan is one edit however many tools it uses; its first record is the only one kept.
         guard !isApplyingPlan else { return }
         // A drag already in progress keeps its first snapshot: what the user wants back is where
