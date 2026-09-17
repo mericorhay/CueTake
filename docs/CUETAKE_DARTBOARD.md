@@ -1,10 +1,11 @@
 # CueTake Dart Tahtası: Rakipler, Açıklar, Teknik Altyapı ve Plan
 
 > Tek rapor, tek otorite. Önceki bütün planlar (master plan, gap report, AI tool roadmap, timeline audit, tracking, zoom, workflow platform) bu dosyada birleştirildi ve kaldırıldı; eski hâlleri git geçmişinde duruyor.
-> Güncelleme: 17 Eylül 2026 · Kod: build 80 · sürüm 0.5.0
+> Güncelleme: 17 Eylül 2026 · Kod: build 88 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
 
 ## İçindekiler
 
+0. [Durum panosu](#0-durum-panosu)
 1. [Kısa cevap: aramızda ne kaldı](#1-kısa-cevap-aramızda-ne-kaldı)
 2. [Dart tahtası](#2-dart-tahtası)
 3. [Rakip profilleri](#3-rakip-profilleri)
@@ -18,6 +19,45 @@
 11. [Kaynaklar](#11-kaynaklar)
 
 ---
+
+## 0. Durum panosu
+
+Son güncelleme: 17 Eylül 2026, build 88. ✅ bitti · 🟡 kısmen · ⬜ başlanmadı.
+
+| Hedef | Durum | Ne var / ne eksik |
+|---|---|---|
+| H1 Animasyonlu altyazı + stil paketleri | ⬜ | Altyazı var; stil DSL'i, animasyon, paketler yok |
+| H2 Long-to-short + reframe | ⬜ | Takip motoru hazır; uzun içe aktarma, an seçimi, skor yok |
+| H3 Script hizalı temizlik | ⬜ | Konuşma algılama var; hizalama, dolgu/tekrar, en iyi çekim yok |
+| H4 Göz teması | ⬜ | — |
+| H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
+| H6 Şablon/efekt/geçiş/görünüm | 🟡 | **15 geçiş bitti:** önceden çizilen geçiş filmleri, her biri CI'da gerçek videoyla test ediliyor. Şablon, LUT/görünüm, Metal efekt yok |
+| H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj. Ana klip keyframe, hız eğrisi, ses keyframe'i, proje sürümleri yok |
+| H8 Maske / yeşil perde | 🟡 | Kişi arka planı değiştirme var; nesne maskesi, chroma, metin-arkada yok |
+| H9 Müzik/SFX/beat/loudness | ⬜ | SFX ve ducking temeli var; beat motoru, LUFS, kütüphane yok |
+| H10 Çeviri/dublaj | ⬜ | — |
+| H11 AI ikiz / Restyle | 🟡 | BYOK video üretimi editörde ve workflow'da var; avatar, lipsync, restyle yok |
+| H12 Yayın | 🟡 | Workflow'a özel API teslimi (multipart/raw/JSON, Keychain'de anahtar). YouTube/IG/TikTok, zamanlama, arka plan yükleme yok |
+| H13 Senkron / iPad / Mac | ⬜ | — |
+| H14 Marka kiti / fikir motoru | ⬜ | — |
+| H15 Multicam | ⬜ | — |
+
+| Altyapı | Durum | Not |
+|---|---|---|
+| T1 Tool Registry | ⬜ | AI hâlâ `EditPlan` → `AIDirector` (geçişler dahil) |
+| T2 MediaIndex | ⬜ | — |
+| T3 Render Core | 🟡 | Tek birleştirici + filtre compositor; geçişler önceden render. Metal yok |
+| T4 JobQueue | 🟡 | Editör içi arka plan işleri (arka plan değiştirme, geçiş filmleri). Kalıcı kuyruk, `BGContinuedProcessingTask`, Live Activity yok |
+| T5 Provider | 🟡 | Worker + BYOK video. Ses/TTS sağlayıcıları yok |
+| T6 Sync & Catalog | ⬜ | — |
+
+**Bu turda öğrenilen (tekrarlanmasın):**
+- İkinci video izine animasyon rampası vermek cihazda oynatıcıyı durduruyordu.
+- Oynatma sırasında çizim de bu sorunu çözmedi.
+- Geçişler artık kısa film olarak önceden çiziliyor ve "eklenen video" yolundan konuyor.
+- Başı ve sonu aynı olan rampa hiçbir yerde kullanılmıyor.
+
+**Sıradaki:** Faz 1 (H1 + H3). Önce build 88'in cihaz kontrolü: geçişler, 50 kliplik proje, durdur/oynat.
 
 ## 1. Kısa cevap: aramızda ne kaldı
 
