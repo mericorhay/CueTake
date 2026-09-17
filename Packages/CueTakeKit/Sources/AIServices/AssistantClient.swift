@@ -159,6 +159,71 @@ public struct AssistantClient: Sendable {
         return try EditPlan.decode(from: text)
     }
 
+    // MARK: - Highlights
+
+    private struct HighlightsRequest: Encodable {
+        var sentences: [SpokenSentence]
+        var instruction: String
+        var locale: String
+        var count: Int
+        var minSeconds: Double
+        var maxSeconds: Double
+    }
+
+    private struct HighlightsResponse: Decodable {
+        var highlights: String?
+    }
+
+    private struct HighlightsAnswer: Decodable {
+        var clips: [HighlightPick]
+    }
+
+    /// The moments of a long video that could stand as shorts, chosen by the server model from
+    /// its sentences. Only text leaves the phone.
+    public func highlights(
+        in sentences: [SpokenSentence],
+        instruction: String,
+        length: HighlightLength,
+        count: Int,
+        localeIdentifier: String
+    ) async throws -> [HighlightPick] {
+        guard let endpoint else { throw AssistantError.notConfigured }
+
+        var request = URLRequest(url: endpoint.url.appending(path: "highlights"))
+        request.httpMethod = "POST"
+        request.timeoutInterval = 120
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(endpoint.appToken, forHTTPHeaderField: "x-cuetake-app")
+        request.httpBody = try JSONEncoder().encode(HighlightsRequest(
+            sentences: sentences,
+            instruction: instruction,
+            locale: localeIdentifier,
+            count: count,
+            minSeconds: length.minimum,
+            maxSeconds: length.maximum
+        ))
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw AssistantError.offline
+        }
+        guard let http = response as? HTTPURLResponse else { throw AssistantError.offline }
+        guard (200..<300).contains(http.statusCode) else {
+            throw AssistantError.rejected(status: http.statusCode)
+        }
+        let decoded = try JSONDecoder().decode(HighlightsResponse.self, from: data)
+        guard let text = decoded.highlights, !text.isEmpty else { throw AssistantError.empty }
+        // The model may wrap its object in prose or a code fence; the object is what counts.
+        guard let open = text.firstIndex(of: "{"), let close = text.lastIndex(of: "}"), open < close else {
+            throw AssistantError.empty
+        }
+        let object = Data(text[open...close].utf8)
+        return try JSONDecoder().decode(HighlightsAnswer.self, from: object).clips
+    }
+
     // MARK: - Workflows
 
     private struct WorkflowRequest: Encodable {

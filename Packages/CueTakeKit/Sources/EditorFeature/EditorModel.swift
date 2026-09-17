@@ -188,6 +188,14 @@ public final class EditorModel {
     public private(set) var player: AVPlayer?
     /// Why the preview could not be built, when it could not. Shown instead of a black frame.
     public private(set) var playbackProblem: String?
+    /// Shorts found in this video (see `EditorShorts`).
+    public var shorts = ShortsState()
+    /// Asks a model for shorts. Nil: the device's own picks only.
+    @ObservationIgnored public var highlightRequester: HighlightRequester?
+    /// Opens a short cut from this video as its own project.
+    @ObservationIgnored public var onCreateShort: ((Project) -> Void)?
+    @ObservationIgnored var shortsTask: Task<Void, Never>?
+    @ObservationIgnored var shortPreviewTask: Task<Void, Never>?
     /// Transition films written this session; a new one rebuilds the preview to show it.
     public internal(set) var readyTransitions: Set<String> = []
     @ObservationIgnored var transitionJob: Task<Void, Never>?

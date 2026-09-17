@@ -221,6 +221,8 @@ struct RootView: View {
                     ? { model.settingsModel.update(\.aiProcessing, to: .allowCloud) }
                     : nil
             )
+            // A different project is a different editor: its playback is prepared afresh.
+            .id(ObjectIdentifier(model.editorModel))
             .onChange(of: model.editorModel.project) {
                 guard !model.editorModel.isAIDriving else { return }
                 model.adoptEditorEdits()

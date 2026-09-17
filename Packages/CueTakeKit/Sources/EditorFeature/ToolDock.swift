@@ -34,11 +34,11 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, generate, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .generate, .shorts, .zoom, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -130,6 +130,7 @@ struct ToolDock: View {
         case .filter, .sound: !model.project.segments.isEmpty
         case .delete: index.map { model.canDeleteSegment(at: $0) } ?? false
         case .transition: model.project.segments.count > 1
+        case .shorts: model.project.segments.contains { $0.selectedTake != nil }
         case .captions, .audio, .video, .more, .ai, .generate, .text, .image: true
         }
     }
@@ -207,6 +208,7 @@ struct ToolDock: View {
         case .speed: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .delete: glyph.symbolEffect(.wiggle, value: count)
         case .transition: glyph.symbolEffect(.bounce.byLayer, value: count)
+        case .shorts: glyph.symbolEffect(.bounce, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
         case .generate:
             glyph
@@ -234,6 +236,7 @@ struct ToolDock: View {
         case .sound: "waveform.badge.plus"
         case .split: "scissors"
         case .transition: "square.on.square.intersection.dashed"
+        case .shorts: "film.stack"
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
         case .captions: "captions.bubble"
@@ -257,6 +260,7 @@ struct ToolDock: View {
         case .sound: String(localized: "editor.dock.sound", bundle: .module)
         case .split: String(localized: "editor.tool.split", bundle: .module)
         case .transition: String(localized: "editor.dock.transition", bundle: .module)
+        case .shorts: String(localized: "editor.dock.shorts", bundle: .module)
         case .trim: String(localized: "editor.dock.trim", bundle: .module)
         case .speed: String(localized: "editor.dock.speed", bundle: .module)
         case .captions: String(localized: "editor.captions", bundle: .module)
@@ -332,7 +336,7 @@ struct ToolDock: View {
         case .ai:
             open = nil
             onComposeAI()
-        case .trim, .speed, .generate, .zoom, .background, .filter, .sound: break
+        case .trim, .speed, .generate, .shorts, .zoom, .background, .filter, .sound: break
         }
     }
 
@@ -347,7 +351,7 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if ![.ai, .generate, .audio, .transition].contains(item), let index {
+                if ![.ai, .generate, .shorts, .audio, .transition].contains(item), let index {
                     Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.4))
@@ -371,6 +375,8 @@ struct ToolDock: View {
                     GeneratePanel(model: model, draft: generateDraft, onCompose: onComposeGenerate)
                 } else if item == .audio {
                     AudioMixerPanel(model: model, onAdd: onAddAudio)
+                } else if item == .shorts {
+                    ShortsPanel(model: model)
                 } else if item == .reframe {
                     mainReframePanel
                 } else if item == .zoom {
