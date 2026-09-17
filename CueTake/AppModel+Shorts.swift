@@ -3,30 +3,41 @@ import AVFoundation
 import Domain
 import EditorFeature
 import Foundation
+import Persistence
+import SettingsFeature
 
 extension AppModel {
     /// Gives the editor what it needs to find shorts and to open one.
     func connectEditorShorts() {
         let client = dependencies.assistantClient
-        editorModel.highlightRequester = client.isConfigured
-            ? { [weak self] sentences, instruction, length, count in
-                guard let self else { throw CancellationError() }
-                guard self.settingsModel.settings.aiProcessing == .allowCloud else {
-                    throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
-                }
-                do {
-                    return try await client.highlights(
-                        in: sentences,
-                        instruction: instruction,
-                        length: length,
-                        count: count,
-                        localeIdentifier: self.project.localeIdentifier
-                    )
-                } catch {
-                    throw DescribedError(message: Self.assistantFailureMessage(error))
-                }
+        guard client.isConfigured else {
+            editorModel.highlightRequester = nil
+            return connectShortOpening()
+        }
+        let requester: HighlightRequester = { [weak self] sentences, instruction, length, count in
+            guard let self else { throw CancellationError() }
+            guard self.settingsModel.settings.aiProcessing == .allowCloud else {
+                throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
             }
-            : nil
+            let locale = self.project.localeIdentifier
+            do {
+                let picks: [HighlightPick] = try await client.highlights(
+                    in: sentences,
+                    instruction: instruction,
+                    length: length,
+                    count: count,
+                    localeIdentifier: locale
+                )
+                return picks
+            } catch {
+                throw DescribedError(message: Self.assistantFailureMessage(error))
+            }
+        }
+        editorModel.highlightRequester = requester
+        connectShortOpening()
+    }
+
+    private func connectShortOpening() {
         editorModel.onCreateShort = { [weak self] clip in
             Task { await self?.openShort(clip) }
         }
