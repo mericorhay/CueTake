@@ -53,6 +53,30 @@ struct MediaJanitorTests {
         #expect(names(in: media) == ["used.mov", "cover.jpg", "overlay-1.png"])
     }
 
+    @Test func aBoughtColourGradeIsNotACache() throws {
+        let media = try folder()
+        defer { try? FileManager.default.removeItem(at: media) }
+
+        let recording = Recording(relativePath: "media/used.mov", format: .vertical1080, camera: .front, duration: MediaTime(seconds: 5))
+        let take = Take(
+            recordingID: recording.id,
+            sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 5)),
+            status: .ready
+        )
+        let segment = Segment(role: .hook, script: "", takes: [take], selectedTakeID: take.id)
+        var project = Project(title: "t", localeIdentifier: "en", segments: [segment], recordings: [recording])
+        var settings = FilterSettings(look: .natural)
+        settings.lut = LookUpTable(name: "Teal", file: "media/lut-1.cube", size: 33)
+        project.effects = [TimelineEffect(start: .zero, duration: MediaTime(seconds: 5), kind: .filter(settings))]
+
+        for name in ["used.mov", "lut-1.cube", "lut-old.cube"] { touch(name, in: media) }
+
+        _ = MediaJanitor.clean(project: project, mediaDirectory: media, keepOriginals: false)
+        let left = names(in: media)
+        #expect(left.contains("lut-1.cube"))
+        #expect(!left.contains("lut-old.cube"))
+    }
+
     @Test func cachesTheCurrentSettingsReadStay() throws {
         let media = try folder()
         defer { try? FileManager.default.removeItem(at: media) }

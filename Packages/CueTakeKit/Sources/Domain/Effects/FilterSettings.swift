@@ -34,6 +34,9 @@ public struct FilterSettings: Hashable, Sendable, Codable {
     public var vignette: Double
     /// 0…1.
     public var sharpness: Double
+    /// A grade read from a `.cube` file, under the look and the adjustments. Optional keeps every
+    /// project written before this source-compatible.
+    public var lut: LookUpTable?
 
     public init(
         look: Look,
@@ -43,7 +46,8 @@ public struct FilterSettings: Hashable, Sendable, Codable {
         saturation: Double = 0,
         warmth: Double = 0,
         vignette: Double = 0,
-        sharpness: Double = 0
+        sharpness: Double = 0,
+        lut: LookUpTable? = nil
     ) {
         self.look = look
         self.intensity = intensity
@@ -53,6 +57,7 @@ public struct FilterSettings: Hashable, Sendable, Codable {
         self.warmth = warmth
         self.vignette = vignette
         self.sharpness = sharpness
+        self.lut = lut
     }
 
     public init(from decoder: any Decoder) throws {
@@ -65,6 +70,7 @@ public struct FilterSettings: Hashable, Sendable, Codable {
         warmth = (try? c.decodeIfPresent(Double.self, forKey: .warmth)) ?? 0
         vignette = (try? c.decodeIfPresent(Double.self, forKey: .vignette)) ?? 0
         sharpness = (try? c.decodeIfPresent(Double.self, forKey: .sharpness)) ?? 0
+        lut = try? c.decodeIfPresent(LookUpTable.self, forKey: .lut)
     }
 
     /// Every value inside its range.

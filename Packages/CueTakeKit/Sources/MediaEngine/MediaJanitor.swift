@@ -92,6 +92,11 @@ public enum MediaJanitor {
         for overlay in project.overlays {
             if case .image(let path, _) = overlay.content { keep.insert(name(path)) }
         }
+        // A bought colour grade is part of the edit, not a cache: without this the first tidy-up
+        // would delete it and the video would quietly go back to its ungraded colours.
+        for effect in project.effects {
+            if let table = effect.filter?.lut { keep.insert(name(table.file)) }
+        }
 
         var freed: Int64 = 0
         for url in files {

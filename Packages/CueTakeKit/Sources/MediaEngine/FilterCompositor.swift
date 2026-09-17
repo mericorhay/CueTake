@@ -281,7 +281,16 @@ public enum FilterLooks {
             looked = looked.applyingFilter("CIPhotoEffectNoir")
         }
 
-        if settings.look != .natural, settings.intensity < 0.999 {
+        // A bought grade goes on before the built-in look, so the two can be stacked: the table
+        // does the colour, the look's curve and the adjustments sit on top of it.
+        if let table = settings.lut, let cube = ColorCubes.shared.cube(for: table) {
+            looked = looked.applyingFilter("CIColorCube", parameters: [
+                "inputCubeDimension": cube.size,
+                "inputCubeData": cube.data,
+            ])
+        }
+
+        if settings.look != .natural || settings.lut != nil, settings.intensity < 0.999 {
             looked = original.applyingFilter("CIDissolveTransition", parameters: [
                 kCIInputTargetImageKey: looked,
                 kCIInputTimeKey: settings.intensity,

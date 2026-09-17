@@ -6614,6 +6614,74 @@
         }
       }
     },
+    "editor.filter.lut.add": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a .cube colour grade"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kendi renk tablonu kullan (.cube)"
+          }
+        }
+      }
+    },
+    "editor.filter.lut.on %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour table, %lld points"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk tablosu, %lld nokta"
+          }
+        }
+      }
+    },
+    "editor.filter.lut.refused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That file is not a colour cube the app can read."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu dosya okunabilir bir renk tablosu değil."
+          }
+        }
+      }
+    },
+    "editor.filter.lut.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove the colour table"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk tablosunu kaldır"
+          }
+        }
+      }
+    },
     "editor.filter.mono": {
       "extractionState": "manual",
       "localizations": {

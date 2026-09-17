@@ -59,6 +59,10 @@ public struct VideoComposer: Sendable {
         renderBackgrounds: Bool = true,
         liveFilters: LiveFilters? = nil
     ) async throws -> Assembled {
+        // Any bought grades are read from beside the footage. Set here rather than by the editor
+        // alone, so an export from anywhere in the app finds them too.
+        ColorCubes.shared.use(folder: mediaDirectory)
+
         // Transitions are short films rendered beforehand and laid over their cuts like any added
         // video (see `TransitionRenderer`). The composition itself stays one track of clips.
         var project = project

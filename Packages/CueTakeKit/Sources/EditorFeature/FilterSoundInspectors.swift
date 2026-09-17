@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The chrome every effect panel shares: a header with its name and times, the times read out with
 /// the playhead shortcuts, the effect's own controls, and cutting or removing it.
@@ -148,6 +149,9 @@ struct FilterInspector: View {
     let effect: TimelineEffect
     let onClose: () -> Void
 
+    @State private var pickingTable = false
+    @State private var refused = false
+
     private var settings: FilterSettings { effect.filter ?? FilterSettings(look: .natural) }
 
     var body: some View {
@@ -191,7 +195,7 @@ struct FilterInspector: View {
                 .scrollIndicators(.hidden)
                 .scrollClipDisabled()
 
-                if settings.look != .natural {
+                if settings.look != .natural || settings.lut != nil {
                     slider("editor.filter.intensity", "circle.lefthalf.filled", \.intensity, 0...1) { "%\(Int(($0 * 100).rounded()))" }
                 }
                 slider("editor.filter.brightness", "sun.max", \.brightness, -1...1, signed: true)
@@ -200,6 +204,72 @@ struct FilterInspector: View {
                 slider("editor.filter.warmth", "thermometer.medium", \.warmth, -1...1, signed: true)
                 slider("editor.filter.vignette", "circle.dashed", \.vignette, 0...1) { "%\(Int(($0 * 100).rounded()))" }
                 slider("editor.filter.sharpness", "triangle", \.sharpness, 0...1) { "%\(Int(($0 * 100).rounded()))" }
+                lookUpTable
+            }
+        }
+        .fileImporter(
+            isPresented: $pickingTable,
+            allowedContentTypes: [UTType(filenameExtension: "cube") ?? .data]
+        ) { result in
+            guard case .success(let url) = result else { return }
+            withAnimation(DS.Motion.settle) {
+                refused = !model.useLookUpTable(at: url, on: effect.id)
+            }
+        }
+    }
+
+    /// A grade bought as a file. Shown last: it is the one thing here that is not a slider, and
+    /// most videos never use one.
+    @ViewBuilder
+    private var lookUpTable: some View {
+        if let table = settings.lut {
+            HStack(spacing: 10) {
+                Image(systemName: "swatchpalette.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(EffectLane.filterTint)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(verbatim: table.name)
+                        .dsFont(.sans, .semibold, 12)
+                        .foregroundStyle(DS.Palette.ink)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Text("editor.filter.lut.on \(table.size)", bundle: .module)
+                        .dsFont(.sans, .regular, 10)
+                        .foregroundStyle(DS.Palette.ink(0.45))
+                }
+                Spacer(minLength: 0)
+                Button {
+                    withAnimation(DS.Motion.settle) { model.removeLookUpTable(from: effect.id) }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("editor.filter.lut.remove", bundle: .module))
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.06)))
+        } else {
+            Button { pickingTable = true } label: {
+                Label {
+                    Text("editor.filter.lut.add", bundle: .module)
+                } icon: {
+                    Image(systemName: "swatchpalette")
+                }
+                .dsFont(.sans, .medium, 12)
+                .foregroundStyle(DS.Palette.ink(0.75))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.07)))
+            }
+            .buttonStyle(.dsPress(radius: 14))
+            if refused {
+                Text("editor.filter.lut.refused", bundle: .module)
+                    .dsFont(.sans, .regular, 10)
+                    .foregroundStyle(DS.Palette.accentWarm)
             }
         }
     }
