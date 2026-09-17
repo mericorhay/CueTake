@@ -46,20 +46,16 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     let passthroughTrackID = kCMPersistentTrackID_Invalid
     let layers: [AVVideoCompositionLayerInstruction]
     let filters: LiveFilters
-    /// What shows where no layer draws: black, or white under a dip to white.
+    /// What shows where no layer draws.
     let background: CIColor
-    /// The transition this stretch belongs to, drawn by the compositor itself.
-    let transition: TransitionRegion?
 
-    init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters, transitions: [TransitionRegion] = []) {
+    init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters) {
         timeRange = instruction.timeRange
         layers = instruction.layerInstructions
         let ids = Set(instruction.layerInstructions.map(\.trackID))
         requiredSourceTrackIDs = ids.sorted().map { NSNumber(value: $0) }
         self.filters = filters
         background = instruction.backgroundColor.map { CIColor(cgColor: $0) } ?? CIColor(red: 0, green: 0, blue: 0)
-        let middle = instruction.timeRange.start + CMTimeMultiplyByRatio(instruction.timeRange.duration, multiplier: 1, divisor: 2)
-        transition = transitions.first { $0.contains(middle) }
     }
 }
 
@@ -114,27 +110,8 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                 let bounds = CGRect(origin: .zero, size: size)
                 var frame = CIImage(color: instruction.background).cropped(to: bounds)
 
-                var layers = instruction.layers
-                // A transition: its two clips first, in the order and with the movement of the
-                // moment; anything added over the video stays over it.
-                if let region = instruction.transition, region.contains(time) {
-                    let look = region.look(at: time)
-                    let ids = region.tracks(at: time)
-                    let outgoing = layers.first { $0.trackID == ids.outgoing }
-                    let incoming = layers.first { $0.trackID == ids.incoming }
-                    layers.removeAll { $0.trackID == ids.outgoing || $0.trackID == ids.incoming }
-                    let pair = [(outgoing, look.outgoing), (incoming, look.incoming)]
-                    for (candidate, move) in look.incomingOnTop ? pair : Array(pair.reversed()) {
-                        guard let layer = candidate, let pixels = request.sourceFrame(byTrackID: layer.trackID),
-                              let placed = Self.place(pixels, layer: layer, at: time, renderHeight: size.height),
-                              let moved = Self.apply(move, to: placed, in: size)
-                        else { continue }
-                        frame = moved.composited(over: frame)
-                    }
-                }
-
                 // The first layer instruction is on top; paint from the bottom up.
-                for layer in layers.reversed() {
+                for layer in instruction.layers.reversed() {
                     guard let pixels = request.sourceFrame(byTrackID: layer.trackID) else { continue }
                     if let image = Self.place(pixels, layer: layer, at: time, renderHeight: size.height) {
                         frame = image.composited(over: frame)

@@ -99,3 +99,39 @@ extension EditorModel {
         }
     }
 }
+
+extension EditorModel {
+    /// Writes the transition films the edit needs, below everything else, and rebuilds the preview
+    /// as they arrive. Until then the preview plays those cuts as cuts.
+    func prepareTransitions() {
+        guard let mediaDirectory else { return }
+        let jobs = TransitionRenderer.jobs(for: project, in: mediaDirectory)
+        for job in jobs where job.isReady && !readyTransitions.contains(job.name) {
+            readyTransitions.insert(job.name)
+        }
+        let missing = jobs.filter { !$0.isReady }
+        let key = missing.map(\.name).joined(separator: ",")
+        guard !missing.isEmpty else {
+            transitionJob?.cancel()
+            transitionJob = nil
+            transitionJobKey = ""
+            return
+        }
+        guard key != transitionJobKey || transitionJob == nil else { return }
+        transitionJob?.cancel()
+        transitionJobKey = key
+        let snapshot = project
+        transitionJob = Task(priority: .utility) { [weak self] in
+            // A moment's wait: a duration slider sends many values, and only the last is drawn.
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            await TransitionRenderer.renderMissing(for: snapshot, in: mediaDirectory, renderBackgrounds: false)
+            guard !Task.isCancelled, let self, self.transitionJobKey == key else { return }
+            self.transitionJob = nil
+            self.transitionJobKey = ""
+            for job in jobs where job.isReady {
+                self.readyTransitions.insert(job.name)
+            }
+        }
+    }
+}

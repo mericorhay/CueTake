@@ -188,10 +188,10 @@ public final class EditorModel {
     public private(set) var player: AVPlayer?
     /// Why the preview could not be built, when it could not. Shown instead of a black frame.
     public private(set) var playbackProblem: String?
-    /// The system's reason, when the preview had to play without its transitions.
-    public internal(set) var transitionProblem: String?
-    /// The transitions that failed to play, so the same ones are not tried again and again.
-    @ObservationIgnored private var skippedTransitions: String?
+    /// Transition films written this session; a new one rebuilds the preview to show it.
+    public internal(set) var readyTransitions: Set<String> = []
+    @ObservationIgnored var transitionJob: Task<Void, Never>?
+    @ObservationIgnored var transitionJobKey = ""
     /// What the last failed player was built from, for counting retries of the same thing.
     @ObservationIgnored private var failedSignature: [String]?
     /// Counts builds, so a slow one that finishes after a newer one never replaces its player.
@@ -243,16 +243,8 @@ public final class EditorModel {
         let assembled: VideoComposer.Assembled
         do {
             liveFilters.update(project.effects)
-            var playable = project
-            if !project.transitions.isEmpty, skippedTransitions == transitionsKey {
-                playable.transitions = []
-            } else if skippedTransitions != nil {
-                // The transitions changed since they failed: try them again.
-                skippedTransitions = nil
-                transitionProblem = nil
-            }
             assembled = try await VideoComposer().compose(
-                project: playable,
+                project: project,
                 mediaDirectory: mediaDirectory,
                 renderBackgrounds: false,
                 liveFilters: liveFilters
@@ -309,6 +301,7 @@ public final class EditorModel {
         if wasPlaying { player.play() }
         // A reversed clip's copy may have just been written; its background can start now.
         prepareBackgrounds()
+        prepareTransitions()
     }
 
     /// Notices when the item on screen stops being playable.
@@ -335,22 +328,10 @@ public final class EditorModel {
             builtSignature = nil
             // Stop here. Playing on made every failure a loop: rebuild, seek back to the playhead,
             // play, fail at the same frame, rebuild — the play button seemed to jump back each time.
-            let wasPlaying = isPlaying
             pause()
             if failed != failedSignature {
                 failedSignature = failed
                 playbackRetries = 0
-            }
-            // Transitions are the newest and the most demanding part of the picture. When they are
-            // there, the preview plays without them once and says why, instead of not playing.
-            if let mediaDirectory, !project.transitions.isEmpty, skippedTransitions != transitionsKey {
-                skippedTransitions = transitionsKey
-                transitionProblem = message
-                Task { [weak self] in
-                    await self?.loadPlayback(mediaDirectory: mediaDirectory)
-                    if wasPlaying, let self, !self.isPlaying { self.togglePlayback() }
-                }
-                return
             }
             guard let mediaDirectory, playbackRetries < 3 else {
                 // Out of tries: say so, with a button, rather than a crossed-out frame.
@@ -372,11 +353,6 @@ public final class EditorModel {
         default:
             break
         }
-    }
-
-    /// The transitions as the preview was asked to play them.
-    private var transitionsKey: String {
-        project.transitions.map { "\($0.after.uuidString):\($0.kind.rawValue):\($0.duration)" }.joined(separator: ",")
     }
 
     /// A player error with its code and cause, which is what finding the fault needs.
@@ -412,6 +388,8 @@ public final class EditorModel {
             }.joined(separator: ","),
             "filters:\(project.effects.contains { $0.filter != nil })",
             "backgrounds:" + backgroundSignature,
+            // A transition film appearing changes the picture.
+            "transition-films:" + readyTransitions.sorted().joined(separator: ","),
             "voice:\(project.voiceEffects.noiseReduction)\(project.voiceEffects.voiceEnhance)\(project.voiceEffects.deRumble)",
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
             "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.recordings.map { ($0.reframe ?? [], $0.cameraMotions ?? []) })",

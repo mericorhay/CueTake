@@ -65,6 +65,9 @@ public enum MediaJanitor {
         for job in BackgroundRemover.jobs(for: project, in: mediaDirectory) {
             keep.insert(job.name)
         }
+        for job in TransitionRenderer.jobs(for: project, in: mediaDirectory) {
+            keep.insert(job.name)
+        }
         // Sound effects: the voice copied out, and each effect rendered from it.
         let sounds = project.effects.compactMap(\.sound).filter(\.needsRender)
         if !sounds.isEmpty {
@@ -114,6 +117,7 @@ public enum MediaJanitor {
             || file.hasSuffix("-dry.m4a")
             || file.contains("-bg-")
             || file.contains("-sfx-")
+            || file.hasPrefix("transition-")
             || file.range(of: #"^[0-9A-F-]{36}-[nvr]{1,3}\.m4a$"#, options: .regularExpression) != nil
     }
 

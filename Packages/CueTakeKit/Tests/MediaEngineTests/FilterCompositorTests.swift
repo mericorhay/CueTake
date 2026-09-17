@@ -36,28 +36,6 @@ struct FilterCompositorTests {
         #expect(filters.settings(at: 2).map(\.look) == [.noir])
     }
 
-    @Test func transitionRegionHandsTheTracksOverAtTheCut() {
-        let region = TransitionRegion(
-            start: CMTime(value: 1200, timescale: 600),
-            cut: CMTime(value: 1500, timescale: 600),
-            end: CMTime(value: 1800, timescale: 600),
-            kind: .crossfade,
-            mainTrackID: 1,
-            carrierTrackID: 3
-        )
-        let before = CMTime(value: 1300, timescale: 600)
-        let after = CMTime(value: 1600, timescale: 600)
-
-        #expect(region.contains(before))
-        #expect(!region.contains(CMTime(value: 1800, timescale: 600)))
-        #expect(region.tracks(at: before).outgoing == 1)
-        #expect(region.tracks(at: before).incoming == 3)
-        #expect(region.tracks(at: after).outgoing == 3)
-        #expect(region.tracks(at: after).incoming == 1)
-        #expect(region.look(at: region.start).outgoing.opacity == 1)
-        #expect(region.look(at: region.end).outgoing.opacity == 0)
-    }
-
     @Test func transitionMovementIsDrawnInRenderSpace() throws {
         let size = CGSize(width: 100, height: 200)
         let frame = CIImage(color: CIColor(red: 1, green: 0, blue: 0)).cropped(to: CGRect(origin: .zero, size: size))
@@ -87,5 +65,40 @@ struct FilterCompositorTests {
         #expect(FilterCompositor.apply(wiped, to: frame, in: size) == nil)
 
         #expect(FilterCompositor.apply(TransitionLook.Layer(), to: frame, in: size)?.extent == frame.extent)
+    }
+
+    @Test func transitionFilmsSitCentredOnTheirCutsAndFollowTheEdit() throws {
+        let recording = Recording(relativePath: "a.mov", format: .vertical1080, camera: .back, duration: MediaTime(seconds: 20))
+        func segment(_ start: Double, _ length: Double) -> Segment {
+            var segment = Segment(role: .hook, script: "")
+            let take = Take(recordingID: recording.id, sourceRange: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: length)), status: .ready)
+            segment.takes = [take]
+            segment.selectedTakeID = take.id
+            return segment
+        }
+        var project = Project(title: "t", localeIdentifier: "en-US", segments: [segment(0, 4), segment(4, 6)], recordings: [recording])
+        let folder = URL(filePath: NSTemporaryDirectory())
+        #expect(TransitionRenderer.jobs(for: project, in: folder).isEmpty)
+
+        project.setTransition(after: project.segments[0].id, kind: .crossfade, duration: 1)
+        let jobs = TransitionRenderer.jobs(for: project, in: folder)
+        let job = try #require(jobs.first)
+        #expect(jobs.count == 1)
+        #expect(abs(job.cut - project.segments[0].barWeight) < 0.0001)
+        #expect(abs(job.start - (job.cut - 0.5)) < 0.0001)
+        #expect(abs(job.end - (job.cut + 0.5)) < 0.0001)
+
+        // Captions and titles do not redraw it; the picture does.
+        var renamed = project
+        renamed.title = "other"
+        #expect(TransitionRenderer.jobs(for: renamed, in: folder).first?.name == job.name)
+        var reframed = project
+        reframed.mainVideoPlacement.zoom = 1.2
+        #expect(TransitionRenderer.jobs(for: reframed, in: folder).first?.name != job.name)
+
+        // Not written yet: the composer plays the cut as a cut and adds nothing.
+        let layered = TransitionRenderer.layered(project, in: folder)
+        #expect(layered.transitions.isEmpty)
+        #expect(layered.videoLayers.isEmpty)
     }
 }

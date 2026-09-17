@@ -119,9 +119,23 @@ extension VideoComposer {
                 let b = item.layer.placement(at: stop.seconds)
                 let first = VideoFrameGeometry(natural: item.natural, preferred: item.preferred, placement: a, render: render)
                 let last = VideoFrameGeometry(natural: item.natural, preferred: item.preferred, placement: b, render: render)
-                layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: instruction.timeRange)
-                layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: instruction.timeRange)
-                layer.setOpacityRamp(fromStartOpacity: Float(a.opacity), toEndOpacity: Float(b.opacity), timeRange: instruction.timeRange)
+                // A value that does not change is set, not ramped: some AVFoundation builds refuse a
+                // ramp with equal ends, and one refusal makes the whole video composition invalid.
+                if first.transform == last.transform {
+                    layer.setTransform(first.transform, at: start)
+                } else {
+                    layer.setTransformRamp(fromStart: first.transform, toEnd: last.transform, timeRange: instruction.timeRange)
+                }
+                if first.crop == last.crop {
+                    layer.setCropRectangle(first.crop, at: start)
+                } else {
+                    layer.setCropRectangleRamp(fromStartCropRectangle: first.crop, toEndCropRectangle: last.crop, timeRange: instruction.timeRange)
+                }
+                if a.opacity == b.opacity {
+                    layer.setOpacity(Float(a.opacity), at: start)
+                } else {
+                    layer.setOpacityRamp(fromStartOpacity: Float(a.opacity), toEndOpacity: Float(b.opacity), timeRange: instruction.timeRange)
+                }
                 layers.append(layer)
             }
             if let source = base.first(where: { middle >= $0.timeRange.start.seconds && middle < $0.timeRange.end.seconds }) {
