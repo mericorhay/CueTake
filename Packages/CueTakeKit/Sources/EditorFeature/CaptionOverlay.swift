@@ -9,14 +9,17 @@ import SwiftUI
 /// `AVPlayer` does not run that tool. The choice is between drawing them again in SwiftUI and
 /// having an editor that cannot show you the thing you are editing.
 ///
-/// So the rule is that both sides read the same numbers — `Project.captionCues` places them, and
-/// `CaptionStyle` sizes and colours them — and neither invents its own idea of where a cue starts.
+/// So both sides read the same numbers: `Project.captionCues` places the cues, `CaptionWords`
+/// decides what each word says, `CaptionLineBreaker` breaks the lines and `CaptionAnimator` moves
+/// every word. Neither side invents its own.
 struct CaptionOverlay: View {
     let cue: PlacedCue
     let style: CaptionStyle
     let locale: Locale
-    /// The playhead, for lighting words as they are said.
+    /// The playhead, for lighting and moving words as they are said.
     let time: Double
+    /// Where the cue sits. Nil uses the style's place.
+    var position: CaptionPosition? = nil
     /// Moves when the AI changes these captions or their look.
     var glowToken: Int = 0
     /// Set in the editor: the caption can be tapped to edit and dragged up or down.
@@ -30,118 +33,174 @@ struct CaptionOverlay: View {
     var body: some View {
         GeometryReader { proxy in
             let size = max(11, proxy.size.height * style.relativeFontSize)
+            let place = position ?? style.position
+            let display = CaptionWords(cue: cue, style: style, locale: locale)
+            let frame = CaptionAnimator.frame(for: cue, wordCount: display.words.count, style: style, at: time)
+            let plated = style.backgroundColor != nil
 
-            line(size: size)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-                // SwiftUI has no text stroke, and short video is watched over whatever happens to
-                // be behind the words. Four offset shadows is the cheap version of an outline and
-                // survives white footage, which a single drop shadow does not. A plate does that
-                // job by itself, so plated styles skip it.
-                .modifier(Outline(enabled: style.backgroundColor == nil, weight: max(0.8, size * 0.06)))
-                .padding(.horizontal, style.backgroundColor == nil ? size * 0.3 : size * 0.55)
-                .padding(.vertical, style.backgroundColor == nil ? size * 0.2 : size * 0.28)
-                .background {
-                    if let background = style.backgroundColor {
-                        RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
-                            .fill(Self.color(background))
-                    }
+            CaptionFlow(spacing: size * 0.26, lineSpacing: size * 0.1) {
+                ForEach(Array(display.words.enumerated()), id: \.offset) { index, word in
+                    wordView(word, index: index, display: display, frame: frame, size: size)
                 }
-                .aiGlow(glowToken, in: RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous), inset: 4)
-                .overlay {
-                    if isEditing {
-                        RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous)
-                            .strokeBorder(DS.Palette.lime, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                            .padding(-6)
-                            .allowsHitTesting(false)
-                    }
+            }
+            .padding(.horizontal, plated ? size * 0.55 : size * 0.3)
+            .padding(.vertical, plated ? size * 0.28 : size * 0.2)
+            .background {
+                if let background = style.backgroundColor {
+                    RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
+                        .fill(Self.color(background))
                 }
-                .scaleEffect(dragging ? 1.04 : 1)
-                .animation(DS.Motion.snap, value: dragging)
-                .contentShape(Rectangle().inset(by: -10))
-                .onTapGesture { onTap?() }
-                .gesture(
-                    DragGesture(minimumDistance: 4, coordinateSpace: .named("captionFrame"))
-                        .onChanged { value in
-                            dragging = true
-                            onMove?(Double(value.location.y / max(1, proxy.size.height)))
-                        }
-                        .onEnded { _ in dragging = false },
-                    including: isEditing ? .all : .none
-                )
-                .frame(maxWidth: proxy.size.width * 0.86)
-                .position(
-                    x: proxy.size.width * style.position.x,
-                    y: proxy.size.height * style.position.y
-                )
-                // The height the caption sits at, while it is moved.
-                .overlay(alignment: .topLeading) {
-                    if dragging {
-                        Rectangle()
-                            .fill(DS.Palette.lime.opacity(0.7))
-                            .frame(width: proxy.size.width, height: 1)
-                            .offset(y: proxy.size.height * style.position.y)
-                            .allowsHitTesting(false)
-                    }
+            }
+            .scaleEffect(frame.scale)
+            .offset(y: frame.offset * size)
+            .opacity(frame.opacity)
+            .aiGlow(glowToken, in: RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous), inset: 4)
+            .overlay {
+                if isEditing {
+                    RoundedRectangle(cornerRadius: max(6, size * 0.32), style: .continuous)
+                        .strokeBorder(DS.Palette.lime, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                        .padding(-6)
+                        .allowsHitTesting(false)
                 }
+            }
+            .scaleEffect(dragging ? 1.04 : 1)
+            .animation(DS.Motion.snap, value: dragging)
+            .contentShape(Rectangle().inset(by: -10))
+            .onTapGesture { onTap?() }
+            .gesture(
+                DragGesture(minimumDistance: 4, coordinateSpace: .named("captionFrame"))
+                    .onChanged { value in
+                        dragging = true
+                        onMove?(Double(value.location.y / max(1, proxy.size.height)))
+                    }
+                    .onEnded { _ in dragging = false },
+                including: isEditing ? .all : .none
+            )
+            .frame(maxWidth: proxy.size.width * 0.86)
+            .position(x: proxy.size.width * place.x, y: proxy.size.height * place.y)
+            // The height the caption sits at, while it is moved.
+            .overlay(alignment: .topLeading) {
+                if dragging {
+                    Rectangle()
+                        .fill(DS.Palette.lime.opacity(0.7))
+                        .frame(width: proxy.size.width, height: 1)
+                        .offset(y: proxy.size.height * place.y)
+                        .allowsHitTesting(false)
+                }
+            }
         }
         .coordinateSpace(.named("captionFrame"))
         .allowsHitTesting(onTap != nil)
     }
 
-    /// The line itself. With karaoke the words are assembled one by one, each coloured by whether
-    /// it has been said yet; otherwise it is the cue's text as written.
-    private func line(size: CGFloat) -> Text {
-        let font = style.fontName.map { Font.custom($0, fixedSize: size) }
-            ?? .system(size: size, weight: .heavy)
-        let base = Self.color(style.textColor)
-
-        guard style.highlightsWords, let highlight = style.highlightColor, !cue.words.isEmpty else {
-            return Text(style.textCase.apply(to: cue.text, locale: locale))
-                .font(font)
-                .foregroundStyle(base)
+    private func wordView(_ word: String, index: Int, display: CaptionWords, frame: CaptionFrame, size: CGFloat) -> some View {
+        let state = index < frame.words.count ? frame.words[index] : CaptionFrame.Word()
+        let font = style.fontName.map { Font.custom($0, fixedSize: size) } ?? .system(size: size, weight: .heavy)
+        let emphasis = style.resolvedEmphasis
+        let lit: Bool = switch emphasis {
+        case .color: state.isLit
+        case .box: state.box > 0.5
+        case .scale: state.isActive && style.highlightColor != nil
+        case .none: false
         }
+        let base = display.keywords.contains(index) ? (style.keywordColor ?? style.textColor) : style.textColor
+        let colour: RGBAColor = lit ? (emphasis == .box ? style.boxedTextColor : style.emphasisColor) : base
+        let outlined = style.resolvedStrokeWeight > 0.001 && !(emphasis == .box && lit)
 
-        let lit = cue.wordIndex(at: time) ?? -1
-        return cue.words.enumerated().reduce(Text(verbatim: "")) { line, item in
-            let (index, word) = item
-            let piece = Text(verbatim: (index == 0 ? "" : " ") + style.textCase.apply(to: word.text, locale: locale))
-                .font(font)
-                .foregroundStyle(index <= lit ? Self.color(highlight) : base)
-            return line + piece
-        }
+        return Text(verbatim: word)
+            .font(font)
+            .foregroundStyle(Self.color(colour))
+            .fixedSize()
+            .modifier(Outline(
+                enabled: outlined,
+                weight: max(0.8, size * style.resolvedStrokeWeight * 0.45),
+                color: Self.color(style.resolvedStrokeColor)
+            ))
+            .shadow(color: .black.opacity(style.shadow == true ? 0.55 : 0), radius: size * 0.1, y: size * 0.04)
+            .padding(.horizontal, emphasis == .box ? size * 0.12 : 0)
+            .background {
+                if emphasis == .box {
+                    RoundedRectangle(cornerRadius: size * 0.18, style: .continuous)
+                        .fill(Self.color(style.emphasisColor))
+                        .opacity(state.box)
+                }
+            }
+            .scaleEffect(state.scale)
+            .offset(y: state.offset * size)
+            .opacity(state.opacity)
     }
 
     static func color(_ color: RGBAColor) -> Color {
-        Color(
-            .sRGB,
-            red: color.red,
-            green: color.green,
-            blue: color.blue,
-            opacity: color.alpha
+        Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha)
+    }
+
+    /// The arrival is drawn by `CaptionAnimator`; the view itself only fades in and out.
+    static func transition(for style: CaptionStyle) -> AnyTransition {
+        .opacity
+    }
+}
+
+/// Words in centred lines, broken the way the export breaks them.
+struct CaptionFlow: Layout {
+    var spacing: CGFloat
+    var lineSpacing: CGFloat
+
+    private func lines(_ sizes: [CGSize], maxWidth: CGFloat) -> [[Int]] {
+        CaptionLineBreaker.lines(
+            widths: sizes.map { Double($0.width) },
+            space: Double(spacing),
+            maxWidth: maxWidth.isFinite ? Double(maxWidth) : .greatestFiniteMagnitude
         )
     }
 
-    /// How each style arrives. Pop pops, the others fade — the entrance is part of the look.
-    static func transition(for style: CaptionStyle) -> AnyTransition {
-        style.presetID == "pop" || style.presetID == "bold" || style.presetID == "story"
-            ? .scale(scale: 0.82).combined(with: .opacity)
-            : .opacity
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let maxWidth = proposal.width ?? .infinity
+        let rows = lines(sizes, maxWidth: maxWidth)
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+        for (index, row) in rows.enumerated() {
+            let rowWidth = row.map { sizes[$0].width }.reduce(0, +) + spacing * CGFloat(max(0, row.count - 1))
+            width = max(width, rowWidth)
+            height += (row.map { sizes[$0].height }.max() ?? 0) + (index > 0 ? lineSpacing : 0)
+        }
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let rows = lines(sizes, maxWidth: bounds.width)
+        var y = bounds.minY
+        for row in rows {
+            let rowWidth = row.map { sizes[$0].width }.reduce(0, +) + spacing * CGFloat(max(0, row.count - 1))
+            let rowHeight = row.map { sizes[$0].height }.max() ?? 0
+            var x = bounds.midX - rowWidth / 2
+            for index in row {
+                subviews[index].place(
+                    at: CGPoint(x: x, y: y + (rowHeight - sizes[index].height) / 2),
+                    proposal: ProposedViewSize(sizes[index])
+                )
+                x += sizes[index].width + spacing
+            }
+            y += rowHeight + lineSpacing
+        }
     }
 }
 
 private struct Outline: ViewModifier {
     let enabled: Bool
     let weight: CGFloat
+    var color: Color = .black
 
     func body(content: Content) -> some View {
         if enabled {
+            // SwiftUI has no text stroke. Four offset shadows is the cheap version of an outline
+            // and survives white footage, which a single drop shadow does not.
             content
-                .shadow(color: .black.opacity(0.95), radius: 0.4, x: weight, y: 0)
-                .shadow(color: .black.opacity(0.95), radius: 0.4, x: -weight, y: 0)
-                .shadow(color: .black.opacity(0.95), radius: 0.4, x: 0, y: weight)
-                .shadow(color: .black.opacity(0.95), radius: 0.4, x: 0, y: -weight)
-                .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                .shadow(color: color.opacity(0.95), radius: 0.4, x: weight, y: 0)
+                .shadow(color: color.opacity(0.95), radius: 0.4, x: -weight, y: 0)
+                .shadow(color: color.opacity(0.95), radius: 0.4, x: 0, y: weight)
+                .shadow(color: color.opacity(0.95), radius: 0.4, x: 0, y: -weight)
         } else {
             content
         }

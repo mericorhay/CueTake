@@ -120,7 +120,7 @@ struct CaptionQuickPanel: View {
                                 }
                             }
                         } label: {
-                            Text(CaptionsScreen.Style(rawValue: preset)?.label ?? preset)
+                            Text(verbatim: CaptionStyleCatalog.label(preset))
                                 .dsFont(.sans, .medium, 12)
                                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.85))
                                 .padding(.horizontal, 12)

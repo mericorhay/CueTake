@@ -35,6 +35,8 @@ public struct VideoComposer: Sendable {
         /// preview player ignores it, so the editor draws its own.
         public var captions: [PlacedCue]
         public var captionStyle: CaptionStyle
+        /// Where each cue sits: the style's place, moved off a followed face where needed.
+        public var captionPositions: [PlacedCue.ID: CaptionPosition] = [:]
         public var localeIdentifier: String
         /// Pictures and text over the video, burned in with the captions.
         public var overlays: [Overlay] = []
@@ -460,7 +462,7 @@ public struct VideoComposer: Sendable {
             videoComposition.instructions = layered.instructions.map { FilterInstruction($0, filters: filters) }
         }
 
-        return Assembled(
+        var assembled = Assembled(
             composition: composition,
             videoComposition: videoComposition,
             audioMix: combinedMix,
@@ -471,6 +473,11 @@ public struct VideoComposer: Sendable {
             overlays: project.overlays,
             mediaDirectory: mediaDirectory
         )
+        assembled.captionPositions = Dictionary(
+            assembled.captions.map { ($0.id, project.captionPosition(for: $0)) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return assembled
     }
 
     /// The face point at a primary clip's timeline moment. Focus uses file time so changing speed,
@@ -825,6 +832,7 @@ public struct VideoComposer: Sendable {
                 style: assembled.captionStyle,
                 locale: Locale(identifier: assembled.localeIdentifier),
                 renderSize: renderSize,
+                positions: assembled.captionPositions,
                 underlays: overlayLayers
             )
         }

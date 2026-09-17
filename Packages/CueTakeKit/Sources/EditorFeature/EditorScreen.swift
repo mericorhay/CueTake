@@ -625,6 +625,7 @@ public struct EditorScreen: View {
                     style: model.project.captionStyle,
                     locale: model.project.locale,
                     time: model.playhead,
+                    position: model.project.captionPosition(for: cue),
                     glowToken: model.captionGlowToken,
                     isEditing: editingCaption == cue.id,
                     onTap: {

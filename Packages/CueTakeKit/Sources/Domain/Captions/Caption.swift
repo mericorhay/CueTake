@@ -43,6 +43,20 @@ public struct CaptionStyle: Hashable, Sendable, Codable {
     public var backgroundColor: RGBAColor?
     public var maxWordsPerCue: Int
     public var position: CaptionPosition
+    /// How a cue arrives. Nil keeps the arrival older styles had (see `resolvedEntrance`).
+    public var entrance: CaptionEntrance?
+    /// How the word being said stands out. Nil follows `highlightColor`.
+    public var emphasis: CaptionEmphasis?
+    /// The outline. Nil: black, and only on styles without a plate.
+    public var strokeColor: RGBAColor?
+    /// Outline width as a fraction of the font size.
+    public var strokeWeight: Double?
+    /// Numbers, money and strong words in this colour. Nil leaves them as the rest.
+    public var keywordColor: RGBAColor?
+    /// An emoji after the first strong word of a cue.
+    public var emoji: Bool?
+    /// A soft shadow under the words.
+    public var shadow: Bool?
 
     public init(
         presetID: String,
@@ -53,7 +67,14 @@ public struct CaptionStyle: Hashable, Sendable, Codable {
         highlightColor: RGBAColor? = nil,
         backgroundColor: RGBAColor? = nil,
         maxWordsPerCue: Int,
-        position: CaptionPosition
+        position: CaptionPosition,
+        entrance: CaptionEntrance? = nil,
+        emphasis: CaptionEmphasis? = nil,
+        strokeColor: RGBAColor? = nil,
+        strokeWeight: Double? = nil,
+        keywordColor: RGBAColor? = nil,
+        emoji: Bool? = nil,
+        shadow: Bool? = nil
     ) {
         self.presetID = presetID
         self.fontName = fontName
@@ -64,6 +85,13 @@ public struct CaptionStyle: Hashable, Sendable, Codable {
         self.backgroundColor = backgroundColor
         self.maxWordsPerCue = maxWordsPerCue
         self.position = position
+        self.entrance = entrance
+        self.emphasis = emphasis
+        self.strokeColor = strokeColor
+        self.strokeWeight = strokeWeight
+        self.keywordColor = keywordColor
+        self.emoji = emoji
+        self.shadow = shadow
     }
 
     /// What a new project starts with: the Pop look, the one the captions screen opens on.
@@ -129,12 +157,15 @@ public struct PlacedCue: Identifiable, Hashable, Sendable {
     /// did not come from a transcript — typed by hand, or built from a script — in which case
     /// nothing is highlighted rather than highlighted at invented times.
     public var words: [PlacedWord]
+    /// The cue's own position, when the user moved it. Nil follows the style.
+    public var position: CaptionPosition?
 
-    public init(id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = []) {
+    public init(id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = [], position: CaptionPosition? = nil) {
         self.id = id
         self.text = text
         self.range = range
         self.words = words
+        self.position = position
     }
 
     /// The index of the word being said at `seconds`, or of the last word already said. Nil
@@ -162,7 +193,15 @@ extension CaptionStyle {
     /// plate, how many words at once — so what the captions screen shows is what the preview draws
     /// and what the export burns in.
     /// Every look, in the order the captions screen offers them.
-    public static let presetIDs = ["pop", "clean", "karaoke", "bold", "boxed", "minimal", "neon", "story"]
+    public static let presetIDs = [
+        "pop", "clean", "karaoke", "bold", "boxed", "minimal", "neon", "story",
+        "punch", "beast", "spotlight", "typewriter", "bounce", "podcast",
+        "subtle", "news", "comic", "emoji", "glow", "focus",
+    ]
+
+    static let lime = RGBAColor(red: 0xE8 / 255, green: 1, blue: 0x4F / 255)
+    static let yellow = RGBAColor(red: 1, green: 0.84, blue: 0.04)
+    static let coral = RGBAColor(red: 1, green: 0x5A / 255, blue: 0x4F / 255)
 
     public static func preset(_ id: String, position: CaptionPosition = .lowerThird) -> CaptionStyle {
         switch id {
@@ -248,6 +287,104 @@ extension CaptionStyle {
                 maxWordsPerCue: 4,
                 position: position
             )
+        case "punch":
+            // Two words in capitals, the one being said growing and turning yellow; numbers green.
+            CaptionStyle(
+                presetID: "punch", fontName: "Archivo-ExtraBold", relativeFontSize: 0.05,
+                textCase: .uppercase, textColor: .white, highlightColor: yellow,
+                maxWordsPerCue: 2, position: position,
+                entrance: .pop, emphasis: .scale, keywordColor: lime
+            )
+        case "beast":
+            // Huge, springing in word by word, the spoken word on a red card.
+            CaptionStyle(
+                presetID: "beast", fontName: "Archivo-ExtraBold", relativeFontSize: 0.056,
+                textCase: .uppercase, textColor: .white, highlightColor: RGBAColor(red: 0.93, green: 0.16, blue: 0.2),
+                maxWordsPerCue: 2, position: position,
+                entrance: .bounce, emphasis: .box, strokeWeight: 0.16
+            )
+        case "spotlight":
+            // The spoken word on a lime card, three words at a time.
+            CaptionStyle(
+                presetID: "spotlight", fontName: "Archivo-Bold", relativeFontSize: 0.04,
+                textCase: .natural, textColor: .white, highlightColor: lime,
+                maxWordsPerCue: 3, position: position,
+                entrance: .pop, emphasis: .box
+            )
+        case "typewriter":
+            // Words appear as they are said, quiet and readable.
+            CaptionStyle(
+                presetID: "typewriter", fontName: "InstrumentSans-SemiBold", relativeFontSize: 0.034,
+                textCase: .natural, textColor: .white,
+                maxWordsPerCue: 5, position: position,
+                entrance: .typewriter, emphasis: CaptionEmphasis.none, strokeWeight: 0.1, shadow: true
+            )
+        case "bounce":
+            // Every word springs in, yellow outline.
+            CaptionStyle(
+                presetID: "bounce", fontName: "Archivo-ExtraBold", relativeFontSize: 0.045,
+                textCase: .uppercase, textColor: .white, highlightColor: yellow,
+                maxWordsPerCue: 3, position: position,
+                entrance: .bounce, emphasis: .color
+            )
+        case "podcast":
+            // Subtitles for talk: dark plate, the spoken word marked.
+            CaptionStyle(
+                presetID: "podcast", fontName: "InstrumentSans-SemiBold", relativeFontSize: 0.03,
+                textCase: .natural, textColor: .white, highlightColor: lime,
+                backgroundColor: RGBAColor(red: 0.05, green: 0.05, blue: 0.06, alpha: 0.72),
+                maxWordsPerCue: 6, position: position,
+                entrance: .rise, emphasis: .color
+            )
+        case "subtle":
+            // Small, rising softly, nothing shouting.
+            CaptionStyle(
+                presetID: "subtle", fontName: "InstrumentSans-Medium", relativeFontSize: 0.028,
+                textCase: .natural, textColor: RGBAColor(red: 1, green: 1, blue: 1, alpha: 0.95),
+                maxWordsPerCue: 6, position: position,
+                entrance: .rise, emphasis: CaptionEmphasis.none, strokeWeight: 0, shadow: true
+            )
+        case "news":
+            // A lower-third bar: white on near-black, rising in.
+            CaptionStyle(
+                presetID: "news", fontName: "Archivo-Bold", relativeFontSize: 0.032,
+                textCase: .uppercase, textColor: .white,
+                backgroundColor: RGBAColor(red: 0.08, green: 0.08, blue: 0.1, alpha: 0.92),
+                maxWordsPerCue: 5, position: position,
+                entrance: .rise, keywordColor: coral
+            )
+        case "comic":
+            // Yellow words with a thick outline, bouncing.
+            CaptionStyle(
+                presetID: "comic", fontName: "Archivo-ExtraBold", relativeFontSize: 0.046,
+                textCase: .uppercase, textColor: yellow, highlightColor: .white,
+                maxWordsPerCue: 3, position: position,
+                entrance: .bounce, emphasis: .scale, strokeWeight: 0.2
+            )
+        case "emoji":
+            // Pop, with an emoji after the strong word.
+            CaptionStyle(
+                presetID: "emoji", fontName: "Archivo-ExtraBold", relativeFontSize: 0.044,
+                textCase: .natural, textColor: .white, highlightColor: yellow,
+                maxWordsPerCue: 3, position: position,
+                entrance: .pop, emphasis: .color, keywordColor: yellow, emoji: true
+            )
+        case "glow":
+            // Lime words with a soft light behind them.
+            CaptionStyle(
+                presetID: "glow", fontName: "Archivo-Bold", relativeFontSize: 0.04,
+                textCase: .uppercase, textColor: lime, highlightColor: .white,
+                maxWordsPerCue: 3, position: position,
+                entrance: .fade, emphasis: .scale, strokeWeight: 0.06, shadow: true
+            )
+        case "focus":
+            // White, the spoken word growing in lime; strong words in coral.
+            CaptionStyle(
+                presetID: "focus", fontName: "Archivo-ExtraBold", relativeFontSize: 0.042,
+                textCase: .natural, textColor: .white, highlightColor: lime,
+                maxWordsPerCue: 3, position: position,
+                entrance: .pop, emphasis: .scale, keywordColor: coral
+            )
         default:
             // Loud: extra-bold, outlined, three words at a time — the look short video is known for.
             CaptionStyle(
@@ -328,7 +465,8 @@ extension Project {
                             // how a caption ends up over the next person's face.
                             duration: MediaTime(seconds: min(duration, cursor + length - start))
                         ),
-                        words: words
+                        words: words,
+                        position: cue.position
                     )
                 )
             }

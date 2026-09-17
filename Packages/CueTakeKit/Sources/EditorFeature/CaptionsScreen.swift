@@ -11,19 +11,8 @@ import SwiftUI
 /// export burns in), the caption is dragged to where it should sit, and the list below is every cue
 /// in the video: tap one to retype it, move its start and end, split it or join it to the next.
 public struct CaptionsScreen: View {
-    public enum Style: String, CaseIterable, Sendable {
-        case pop = "Pop"
-        case clean = "Clean"
-        case karaoke = "Karaoke"
-        case bold = "Bold"
-        case boxed = "Boxed"
-        case minimal = "Minimal"
-        case neon = "Neon"
-        case story = "Story"
-
-        var presetID: String { rawValue.lowercased() }
-    }
-
+    /// The pack last applied here, to mark it.
+    @State private var appliedPack: String?
     @Binding private var project: Project
     /// Frames sampled from each take, for putting the caption over the picture it belongs to.
     private let frames: [Take.ID: [CGImage]]
@@ -385,17 +374,27 @@ public struct CaptionsScreen: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
-                        ForEach(Style.allCases, id: \.self) { option in
-                            lookCard(option)
-                                .frame(width: 80)
-                                .id(option)
+                        ForEach(CaptionStyle.presetIDs, id: \.self) { presetID in
+                            lookCard(presetID)
+                                .frame(width: 84)
+                                .id(presetID)
                         }
                     }
                     .padding(.vertical, 2)
                 }
                 .scrollIndicators(.hidden)
                 .scrollClipDisabled()
-                .onAppear { proxy.scrollTo(style, anchor: .center) }
+                .onAppear { proxy.scrollTo(look.presetID, anchor: .center) }
+            }
+
+            StylePackRow(selected: appliedPack) { pack in
+                withAnimation(DS.Motion.settle) {
+                    project.apply(pack)
+                    look = project.captionStyle
+                    appliedPack = pack.id
+                }
+                snapTick += 1
+                report()
             }
 
             HStack(spacing: 8) {
@@ -477,29 +476,35 @@ public struct CaptionsScreen: View {
         .buttonStyle(.dsPressIcon)
     }
 
-    /// Each look shown in its own type and colour, so choosing is recognising rather than reading.
-    private func lookCard(_ option: Style) -> some View {
-        let isOn = style == option
-        let preset = CaptionStyle.preset(option.presetID)
-        let font = preset.fontName.map { Font.custom($0, fixedSize: 17) } ?? .system(size: 17, weight: .heavy)
-
+    /// Each look shown in its own type, colour and emphasis, so choosing is recognising rather
+    /// than reading.
+    private func lookCard(_ presetID: String) -> some View {
+        let isOn = look.presetID == presetID
         return Button {
-            guard style != option else { return }
-            // A preset is a fresh start: its own size, colours and words per line.
-            withAnimation(DS.Motion.snap) { look = CaptionStyle.preset(option.presetID, position: look.position) }
+            guard !isOn else { return }
+            // A preset is a fresh start: its own size, colours, motion and words per line.
+            withAnimation(DS.Motion.snap) { look = CaptionStyle.preset(presetID, position: look.position) }
+            appliedPack = nil
             snapTick += 1
             report()
         } label: {
             VStack(spacing: 7) {
-                lookSample(option, font: font)
-                    .frame(height: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color(white: 0.18))
+                    CaptionSwatch(style: CaptionStyle.preset(presetID), size: 13)
+                }
+                .frame(height: 34)
 
-                Text(option.label)
+                Text(verbatim: CaptionStyleCatalog.label(presetID))
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.5))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 11)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 6)
             .background {
                 if isOn {
                     RoundedRectangle(cornerRadius: DS.Radius.m, style: .continuous)
@@ -517,55 +522,8 @@ public struct CaptionsScreen: View {
             .scaleEffect(isOn ? 1 : 0.97)
         }
         .buttonStyle(.dsPress(radius: DS.Radius.m))
-    }
-
-    @ViewBuilder
-    private func lookSample(_ option: Style, font: Font) -> some View {
-        switch option {
-        case .pop:
-            Text(verbatim: "WOW")
-                .font(font)
-                .foregroundStyle(.white)
-                .shadow(color: .black, radius: 0.5, x: 1, y: 1)
-                .shadow(color: .black, radius: 0.5, x: -1, y: -1)
-        case .clean:
-            Text(verbatim: "Aa")
-                .font(font)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color.black.opacity(0.62)))
-        case .karaoke:
-            (Text(verbatim: "la ").foregroundStyle(DS.Palette.lime) + Text(verbatim: "la").foregroundStyle(.white))
-                .font(font)
-        case .bold:
-            (Text(verbatim: "BIG ").foregroundStyle(Color(red: 1, green: 0.84, blue: 0.04)) + Text(verbatim: "YES").foregroundStyle(.white))
-                .font(font)
-                .shadow(color: .black, radius: 0.5, x: 1, y: 1)
-        case .boxed:
-            Text(verbatim: "Aa")
-                .font(font)
-                .foregroundStyle(.black)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color.white))
-        case .minimal:
-            Text(verbatim: "hey")
-                .font(font)
-                .foregroundStyle(.white.opacity(0.9))
-        case .neon:
-            Text(verbatim: "GLOW")
-                .font(font)
-                .foregroundStyle(DS.Palette.lime)
-                .shadow(color: DS.Palette.lime.opacity(0.7), radius: 6)
-        case .story:
-            Text(verbatim: "Hi!")
-                .font(font)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(RoundedRectangle(cornerRadius: 6).fill(DS.Palette.accent))
-        }
+        .accessibilityLabel(Text(verbatim: CaptionStyleCatalog.label(presetID)))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     // MARK: - Cue list
@@ -580,6 +538,16 @@ public struct CaptionsScreen: View {
                 HStack {
                     DSKicker(String(localized: "captions.count \(all.count)", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
                     Spacer(minLength: 0)
+                    if fastCount > 0 {
+                        Label {
+                            Text("captions.tooFast \(fastCount)", bundle: .module)
+                        } icon: {
+                            Image(systemName: "hare.fill")
+                        }
+                        .dsFont(.mono, .medium, 9)
+                        .foregroundStyle(DS.Palette.accent)
+                        .help(Text("captions.tooFast.hint", bundle: .module))
+                    }
                     if edited > 0 {
                         Text("captions.editedCount \(edited)", bundle: .module)
                             .dsFont(.mono, .medium, 9)
@@ -821,9 +789,9 @@ public struct CaptionsScreen: View {
         onStyleChange(previewStyle)
     }
 
-    /// The preset card the look came from.
-    private var style: Style {
-        Style.allCases.first { $0.presetID == look.presetID } ?? .pop
+    /// Cues shown faster than most people read.
+    private var fastCount: Int {
+        CaptionReadability.tooFast(project.captionCues).count
     }
 
     private var isCustomized: Bool {
@@ -836,21 +804,6 @@ public struct CaptionsScreen: View {
         let whole = Int(seconds)
         let tenth = Int((seconds - Double(whole)) * 10)
         return String(format: "%d:%02d.%d", whole / 60, whole % 60, tenth)
-    }
-}
-
-extension CaptionsScreen.Style {
-    var label: String {
-        switch self {
-        case .pop: String(localized: "captions.style.pop", bundle: .module)
-        case .clean: String(localized: "captions.style.clean", bundle: .module)
-        case .karaoke: String(localized: "captions.style.karaoke", bundle: .module)
-        case .bold: String(localized: "captions.style.bold", bundle: .module)
-        case .boxed: String(localized: "captions.style.boxed", bundle: .module)
-        case .minimal: String(localized: "captions.style.minimal", bundle: .module)
-        case .neon: String(localized: "captions.style.neon", bundle: .module)
-        case .story: String(localized: "captions.style.story", bundle: .module)
-        }
     }
 }
 
@@ -943,6 +896,8 @@ struct CaptionTuningPanel: View {
                     }
                 }
             }
+
+            CaptionMotionTuning(look: $look, onCommit: onCommit)
 
             // Case
             VStack(alignment: .leading, spacing: 6) {
