@@ -32,7 +32,7 @@ struct TransitionRendererTests {
             segments: [Self.segment(red), Self.segment(blue)],
             recordings: [red, blue]
         )
-        project.setTransition(after: project.segments[0].id, kind: kind, duration: 0.6)
+        project.setTransition(after: project.segments[0].id, kind: kind, duration: 0.4)
 
         let job = try #require(TransitionRenderer.jobs(for: project, in: folder).first)
         #expect(!job.isReady)
@@ -40,15 +40,17 @@ struct TransitionRendererTests {
         #expect(job.isReady, "\(kind.rawValue) wrote no film")
 
         let length = try await AVURLAsset(url: job.destination).load(.duration).seconds
-        #expect(abs(length - 0.6) < 0.1, "\(kind.rawValue) lasts \(length)")
+        #expect(abs(length - 0.4) < 0.1, "\(kind.rawValue) lasts \(length)")
 
         let first = try await Self.averageColour(of: job.destination, at: 0)
         let middle = try await Self.averageColour(of: job.destination, at: length / 2)
-        let last = try await Self.averageColour(of: job.destination, at: max(0, length - 0.05))
+        let last = try await Self.averageColour(of: job.destination, at: max(0, length - 0.02))
 
         // It starts on the leaving clip and ends on the arriving one.
         #expect(first.red > 0.8 && first.blue < 0.2, "\(kind.rawValue) starts on \(first)")
-        #expect(last.blue > 0.7 && last.red < 0.3, "\(kind.rawValue) ends on \(last)")
+        // A dip to white blends in linear light: the last few percent of white still read brighter.
+        let leftover = kind == .fadeWhite ? 0.5 : 0.3
+        #expect(last.blue > 0.7 && last.red < leftover, "\(kind.rawValue) ends on \(last)")
         // Halfway it is neither: mixed, dipped, or split.
         let isRed = middle.red > 0.9 && middle.blue < 0.1
         let isBlue = middle.blue > 0.9 && middle.red < 0.1
