@@ -36,6 +36,22 @@ extension AppModel {
         go(to: .script)
     }
 
+    /// From the studio, for a project with nothing to read. Back goes to the studio.
+    func openScriptFromStudio() {
+        scriptReturn = .studio
+        studioReturn = .create
+        go(to: .script)
+    }
+
+    /// Leaving the script screen: back where it was opened from.
+    func leaveScript() {
+        switch scriptReturn {
+        case .studio: openStudio()
+        case .blueprint where !project.segments.isEmpty: go(to: .blueprint)
+        default: go(to: .create)
+        }
+    }
+
     func openStudioFromPlan() {
         studioReturn = project.segments.isEmpty ? .create : .blueprint
         openStudio()

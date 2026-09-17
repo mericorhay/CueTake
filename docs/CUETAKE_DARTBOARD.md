@@ -79,6 +79,16 @@ Son güncelleme: 17 Eylül 2026, build 92. ✅ bitti · 🟢 kodu bitti, cihazda
 - Canlı takip: söylenen sayılar rakamla eşleşiyor ("iki bin yirmi altı" → 2026), aksan farkı eşleşmeyi bozmuyor, metin tanıyıcı sonuçları arasında ölçülen hızla en fazla 2 kelime önden kayıyor.
 - Cihazda doğrulanmadı; özellikle SpeechAnalyzer bağlam (contextual strings) desteği denenmeli.
 
+**Kararlılık turu (build 93):**
+- Workflow "birleştir" adımı: bölüme klip atanmamışsa artık boş yer tutucu koymuyor; atanmamış klipleri sırayla dağıtıyor, kalan bölümü düşürüyor, hiç video yoksa adımı atlıyor. Eskiden videoların yerine boş "point, point, cta" geliyordu.
+- Kısa klipler paneli sheet oldu; yazarken klavyenin altında kalmıyor.
+- Editörde klavye açılınca panel/enspektör alanı klavyenin üstüne kalkıyor (altyazı metni, konuşmacı notu, özel model alanı).
+- Araç animasyonu oynayınca kayboluyor; zaman çizelgesinde takılı yeşil ışık bırakmıyor.
+- Stil paketi, kullanıcının seçtiği geçişleri ezmiyor; yalnızca boş kesimleri dolduruyor.
+- Teleprompter ayarları kaydırma bitince tek seferde yazılıyor.
+- Temizlik planı her karede değil, klip ya da eşik değişince hesaplanıyor.
+- AI script yazma artık görünür: script ekranında her zaman bir düğme, stüdyoda metin yoksa bir kart.
+
 **Sıradaki:** Cihaz kontrolü (H1, H2, H3, teleprompter, ses). Gerçek kayıtlarla ölçüm seti. Sonra H3'ün kalanı (cümle bazında yeniden çekim) veya Faz 2 (H4 göz teması, H5 export).
 
 ## 1. Kısa cevap: aramızda ne kaldı

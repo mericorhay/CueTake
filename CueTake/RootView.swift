@@ -179,7 +179,7 @@ struct RootView: View {
         case .script:
             ScriptScreen(
                 project: $model.project,
-                onBack: { model.go(to: model.scriptReturn == .blueprint && !model.project.segments.isEmpty ? .blueprint : .create) },
+                onBack: { model.leaveScript() },
                 onOpenStudio: { model.openStudioFromPlan() },
                 serverRewrite: scriptRewrite,
                 library: model.scriptLibrary,
@@ -193,7 +193,8 @@ struct RootView: View {
                 onBack: { model.go(to: model.studioReturn) },
                 onOpenEditor: { model.openEditor() },
                 onFinished: { Task { await model.finishStudioCapture() } },
-                onBeginCapture: { await model.beginStudioCapture() }
+                onBeginCapture: { await model.beginStudioCapture() },
+                onWriteScript: { model.openScriptFromStudio() }
             )
 
         case .complete:

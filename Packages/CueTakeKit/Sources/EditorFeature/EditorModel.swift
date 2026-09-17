@@ -847,12 +847,23 @@ public final class EditorModel {
     /// Announces an edit at the playhead. Called by the tools, watched by the timeline.
     public func pulse(_ kind: ToolKind) {
         pulseCount += 1
+        let number = pulseCount
         lastTool = ToolPulse(
-            id: pulseCount,
+            id: number,
             kind: kind,
             position: timelineDuration > 0 ? playhead / timelineDuration : 0
         )
+        // The flourish is an answer, not a mark: once it has played it goes. It used to be left on
+        // the timeline until the next tool was used, which read as a light stuck at the cut.
+        flourishTask?.cancel()
+        flourishTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(900))
+            guard let self, !Task.isCancelled, lastTool?.id == number else { return }
+            lastTool = nil
+        }
     }
+
+    @ObservationIgnored private var flourishTask: Task<Void, Never>?
 
     public func move(segmentAt index: Int, to destination: Int) {
         guard project.segments.indices.contains(index),

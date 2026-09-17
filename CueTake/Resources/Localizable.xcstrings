@@ -1549,6 +1549,23 @@
         }
       }
     },
+    "workflow.assembled %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld clips assembled · %2$lld sections had no footage"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld klip birleştirildi · %2$lld bölüme video düşmedi"
+          }
+        }
+      }
+    },
     "workflow.clip %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -1749,6 +1766,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temizlenecek eklenmiş ses yok"
+          }
+        }
+      }
+    },
+    "workflow.skip.noClips": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No footage to assemble"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birleştirilecek video yok"
           }
         }
       }

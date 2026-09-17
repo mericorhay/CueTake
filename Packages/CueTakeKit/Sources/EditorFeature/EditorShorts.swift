@@ -124,12 +124,16 @@ extension EditorModel {
 
 struct ShortsPanel: View {
     @Bindable var model: EditorModel
+    /// The sheet says this in its own header.
+    var showsHint = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("editor.shorts.hint", bundle: .module)
-                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.58))
+            if showsHint {
+                Text("editor.shorts.hint", bundle: .module)
+                    .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.ink(0.58))
+            }
 
             TextField(
                 String(localized: "editor.shorts.placeholder", bundle: .module),
@@ -336,5 +340,50 @@ private struct ShortCard: View {
     static func clock(_ seconds: Double) -> String {
         let whole = Int(seconds.rounded(.down))
         return String(format: "%d:%02d", whole / 60, whole % 60)
+    }
+}
+
+/// The shorts panel as a sheet: it rides above the keyboard while the instruction is typed, which
+/// a panel inside the editor cannot do — the editor ignores the keyboard so the picture never jumps.
+struct ShortsSheet: View {
+    @Bindable var model: EditorModel
+    let onClose: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    DSKicker(String(localized: "editor.dock.shorts", bundle: .module))
+                    Text("editor.shorts.hint", bundle: .module)
+                        .dsFont(.sans, .regular, 11, lineHeight: 1.3)
+                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
+
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("editor.panel.close", bundle: .module))
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 22)
+            .padding(.bottom, 12)
+
+            ScrollView {
+                ShortsPanel(model: model, showsHint: false)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 32)
+            }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .background(DS.Palette.screen)
     }
 }

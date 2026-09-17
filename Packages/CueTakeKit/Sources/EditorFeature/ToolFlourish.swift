@@ -42,6 +42,8 @@ struct ToolFlourish: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var phase: Double = 0
+    /// Fades the whole flourish out at the end, so its last frame is not left on the timeline.
+    @State private var gone = false
 
     private var duration: Double {
         switch pulse.kind {
@@ -75,12 +77,15 @@ struct ToolFlourish: View {
             .frame(width: width, height: height, alignment: .topLeading)
         }
         .allowsHitTesting(false)
+        .opacity(gone ? 0 : 1)
         .onAppear {
             guard !reduceMotion else {
                 phase = 1
+                gone = true
                 return
             }
             withAnimation(.easeOut(duration: duration)) { phase = 1 }
+            withAnimation(.easeOut(duration: 0.22).delay(duration + 0.16)) { gone = true }
         }
     }
 

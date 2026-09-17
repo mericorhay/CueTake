@@ -17,21 +17,32 @@ struct CleanupPanel: View {
     @State private var pause = 0.6
     @State private var chosen: Set<CleanupItem.ID>?
     @State private var result: String?
-
-    private var plan: CleanupPlan? {
-        model.cleanupPlan(at: index, options: CleanupOptions(pause: pause))
+    @State private var plan: CleanupPlan?
+    /// Changes whenever the clip's own words or cuts do, so the plan is worked out again.
+    private var planInput: String {
+        let take = model.project.segments.indices.contains(index) ? model.project.segments[index].selectedTake : nil
+        return [
+            take?.id.uuidString ?? "",
+            String(take?.sourceRange.duration.seconds ?? 0),
+            String(pause),
+        ].joined(separator: "|")
     }
 
     private var words: [TimedWord] { model.spokenWords(at: index) }
 
     var body: some View {
-        if let plan {
-            content(plan, chosen: chosen ?? plan.defaultSelection)
-        } else {
-            Text("editor.cleanup.nothing", bundle: .module)
-                .dsFont(.sans, .regular, 13, lineHeight: 1.45)
-                .foregroundStyle(DS.Palette.ink(0.5))
-                .padding(.horizontal, 20)
+        Group {
+            if let plan {
+                content(plan, chosen: chosen ?? plan.defaultSelection)
+            } else {
+                Text("editor.cleanup.nothing", bundle: .module)
+                    .dsFont(.sans, .regular, 13, lineHeight: 1.45)
+                    .foregroundStyle(DS.Palette.ink(0.5))
+                    .padding(.horizontal, 20)
+            }
+        }
+        .task(id: planInput) {
+            plan = model.cleanupPlan(at: index, options: CleanupOptions(pause: pause))
         }
     }
 
@@ -50,6 +61,7 @@ struct CleanupPanel: View {
         .padding(.horizontal, 20)
         .padding(.bottom, 16)
         .onChange(of: pause) { _, _ in self.chosen = nil }
+        .onChange(of: plan) { _, _ in self.chosen = nil }
     }
 
     // MARK: - Summary

@@ -125,6 +125,15 @@ struct CaptionMotionTests {
         #expect(project.effects.isEmpty)
         #expect(project.transitions.allSatisfy { $0.kind == .zoomIn })
         #expect(project.captionStyle.presetID == "podcast")
+
+        // A pack fills the cuts that have no transition; it does not overrule a chosen one.
+        project.setTransition(after: project.segments[0].id, kind: .fadeBlack)
+        project.transitions.removeAll { $0.after == project.segments[1].id }
+        project.apply(StylePack.named("energy")!)
+        let kinds = project.transitions.sorted { a, b in
+            (project.segments.firstIndex { $0.id == a.after } ?? 0) < (project.segments.firstIndex { $0.id == b.after } ?? 0)
+        }.map(\.kind)
+        #expect(kinds == [.fadeBlack, .slideLeft])
     }
 
     @Test func captionsMoveOffAFollowedFace() {

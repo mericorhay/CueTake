@@ -72,6 +72,7 @@ public struct EditorScreen: View {
     @State private var editingCaption: CaptionCue.ID?
     @State private var previewExpanded = false
     @State private var showsTranscript = false
+    @State private var showsShorts = false
     @State private var showsVideoPlacementEditor = false
     @State private var showsSubjectTrackingEditor = false
     /// Where typing goes while the keyboard is up.
@@ -83,6 +84,8 @@ public struct EditorScreen: View {
     @State private var composingGenerate = false
     /// The height the portrait column has, which the timeline's share is worked out from.
     @State private var columnHeight: CGFloat = 760
+    /// The editor does not resize for the keyboard; panels with a field in them are lifted over it.
+    @State private var keyboard = DSKeyboard()
 
     /// Changes when a script is edited, a take is selected, or transcription finishes.
     private var roleAnalysisInput: [String] {
@@ -149,6 +152,13 @@ public struct EditorScreen: View {
             // does not, so it sits right on top of it.
             editor
                 .ignoresSafeArea(.keyboard)
+                // A field inside an inspector or a tool panel would otherwise type from under the
+                // keyboard. The typing bar and the sheets handle themselves.
+                .dsKeyboardLift(
+                    keyboard,
+                    active: typing == nil && !composingAI && !composingGenerate
+                        && !showsShorts && !showsTranscript && !showsChanges && !showsAIChanges
+                )
             if let typing {
                 TextEntryBar(title: typingTitle(typing), text: typingText(typing)) {
                     withAnimation(DS.Motion.settle) { self.typing = nil }
@@ -355,6 +365,11 @@ public struct EditorScreen: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+        }
+        .sheet(isPresented: $showsShorts) {
+            ShortsSheet(model: model) { showsShorts = false }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showsChanges) {
             ChangesSheet(
@@ -948,6 +963,11 @@ public struct EditorScreen: View {
                         model.pause()
                         dockPanel = nil
                         showsSubjectTrackingEditor = true
+                    },
+                    onShorts: {
+                        model.pause()
+                        dockPanel = nil
+                        showsShorts = true
                     },
                     inlineTimeline: AnyView(
                         VStack(alignment: .leading, spacing: 0) {

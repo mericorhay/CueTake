@@ -460,56 +460,80 @@ extension AppModel {
         project.segments.contains { $0.selectedTake?.transcript?.words.isEmpty == false }
     }
 
-    /// Lays the chosen clips into the sections.
+    /// Lays the footage into the workflow's sections.
     ///
-    /// A section's take points at its whole clip, and keeps any transcript that clip already has,
-    /// so re-running a workflow does not listen to the same footage twice. A section with no clip
-    /// becomes a planned segment with a target length — a gap to fill, shown on the timeline as
-    /// one, rather than being dropped.
+    /// A section names a clip by its number. Sections that name none take the clips nobody claimed,
+    /// in order, so a workflow written without clip numbers still assembles the video the user
+    /// imported rather than replacing it with empty placeholders. Sections left with no footage at
+    /// all are dropped: a segment with no take is a hole in the video, and the run used to leave
+    /// the project as "point, point, cta" with nothing in them.
+    ///
+    /// A section's take points at its whole clip and keeps any transcript that clip already has,
+    /// so re-running a workflow does not listen to the same footage twice.
     private func assemble(_ sections: [WorkflowSection]) -> StudioStepState {
         guard !sections.isEmpty else { return .skipped(String(localized: "workflow.skip.noSections")) }
+        guard !project.recordings.isEmpty else { return .skipped(String(localized: "workflow.skip.noClips")) }
+
+        // Clips named by a section, and the ones left over for the sections that name none.
+        var claimed = Set<Int>()
+        for section in sections {
+            if let slot = section.clip, project.recordings.indices.contains(slot - 1) {
+                claimed.insert(slot - 1)
+            }
+        }
+        var spare = project.recordings.indices.filter { !claimed.contains($0) }
 
         let existingTakes = project.segments.flatMap(\.takes)
         var segments: [Segment] = []
+        var unused = 0
 
         for section in sections {
-            if let slot = section.clip, project.recordings.indices.contains(slot - 1) {
-                let recording = project.recordings[slot - 1]
-                let previous = existingTakes.first {
-                    $0.recordingID == recording.id && $0.sourceRange.start.seconds < 0.01
-                        && abs($0.sourceRange.duration.seconds - recording.duration.seconds) < 0.05
-                }
-                let take = Take(
-                    recordingID: recording.id,
-                    sourceRange: MediaTimeRange(start: .zero, duration: recording.duration),
-                    status: .ready,
-                    transcript: previous?.transcript
-                )
-                segments.append(
-                    Segment(
-                        role: section.segmentRole,
-                        title: section.title,
-                        script: take.transcript?.text ?? "",
-                        estimatedDuration: take.duration,
-                        takes: [take],
-                        selectedTakeID: take.id
-                    )
-                )
-            } else {
-                segments.append(
-                    Segment(
-                        role: section.segmentRole,
-                        title: section.title,
-                        script: "",
-                        estimatedDuration: MediaTime(seconds: section.seconds)
-                    )
-                )
+            var slot: Int?
+            if let named = section.clip, project.recordings.indices.contains(named - 1) {
+                slot = named - 1
+            } else if !spare.isEmpty {
+                slot = spare.removeFirst()
             }
+            guard let slot else {
+                unused += 1
+                continue
+            }
+
+            let recording = project.recordings[slot]
+            let previous = existingTakes.first {
+                $0.recordingID == recording.id && $0.sourceRange.start.seconds < 0.01
+                    && abs($0.sourceRange.duration.seconds - recording.duration.seconds) < 0.05
+            }
+            let take = Take(
+                recordingID: recording.id,
+                sourceRange: MediaTimeRange(start: .zero, duration: recording.duration),
+                status: .ready,
+                transcript: previous?.transcript
+            )
+            segments.append(
+                Segment(
+                    role: section.segmentRole,
+                    title: section.title,
+                    script: take.transcript?.text ?? "",
+                    estimatedDuration: take.duration,
+                    takes: [take],
+                    selectedTakeID: take.id
+                )
+            )
         }
 
+        guard !segments.isEmpty else { return .skipped(String(localized: "workflow.skip.noClips")) }
+
         project.segments = segments
+        project.transitions.removeAll { transition in
+            !segments.contains { $0.id == transition.after }
+        }
         project.updatedAt = .now
         editorModel.project = project
+        if unused > 0 {
+            // Sections with no footage left are dropped rather than left as holes in the video.
+            show(notice: String(localized: "workflow.assembled \(segments.count) \(unused)"))
+        }
         return .done
     }
 

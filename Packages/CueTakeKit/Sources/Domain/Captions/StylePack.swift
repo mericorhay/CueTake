@@ -49,7 +49,8 @@ extension Project {
         }
 
         if let kind = pack.transition {
-            for index in segments.indices.dropLast() {
+            let already = Set(transitions.map(\.after))
+            for index in segments.indices.dropLast() where !already.contains(segments[index].id) {
                 let incoming = segments[index + 1].barWeight
                 let outgoing = segments[index].barWeight
                 let seconds = ClipTransition.usableDuration(kind.defaultDuration, outgoing: outgoing, incoming: incoming)

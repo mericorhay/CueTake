@@ -33,6 +33,8 @@ public struct ScriptScreen: View {
     /// Nil when there is no AI to write with.
     private let writer: Writer?
     @State private var editingBrand = false
+    /// Opened by hand once the script has beats: the AI card is not only for an empty script.
+    @State private var showsStartCard = false
     @State private var notice: String?
 
     public init(
@@ -65,12 +67,15 @@ public struct ScriptScreen: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 11) {
-                        if isBlank {
+                        if isBlank || showsStartCard {
                             ScriptStartCard(
                                 localeIdentifier: project.localeIdentifier,
                                 library: library,
                                 writer: writer,
-                                onBeats: { beats, title in apply(beats, title: title) },
+                                onBeats: { beats, title in
+                                    apply(beats, title: title)
+                                    showsStartCard = false
+                                },
                                 onEditBrand: { editingBrand = true }
                             )
                         }
@@ -81,7 +86,7 @@ public struct ScriptScreen: View {
                                 .dsEnter(.rise(duration: 0.5, delay: Double(index) * 0.06))
                         }
 
-                        addButton
+                        bottomRow
                     }
                     .padding(.horizontal, 22)
                     .padding(.top, 4)
@@ -400,6 +405,37 @@ public struct ScriptScreen: View {
                     : given
             }
             project.updatedAt = .now
+        }
+    }
+
+    /// Add a beat by hand, or have the AI write the script. Both where the script ends, which is
+    /// where someone looking for more of it looks.
+    @ViewBuilder
+    private var bottomRow: some View {
+        if writer != nil, !isBlank, !showsStartCard {
+            HStack(spacing: 9) {
+                addButton
+                Button {
+                    withAnimation(DS.Motion.settle) { showsStartCard = true }
+                } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text("script.start.write", bundle: .module)
+                            .dsFont(.sans, .semibold, 14)
+                    }
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(
+                        RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
+                            .fill(DS.Palette.lime)
+                    )
+                }
+                .buttonStyle(.dsPress(radius: DS.Radius.card))
+            }
+        } else {
+            addButton
         }
     }
 

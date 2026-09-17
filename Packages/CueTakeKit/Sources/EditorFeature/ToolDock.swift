@@ -26,6 +26,8 @@ struct ToolDock: View {
     var onShowAIChanges: () -> Void = {}
     /// Opens the direct-on-picture subject picker owned by the editor screen.
     var onTrack: () -> Void = {}
+    /// Opens the shorts sheet, which lives above the keyboard rather than under it.
+    var onShorts: () -> Void = {}
     /// The timeline stays between the stable tool row and whichever inspector the row opens. This
     /// keeps the edit visible while its controls grow below it instead of pushing it off-screen.
     var inlineTimeline: AnyView? = nil
@@ -38,7 +40,7 @@ struct ToolDock: View {
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .generate, .shorts, .zoom, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -336,7 +338,10 @@ struct ToolDock: View {
         case .ai:
             open = nil
             onComposeAI()
-        case .trim, .speed, .generate, .shorts, .zoom, .background, .filter, .sound: break
+        case .shorts:
+            open = nil
+            onShorts()
+        case .trim, .speed, .generate, .zoom, .background, .filter, .sound: break
         }
     }
 
@@ -375,8 +380,6 @@ struct ToolDock: View {
                     GeneratePanel(model: model, draft: generateDraft, onCompose: onComposeGenerate)
                 } else if item == .audio {
                     AudioMixerPanel(model: model, onAdd: onAddAudio)
-                } else if item == .shorts {
-                    ShortsPanel(model: model)
                 } else if item == .reframe {
                     mainReframePanel
                 } else if item == .zoom {

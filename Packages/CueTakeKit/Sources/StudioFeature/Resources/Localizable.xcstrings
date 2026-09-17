@@ -702,6 +702,57 @@
         }
       }
     },
+    "studio.noScript.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The teleprompter needs words. Write them yourself or have the AI write them from an idea."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teleprompter için metin gerekiyor. Kendin yazabilir ya da bir fikirden AI'a yazdırabilirsin."
+          }
+        }
+      }
+    },
+    "studio.noScript.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No script to read"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Okunacak metin yok"
+          }
+        }
+      }
+    },
+    "studio.noScript.write": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write a script"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Script yaz"
+          }
+        }
+      }
+    },
     "studio.prompter.auto": {
       "extractionState": "manual",
       "localizations": {

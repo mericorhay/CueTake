@@ -164,9 +164,22 @@ public final class TeleprompterModel {
         )
     }
 
-    /// Writes the settings down. Called when they change, not while a drag is still moving them.
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
+
+    /// Writes the settings down, a moment after the last change: a slider being dragged changes
+    /// them sixty times a second, and each write is a trip to disk.
     public func save() {
-        guard let defaults, !isDragging else { return }
+        guard defaults != nil, !isDragging else { return }
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            self?.write()
+        }
+    }
+
+    private func write() {
+        guard let defaults else { return }
         if isLandscape {
             landscapeFrame = frame
         } else {

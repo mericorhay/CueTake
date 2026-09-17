@@ -17,6 +17,8 @@ public struct StudioScreen: View {
     private let onFinished: () -> Void
     /// Asks for somewhere to write. Only the layer that owns the project knows where that is.
     private let onBeginCapture: () async -> Void
+    /// Opens the script screen, for a project with nothing to read. Nil hides the offer.
+    private let onWriteScript: (() -> Void)?
 
     public init(
         model: StudioModel,
@@ -24,7 +26,8 @@ public struct StudioScreen: View {
         onBack: @escaping () -> Void,
         onOpenEditor: @escaping () -> Void,
         onFinished: @escaping () -> Void,
-        onBeginCapture: @escaping () async -> Void = {}
+        onBeginCapture: @escaping () async -> Void = {},
+        onWriteScript: (() -> Void)? = nil
     ) {
         self.model = model
         self.camera = camera
@@ -32,6 +35,7 @@ public struct StudioScreen: View {
         self.onOpenEditor = onOpenEditor
         self.onFinished = onFinished
         self.onBeginCapture = onBeginCapture
+        self.onWriteScript = onWriteScript
     }
 
     /// Bumped on every shutter press, so the bloom ring fires once per commit.
@@ -73,6 +77,10 @@ public struct StudioScreen: View {
                 if model.showsGrid {
                     FramingGrid()
                         .transition(.opacity)
+                }
+
+                if !model.hasScript, let onWriteScript, model.phase == .idle, model.countdown == nil {
+                    emptyPrompter(onWriteScript)
                 }
 
                 if model.hasScript {
@@ -140,6 +148,50 @@ public struct StudioScreen: View {
         .onChange(of: model.phase) { _, phase in
             if phase == .complete { onFinished() }
         }
+    }
+
+    /// Nothing to read: the prompter is the reason to be here, so its absence is said out loud
+    /// rather than leaving the camera looking broken.
+    private func emptyPrompter(_ onWriteScript: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "text.viewfinder")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
+                Text("studio.noScript.title", bundle: .module)
+                    .dsFont(.sans, .semibold, 15)
+                    .foregroundStyle(DS.Palette.ink)
+            }
+            Text("studio.noScript.hint", bundle: .module)
+                .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.6))
+
+            Button(action: onWriteScript) {
+                HStack(spacing: 7) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("studio.noScript.write", bundle: .module)
+                        .dsFont(.sans, .semibold, 14)
+                }
+                .foregroundStyle(DS.Palette.inkInverse)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(DS.Palette.lime)
+                )
+            }
+            .buttonStyle(.dsPress(radius: 16))
+        }
+        .padding(16)
+        .frame(maxWidth: 360)
+        .dsGlass(
+            tint: DS.Palette.glassSheet(0.9),
+            in: RoundedRectangle(cornerRadius: 22, style: .continuous),
+            border: DS.Palette.hairline(0.14)
+        )
+        .padding(.horizontal, 22)
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
     // MARK: - Top bar
