@@ -22,13 +22,13 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 17 Eylül 2026, build 92. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 17 Eylül 2026, build 93. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
 | H1 Animasyonlu altyazı + stil paketleri | 🟢 | Kelime bazlı animasyon motoru (önizleme = export), 20 görünüm, 6 stil paketi, anahtar kelime/emoji, okunabilirlik uyarısı, yüzden kaçan konum. Cihazda denenmedi |
 | H2 Long-to-short + reframe | 🟢 | Cümle bazlı an bulucu + puan, AI seçimi (`/highlights`), tek dokunuşla dikey kısa proje (dosyalar hard link), geniş videoda yüz takibi. Cihazda denenmedi |
-| H3 Script hizalı temizlik | 🟢 | Script hizalaması (NW + bulanık eşleşme), dolgu/tekrar/yeniden başlama/script dışı, duraklama eşiği, tüm kliplere tek geri alma, geri açılabilir kesim, kesimde ses tıkı giderme, çekim puanı + en iyi çekim. Eksik: cümle bazında yeniden çekim, ses kalitesi/göz puanı, timeline'da hayalet aralık |
+| H3 Script hizalı temizlik | 🟢 | Script hizalaması (NW + bulanık eşleşme), dolgu/tekrar/yeniden başlama/script dışı, duraklama eşiği, tüm kliplere tek geri alma, geri açılabilir kesim, kesimde ses tıkı giderme, çekim puanı + en iyi çekim. Cümle bazında yeniden çekim (transcript'ten) ve yeniden çekimi konuşmaya göre kırpma da var. Eksik: çekim puanında ses kalitesi/göz teması, timeline'da hayalet aralık |
 | H4 Göz teması | ⬜ | — |
 | H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
 | H6 Şablon/efekt/geçiş/görünüm | 🟡 | **15 geçiş bitti:** önceden çizilen geçiş filmleri, her biri CI'da gerçek videoyla test ediliyor. Şablon, LUT/görünüm, Metal efekt yok |
@@ -39,7 +39,7 @@ Son güncelleme: 17 Eylül 2026, build 92. ✅ bitti · 🟢 kodu bitti, cihazda
 | H11 AI ikiz / Restyle | 🟡 | BYOK video üretimi editörde ve workflow'da var; avatar, lipsync, restyle yok |
 | H12 Yayın | 🟡 | Workflow'a özel API teslimi (multipart/raw/JSON, Keychain'de anahtar). YouTube/IG/TikTok, zamanlama, arka plan yükleme yok |
 | H13 Senkron / iPad / Mac | ⬜ | — |
-| H14 Marka kiti / fikir motoru | ⬜ | — |
+| H14 Marka kiti / fikir motoru | 🟡 | Marka sesi (ad, ne yaptığı, kitle, mutlaka/asla) AI script'e ve konuşma tanımaya giriyor; kaydedilen hazır metinler. Renk/font/logo kiti, fikir motoru, trend takibi yok |
 | H15 Multicam | ⬜ | — |
 
 | Altyapı | Durum | Not |
