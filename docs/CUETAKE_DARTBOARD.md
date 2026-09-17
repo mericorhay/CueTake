@@ -1,7 +1,7 @@
 # CueTake Dart Tahtası: Rakipler, Açıklar, Teknik Altyapı ve Plan
 
 > Tek rapor, tek otorite. Önceki bütün planlar (master plan, gap report, AI tool roadmap, timeline audit, tracking, zoom, workflow platform) bu dosyada birleştirildi ve kaldırıldı; eski hâlleri git geçmişinde duruyor.
-> Güncelleme: 17 Eylül 2026 · Kod: build 88 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
+> Güncelleme: 18 Eylül 2026 · Kod: build 97 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
 
 ## İçindekiler
 
@@ -22,7 +22,7 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 17 Eylül 2026, build 93. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 18 Eylül 2026, build 97. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
@@ -31,15 +31,15 @@ Son güncelleme: 17 Eylül 2026, build 93. ✅ bitti · 🟢 kodu bitti, cihazda
 | H3 Script hizalı temizlik | 🟢 | Script hizalaması (NW + bulanık eşleşme), dolgu/tekrar/yeniden başlama/script dışı, duraklama eşiği, tüm kliplere tek geri alma, geri açılabilir kesim, kesimde ses tıkı giderme, çekim puanı + en iyi çekim. Cümle bazında yeniden çekim (transcript'ten) ve yeniden çekimi konuşmaya göre kırpma da var. Eksik: çekim puanında ses kalitesi/göz teması, timeline'da hayalet aralık |
 | H4 Göz teması | ⬜ | — |
 | H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
-| H6 Şablon/efekt/geçiş/görünüm | 🟡 | **15 geçiş bitti:** önceden çizilen geçiş filmleri, her biri CI'da gerçek videoyla test ediliyor. Şablon, LUT/görünüm, Metal efekt yok |
-| H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj. Ana klip keyframe, hız eğrisi, ses keyframe'i, proje sürümleri yok |
+| H6 Şablon/efekt/geçiş/görünüm | 🟢 | **15 geçiş**, önceden çizilen geçiş filmleri (her biri CI'da gerçek videoyla test ediliyor); bitmiş videodan **şablon** çıkarma ve başka videoya uygulama; satın alınan **.cube renk tabloları** (hazır görünümle üst üste, medya temizlikçisi silmiyor). Eksik: Metal efekt |
+| H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj, eklenen video artık kendi kareleriyle çizilen gerçek bir satır. Ana klip keyframe, hız eğrisi, ses keyframe'i, proje sürümleri yok |
 | H8 Maske / yeşil perde | 🟡 | Kişi arka planı değiştirme var; nesne maskesi, chroma, metin-arkada yok |
 | H9 Müzik/SFX/beat/loudness | ⬜ | SFX ve ducking temeli var; beat motoru, LUFS, kütüphane yok |
 | H10 Çeviri/dublaj | ⬜ | — |
 | H11 AI ikiz / Restyle | 🟡 | BYOK video üretimi editörde ve workflow'da var; avatar, lipsync, restyle yok |
 | H12 Yayın | 🟡 | Workflow'a özel API teslimi (multipart/raw/JSON, Keychain'de anahtar). YouTube/IG/TikTok, zamanlama, arka plan yükleme yok |
 | H13 Senkron / iPad / Mac | ⬜ | — |
-| H14 Marka kiti / fikir motoru | 🟡 | Marka sesi (ad, ne yaptığı, kitle, mutlaka/asla) AI script'e ve konuşma tanımaya giriyor; kaydedilen hazır metinler. Renk/font/logo kiti, fikir motoru, trend takibi yok |
+| H14 Marka kiti / fikir motoru | 🟢 | Marka sesi (ad, ne yaptığı, kitle, mutlaka/asla) AI script'e ve konuşma tanımaya giriyor; kaydedilen hazır metinler; **renk + yazı tipi + logo kiti**, köşe/boyut seçilen filigran, tek dokunuşla videoya uygulama. Eksik: fikir motoru, trend takibi |
 | H15 Multicam | ⬜ | — |
 
 | Altyapı | Durum | Not |
@@ -50,6 +50,8 @@ Son güncelleme: 17 Eylül 2026, build 93. ✅ bitti · 🟢 kodu bitti, cihazda
 | T4 JobQueue | 🟡 | Editör içi arka plan işleri (arka plan değiştirme, geçiş filmleri). Kalıcı kuyruk, `BGContinuedProcessingTask`, Live Activity yok |
 | T5 Provider | 🟡 | Worker + BYOK video. Ses/TTS sağlayıcıları yok |
 | T6 Sync & Catalog | ⬜ | — |
+
+**Sahne (build 95–96):** ana video artık tam ekran olmak zorunda değil — `Project.mainVideoPlacement` kanvastan taşınıp boyutlanıyor, `StagePiece` ile eklenen videolarla aynı muameleyi görüyor. Bölünmüş ekran ön ayarları iki resmi birlikte yerleştiriyor, takas var. Yarım ekrana düşen resim mektup kutusu yerine kırpılıyor.
 
 **Bu turda öğrenilen (tekrarlanmasın):**
 - İkinci video izine animasyon rampası vermek cihazda oynatıcıyı durduruyordu.
