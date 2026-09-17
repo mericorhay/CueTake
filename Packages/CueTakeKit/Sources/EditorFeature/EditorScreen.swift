@@ -609,6 +609,16 @@ public struct EditorScreen: View {
             }
         }
         .frame(height: previewHeight)
+        .overlay(alignment: .top) {
+            if let problem = model.transitionProblem {
+                TransitionProblemNote(problem: problem) {
+                    withAnimation(DS.Motion.settle) { model.transitionProblem = nil }
+                }
+                .padding(8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(DS.Motion.settle, value: model.transitionProblem)
         // Captions, over the picture, where they will be in the finished file. The export burns
         // them in with a layer tool the preview player cannot run, so the preview draws its own
         // from the same numbers — see `CaptionOverlay`.

@@ -478,3 +478,42 @@ struct TransitionThumbnail: View {
         .accessibilityHidden(true)
     }
 }
+
+/// Said over the preview when it plays without its transitions, with the system's reason.
+struct TransitionProblemNote: View {
+    let problem: String
+    var onClose: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(DS.Palette.accent)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("editor.transition.previewFailed", bundle: .module)
+                    .dsFont(.sans, .semibold, 12)
+                    .foregroundStyle(DS.Palette.ink)
+                Text(verbatim: problem)
+                    .dsFont(.mono, .medium, 9)
+                    .foregroundStyle(DS.Palette.ink(0.55))
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+            }
+            Spacer(minLength: 0)
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(DS.Palette.ink(0.7))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.dsPressIcon)
+            .accessibilityLabel(Text("editor.panel.close", bundle: .module))
+        }
+        .padding(.leading, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.ultraThinMaterial)
+        )
+    }
+}

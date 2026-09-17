@@ -8963,6 +8963,23 @@
         }
       }
     },
+    "editor.transition.previewFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transitions could not play here, so the preview skips them"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçişler burada oynatılamadı, önizleme onları atlıyor"
+          }
+        }
+      }
+    },
     "editor.transition.pushLeft": {
       "extractionState": "manual",
       "localizations": {

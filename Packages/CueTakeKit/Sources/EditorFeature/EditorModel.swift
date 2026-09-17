@@ -188,6 +188,12 @@ public final class EditorModel {
     public private(set) var player: AVPlayer?
     /// Why the preview could not be built, when it could not. Shown instead of a black frame.
     public private(set) var playbackProblem: String?
+    /// The system's reason, when the preview had to play without its transitions.
+    public internal(set) var transitionProblem: String?
+    /// The transitions that failed to play, so the same ones are not tried again and again.
+    @ObservationIgnored private var skippedTransitions: String?
+    /// What the last failed player was built from, for counting retries of the same thing.
+    @ObservationIgnored private var failedSignature: [String]?
     /// Counts builds, so a slow one that finishes after a newer one never replaces its player.
     @ObservationIgnored private var playbackGeneration = 0
     /// What the current player was built from. A request to build the same thing again is ignored:
@@ -237,8 +243,16 @@ public final class EditorModel {
         let assembled: VideoComposer.Assembled
         do {
             liveFilters.update(project.effects)
+            var playable = project
+            if !project.transitions.isEmpty, skippedTransitions == transitionsKey {
+                playable.transitions = []
+            } else if skippedTransitions != nil {
+                // The transitions changed since they failed: try them again.
+                skippedTransitions = nil
+                transitionProblem = nil
+            }
             assembled = try await VideoComposer().compose(
-                project: project,
+                project: playable,
                 mediaDirectory: mediaDirectory,
                 renderBackgrounds: false,
                 liveFilters: liveFilters
@@ -306,7 +320,7 @@ public final class EditorModel {
         let id = ObjectIdentifier(item)
         itemStatus = item.observe(\.status, options: [.new]) { @Sendable [weak self] observed, _ in
             let status = observed.status
-            let message = observed.error.map { String(describing: $0) } ?? "AVPlayerItem failed"
+            let message = observed.error.map { EditorModel.describe($0) } ?? "AVPlayerItem failed"
             Task { @MainActor in
                 self?.itemStatusChanged(id, status: status, message: message)
             }
@@ -316,10 +330,28 @@ public final class EditorModel {
     private func itemStatusChanged(_ id: ObjectIdentifier, status: AVPlayerItem.Status, message: String) {
         guard let current = player?.currentItem, ObjectIdentifier(current) == id else { return }
         switch status {
-        case .readyToPlay:
-            playbackRetries = 0
         case .failed:
+            let failed = builtSignature
             builtSignature = nil
+            // Stop here. Playing on made every failure a loop: rebuild, seek back to the playhead,
+            // play, fail at the same frame, rebuild — the play button seemed to jump back each time.
+            let wasPlaying = isPlaying
+            pause()
+            if failed != failedSignature {
+                failedSignature = failed
+                playbackRetries = 0
+            }
+            // Transitions are the newest and the most demanding part of the picture. When they are
+            // there, the preview plays without them once and says why, instead of not playing.
+            if let mediaDirectory, !project.transitions.isEmpty, skippedTransitions != transitionsKey {
+                skippedTransitions = transitionsKey
+                transitionProblem = message
+                Task { [weak self] in
+                    await self?.loadPlayback(mediaDirectory: mediaDirectory)
+                    if wasPlaying, let self, !self.isPlaying { self.togglePlayback() }
+                }
+                return
+            }
             guard let mediaDirectory, playbackRetries < 3 else {
                 // Out of tries: say so, with a button, rather than a crossed-out frame.
                 teardownPlayer()
@@ -340,6 +372,22 @@ public final class EditorModel {
         default:
             break
         }
+    }
+
+    /// The transitions as the preview was asked to play them.
+    private var transitionsKey: String {
+        project.transitions.map { "\($0.after.uuidString):\($0.kind.rawValue):\($0.duration)" }.joined(separator: ",")
+    }
+
+    /// A player error with its code and cause, which is what finding the fault needs.
+    nonisolated static func describe(_ error: any Error) -> String {
+        let ns = error as NSError
+        var text = "\(ns.domain) \(ns.code): \(ns.localizedDescription)"
+        if let reason = ns.localizedFailureReason { text += " — \(reason)" }
+        if let underlying = ns.userInfo[NSUnderlyingErrorKey] as? NSError {
+            text += " [\(underlying.domain) \(underlying.code)]"
+        }
+        return text
     }
 
     /// Everything that changes what the preview plays: which footage, which part of it, in what
