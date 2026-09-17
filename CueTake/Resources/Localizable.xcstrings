@@ -137,6 +137,57 @@
         }
       }
     },
+    "brand.logo.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The logo could not be saved"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Logo kaydedilemedi"
+          }
+        }
+      }
+    },
+    "brand.template.applied %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applied %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ uygulandı"
+          }
+        }
+      }
+    },
+    "brand.template.saved %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kept as %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ olarak kaydedildi"
+          }
+        }
+      }
+    },
     "busy.aligning": {
       "extractionState": "manual",
       "localizations": {

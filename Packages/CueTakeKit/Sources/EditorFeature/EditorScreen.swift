@@ -38,7 +38,8 @@ public struct EditorScreen: View {
         onSave: @escaping () -> Void = {},
         onTranscribe: @escaping () -> Void = {},
         onAIEdit: AIRequester? = nil,
-        onAllowCloudAI: (() -> Void)? = nil
+        onAllowCloudAI: (() -> Void)? = nil,
+        brandTools: BrandTools? = nil
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -54,10 +55,13 @@ public struct EditorScreen: View {
         self.onTranscribe = onTranscribe
         self.onAIEdit = onAIEdit
         self.onAllowCloudAI = onAllowCloudAI
+        self.brandTools = brandTools
     }
 
     private let onAIEdit: AIRequester?
     private let onAllowCloudAI: (() -> Void)?
+    /// The brand's colours and the ways of making a video, from the app. Nil hides them.
+    private let brandTools: BrandTools?
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
@@ -73,6 +77,7 @@ public struct EditorScreen: View {
     @State private var previewExpanded = false
     @State private var showsTranscript = false
     @State private var showsShorts = false
+    @State private var showsBrand = false
     @State private var showsVideoPlacementEditor = false
     @State private var showsSubjectTrackingEditor = false
     /// Where typing goes while the keyboard is up.
@@ -345,6 +350,10 @@ public struct EditorScreen: View {
                 onCaptions: onCaptions,
                 onExport: onExport,
                 onTranscriptEdit: { showsTranscript = true },
+                onBrand: brandTools == nil ? nil : {
+                    showsTools = false
+                    showsBrand = true
+                },
                 onClose: { showsTools = false }
             )
             .presentationDetents([.medium, .large])
@@ -364,6 +373,13 @@ public struct EditorScreen: View {
                 )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+            }
+        }
+        .sheet(isPresented: $showsBrand) {
+            if let brandTools {
+                BrandSheet(model: model, tools: brandTools) { showsBrand = false }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
         }
         .sheet(isPresented: $showsShorts) {

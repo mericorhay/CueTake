@@ -19,6 +19,8 @@ struct ToolBrowser: View {
     let onCaptions: () -> Void
     let onExport: () -> Void
     let onTranscriptEdit: () -> Void
+    /// Opens the brand and templates sheet. Nil in a build without them.
+    var onBrand: (() -> Void)? = nil
     let onClose: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -170,7 +172,27 @@ struct ToolBrowser: View {
     // MARK: - The catalogue
 
     private var categories: [Category] {
-        [cutting, time, sound, words, delivery]
+        [cutting, time, sound, words, look, delivery].compactMap { $0 }
+    }
+
+    /// What the video looks like as a whole: the brand's colours and the ways of making one.
+    private var look: Category? {
+        guard let onBrand else { return nil }
+        return Category(
+            id: "look",
+            title: "editor.tools.look",
+            symbol: "paintpalette",
+            items: [
+                Item(
+                    id: "brand",
+                    symbol: "paintpalette.fill",
+                    title: "editor.brand.title",
+                    note: "editor.tools.brand.note",
+                    enabled: true,
+                    tint: DS.Palette.lime
+                ) { onBrand() },
+            ]
+        )
     }
 
     private var cutting: Category {

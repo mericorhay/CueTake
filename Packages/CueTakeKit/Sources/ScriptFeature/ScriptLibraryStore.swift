@@ -10,12 +10,19 @@ public final class ScriptLibraryStore {
         var scripts: [SavedScript]
         var brand: BrandVoice
         var usesBrand: Bool
+        /// Added later; a library saved before them decodes with none.
+        var kit: BrandKit?
+        var templates: [VideoTemplate]?
     }
 
     public private(set) var scripts: [SavedScript] = []
     public private(set) var brand = BrandVoice()
     /// Whether scripts the AI writes use the brand voice.
     public private(set) var usesBrand = true
+    /// The colours, face and logo of the brand.
+    public private(set) var kit = BrandKit()
+    /// Ways of making a video, taken from videos already made. Newest first.
+    public private(set) var templates: [VideoTemplate] = []
 
     public static let limit = 50
     private let defaults: UserDefaults?
@@ -28,6 +35,8 @@ public final class ScriptLibraryStore {
             scripts = stored.scripts
             brand = stored.brand
             usesBrand = stored.usesBrand
+            kit = stored.kit ?? BrandKit()
+            templates = stored.templates ?? []
         }
     }
 
@@ -77,9 +86,31 @@ public final class ScriptLibraryStore {
         persist()
     }
 
+    public func setKit(_ kit: BrandKit) {
+        self.kit = kit
+        persist()
+    }
+
+    /// Keeps a way of making videos. A template saved again under the same name replaces it.
+    @discardableResult
+    public func save(_ template: VideoTemplate) -> VideoTemplate {
+        var entry = template
+        entry.updatedAt = .now
+        templates.removeAll { $0.id == entry.id || $0.name.caseInsensitiveCompare(entry.name) == .orderedSame }
+        templates.insert(entry, at: 0)
+        if templates.count > 20 { templates.removeLast(templates.count - 20) }
+        persist()
+        return entry
+    }
+
+    public func deleteTemplate(_ id: VideoTemplate.ID) {
+        templates.removeAll { $0.id == id }
+        persist()
+    }
+
     private func persist() {
         guard let defaults else { return }
-        let stored = Stored(scripts: scripts, brand: brand, usesBrand: usesBrand)
+        let stored = Stored(scripts: scripts, brand: brand, usesBrand: usesBrand, kit: kit, templates: templates)
         if let data = try? JSONEncoder().encode(stored) {
             defaults.set(data, forKey: Self.key)
         }

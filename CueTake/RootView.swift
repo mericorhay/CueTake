@@ -20,6 +20,7 @@ struct RootView: View {
 
     @State private var pickedFootage: [PhotosPickerItem] = []
     @State private var pickedVideoLayer: PhotosPickerItem?
+    @State private var pickedBrandLogo: PhotosPickerItem?
 
     var body: some View {
         ZStack {
@@ -68,6 +69,15 @@ struct RootView: View {
             matching: .videos
         )
         .photosPicker(isPresented: $model.isPickingVideoLayer, selection: $pickedVideoLayer, matching: .videos)
+        .photosPicker(isPresented: $model.isPickingBrandLogo, selection: $pickedBrandLogo, matching: .images)
+        .onChange(of: pickedBrandLogo) { _, item in
+            guard let item else { return }
+            pickedBrandLogo = nil
+            Task {
+                guard let data = try? await item.loadTransferable(type: Data.self) else { return }
+                await model.adoptBrandLogo(data)
+            }
+        }
         // Files rather than the photo picker: music does not live in the photo library. Copying
         // happens in the importer, so the security-scoped loan this hands back only has to survive
         // the copy.
@@ -222,7 +232,8 @@ struct RootView: View {
                 onAIEdit: aiEdit,
                 onAllowCloudAI: model.dependencies.assistantClient.isConfigured
                     ? { model.settingsModel.update(\.aiProcessing, to: .allowCloud) }
-                    : nil
+                    : nil,
+                brandTools: model.brandTools
             )
             // A different project is a different editor: its playback is prepared afresh.
             .id(ObjectIdentifier(model.editorModel))

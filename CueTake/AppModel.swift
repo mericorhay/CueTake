@@ -155,6 +155,8 @@ final class AppModel {
     var isPickingFootage = false
     /// A movie picked for a simultaneous video layer in the open project.
     var isPickingVideoLayer = false
+    /// The brand's logo is being chosen from the photo library.
+    var isPickingBrandLogo = false
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
