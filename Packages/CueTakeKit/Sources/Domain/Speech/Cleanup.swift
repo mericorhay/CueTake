@@ -374,13 +374,15 @@ public struct TakeScore: Hashable, Sendable {
         guard let words = take.transcript?.words, words.count >= 2 else { return nil }
         let plan = CleanupPlanner.plan(
             words: words,
-            script: segment.script,
+            script: script,
             total: take.sourceRange.duration.seconds,
             segmentID: UUID(),
             locale: Locale(identifier: localeIdentifier)
         )
-        let slips = plan.items.filter { $0.kind != .pause && $0.kind != .offScript && $0.isOn }
-            .reduce(0) { $0 + ($1.words?.count ?? 0) }
+        var slips = 0
+        for item in plan.items where item.isOn && item.kind != .pause && item.kind != .offScript {
+            slips += item.words?.count ?? 0
+        }
         let fluency = max(0, 1 - Double(slips) / Double(words.count) * 4)
 
         let speaking = max(0.5, (words.last?.range.end.seconds ?? 0) - (words.first?.range.start.seconds ?? 0))
