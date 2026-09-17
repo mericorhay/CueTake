@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import SwiftUI
+import UIKit
 
 /// Pictures and text on the timeline, above the clips they sit over.
 ///
@@ -12,7 +13,7 @@ struct OverlayLane: View {
 
     private static let space = "overlayLane"
 
-    static let rowHeight: CGFloat = 24
+    static let rowHeight: CGFloat = 28
     static let rowSpacing: CGFloat = 3
 
     static func rows(for overlays: [Overlay]) -> [Overlay.ID: Int] {
@@ -49,6 +50,7 @@ struct OverlayLane: View {
                         y: CGFloat(placement[overlay.id] ?? 0) * (Self.rowHeight + Self.rowSpacing)
                     )
                     .zIndex(model.selectedOverlay == overlay.id ? 1 : 0)
+                    .transition(.scale(scale: 0.86, anchor: .leading).combined(with: .opacity))
             }
         }
         .frame(height: Self.height(for: model.project.overlays), alignment: .topLeading)
@@ -61,8 +63,17 @@ struct OverlayLane: View {
         let tint = overlay.isText ? DS.Palette.lime : DS.Palette.accentWarm
 
         return HStack(spacing: 5) {
-            Image(systemName: overlay.isText ? "textformat" : "photo")
-                .font(.system(size: 9, weight: .bold))
+            // A picture's own thumbnail says which picture it is; the word "Picture" never did.
+            if let picture = model.overlayImages[overlay.id] {
+                Image(uiImage: picture)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 17, height: 17)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            } else {
+                Image(systemName: overlay.isText ? "textformat" : "photo")
+                    .font(.system(size: 9, weight: .bold))
+            }
             Text(Self.label(for: overlay))
                 .dsFont(.sans, .semibold, 10)
                 .lineLimit(1)
@@ -75,6 +86,7 @@ struct OverlayLane: View {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(DS.Palette.ink, lineWidth: selected ? 2 : 0)
         }
+        .shadow(color: .black.opacity(selected ? 0.25 : 0), radius: selected ? 6 : 0, y: 2)
         .aiGlow(
             model.glowToken(.overlay(overlay.id)),
             in: RoundedRectangle(cornerRadius: 7, style: .continuous)

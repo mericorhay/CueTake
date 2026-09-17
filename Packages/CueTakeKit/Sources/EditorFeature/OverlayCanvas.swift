@@ -15,6 +15,8 @@ struct OverlayCanvas: View {
 
     @State private var gestureOrigin: OverlayTransform?
     @State private var snapTick = 0
+    /// How far the size handle was from the picture's centre when the finger landed.
+    @State private var handleReach: CGFloat?
     @State private var guides: (vertical: Bool, horizontal: Bool) = (false, false)
 
     var body: some View {
@@ -38,6 +40,12 @@ struct OverlayCanvas: View {
                         item(overlay, in: rect, selected: selected, visible: visible)
                             .transition(Self.transition(for: overlay.animation))
                     }
+                }
+
+                // One finger sizes a picture, like the added videos: a pinch needs two fingers on
+                // something that may be a thumbnail in the corner of the frame.
+                if let selected = model.selectedOverlayValue, case .image(_, let aspect) = selected.content {
+                    handle(selected, aspect: aspect, in: rect)
                 }
 
                 if guides.vertical {
@@ -82,6 +90,56 @@ struct OverlayCanvas: View {
                 withAnimation(DS.Motion.snap) { model.select(overlay: overlay.id) }
             }
             .gesture(selected ? transformGesture(for: overlay, in: rect) : nil)
+    }
+
+    /// The size handle, on the picture's lower corner wherever the picture has been turned to.
+    private func handle(_ overlay: Overlay, aspect: Double, in rect: CGRect) -> some View {
+        let t = overlay.transform
+        let width = rect.width * t.imageWidthFraction
+        let height = width / max(aspect, 0.01)
+        let centre = CGPoint(x: rect.minX + rect.width * t.x, y: rect.minY + rect.height * t.y)
+        let angle = t.rotation * .pi / 180
+        let dx = width / 2
+        let dy = height / 2
+        let corner = CGPoint(
+            x: centre.x + dx * cos(angle) - dy * sin(angle),
+            y: centre.y + dx * sin(angle) + dy * cos(angle)
+        )
+        return Circle()
+            .fill(DS.Palette.lime)
+            .overlay(Circle().stroke(DS.Palette.inkInverse, lineWidth: 2))
+            .frame(width: 16, height: 16)
+            .frame(width: 40, height: 40)
+            .contentShape(Rectangle())
+            .position(corner)
+            .gesture(cornerDrag(overlay, centre: centre, reach: hypot(dx, dy)))
+    }
+
+    private func cornerDrag(_ overlay: Overlay, centre: CGPoint, reach: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 1)
+            .onChanged { value in
+                if gestureOrigin == nil {
+                    gestureOrigin = overlay.transform
+                    // The reach is taken once: the picture grows as it is dragged, and measuring
+                    // against the grown picture would make it run away from the finger.
+                    handleReach = reach
+                    model.pause()
+                }
+                guard let origin = gestureOrigin, let from = handleReach, from > 1 else { return }
+                let now = hypot(value.location.x - centre.x, value.location.y - centre.y)
+                let scale = origin.scale * Double(now / from)
+                model.updateOverlay(overlay.id, coalescing: "overlay-gesture") {
+                    $0.transform.scale = min(
+                        max(scale, OverlayTransform.scaleRange.lowerBound),
+                        OverlayTransform.scaleRange.upperBound
+                    )
+                }
+            }
+            .onEnded { _ in
+                gestureOrigin = nil
+                handleReach = nil
+                snapTick += 1
+            }
     }
 
     @ViewBuilder
