@@ -76,8 +76,10 @@ struct CleanupTests {
     @Test func withAScriptFillerWordsAreCutOnlyWhenTheScriptDoesNotHaveThem() {
         let offered = plan("so um this is like the point", script: "This is the point.", locale: en)
         let fillers = offered.items.filter { $0.kind == .filler }
-        #expect(fillers.map(\.text) == ["so um", "like"])
-        #expect(fillers.allSatisfy(\.isOn))
+        let texts = fillers.map { $0.text }
+        let allOn = fillers.allSatisfy { $0.isOn }
+        #expect(texts == ["so um", "like"])
+        #expect(allOn)
 
         // "like" is in this script, so it stays.
         let meant = plan("this is like the point", script: "This is like the point.", locale: en)
@@ -122,7 +124,8 @@ struct CleanupTests {
         )
         let adLib = offered.items.filter { $0.kind == .offScript }
         #expect(!adLib.isEmpty)
-        #expect(adLib.allSatisfy { !$0.isOn })
+        let allOff = adLib.allSatisfy { !$0.isOn }
+        #expect(allOff)
         #expect(offered.saved(offered.defaultSelection) < 0.01)
     }
 
