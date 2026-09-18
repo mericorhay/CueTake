@@ -10,11 +10,12 @@ DEVELOPMENT_TEAM = XYB3NLV654
 CODE_SIGN_STYLE = Automatic
 // iCloud (CloudKit) and push, for shared team projects. The App Store profile carries both.
 CODE_SIGN_ENTITLEMENTS = CueTake/CueTake.entitlements
-// Teams are on: the build carries the iCloud entitlement, so CloudKit may be touched.
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) CUETAKE_TEAMS
+// Teams are built but switched off until they have been tried on two phones. Before switching on,
+// the CloudKit schema (Project, Media, Team) has to be deployed to Production — see
+// docs/CUETAKE_DARTBOARD.md. Then add: SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) CUETAKE_TEAMS
 
 MARKETING_VERSION = 0.5.0
-CURRENT_PROJECT_VERSION = 102
+CURRENT_PROJECT_VERSION = 103
 
 // iPhone only, iOS 26 and up — see README for why the floor is that high.
 IPHONEOS_DEPLOYMENT_TARGET = 26.0

@@ -4,171 +4,138 @@ import SwiftUI
 public enum BumpPhase: Hashable, Sendable {
     /// Nothing nearby. No light at all.
     case idle
-    /// Looking for the other phone: a thin breathing line of light along the top edge, the
-    /// place the other phone should touch.
+    /// Looking for the other phone. Still no light: the light is the other phone, and it is not
+    /// here yet. It gathers only as the phones come close (see `closeness`).
     case sensing
-    /// The phones met. The light bursts out of the top edge and rolls down the screen.
+    /// The phones met: one flash out of the top edge, which then goes out by itself.
     case contact
-    /// They are joined. The light has gathered into a soft band the card sits in.
+    /// They are joined. Whatever light is left fades; the card is what remains.
     case connected
 }
 
 /// The light two phones make when they touch, drawn from the top edge of the screen.
 ///
+/// Modelled on the system's own: white, brief, and only ever a response to the other phone — it
+/// gathers as the phones approach, flashes once when they touch, and is gone a second later.
+/// A light that stays on, or that is every colour, stops reading as light and starts reading as
+/// decoration.
+///
 /// Its own module with no dependencies on purpose: it is the showiest piece of the app, the one
 /// most likely to be rewritten, and the one that must never be the reason anything else stops
-/// working. Everything it needs is SwiftUI; everything it knows is the phase it is given.
+/// working. Everything it needs is SwiftUI; everything it knows is what it is given.
 public struct BumpGlow: View {
     public var phase: BumpPhase
-    /// The colours of the light's edge. The core is always white: that is what reads as light.
-    public var colours: [Color]
+    /// 0 far apart … 1 touching. Drives the faint glow before contact; nil where distance
+    /// cannot be measured, which means no glow before the tap.
+    public var closeness: Double?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var burst = 0
+    @State private var flashes = 0
 
-    public init(phase: BumpPhase, colours: [Color] = BumpGlow.iridescent) {
+    public init(phase: BumpPhase, closeness: Double? = nil) {
         self.phase = phase
-        self.colours = colours.isEmpty ? BumpGlow.iridescent : colours
+        self.closeness = closeness
     }
 
-    public static let iridescent: [Color] = [
-        Color(red: 0.36, green: 0.62, blue: 1.0),
-        Color(red: 0.62, green: 0.42, blue: 1.0),
-        Color(red: 1.0, green: 0.46, blue: 0.78),
-        Color(red: 0.4, green: 0.92, blue: 1.0),
-    ]
+    /// The only colours: white, and at the very edge the faintest cool cast, the way bright light
+    /// through glass picks one up.
+    static let core = Color.white
+    static let rim = Color(red: 0.86, green: 0.92, blue: 1.0)
 
     public var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
             ZStack(alignment: .top) {
-                if phase != .idle {
-                    if reduceMotion {
-                        still(in: size)
-                            .transition(.opacity)
-                    } else {
-                        TimelineView(.animation) { timeline in
-                            let time = timeline.date.timeIntervalSinceReferenceDate
-                            light(in: size, time: time)
-                        }
-                        .transition(.opacity)
-                    }
-                }
+                approach(in: size)
+                flash(in: size)
             }
             .frame(width: size.width, height: size.height, alignment: .top)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
-        .animation(.easeInOut(duration: 0.45), value: phase)
         .onChange(of: phase) { _, next in
-            if next == .contact { burst += 1 }
+            if next == .contact { flashes += 1 }
         }
-        .sensoryFeedback(.impact(weight: .heavy, intensity: 1), trigger: burst)
+        .sensoryFeedback(.impact(weight: .heavy, intensity: 1), trigger: flashes)
         .accessibilityHidden(true)
     }
 
-    // MARK: - The light
+    // MARK: - Before the touch
 
-    /// How far down the screen the light reaches, as a fraction of its height.
-    private var reach: CGFloat {
-        switch phase {
-        case .idle: 0
-        case .sensing: 0.05
-        case .contact: 0.62
-        case .connected: 0.34
-        }
-    }
-
-    private func light(in size: CGSize, time: Double) -> some View {
-        let breathe = 0.5 + 0.5 * sin(time * 2.4)
-        let depth = max(size.height * reach, 24)
-        let width = size.width
-
-        return ZStack(alignment: .top) {
-            // The halo: the colours, turning slowly so the light looks alive rather than printed.
-            halo(width: width, depth: depth, time: time)
-                .opacity(phase == .sensing ? 0.55 + 0.35 * breathe : 1)
-
-            // The core: white-hot where the phones touch, spread along the edge.
-            Ellipse()
-                .fill(
-                    RadialGradient(
-                        colors: [.white, .white.opacity(0.85), .white.opacity(0)],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: width * 0.36
-                    )
-                )
-                .frame(width: width * (phase == .sensing ? 0.5 : 1.1), height: depth * 0.5)
-                .offset(y: -depth * 0.2)
-                .blur(radius: phase == .sensing ? 6 : 14)
-                .blendMode(.plusLighter)
-                .opacity(phase == .sensing ? 0.5 + 0.4 * breathe : 1)
-
-            if phase == .contact {
-                ripple(width: width, depth: depth)
-            }
-        }
-        .frame(width: width, height: depth * 1.4, alignment: .top)
-        .compositingGroup()
-    }
-
-    private func halo(width: CGFloat, depth: CGFloat, time: Double) -> some View {
-        let turn = Angle.degrees(time.truncatingRemainder(dividingBy: 12) / 12 * 360)
+    /// A soft white gathering at the top edge as the other phone comes near. Nothing at arm's
+    /// length; most of the way there just before they touch.
+    private func approach(in size: CGSize) -> some View {
+        let near = phase == .sensing ? min(max(closeness ?? 0, 0), 1) : 0
+        let eased = near * near
         return Ellipse()
             .fill(
-                AngularGradient(
-                    colors: colours + [colours[0]],
+                RadialGradient(
+                    colors: [Self.core.opacity(0.9), Self.rim.opacity(0.35), .clear],
                     center: .center,
-                    angle: turn
+                    startRadius: 0,
+                    endRadius: size.width * 0.5
                 )
             )
-            .frame(width: width * 1.5, height: depth * 1.6)
-            .offset(y: -depth * 0.55)
-            .blur(radius: max(depth * 0.18, 10))
+            .frame(width: size.width * 1.2, height: 60 + 140 * eased)
+            .offset(y: -40)
+            .blur(radius: 24)
             .blendMode(.plusLighter)
+            .opacity(eased * 0.8)
+            .animation(.easeOut(duration: 0.25), value: eased)
     }
 
-    /// The single ring that rolls down the screen when the phones meet. Keyed on the burst count
-    /// so it plays once per touch and not on every redraw.
-    private func ripple(width: CGFloat, depth: CGFloat) -> some View {
-        KeyframeAnimator(initialValue: Ripple(), trigger: burst) { value in
-            Ellipse()
-                .stroke(
-                    LinearGradient(colors: colours, startPoint: .leading, endPoint: .trailing),
-                    lineWidth: 6
-                )
-                .frame(width: width * (0.3 + value.spread * 1.2), height: depth * (0.2 + value.spread))
-                .offset(y: -depth * 0.25 + value.spread * depth * 0.4)
-                .blur(radius: 4 + value.spread * 10)
-                .opacity(value.opacity)
-                .blendMode(.plusLighter)
-        } keyframes: { _ in
-            KeyframeTrack(\.spread) {
-                CubicKeyframe(0, duration: 0.01)
-                SpringKeyframe(1, duration: 0.9, spring: .smooth(duration: 0.9, extraBounce: 0.1))
+    // MARK: - The touch
+
+    /// One flash per touch: bright white out of the top edge, rolling a short way down the
+    /// screen and gone again within about a second. Keyed on the count of touches, so it plays
+    /// once and never idles on screen.
+    private func flash(in size: CGSize) -> some View {
+        KeyframeAnimator(initialValue: Flash(), trigger: flashes) { value in
+            ZStack(alignment: .top) {
+                // The body of the light.
+                Ellipse()
+                    .fill(
+                        RadialGradient(
+                            colors: [Self.core, Self.core.opacity(0.75), Self.rim.opacity(0.25), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size.width * 0.62
+                        )
+                    )
+                    .frame(width: size.width * 1.35, height: size.height * (0.12 + 0.38 * value.reach))
+                    .offset(y: -size.height * 0.06)
+                    .blur(radius: reduceMotion ? 18 : 22)
+
+                // The leading edge, a thin brighter line that runs down with the light.
+                if !reduceMotion {
+                    Capsule()
+                        .fill(Self.core.opacity(0.9))
+                        .frame(width: size.width * (0.35 + 0.6 * value.reach), height: 3)
+                        .offset(y: size.height * 0.32 * value.reach)
+                        .blur(radius: 3)
+                        .opacity(1 - value.reach)
+                }
             }
-            KeyframeTrack(\.opacity) {
-                LinearKeyframe(1, duration: 0.15)
-                LinearKeyframe(0, duration: 0.75)
+            .blendMode(.plusLighter)
+            .opacity(value.light)
+        } keyframes: { _ in
+            KeyframeTrack(\.light) {
+                LinearKeyframe(0, duration: 0.01)
+                CubicKeyframe(1, duration: 0.12)
+                CubicKeyframe(0.55, duration: 0.35)
+                CubicKeyframe(0, duration: 0.7)
+            }
+            KeyframeTrack(\.reach) {
+                LinearKeyframe(0, duration: 0.01)
+                SpringKeyframe(1, duration: reduceMotion ? 0.3 : 0.8, spring: .smooth(duration: 0.8))
+                LinearKeyframe(1, duration: 0.37)
             }
         }
+        .frame(width: size.width, height: size.height, alignment: .top)
     }
 
-    /// The same light without motion, for Reduce Motion: a band that fades in and out.
-    private func still(in size: CGSize) -> some View {
-        LinearGradient(
-            colors: [.white.opacity(0.9)] + colours.map { $0.opacity(0.6) } + [.clear],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .frame(width: size.width, height: max(size.height * reach, 20))
-        .blur(radius: 12)
-        .blendMode(.plusLighter)
-    }
-
-    private struct Ripple {
-        var spread: CGFloat = 0
-        var opacity: Double = 0
+    private struct Flash {
+        var light: Double = 0
+        var reach: CGFloat = 0
     }
 }

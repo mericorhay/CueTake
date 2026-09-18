@@ -12,17 +12,22 @@ public struct SettingsScreen: View {
     private let onCleanStorage: (() -> Void)?
     /// Opens the team screen. Nil where there is none.
     private let onTeam: (() -> Void)?
+    /// A preview of the light two phones make, behind a long press on the version: for trying the
+    /// animation while teams themselves are switched off.
+    private let onPreviewLight: (() -> Void)?
 
     public init(
         model: SettingsModel,
         storage: String? = nil,
         onCleanStorage: (() -> Void)? = nil,
-        onTeam: (() -> Void)? = nil
+        onTeam: (() -> Void)? = nil,
+        onPreviewLight: (() -> Void)? = nil
     ) {
         self.model = model
         self.storage = storage
         self.onCleanStorage = onCleanStorage
         self.onTeam = onTeam
+        self.onPreviewLight = onPreviewLight
     }
 
     @State private var showsConverter = false
@@ -108,6 +113,8 @@ public struct SettingsScreen: View {
 
                     // No subscription row until there is a subscription: it said "Pro" to everyone.
                     staticRow("settings.version", Self.version, isLast: true)
+                        .contentShape(Rectangle())
+                        .onLongPressGesture(minimumDuration: 2) { onPreviewLight?() }
                 }
                 .dsCard(radius: DS.Radius.card)
             }

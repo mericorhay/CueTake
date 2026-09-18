@@ -1,7 +1,7 @@
 # CueTake Dart Tahtası: Rakipler, Açıklar, Teknik Altyapı ve Plan
 
 > Tek rapor, tek otorite. Önceki bütün planlar (master plan, gap report, AI tool roadmap, timeline audit, tracking, zoom, workflow platform) bu dosyada birleştirildi ve kaldırıldı; eski hâlleri git geçmişinde duruyor.
-> Güncelleme: 18 Eylül 2026 · Kod: build 97 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
+> Güncelleme: 18 Eylül 2026 · Kod: build 103 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
 
 ## İçindekiler
 
@@ -22,7 +22,7 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 18 Eylül 2026, build 97. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 18 Eylül 2026, build 103. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
@@ -32,13 +32,13 @@ Son güncelleme: 18 Eylül 2026, build 97. ✅ bitti · 🟢 kodu bitti, cihazda
 | H4 Göz teması | ⬜ | — |
 | H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
 | H6 Şablon/efekt/geçiş/görünüm | 🟢 | **15 geçiş**, önceden çizilen geçiş filmleri (her biri CI'da gerçek videoyla test ediliyor); bitmiş videodan **şablon** çıkarma ve başka videoya uygulama; satın alınan **.cube renk tabloları** (hazır görünümle üst üste, medya temizlikçisi silmiyor). Eksik: Metal efekt |
-| H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj, eklenen video artık kendi kareleriyle çizilen gerçek bir satır. Ana klip keyframe, hız eğrisi, ses keyframe'i, proje sürümleri yok |
+| H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj, eklenen video gerçek bir satır, **proje sürümleri** (adlı + otomatik, temizlikçi sürüm videolarını korur), **ses eğrisi** (fade ve ducking'in üstüne çarpılan noktalar). Eksik: ana klip keyframe, hız eğrisi |
 | H8 Maske / yeşil perde | 🟡 | Kişi arka planı değiştirme var; nesne maskesi, chroma, metin-arkada yok |
 | H9 Müzik/SFX/beat/loudness | ⬜ | SFX ve ducking temeli var; beat motoru, LUFS, kütüphane yok |
 | H10 Çeviri/dublaj | ⬜ | — |
 | H11 AI ikiz / Restyle | 🟡 | BYOK video üretimi editörde ve workflow'da var; avatar, lipsync, restyle yok |
 | H12 Yayın | 🟡 | Workflow'a özel API teslimi (multipart/raw/JSON, Keychain'de anahtar). YouTube/IG/TikTok, zamanlama, arka plan yükleme yok |
-| H13 Senkron / iPad / Mac | ⬜ | — |
+| H13 Senkron / iPad / Mac | 🟡 | Ekip senkronu yazıldı ve kilitli (yukarıdaki not): CloudKit paylaşılan alanlar, üç yollu birleştirme, tokuşturmayla davet. iPad/Mac yok |
 | H14 Marka kiti / fikir motoru | 🟢 | Marka sesi (ad, ne yaptığı, kitle, mutlaka/asla) AI script'e ve konuşma tanımaya giriyor; kaydedilen hazır metinler; **renk + yazı tipi + logo kiti**, köşe/boyut seçilen filigran, tek dokunuşla videoya uygulama. Eksik: fikir motoru, trend takibi |
 | H15 Multicam | ⬜ | — |
 
@@ -50,6 +50,12 @@ Son güncelleme: 18 Eylül 2026, build 97. ✅ bitti · 🟢 kodu bitti, cihazda
 | T4 JobQueue | 🟡 | Editör içi arka plan işleri (arka plan değiştirme, geçiş filmleri). Kalıcı kuyruk, `BGContinuedProcessingTask`, Live Activity yok |
 | T5 Provider | 🟡 | Worker + BYOK video. Ses/TTS sağlayıcıları yok |
 | T6 Sync & Catalog | ⬜ | — |
+
+**Ekipler (build 102, kilitli):** Kod tamam ve derleniyor (`TeamSync`, `TeamFeature`, `BumpKit`, `ProjectMerge`), ama arayüzden kapalı: `CUETAKE_TEAMS` kapalıyken motor başlamaz, CloudKit'e dokunulmaz, Ayarlar'da Ekip satırı görünmez. Işık önizlemesi Ayarlar → sürüm satırına 2 sn basılı tutunca açılır. Kilidi açmadan önce:
+1. **CloudKit şeması Üretim'e dağıtılmalı** — kayıt türleri Üretim'de kendiliğinden oluşmaz. CloudKit Console → `iCloud.com.orhay.cuetake` → Development'ta şu türleri oluştur, sonra *Deploy Schema Changes*: `Project` (document: Bytes, **şifreli**; title: String, **şifreli**; updatedAt: Date/Time; schema: Int64), `Media` (file: String, **şifreli**; asset: Asset; project: Reference), `Team` (name: String, **şifreli**).
+2. `CUETAKE_TEAMS` bayrağı `Config/CueTake.xcconfig`'te açılır.
+3. İki telefonla (iki farklı Apple ID) dene: tokuşturmayla katılma, bağlantıyla davet, projeyi ekibe koyma, iki yönlü düzenleme, aynı anda düzenleme.
+4. Açık risk: `shareParticipants(for:)` ile kullanıcı kaydı kimliğinden katılımcı bulma gerçek cihazda doğrulanmadı; tutmazsa tokuşturma yerine bağlantıyla davet çalışır.
 
 **Sahne (build 95–96):** ana video artık tam ekran olmak zorunda değil — `Project.mainVideoPlacement` kanvastan taşınıp boyutlanıyor, `StagePiece` ile eklenen videolarla aynı muameleyi görüyor. Bölünmüş ekran ön ayarları iki resmi birlikte yerleştiriyor, takas var. Yarım ekrana düşen resim mektup kutusu yerine kırpılıyor.
 

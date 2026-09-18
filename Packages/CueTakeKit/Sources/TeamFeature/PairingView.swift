@@ -21,6 +21,8 @@ struct PairingView: View {
     @State private var phase: BumpPhase = .sensing
     @State private var peer: String?
     @State private var canMeasure = true
+    /// 0 at half a metre or more, 1 at touching distance.
+    @State private var closeness: Double?
     @State private var waiting: String?
     /// The other phone has said who it is; from here the wait is for people and iCloud, not it.
     @State private var heardFrom = false
@@ -28,7 +30,7 @@ struct PairingView: View {
     @State private var problem: String?
 
     var body: some View {
-        BumpStage(phase: phase) {
+        BumpStage(phase: phase, closeness: closeness) {
             content
         } card: {
             BumpPersonCard(name: cardName, detail: cardDetail)
@@ -159,7 +161,12 @@ struct PairingView: View {
                 peer = name
                 problem = nil
             case .distance(let metres):
-                if metres == nil { canMeasure = false }
+                if let metres {
+                    closeness = min(max((0.5 - metres) / (0.5 - NearbyLink.touchDistance), 0), 1)
+                } else {
+                    canMeasure = false
+                    closeness = nil
+                }
             case .touched:
                 await touched()
             case .received(let message):

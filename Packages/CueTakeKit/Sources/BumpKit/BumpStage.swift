@@ -8,6 +8,8 @@ import SwiftUI
 /// on it.
 public struct BumpStage<Content: View, Card: View>: View {
     public var phase: BumpPhase
+    /// 0…1 as the other phone approaches; nil where it cannot be measured.
+    public var closeness: Double?
     private let content: Content
     private let card: Card
 
@@ -15,10 +17,12 @@ public struct BumpStage<Content: View, Card: View>: View {
 
     public init(
         phase: BumpPhase,
+        closeness: Double? = nil,
         @ViewBuilder content: () -> Content,
         @ViewBuilder card: () -> Card
     ) {
         self.phase = phase
+        self.closeness = closeness
         self.content = content()
         self.card = card()
     }
@@ -26,12 +30,12 @@ public struct BumpStage<Content: View, Card: View>: View {
     public var body: some View {
         ZStack(alignment: .top) {
             content
-                .scaleEffect(stepBack ? 0.94 : 1, anchor: .bottom)
-                .brightness(stepBack ? -0.18 : 0)
-                .blur(radius: stepBack && !reduceMotion ? 2 : 0)
+                .scaleEffect(stepBack ? 0.96 : 1, anchor: .bottom)
+                .brightness(stepBack ? -0.12 : 0)
+                .blur(radius: stepBack && !reduceMotion ? 1.5 : 0)
                 .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(duration: 0.55, bounce: 0.18), value: stepBack)
 
-            BumpGlow(phase: phase)
+            BumpGlow(phase: phase, closeness: closeness)
 
             if phase == .connected {
                 card
@@ -72,7 +76,7 @@ public struct BumpPersonCard: View {
             ZStack {
                 Circle()
                     .fill(
-                        AngularGradient(colors: BumpGlow.iridescent + [BumpGlow.iridescent[0]], center: .center)
+                        LinearGradient(colors: [BumpGlow.core, BumpGlow.rim], startPoint: .top, endPoint: .bottom)
                     )
                 Circle()
                     .fill(.black.opacity(0.55))

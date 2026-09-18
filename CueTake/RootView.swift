@@ -326,7 +326,9 @@ struct RootView: View {
                 model: model.settingsModel,
                 storage: model.storageLabel,
                 onCleanStorage: { Task { await model.cleanStorageNow() } },
-                onTeam: { showsTeam = true }
+                // Teams are locked until tried on two phones; only the light can be previewed.
+                onTeam: model.isTeamSharingAvailable ? { showsTeam = true } : nil,
+                onPreviewLight: { showsTeam = true }
             )
             .task { await model.refreshStorage() }
             .fullScreenCover(isPresented: $showsTeam) {

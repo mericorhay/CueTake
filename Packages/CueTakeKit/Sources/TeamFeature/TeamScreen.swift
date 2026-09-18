@@ -15,6 +15,7 @@ public struct TeamScreen: View {
     let onClose: () -> Void
 
     @State private var phase: BumpPhase = .idle
+    @State private var closeness: Double?
     @State private var rehearsal: Task<Void, Never>?
 
     public init(isSharingAvailable: Bool, tools: TeamTools? = nil, onClose: @escaping () -> Void) {
@@ -32,7 +33,7 @@ public struct TeamScreen: View {
     }
 
     private var preview: some View {
-        BumpStage(phase: phase) {
+        BumpStage(phase: phase, closeness: closeness) {
             content
         } card: {
             BumpPersonCard(
@@ -128,11 +129,16 @@ public struct TeamScreen: View {
             // However it ends, the button comes back and the light goes out.
             defer {
                 phase = .idle
+                closeness = nil
                 rehearsal = nil
             }
             phase = .sensing
-            try? await Task.sleep(for: .seconds(1.6))
-            guard !Task.isCancelled else { return }
+            // The other phone coming closer, as the distance readings would say it.
+            for step in 0...12 {
+                closeness = Double(step) / 12
+                try? await Task.sleep(for: .milliseconds(110))
+                guard !Task.isCancelled else { return }
+            }
             phase = .contact
             try? await Task.sleep(for: .seconds(0.9))
             guard !Task.isCancelled else { return }
