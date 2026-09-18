@@ -2202,6 +2202,23 @@
         }
       }
     },
+    "suflor.stage.countdown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GET INTO POSITION"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YERİNİ AL"
+          }
+        }
+      }
+    },
     "suflor.stage.end": {
       "extractionState": "manual",
       "localizations": {
@@ -2259,13 +2276,98 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Float the window"
+            "value": "Float the window and switch apps"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pencereyi yüzdür"
+            "value": "Pencereyi yüzdür ve uygulamaya geç"
+          }
+        }
+      }
+    },
+    "suflor.stage.guide.here": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or start from here"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya da buradan başlat"
+          }
+        }
+      }
+    },
+    "suflor.stage.guide.step1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Float the window and switch to your app"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pencereyi yüzdür ve uygulamana geç"
+          }
+        }
+      }
+    },
+    "suflor.stage.guide.step2": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start your stream there"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yayını orada başlat"
+          }
+        }
+      }
+    },
+    "suflor.stage.guide.step3": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press ▶ in the floating window: it counts ten seconds, then the words roll"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yüzen penceredeki ▶'ye bas: 10 saniye sayar, sonra yazı akar"
+          }
+        }
+      }
+    },
+    "suflor.stage.guide.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BEFORE YOU START"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BAŞLAMADAN"
           }
         }
       }
@@ -2402,57 +2504,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Önceki kart"
-          }
-        }
-      }
-    },
-    "suflor.stage.ready": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "GET READY"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HAZIRLAN"
-          }
-        }
-      }
-    },
-    "suflor.stage.ready.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Float the window, start your stream, then press ▶ — here or in the floating window. The words wait until then."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pencereyi yüzdür, yayını başlat, sonra ▶'ye bas — burada ya da yüzen pencerede. Yazılar o zamana kadar bekler."
-          }
-        }
-      }
-    },
-    "suflor.stage.ready.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ready when you are"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hazır, seni bekliyor"
           }
         }
       }

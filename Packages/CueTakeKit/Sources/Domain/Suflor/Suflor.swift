@@ -173,7 +173,7 @@ public struct SuflorClock: Hashable, Sendable {
     public enum Phase: Hashable, Sendable {
         /// On stage but not started: waiting for the first play, which is when the stream starts.
         case ready
-        /// The three-second count before anything moves.
+        /// The count before anything moves.
         case countdown
         case rolling
         /// Waiting at the top of the ad section.
@@ -196,7 +196,8 @@ public struct SuflorClock: Hashable, Sendable {
     /// Set once the speaker or the minute has let the ad go.
     public var released = false
     public var end: Double
-    public static let countdown: Double = 3
+    /// Time to put the phone down and look at the camera after pressing play.
+    public static let countdown: Double = 10
 
     public init(end: Double, holdAt: Double? = nil, adAt: Double? = nil, started: Bool = true) {
         self.end = end

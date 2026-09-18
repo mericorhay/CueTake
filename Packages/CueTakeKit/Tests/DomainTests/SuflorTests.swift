@@ -42,7 +42,7 @@ struct SuflorTests {
 
     @Test func theFlowWaitsAtTheAdUntilTheMinute() {
         var clock = SuflorClock(end: 1000, holdAt: 100, adAt: 60)
-        clock.tick(2, speed: 50)
+        clock.tick(9, speed: 50)
         #expect(clock.phase == .countdown)
         #expect(clock.offset == 0)
         clock.tick(1, speed: 50)
@@ -50,8 +50,8 @@ struct SuflorTests {
         clock.tick(3, speed: 50)
         #expect(clock.offset == 100)
         #expect(clock.phase == .holding)
-        #expect(clock.secondsToAd == 54)
-        for _ in 0..<53 { clock.tick(1, speed: 50) }
+        #expect(clock.secondsToAd == 47)
+        for _ in 0..<46 { clock.tick(1, speed: 50) }
         #expect(clock.offset == 100)
         clock.tick(1, speed: 50)
         #expect(clock.released)
@@ -81,9 +81,11 @@ struct SuflorTests {
         #expect(clock.offset == 0)
         clock.setPlaying(true)
         #expect(clock.phase == .countdown)
-        clock.tick(4, speed: 10)
-        #expect(clock.offset == 40)
-        #expect(clock.secondsToAd == 56)
+        clock.tick(9, speed: 10)
+        #expect(clock.offset == 0)
+        clock.tick(2, speed: 10)
+        #expect(clock.offset == 20)
+        #expect(clock.secondsToAd == 49)
     }
 
     @Test func pausingAndDraggingMoveOnlyByHand() {

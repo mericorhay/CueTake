@@ -44,6 +44,8 @@ struct SuflorStageView: View {
     @State private var confirmingEnd = false
     @State private var dragStart: CGFloat?
     @State private var width: CGFloat = 402
+    /// Step one of the guide is done once the window has floated.
+    @State private var hasFloated = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -51,7 +53,6 @@ struct SuflorStageView: View {
             DS.Palette.screen.ignoresSafeArea()
             prompter
             adGlow
-            if status.phase == .ready { readyOverlay }
             if status.phase == .countdown { countdown }
             if status.phase == .holding { holdCard }
             if flash { adFlash }
@@ -59,6 +60,9 @@ struct SuflorStageView: View {
         .overlay(alignment: .top) { topBar }
         .overlay(alignment: .bottom) { dock }
         .task { await followEngine() }
+        .onChange(of: model.isFloating) { _, floating in
+            if floating { hasFloated = true }
+        }
         .onChange(of: status.isInAd) { _, inAd in
             guard inAd else { return }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -142,48 +146,62 @@ struct SuflorStageView: View {
 
     // MARK: - Moments
 
-    /// On stage, not started: one big button, and what it is for. The stream is usually started
-    /// in the other app first, so the same button waits in the floating window too.
-    private var readyOverlay: some View {
-        VStack(spacing: 18) {
+    /// On stage, not started: the three things to do, in order, and a start button. The words
+    /// stay visible above it and can be dragged to check them; nothing moves until play.
+    private var readyGuide: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DSKicker(String(localized: "suflor.stage.guide.title", bundle: .module), size: 10, tracking: 0.18, color: DS.Palette.lime)
+            guideStep(1, done: hasFloated, text: String(localized: "suflor.stage.guide.step1", bundle: .module))
+            guideStep(2, done: false, text: String(localized: "suflor.stage.guide.step2", bundle: .module))
+            guideStep(3, done: false, text: String(localized: "suflor.stage.guide.step3", bundle: .module))
             Button {
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                 model.togglePlaying()
             } label: {
-                ZStack {
-                    Circle()
-                        .stroke(DS.Palette.lime(0.35), lineWidth: 2)
-                        .frame(width: 132, height: 132)
-                        .scaleEffect(reduceMotion ? 1 : 1.08)
-                        .modifier(Breathing(active: !reduceMotion))
-                    Circle()
-                        .fill(DS.Palette.lime)
-                        .frame(width: 104, height: 104)
-                        .shadow(color: DS.Palette.lime(0.45), radius: 26)
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 38, weight: .bold))
-                        .foregroundStyle(DS.Palette.inkInverse)
-                        .offset(x: 3)
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill").font(.system(size: 13, weight: .bold))
+                    Text("suflor.stage.guide.here", bundle: .module).dsFont(.sans, .semibold, 14)
+                }
+                .foregroundStyle(DS.Palette.lime)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 44)
+                .background(Capsule().stroke(DS.Palette.lime(0.5), lineWidth: 1.5))
+            }
+            .buttonStyle(.dsPress)
+            .accessibilityLabel(Text("suflor.stage.start", bundle: .module))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsGlass(tint: DS.Palette.glass(0.8), in: RoundedRectangle(cornerRadius: 26, style: .continuous), border: DS.Palette.lime(0.25))
+        .padding(.horizontal, 12)
+    }
+
+    /// One numbered step; the number turns into a tick once it is done.
+    private func guideStep(_ number: Int, done: Bool, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle().fill(done ? DS.Palette.lime : DS.Palette.hairline(0.1))
+                if done {
+                    DrawnCheck(progress: 1)
+                        .stroke(DS.Palette.inkInverse, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                        .padding(6)
+                        .transition(.scale.combined(with: .opacity))
+                } else {
+                    Text(verbatim: "\(number)")
+                        .dsFont(.archivo, .bold, 13)
+                        .foregroundStyle(DS.Palette.ink)
                 }
             }
-            .buttonStyle(.dsPressIcon)
-            .accessibilityLabel(Text("suflor.stage.start", bundle: .module))
-            VStack(spacing: 6) {
-                Text("suflor.stage.ready.title", bundle: .module)
-                    .dsFont(.archivo, .bold, 22)
-                    .foregroundStyle(DS.Palette.ink)
-                Text("suflor.stage.ready.detail", bundle: .module)
-                    .dsFont(.sans, .regular, 14, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.68))
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 36)
+            .frame(width: 26, height: 26)
+            Text(text)
+                .dsFont(.sans, .medium, 15, lineHeight: 1.3)
+                .foregroundStyle(done ? DS.Palette.ink(0.5) : DS.Palette.ink)
+                .strikethrough(done, color: DS.Palette.ink(0.4))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 3)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.bottom, 200)
-        .background(DS.Palette.screen.opacity(0.72).ignoresSafeArea())
-        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        .animation(DS.Motion.bloom, value: done)
+        .accessibilityElement(children: .combine)
     }
 
     /// 3, 2, 1: each number lands with a bloom and a ring that empties with its second.
@@ -206,7 +224,7 @@ struct SuflorStageView: View {
                     .id(status.countdown)
                     .transition(.scale(scale: 1.8).combined(with: .opacity))
             }
-            Text("suflor.stage.ready", bundle: .module)
+            Text("suflor.stage.countdown", bundle: .module)
                 .dsFont(.mono, .medium, 12, letterSpacing: 0.2)
                 .foregroundStyle(DS.Palette.ink(0.66))
                 .offset(y: 130)
@@ -375,6 +393,10 @@ struct SuflorStageView: View {
 
     private var dock: some View {
         VStack(spacing: 12) {
+            if status.phase == .ready {
+                readyGuide
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             if let items = model.session?.plan.brief.mustSay, !items.isEmpty {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
@@ -585,21 +607,5 @@ private struct AdSweep: View {
             }
         }
         .ignoresSafeArea()
-    }
-}
-
-/// A slow in-and-out, for the ring around the start button.
-private struct Breathing: ViewModifier {
-    let active: Bool
-    @State private var out = false
-
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(out ? 1.12 : 0.96)
-            .opacity(out ? 0.3 : 0.9)
-            .onAppear {
-                guard active else { return }
-                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { out = true }
-            }
     }
 }
