@@ -1583,6 +1583,23 @@
         }
       }
     },
+    "team.collided %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A teammate changed %lld of the same things at the same time. Your changes were kept."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir ekip arkadaşın aynı anda %lld şeyi değiştirdi. Senin değişikliklerin korundu."
+          }
+        }
+      }
+    },
     "versions.auto.beforeRestore": {
       "extractionState": "manual",
       "localizations": {

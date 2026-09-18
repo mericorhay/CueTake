@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_cuetake-team._tcp</string>
+		<string>_cuetake-team._udp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>CueTake finds a phone held next to yours so you can let its owner into your team.</string>
+	<key>NSNearbyInteractionUsageDescription</key>
+	<string>CueTake measures how close another phone is, so joining a team happens when the two phones touch.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+</dict>
+</plist>

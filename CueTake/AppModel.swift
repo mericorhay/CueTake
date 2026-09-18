@@ -15,6 +15,7 @@ import SpeechEngine
 import SettingsFeature
 import StudioFeature
 import SwiftUI
+import TeamSync
 import WorkflowsFeature
 
 /// Which screen is on top. Mirrors the design's screen graph one to one.
@@ -159,6 +160,10 @@ final class AppModel {
     var isPickingBrandLogo = false
     /// Saved states of the open project, newest first. See `AppModel+Versions`.
     var projectVersions: [ProjectVersion] = []
+    /// Shared projects through iCloud. Nil in builds without the entitlement, and until started.
+    @ObservationIgnored var teamSync: TeamSyncEngine?
+    /// The teams this phone belongs to, for the team screen.
+    var teams: [TeamInfo] = []
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
@@ -639,6 +644,7 @@ final class AppModel {
             do {
                 try await store.save(project)
                 savedAt = .now
+                projectWasSaved(project.id)
             } catch {
                 saveFailed = true
             }
@@ -676,6 +682,7 @@ final class AppModel {
             do {
                 try await store.save(project)
                 savedAt = .now
+                projectWasSaved(project.id)
             } catch {
                 saveFailed = true
             }
@@ -686,6 +693,7 @@ final class AppModel {
     /// Loads the most recently edited project, or writes the seeded one if there is nothing yet.
     /// Called once, when the root view appears.
     func restore() async {
+        defer { Task { await startTeams() } }
         let store = dependencies.projectStore
         guard let summary = try? await store.summaries().first,
               let stored = try? await store.load(summary.id)

@@ -12,7 +12,7 @@ let ui: [SwiftSetting] = concurrency + [.defaultIsolation(MainActor.self)]
 
 let modules: [String] = [
     "Domain",
-    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine",
+    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync",
     "DesignSystem", "Teleprompter", "BumpKit",
     "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature",
 ]
@@ -45,6 +45,9 @@ let package = Package(
         engine("WorkflowEngine"),
         // Video models on the user's own keys: fal, Veo, Sora, Replicate.
         engine("GenerationEngine"),
+        // Shared team projects through iCloud: no server of ours. Compiled always, started only
+        // in builds that carry the iCloud entitlement.
+        engine("TeamSync", ["Domain", "Persistence"]),
 
         // Shared UI.
         uiModule("DesignSystem", []),
@@ -73,6 +76,7 @@ let package = Package(
         .testTarget(name: "GenerationEngineTests", dependencies: ["Domain", "GenerationEngine"], swiftSettings: concurrency),
         .testTarget(name: "MediaEngineTests", dependencies: ["Domain", "MediaEngine"], swiftSettings: concurrency),
         .testTarget(name: "PersistenceTests", dependencies: ["Domain", "Persistence"], swiftSettings: concurrency),
+        .testTarget(name: "TeamSyncTests", dependencies: ["Domain", "Persistence", "TeamSync"], swiftSettings: concurrency),
         .testTarget(name: "EditorFeatureTests", dependencies: ["Domain", "EditorFeature"], swiftSettings: ui),
     ]
 )
