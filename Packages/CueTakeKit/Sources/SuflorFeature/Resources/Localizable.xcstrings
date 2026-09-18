@@ -18,6 +18,57 @@
         }
       }
     },
+    "suflor.brief.details": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ABOUT THE PRODUCT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÜRÜN HAKKINDA"
+          }
+        }
+      }
+    },
+    "suflor.brief.details.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The flow only says what is written here. What's missing is left as a blank in brackets for you to fill."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akış sadece burada yazanı söyler. Eksik kalan yerleri parantez içinde boş bırakır, sen doldurursun."
+          }
+        }
+      }
+    },
+    "suflor.brief.details.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste the brand's brief: what it is, what to highlight, what not to say…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Markanın brifini yapıştır: ne olduğu, neyin öne çıkacağı, neyin söylenmeyeceği…"
+          }
+        }
+      }
+    },
     "suflor.brief.keep": {
       "extractionState": "manual",
       "localizations": {

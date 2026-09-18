@@ -40,6 +40,10 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
     public var tone: String
     /// What the stream or video is about, so the bridge into the ad sounds like part of it.
     public var topic: String
+    /// What the product is and what the brand wants said about it, usually pasted from the
+    /// brand's own brief. The only source of facts about the product: without it, nothing is
+    /// claimed about what the product is or does.
+    public var details: String
 
     public init(
         kind: Kind = .live,
@@ -49,7 +53,8 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         mustSay: [String] = [],
         timing: AdTiming = .minute(5),
         tone: String = "",
-        topic: String = ""
+        topic: String = "",
+        details: String = ""
     ) {
         self.kind = kind
         self.platform = platform
@@ -59,6 +64,25 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         self.timing = timing
         self.tone = tone
         self.topic = topic
+        self.details = details
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case kind, platform, brand, product, mustSay, timing, tone, topic, details
+    }
+
+    /// Briefs saved before `details` existed still open.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try container.decode(Kind.self, forKey: .kind)
+        platform = try container.decode(Platform.self, forKey: .platform)
+        brand = try container.decode(String.self, forKey: .brand)
+        product = try container.decode(String.self, forKey: .product)
+        mustSay = try container.decode([String].self, forKey: .mustSay)
+        timing = try container.decode(AdTiming.self, forKey: .timing)
+        tone = try container.decode(String.self, forKey: .tone)
+        topic = try container.decode(String.self, forKey: .topic)
+        details = try container.decodeIfPresent(String.self, forKey: .details) ?? ""
     }
 
     /// Enough to prepare anything from.

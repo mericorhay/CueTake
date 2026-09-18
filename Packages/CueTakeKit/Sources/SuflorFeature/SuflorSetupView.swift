@@ -171,7 +171,7 @@ private struct SuflorBriefStep: View {
     @State private var newItem = ""
     @FocusState private var focused: Field?
 
-    private enum Field { case brand, product, item, topic }
+    private enum Field { case brand, product, details, item, topic }
 
     private let tones: [String.LocalizationValue] = ["suflor.tone.warm", "suflor.tone.energetic", "suflor.tone.calm", "suflor.tone.funny"]
 
@@ -190,6 +190,25 @@ private struct SuflorBriefStep: View {
                     field("suflor.brief.product", text: $model.brief.product, field: .product)
                 }
                 .padding(.top, 22)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    DSKicker(String(localized: "suflor.brief.details", bundle: .module))
+                    TextField(String(localized: "suflor.brief.details.placeholder", bundle: .module), text: $model.brief.details, axis: .vertical)
+                        .lineLimit(3...8)
+                        .focused($focused, equals: .details)
+                        .dsFont(.sans, .regular, 15)
+                        .foregroundStyle(DS.Palette.ink)
+                        .frame(maxWidth: .infinity, minHeight: 72, alignment: .topLeading)
+                        .padding(14)
+                        .contentShape(Rectangle())
+                        .onTapGesture { focused = .details }
+                        .dsCard(radius: 16, border: focused == .details ? DS.Palette.lime(0.6) : DS.Palette.hairline(0.07))
+                    Text("suflor.brief.details.hint", bundle: .module)
+                        .dsFont(.sans, .regular, 12)
+                        .foregroundStyle(DS.Palette.ink(0.52))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.top, 14)
 
                 mustSay.padding(.top, 22)
                 if model.brief.kind == .live { timing.padding(.top, 22) }

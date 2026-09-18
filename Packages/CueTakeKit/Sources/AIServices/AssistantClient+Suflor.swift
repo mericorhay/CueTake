@@ -12,6 +12,7 @@ extension AssistantClient {
             var mustSay: [String]
             var tone: String
             var topic: String
+            var details: String
         }
 
         var brief: Brief
@@ -32,7 +33,8 @@ extension AssistantClient {
                 product: brief.product,
                 mustSay: brief.mustSay,
                 tone: brief.tone,
-                topic: brief.topic
+                topic: brief.topic,
+                details: brief.details
             ),
             locale: localeIdentifier
         )

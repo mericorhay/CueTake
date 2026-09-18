@@ -24,6 +24,17 @@ struct SuflorTests {
         #expect(plan.wordCount == 10)
     }
 
+    @Test func aBriefSavedBeforeDetailsStillOpens() throws {
+        var brief = SuflorBrief(brand: "Marvel", product: "Spider-Man", details: "Kolektör figürü, 30 cm")
+        let data = try JSONEncoder().encode(brief)
+        #expect(try JSONDecoder().decode(SuflorBrief.self, from: data) == brief)
+        var object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object["details"] = nil
+        let old = try JSONSerialization.data(withJSONObject: object)
+        brief.details = ""
+        #expect(try JSONDecoder().decode(SuflorBrief.self, from: old) == brief)
+    }
+
     @Test func modelTextIsReadAroundTheJSON() {
         let cues = SuflorPlan.cues(fromModelText: #"İşte: {"cues":[{"role":"bridge","text":"Bu arada"},{"role":"weird","text":"x"},{"role":"ad","text":""}]} bitti"#)
         #expect(cues.map(\.role) == [.bridge, .topic])
