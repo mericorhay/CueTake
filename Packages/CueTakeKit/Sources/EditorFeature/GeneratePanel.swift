@@ -91,7 +91,7 @@ struct GeneratePanel: View {
 
             Text("editor.generate.note \(Int(options.seconds))", bundle: .module)
                 .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.42))
+                .foregroundStyle(DS.Palette.ink(0.56))
 
             if !model.generationJobs.isEmpty {
                 VStack(spacing: 6) {
@@ -195,7 +195,7 @@ struct GeneratePanel: View {
         HStack(spacing: 6) {
             Image(systemName: "timer")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
             ForEach(lengths, id: \.self) { value in
                 let isOn = abs(options.seconds - value) < 0.01
                 Button {

@@ -91,7 +91,7 @@ public struct CreateScreen: View {
 
             Text("create.subtitle", bundle: .module)
                 .dsFont(.sans, .regular, 14)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
 
             VStack(spacing: 13) {
                 ForEach(Array(cards.enumerated()), id: \.offset) { index, card in

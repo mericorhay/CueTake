@@ -185,8 +185,8 @@ struct AudioMixerPanel: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Text(verbatim: "\(MediaTime(seconds: clip.start.seconds).timecode) · \(String(format: "%.1f s", clip.timelineDuration.seconds))")
-                        .dsFont(.mono, .medium, 9)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .lineLimit(1)
                         .fixedSize()
                 }

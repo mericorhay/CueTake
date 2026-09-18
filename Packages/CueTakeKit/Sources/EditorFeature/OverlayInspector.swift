@@ -57,16 +57,17 @@ struct OverlayInspector: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text(verbatim: "\(MediaTime(seconds: overlay.start.seconds).preciseTimecode) – \(MediaTime(seconds: end).preciseTimecode)")
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .contentTransition(.numericText())
             }
             Spacer(minLength: 0)
             Text("editor.overlay.gestureHint", bundle: .module)
                 .dsFont(.sans, .regular, 10)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .multilineTextAlignment(.trailing)
             Button(action: onClose) {
                 Image(systemName: "checkmark")
+                    .dsActionName("checkmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.inkInverse)
                     .frame(width: 30, height: 30)
@@ -80,7 +81,7 @@ struct OverlayInspector: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TimingReadout(start: overlay.start.seconds, end: end)
             HStack(spacing: 8) {
                 smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {
@@ -107,7 +108,7 @@ struct OverlayInspector: View {
 
     private func textControls(_ text: OverlayText) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "editor.overlay.words", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.overlay.words", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TextEntryField(
                 text: text.text,
                 placeholder: String(localized: "editor.overlay.placeholder", bundle: .module),
@@ -201,7 +202,7 @@ struct OverlayInspector: View {
 
     private var look: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "editor.overlay.look", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.overlay.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
 
             HStack(spacing: 10) {
                 Image(systemName: "square.resize.down").font(.system(size: 12)).foregroundStyle(DS.Palette.ink(0.5))
@@ -320,8 +321,8 @@ struct OverlayInspector: View {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -337,6 +338,7 @@ struct OverlayInspector: View {
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: 32, height: 32)
@@ -363,6 +365,7 @@ struct OverlayInspector: View {
     private func iconButton(_ symbol: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.85))
                 .frame(maxWidth: .infinity)
@@ -387,6 +390,7 @@ struct OverlayInspector: View {
             if allowsNone {
                 Button { onPick(nil) } label: {
                     Image(systemName: "nosign")
+                        .dsActionName("nosign")
                         .font(.system(size: 12))
                         .foregroundStyle(DS.Palette.ink(0.6))
                         .frame(width: 26, height: 26)

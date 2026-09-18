@@ -28,8 +28,8 @@ struct WorkflowProposalCard: View {
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 Text(String(localized: "assistant.workflow.steps \(workflow.steps.count)", bundle: .module))
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             if !workflow.sections.isEmpty {
@@ -51,7 +51,7 @@ struct WorkflowProposalCard: View {
                 ForEach(Array(workflow.steps.filter(\.isEnabled).enumerated()), id: \.offset) { index, step in
                     HStack(spacing: 7) {
                         Text(verbatim: "\(index + 1)")
-                            .dsFont(.mono, .medium, 9)
+                            .dsFont(.mono, .medium, 10)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .frame(width: 16, height: 16)
                             .background(Circle().fill(DS.Palette.lime))

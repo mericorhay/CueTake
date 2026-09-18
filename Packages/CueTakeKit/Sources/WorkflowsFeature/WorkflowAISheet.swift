@@ -38,6 +38,7 @@ struct WorkflowAISheet: View {
                 Spacer(minLength: 0)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
+                        .dsActionName("xmark")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(DS.Palette.ink)
                         .frame(width: 30, height: 30)

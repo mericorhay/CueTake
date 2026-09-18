@@ -85,12 +85,12 @@ public struct CompleteScreen: View {
     private func segmentChip(_ segment: Segment) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(segment.role.displayLabel)
-                .dsFont(.mono, .medium, 9)
+                .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.segment(at: segment.role.paletteIndex))
             Text(segment.selectedTake.map { $0.sourceRange.duration.preciseTimecode }
                 ?? String(localized: "complete.notRecorded", bundle: .module))
                 .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 10)

@@ -186,7 +186,7 @@ struct ToolDock: View {
             let working = model.generationJobs.filter { $0.phase == .working }.count
             if item == .generate, working > 0 {
                 Text(verbatim: "\(working)")
-                    .dsFont(.mono, .semibold, 9)
+                    .dsFont(.mono, .semibold, 10)
                     .foregroundStyle(DS.Palette.inkInverse)
                     .frame(minWidth: 16, minHeight: 16)
                     .background(Circle().fill(DS.Palette.lime))
@@ -359,7 +359,7 @@ struct ToolDock: View {
                 if ![.ai, .generate, .shorts, .audio, .transition].contains(item), let index {
                     Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 Spacer(minLength: 0)
                 Button {
@@ -441,7 +441,7 @@ struct ToolDock: View {
                     HStack(spacing: 6) {
                         Text("editor.zoom.feel", bundle: .module)
                             .dsFont(.sans, .medium, 10)
-                            .foregroundStyle(DS.Palette.ink(0.46))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                         Spacer(minLength: 4)
                         ForEach(CameraMotionRecipe.Feel.allCases, id: \.self) { feel in
                             let active = recipe.feel == feel
@@ -462,7 +462,7 @@ struct ToolDock: View {
 
                     HStack(spacing: 9) {
                         Image(systemName: "minus.magnifyingglass")
-                            .foregroundStyle(DS.Palette.ink(0.45))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                         Slider(
                             value: Binding(
                                 get: { 1 + (model.cameraMotionAtPlayhead?.amount ?? 0.15) },
@@ -483,7 +483,7 @@ struct ToolDock: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            DSKicker(String(localized: "editor.zoom.static", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+            DSKicker(String(localized: "editor.zoom.static", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
 
             HStack(spacing: 7) {
                 ForEach([1.0, 1.10, 1.15, 1.20], id: \.self) { value in
@@ -512,7 +512,7 @@ struct ToolDock: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "minus.magnifyingglass")
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Slider(
                     value: Binding(
                         get: { model.mainVideoZoom },
@@ -641,7 +641,7 @@ struct ToolDock: View {
                 case .failed, .noFace:
                     Image(systemName: "arrow.clockwise").foregroundStyle(DS.Palette.accentWarm)
                 case .idle:
-                    Image(systemName: "chevron.right").foregroundStyle(DS.Palette.ink(0.35))
+                    Image(systemName: "chevron.right").foregroundStyle(DS.Palette.ink(0.52))
                 }
             }
             .padding(11)
@@ -692,7 +692,7 @@ struct ToolDock: View {
 
             Text("editor.dock.trim.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
@@ -701,8 +701,8 @@ struct ToolDock: View {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: String(format: "%.1f s", value))
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -719,6 +719,7 @@ struct ToolDock: View {
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: 34, height: 34)
@@ -922,7 +923,7 @@ struct ToolDock: View {
 
             Text("editor.background.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
@@ -978,7 +979,7 @@ struct ToolDock: View {
             .scrollClipDisabled()
             Text("editor.filter.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
@@ -1013,7 +1014,7 @@ struct ToolDock: View {
             }
             Text("editor.sound.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 

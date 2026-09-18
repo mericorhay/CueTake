@@ -41,7 +41,7 @@ struct SubjectTrackLane: View {
                 .font(.system(size: 9, weight: .bold))
             if (span.end - span.start) * scale > 70 {
                 Text("editor.trackLane.title", bundle: .module)
-                    .dsFont(.sans, .semibold, 9)
+                    .dsFont(.sans, .semibold, 10)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)

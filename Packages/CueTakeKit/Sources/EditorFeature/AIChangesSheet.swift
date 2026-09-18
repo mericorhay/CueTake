@@ -43,7 +43,7 @@ struct AIChangesSheet: View {
                 DSKicker(String(localized: "editor.aiChanges.title", bundle: .module))
                 Text("editor.aiChanges.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             Spacer(minLength: 0)
             Button(action: onClose) {
@@ -88,7 +88,7 @@ struct AIChangesSheet: View {
                 Spacer(minLength: 0)
                 Text(set.date, format: .dateTime.hour().minute())
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             if !set.instruction.isEmpty, !set.summary.isEmpty {
@@ -107,7 +107,7 @@ struct AIChangesSheet: View {
             HStack {
                 Text("editor.aiChanges.count \(set.activeCount)", bundle: .module)
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .contentTransition(.numericText())
                 Spacer(minLength: 0)
                 Button {
@@ -161,12 +161,12 @@ struct AIChangesSheet: View {
                 Text(item.text)
                     .dsFont(.sans, .regular, 12)
                     .foregroundStyle(DS.Palette.ink(item.reverted ? 0.35 : 0.85))
-                    .strikethrough(item.reverted, color: DS.Palette.ink(0.35))
+                    .strikethrough(item.reverted, color: DS.Palette.ink(0.52))
                     .lineLimit(2)
                 if item.reverted {
                     Text("editor.aiChanges.reverted", bundle: .module)
                         .dsFont(.sans, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }

@@ -64,11 +64,11 @@ struct AudioInspector: View {
         let count = clip.orderedVolumeKeys.count
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.audio.curve", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "editor.audio.curve", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 if count > 0 {
                     Text("editor.audio.curve.count \(count)", bundle: .module)
                         .dsFont(.sans, .regular, 10)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 Spacer(minLength: 0)
@@ -126,11 +126,11 @@ struct AudioInspector: View {
                     }
                 }
                 .dsFont(.sans, .regular, 10)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
             } else {
                 Text("editor.audio.curve.outside", bundle: .module)
                     .dsFont(.sans, .regular, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
         }
         .animation(reduceMotion ? nil : DS.Motion.snap, value: key?.id)
@@ -213,8 +213,8 @@ struct AudioInspector: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("editor.audio.level", bundle: .module)
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                    .foregroundStyle(DS.Palette.ink(0.38))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                    .foregroundStyle(DS.Palette.ink(0.52))
                 Spacer(minLength: 0)
                 Text(AudioLane.levelLabel(for: clip) + " dB")
                     .dsFont(.mono, .medium, 11)
@@ -268,8 +268,8 @@ struct AudioInspector: View {
     private var speed: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("editor.audio.speed", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
 
             HStack(spacing: 6) {
                 ForEach([0.5, 0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { value in
@@ -305,8 +305,8 @@ struct AudioInspector: View {
     private var effects: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("editor.audio.repair", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
 
             HStack(spacing: 9) {
                 toggle(
@@ -375,12 +375,12 @@ struct AudioInspector: View {
         HStack(spacing: 8) {
             Image(systemName: symbol)
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                    .foregroundStyle(DS.Palette.ink(0.38))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                    .foregroundStyle(DS.Palette.ink(0.52))
                 Text(String(format: "%.1fs", value))
                     .dsFont(.mono, .medium, 12)
                     .foregroundStyle(DS.Palette.ink)

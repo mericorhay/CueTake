@@ -16,7 +16,7 @@ struct StudioStyleCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                DSKicker(String(localized: "studio.style", bundle: .module), size: 10, color: DS.Palette.ink(0.45))
+                DSKicker(String(localized: "studio.style", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 Toggle(isOn: binding(\.captions)) {
                     Text("studio.style.captions", bundle: .module)
@@ -139,8 +139,8 @@ struct StudioStyleCard: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: key, bundle: .module))
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
 
             HStack(spacing: 5) {
                 ForEach(options, id: \.self) { option in

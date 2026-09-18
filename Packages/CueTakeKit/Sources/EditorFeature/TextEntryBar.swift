@@ -85,7 +85,7 @@ struct TextEntryField: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "keyboard")
                     .font(.system(size: 13))
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)

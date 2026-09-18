@@ -41,7 +41,7 @@ public struct WorkflowsScreen: View {
 
                 Text("workflows.subtitle", bundle: .module)
                     .dsFont(.sans, .regular, 13)
-                    .foregroundStyle(DS.Palette.ink(0.42))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .padding(.top, 6)
 
                 createCard
@@ -169,7 +169,7 @@ public struct WorkflowsScreen: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text("workflows.new.manual.note", bundle: .module)
                     .dsFont(.sans, .medium, 11)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .lineLimit(2)
             }
             .padding(16)
@@ -207,7 +207,7 @@ public struct WorkflowsScreen: View {
                     if let summary = workflow.summary, !summary.isEmpty {
                         Text(summary)
                             .dsFont(.sans, .regular, 11)
-                            .foregroundStyle(DS.Palette.ink(0.42))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                             .lineLimit(1)
                     }
                 }

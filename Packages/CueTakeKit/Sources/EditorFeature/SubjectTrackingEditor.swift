@@ -117,7 +117,7 @@ struct SubjectTrackingEditor: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text("editor.track.subtitle", bundle: .module)
                     .dsFont(.sans, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.48))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             Spacer(minLength: 0)
             if !strokes.isEmpty || !activeStroke.isEmpty {

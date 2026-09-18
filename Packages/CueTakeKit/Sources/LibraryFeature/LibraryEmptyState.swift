@@ -16,7 +16,7 @@ struct LibraryEmptyState: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(message)
                 .dsFont(.sans, .regular, 14, lineHeight: 1.45)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .frame(maxWidth: 280, alignment: .leading)
 
             if let action, let onTap {

@@ -17,7 +17,7 @@ struct StudioPipeline: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                DSKicker(String(localized: "studio.pipeline", bundle: .module), size: 10, color: DS.Palette.ink(0.45))
+                DSKicker(String(localized: "studio.pipeline", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 Button(action: onShowPalette) {
                     Label(String(localized: "studio.pipeline.add", bundle: .module), systemImage: "plus")
@@ -131,7 +131,7 @@ struct StudioPipeline: View {
                             Text(String(localized: tool.title, bundle: .module))
                                 .dsFont(.sans, .semibold, 14)
                                 .foregroundStyle(step.isEnabled ? DS.Palette.ink : DS.Palette.ink(0.35))
-                                .strikethrough(!step.isEnabled, color: DS.Palette.ink(0.3))
+                                .strikethrough(!step.isEnabled, color: DS.Palette.ink(0.52))
 
                             Text(model.stepNotes[step.id] ?? Self.subtitle(step, state: state, note: tool.note))
                                 .dsFont(.sans, .regular, 11)
@@ -146,7 +146,7 @@ struct StudioPipeline: View {
                             // Not a switch: the closing export cannot be turned off or moved.
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(DS.Palette.ink(0.35))
+                                .foregroundStyle(DS.Palette.ink(0.52))
                                 .frame(width: 30, height: 30)
                                 .accessibilityLabel(Text("studio.export.locked", bundle: .module))
                         } else {
@@ -178,7 +178,7 @@ struct StudioPipeline: View {
                         if locked {
                             Label(String(localized: "studio.export.lockedNote", bundle: .module), systemImage: "lock")
                                 .dsFont(.sans, .regular, 10)
-                                .foregroundStyle(DS.Palette.ink(0.4))
+                                .foregroundStyle(DS.Palette.ink(0.56))
                         } else {
                             HStack(spacing: 6) {
                                 moveButton("arrow.up", step: step, by: -1)
@@ -447,6 +447,7 @@ struct StudioToolPalette: View {
                 Spacer(minLength: 0)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
+                        .dsActionName("xmark")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(DS.Palette.ink(0.6))
                         .frame(width: 30, height: 30)
@@ -508,7 +509,7 @@ struct StudioToolPalette: View {
                         .foregroundStyle(DS.Palette.ink)
                     Text(String(localized: tool.note, bundle: .module))
                         .dsFont(.sans, .regular, 11)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .lineLimit(2)
                 }
 
@@ -517,7 +518,7 @@ struct StudioToolPalette: View {
                 if count > 0 {
                     Text(verbatim: "×\(count)")
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
             }
             .padding(10)

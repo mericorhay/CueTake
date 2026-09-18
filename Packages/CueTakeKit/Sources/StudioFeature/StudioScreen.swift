@@ -288,7 +288,7 @@ public struct StudioScreen: View {
                 .font(.system(size: 10, weight: .semibold))
                 .symbolEffect(.variableColor.iterative, options: .repeating, isActive: mode != .autoScroll)
             Text(Self.badgeText(for: mode))
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.1)
         }
         .foregroundStyle(mode == .followingVoice ? DS.Palette.lime : DS.Palette.ink(0.7))
         .padding(.horizontal, 10)

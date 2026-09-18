@@ -61,7 +61,7 @@ struct BusyOverlay: View {
 
                     Text(status)
                         .dsFont(.mono, .medium, 11)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 .frame(minHeight: 52)

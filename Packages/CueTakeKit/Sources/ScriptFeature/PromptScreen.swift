@@ -212,11 +212,11 @@ public struct PromptScreen: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 3) {
                     Text(String(localized: key, bundle: .module))
-                        .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                        .foregroundStyle(DS.Palette.ink(0.38))
+                        .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                        .foregroundStyle(DS.Palette.ink(0.52))
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 7, weight: .bold))
-                        .foregroundStyle(DS.Palette.ink(0.3))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                 }
                 Text(value)
                     .dsFont(.sans, .semibold, 14)
@@ -338,7 +338,7 @@ public struct PromptScreen: View {
 
             Text(String(localized: step.noteKey, bundle: .module))
                 .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.3))
+                .foregroundStyle(DS.Palette.ink(0.52))
         }
         .padding(.vertical, 13)
         .padding(.horizontal, 2)

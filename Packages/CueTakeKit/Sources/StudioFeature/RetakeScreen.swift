@@ -341,7 +341,7 @@ public struct RetakeScreen: View {
 
                 Text("retake.note", bundle: .module)
                     .dsFont(.sans, .regular, 12)
-                    .foregroundStyle(DS.Palette.ink(0.38))
+                    .foregroundStyle(DS.Palette.ink(0.52))
                     .padding(.top, 12)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -584,15 +584,15 @@ public struct RetakeScreen: View {
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 Text(kicker)
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(title)
                     .dsFont(.archivo, .bold, 16)
                     .foregroundStyle(DS.Palette.ink)
                     .padding(.top, 5)
                 Text(meta)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .padding(.top, 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

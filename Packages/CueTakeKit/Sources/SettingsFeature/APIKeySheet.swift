@@ -118,7 +118,7 @@ private struct ProviderKeyRow: View {
                     statusChip
                     Image(systemName: "chevron.down")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                 }
                 .contentShape(Rectangle())
@@ -192,7 +192,7 @@ private struct ProviderKeyRow: View {
         } else {
             Text("settings.apiKey.none", bundle: .module)
                 .dsFont(.sans, .medium, 11)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 

@@ -327,7 +327,7 @@ private struct ShortCard: View {
             }
             .frame(height: 5)
             Text(String(localized: key, bundle: .module))
-                .dsFont(.sans, .medium, 9)
+                .dsFont(.sans, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.5))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -356,7 +356,7 @@ struct ShortsSheet: View {
                     DSKicker(String(localized: "editor.dock.shorts", bundle: .module))
                     Text("editor.shorts.hint", bundle: .module)
                         .dsFont(.sans, .regular, 11, lineHeight: 1.3)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .lineLimit(2)
                 }
 

@@ -119,7 +119,7 @@ struct JourneyMapSheet: View {
                             }
                             Text(Self.stageNote(index))
                                 .dsFont(.sans, .regular, 12)
-                                .foregroundStyle(DS.Palette.ink(0.45))
+                                .foregroundStyle(DS.Palette.ink(0.56))
                         }
                         .padding(.top, 5)
 

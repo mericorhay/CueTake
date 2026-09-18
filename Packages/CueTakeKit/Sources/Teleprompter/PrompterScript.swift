@@ -57,7 +57,7 @@ public struct PrompterScript: View {
                                 Image(systemName: "note.text")
                                     .font(.system(size: max(9, textSize * 0.42), weight: .semibold))
                                 Text(notes)
-                                    .dsFont(.sans, .regular, max(10, textSize * 0.5), lineHeight: 1.3)
+                                    .dsFont(.sans, .regular, max(10, textSize * 0.5), lineHeight: 1.3, fixed: true)
                                     .italic()
                             }
                             .foregroundStyle(DS.Palette.lime.opacity(0.8))
@@ -67,7 +67,7 @@ public struct PrompterScript: View {
                         FlowLayout(horizontalSpacing: 0, verticalSpacing: 0, alignment: horizontal) {
                             ForEach(words) { word in
                                 Text(word.text + " ")
-                                    .dsFont(.sans, word.isEmphasized ? .bold : .medium, textSize, lineHeight: 1.45)
+                                    .dsFont(.sans, word.isEmphasized ? .bold : .medium, textSize, lineHeight: 1.45, fixed: true)
                                     .underline(word.isEmphasized, color: word.color.opacity(0.5))
                                     .foregroundStyle(word.color)
                                     .padding(.horizontal, 2)
@@ -89,7 +89,7 @@ public struct PrompterScript: View {
 
                         if let upNext, !upNext.isEmpty {
                             Text(upNext)
-                                .dsFont(.sans, .regular, max(11, textSize - 6), lineHeight: 1.4)
+                                .dsFont(.sans, .regular, max(11, textSize - 6), lineHeight: 1.4, fixed: true)
                                 .foregroundStyle(DS.Palette.ink(0.26))
                                 .multilineTextAlignment(isCentered ? .center : .leading)
                                 .frame(maxWidth: .infinity, alignment: frameAlignment)

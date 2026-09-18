@@ -133,8 +133,8 @@ struct StudioStepEditor: View {
 
     private func label(_ key: String.LocalizationValue) -> some View {
         Text(String(localized: key, bundle: .module))
-            .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-            .foregroundStyle(DS.Palette.ink(0.38))
+            .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+            .foregroundStyle(DS.Palette.ink(0.52))
     }
 
     private func slider(
@@ -240,6 +240,7 @@ struct StudioStepEditor: View {
 
                 Button { add(to: options) } label: {
                     Image(systemName: "plus")
+                        .dsActionName("plus")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(width: 32, height: 32)
@@ -283,11 +284,12 @@ struct StudioJSONSheet: View {
                     DSKicker(String(localized: "studio.json", bundle: .module))
                     Text("studio.json.note", bundle: .module)
                         .dsFont(.sans, .regular, 11)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 Spacer(minLength: 0)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
+                        .dsActionName("xmark")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(DS.Palette.ink(0.6))
                         .frame(width: 30, height: 30)

@@ -23,6 +23,14 @@ extension AppModel {
         go(to: .script)
     }
 
+    /// From the home screen straight to reading: a clean project, the place to paste the words,
+    /// and from there the camera. Back returns home rather than into the create flow.
+    func startTeleprompter() {
+        if projectHasContent || !project.segments.isEmpty { adopt(Self.blankProject()) }
+        scriptReturn = .home
+        go(to: .script)
+    }
+
     /// A clean project for the studio, to record without a script.
     func startRecording() {
         if projectHasContent { adopt(Self.blankProject()) }
@@ -48,6 +56,7 @@ extension AppModel {
         switch scriptReturn {
         case .studio: openStudio()
         case .blueprint where !project.segments.isEmpty: go(to: .blueprint)
+        case .home: go(to: .home)
         default: go(to: .create)
         }
     }

@@ -110,7 +110,7 @@ public struct DSBackButton: View {
 
                     Image(systemName: "chevron.down")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 .padding(.leading, 9)
                 .padding(.trailing, 11)

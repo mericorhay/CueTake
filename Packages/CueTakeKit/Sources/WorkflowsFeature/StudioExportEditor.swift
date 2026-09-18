@@ -42,7 +42,7 @@ struct StudioExportEditor: View {
             let size = model.definition.style.format.renderSize
             Text(verbatim: "\(size.width)×\(size.height) · \(model.definition.style.frameRate) fps · \(model.definition.style.resolution.prefersHEVC ? "HEVC" : "H.264")")
                 .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .contentTransition(.numericText())
 
             chips(
@@ -71,8 +71,8 @@ struct StudioExportEditor: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(String(localized: key, bundle: .module))
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
             HStack(spacing: 5) {
                 ForEach(options, id: \.self) { option in
                     let isOn = option == selected
@@ -132,7 +132,7 @@ struct StudioDeliveryEditor: View {
                         .foregroundStyle(DS.Palette.ink)
                     Text("studio.delivery.note", bundle: .module)
                         .dsFont(.sans, .regular, 10, lineHeight: 1.3)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
@@ -183,7 +183,7 @@ struct StudioDeliveryEditor: View {
             }
             Text(Self.payloadNote(delivery.payload))
                 .dsFont(.sans, .regular, 10, lineHeight: 1.3)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.opacity)
 
@@ -208,8 +208,8 @@ struct StudioDeliveryEditor: View {
     private var secretRow: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("studio.delivery.secret", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
             HStack(spacing: 6) {
                 SecureField(
                     savedSuffix.map { String(localized: "studio.delivery.secret.saved \($0)", bundle: .module) }
@@ -254,8 +254,8 @@ struct StudioDeliveryEditor: View {
             }
             .animation(DS.Motion.snap, value: secret.isEmpty)
             Text("studio.delivery.secret.note", bundle: .module)
-                .dsFont(.sans, .regular, 9)
-                .foregroundStyle(DS.Palette.ink(0.35))
+                .dsFont(.sans, .regular, 10)
+                .foregroundStyle(DS.Palette.ink(0.52))
         }
     }
 
@@ -303,8 +303,8 @@ struct StudioDeliveryEditor: View {
             }
 
             Text("studio.delivery.fields", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
             ForEach(delivery.fields.keys.sorted(), id: \.self) { key in
                 HStack(spacing: 6) {
                     Text(verbatim: key)
@@ -319,6 +319,7 @@ struct StudioDeliveryEditor: View {
                         withAnimation(DS.Motion.snap) { model.updateDelivery { $0.fields[key] = nil } }
                     } label: {
                         Image(systemName: "xmark")
+                            .dsActionName("xmark")
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(DS.Palette.ink(0.5))
                             .frame(width: 28, height: 28)
@@ -339,6 +340,7 @@ struct StudioDeliveryEditor: View {
                     .onSubmit(addField)
                 Button(action: addField) {
                     Image(systemName: "plus")
+                        .dsActionName("plus")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(width: 30, height: 30)
@@ -442,8 +444,8 @@ struct StudioDeliveryEditor: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(String(localized: key, bundle: .module))
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
             TextField(prompt, text: text)
                 .dsFont(.mono, .regular, 12)
                 .keyboardType(keyboard)

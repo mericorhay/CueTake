@@ -84,7 +84,7 @@ struct AIDirectorHUD: View {
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .lineLimit(1)
                 Text("editor.ai.hud.stats \(session.clips) \(session.words)", bundle: .module)
-                    .dsFont(.mono, .medium, 9)
+                    .dsFont(.mono, .medium, 10)
                     .foregroundStyle(AIPalette.linear)
             }
             Spacer(minLength: 0)
@@ -120,7 +120,7 @@ struct AIDirectorHUD: View {
                     .clipped()
                     Text("editor.ai.hud.step \(session.current + 1) \(count)", bundle: .module)
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 .animation(.spring(response: 0.42, dampingFraction: 0.8), value: session.current)
@@ -182,7 +182,7 @@ struct AIDirectorHUD: View {
                     if skipped > 0 {
                         Text("editor.ai.skipped \(skipped)", bundle: .module)
                             .dsFont(.sans, .regular, 11)
-                            .foregroundStyle(DS.Palette.ink(0.45))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                     }
                 }
                 Spacer(minLength: 0)

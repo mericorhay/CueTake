@@ -85,7 +85,7 @@ struct AudioLane: View {
                 // The level, always visible. It is the number people change most, and the one they
                 // most need to compare between two clips at a glance.
                 Text(Self.levelLabel(for: clip))
-                    .dsFont(.mono, .medium, 9)
+                    .dsFont(.mono, .medium, 10)
                     .opacity(0.6)
             }
             .foregroundStyle(DS.Palette.ink(clip.isMuted ? 0.35 : 0.92))

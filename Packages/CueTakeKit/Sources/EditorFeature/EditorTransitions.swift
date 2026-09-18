@@ -402,7 +402,7 @@ struct TransitionPanel: View {
             HStack(spacing: 10) {
                 Image(systemName: "hare")
                     .font(.system(size: 11))
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Slider(
                     value: Binding(
                         get: { min(transition.duration, longest) },
@@ -415,12 +415,12 @@ struct TransitionPanel: View {
                 .tint(DS.Palette.lime)
                 Image(systemName: "tortoise")
                     .font(.system(size: 11))
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             if longest < ClipTransition.durationRange.upperBound - 0.01 {
                 Text("editor.transition.limited \(String(format: "%.1f", longest))", bundle: .module)
                     .dsFont(.sans, .regular, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
         }
     }

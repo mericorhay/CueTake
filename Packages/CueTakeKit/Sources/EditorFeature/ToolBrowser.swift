@@ -82,6 +82,7 @@ struct ToolBrowser: View {
             Spacer(minLength: 0)
             Button(action: onClose) {
                 Image(systemName: "xmark")
+                    .dsActionName("xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)
@@ -103,7 +104,7 @@ struct ToolBrowser: View {
             HStack(spacing: 7) {
                 Image(systemName: category.symbol)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(String(localized: category.title, bundle: .module))
                     .dsFont(.archivo, .bold, 15)
                     .foregroundStyle(DS.Palette.ink)
@@ -147,7 +148,7 @@ struct ToolBrowser: View {
                         .foregroundStyle(item.enabled ? DS.Palette.ink : DS.Palette.ink(0.25))
                     Text(String(localized: item.note, bundle: .module))
                         .dsFont(.sans, .regular, 10)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .lineLimit(1)
                 }
 

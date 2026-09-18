@@ -96,14 +96,17 @@ public struct HomeScreen: View {
     private let onOpenProject: (LibraryItem) -> Void
     private let onOpenAllProjects: () -> Void
     private let onOpenWorkflow: () -> Void
+    private let onTeleprompter: () -> Void
 
     public init(
         recents: [LibraryItem] = LibraryItem.sampleRecents,
         onCreate: @escaping () -> Void,
         onOpenProject: @escaping (LibraryItem) -> Void,
         onOpenAllProjects: @escaping () -> Void,
-        onOpenWorkflow: @escaping () -> Void
+        onOpenWorkflow: @escaping () -> Void,
+        onTeleprompter: @escaping () -> Void = {}
     ) {
+        self.onTeleprompter = onTeleprompter
         self.recents = recents
         self.onCreate = onCreate
         self.onOpenProject = onOpenProject
@@ -116,6 +119,7 @@ public struct HomeScreen: View {
             VStack(alignment: .leading, spacing: 0) {
                 header
                 createCard
+                teleprompterCard
                 recentSection
                 workflowSection
             }
@@ -137,7 +141,7 @@ public struct HomeScreen: View {
                     String(localized: "home.greeting.stamp", bundle: .module),
                     size: 11,
                     tracking: 0.14,
-                    color: DS.Palette.ink(0.4)
+                    color: DS.Palette.ink(0.56)
                 )
                 DSHeadline(
                     String(localized: "home.greeting.title", bundle: .module),
@@ -196,6 +200,7 @@ public struct HomeScreen: View {
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(DS.Palette.inkInverse))
                     .padding(22)
+                    .accessibilityHidden(true)
             }
             .clipShape(RoundedRectangle(cornerRadius: DS.Radius.hero, style: .continuous))
             .shadow(color: DS.Palette.accent(0.32), radius: 30, y: 24)
@@ -203,6 +208,44 @@ public struct HomeScreen: View {
         .buttonStyle(.dsPressCard)
         .padding(.horizontal, 22)
         .padding(.top, 26)
+    }
+
+    // MARK: - Teleprompter
+
+    /// Straight to reading: paste or type the words, then the camera. For people who already know
+    /// what they will say and want nothing between them and the take.
+    private var teleprompterCard: some View {
+        Button(action: onTeleprompter) {
+            HStack(spacing: 14) {
+                Image(systemName: "text.viewfinder")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(width: 46, height: 46)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.lime))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("home.teleprompter.title", bundle: .module)
+                        .dsFont(.sans, .semibold, 16)
+                        .foregroundStyle(DS.Palette.ink)
+                    Text("home.teleprompter.subtitle", bundle: .module)
+                        .dsFont(.sans, .regular, 13)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.52))
+                    .accessibilityHidden(true)
+            }
+            .padding(14)
+            .frame(minHeight: 44)
+            .dsCard(radius: 20)
+        }
+        .buttonStyle(.dsPressCard)
+        .accessibilityHint(Text("home.teleprompter.hint", bundle: .module))
+        .padding(.horizontal, 22)
+        .padding(.top, 12)
     }
 
     // MARK: - Recent
@@ -271,7 +314,7 @@ public struct HomeScreen: View {
 
     private func durationChip(_ text: String) -> some View {
         Text(text)
-            .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
+            .dsFont(.mono, .medium, 10, letterSpacing: 0.1)
             .foregroundStyle(DS.Palette.ink)
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
@@ -291,6 +334,7 @@ public struct HomeScreen: View {
             Button(action: onOpenWorkflow) {
                 HStack(spacing: 13) {
                     Text("PR")
+                        .accessibilityHidden(true)
                         .dsFont(.archivo, .bold, 13)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(width: 34, height: 34)
@@ -305,14 +349,15 @@ public struct HomeScreen: View {
                             .foregroundStyle(DS.Palette.ink)
                         Text("home.workflow.meta", bundle: .module)
                             .dsFont(.mono, .medium, 11)
-                            .foregroundStyle(DS.Palette.ink(0.4))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                     }
 
                     Spacer(minLength: 0)
 
                     Text("›")
                         .font(.system(size: 17))
-                        .foregroundStyle(DS.Palette.ink(0.3))
+                        .foregroundStyle(DS.Palette.ink(0.52))
+                        .accessibilityHidden(true)
                 }
                 .padding(15)
                 .dsCard(radius: 18)
@@ -326,7 +371,7 @@ public struct HomeScreen: View {
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .dsFont(.sans, .semibold, 13, letterSpacing: 0.12)
-            .foregroundStyle(DS.Palette.ink(0.45))
+            .foregroundStyle(DS.Palette.ink(0.56))
     }
 }
 

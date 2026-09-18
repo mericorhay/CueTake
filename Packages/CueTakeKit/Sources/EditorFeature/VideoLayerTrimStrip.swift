@@ -75,11 +75,11 @@ struct FootageTrimStrip: View {
                     .contentTransition(.numericText())
                 Text(verbatim: "· " + String(format: "%.1f s", to - from))
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 Text(verbatim: MediaTime(seconds: fileLength).timecode)
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.ink(0.35))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.52))
             }
         }
         .task(id: recordingID) { await model.loadRecordingFrames(recordingID) }

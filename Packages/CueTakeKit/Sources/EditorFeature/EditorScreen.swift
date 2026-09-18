@@ -567,6 +567,7 @@ public struct EditorScreen: View {
                 showsTools = true
             } label: {
                 Image(systemName: "square.grid.2x2")
+                    .dsActionName("square.grid.2x2")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(DS.Palette.ink(0.75))
                     .frame(width: 30, height: 30)
@@ -627,8 +628,8 @@ public struct EditorScreen: View {
                                     .dsFont(.sans, .semibold, 13)
                                     .foregroundStyle(DS.Palette.ink)
                                 Text(verbatim: problem)
-                                    .dsFont(.mono, .medium, 9)
-                                    .foregroundStyle(DS.Palette.ink(0.45))
+                                    .dsFont(.mono, .medium, 10)
+                                    .foregroundStyle(DS.Palette.ink(0.56))
                                     .lineLimit(3)
                                     .multilineTextAlignment(.center)
                                 Button {
@@ -785,7 +786,7 @@ public struct EditorScreen: View {
     /// 44-point hit area, so the reclaimed space never becomes an accuracy tax.
     private var timelineHeader: some View {
         HStack(spacing: 4) {
-            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
 
             Spacer(minLength: 8)
 
@@ -812,7 +813,7 @@ public struct EditorScreen: View {
                     Text(model.playheadLabel)
                 }
                 .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.42))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .monospacedDigit()
                 .contentTransition(.numericText())
                 .lineLimit(1)
@@ -1113,7 +1114,7 @@ public struct EditorScreen: View {
 
                 Text(model.rangeLabel(at: index))
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.35))
+                    .foregroundStyle(DS.Palette.ink(0.52))
 
                 Spacer(minLength: 0)
 
@@ -1122,7 +1123,7 @@ public struct EditorScreen: View {
                 } label: {
                     Text("✕")
                         .font(.system(size: 16))
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 .buttonStyle(.dsPress)
             }

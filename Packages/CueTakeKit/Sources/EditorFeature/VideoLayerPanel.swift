@@ -24,7 +24,7 @@ struct VideoLayerPanel: View {
                     stage
                     if let layer {
                         VStack(alignment: .leading, spacing: 8) {
-                            DSKicker(String(localized: "editor.video.part", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                            DSKicker(String(localized: "editor.video.part", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                             VideoLayerTrimStrip(model: model, layer: layer)
                         }
                         actions(layer)
@@ -111,7 +111,7 @@ struct VideoLayerPanel: View {
     private var stage: some View {
         if !model.project.videoLayers.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                DSKicker(String(localized: "editor.video.stage", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "editor.video.stage", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 ScrollView(.horizontal) {
                     HStack(spacing: 7) {
                         piece(
@@ -166,10 +166,10 @@ struct VideoLayerPanel: View {
         let current = model.project.mainVideoPlacement.bounded
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Text("editor.video.placeOnPicture", bundle: .module)
                     .dsFont(.sans, .regular, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             slider("editor.video.size", symbol: "square.resize", value: current.width, range: 0.1...1) { value in
                 model.setMainVideoPlacement(current.resized(width: value))
@@ -363,7 +363,7 @@ struct VideoLayerPanel: View {
         case .idle:
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(DS.Palette.ink(0.35))
+                .foregroundStyle(DS.Palette.ink(0.52))
                 .frame(width: 28, height: 28)
         }
     }
@@ -372,10 +372,10 @@ struct VideoLayerPanel: View {
         let current = layer.placement(at: model.playhead)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Text("editor.video.placeOnPicture", bundle: .module)
                     .dsFont(.sans, .regular, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             HStack(spacing: 7) {
                 layoutButton(.pictureInPicture, "rectangle.inset.filled")
@@ -402,7 +402,7 @@ struct VideoLayerPanel: View {
         let key = layer.chroma
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                DSKicker(String(localized: "editor.video.key", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "editor.video.key", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 if key != nil {
                     Button {

@@ -70,13 +70,14 @@ struct ConverterSheet: View {
                 DSKicker(String(localized: "converter.title", bundle: .module))
                 Text("converter.note", bundle: .module)
                     .dsFont(.sans, .regular, 12, lineHeight: 1.4)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             Spacer(minLength: 0)
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
+                    .dsActionName("xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)
@@ -105,7 +106,7 @@ struct ConverterSheet: View {
 
                     Text("converter.pick.note", bundle: .module)
                         .dsFont(.sans, .regular, 11)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                 }
 
                 Spacer(minLength: 0)
@@ -121,8 +122,8 @@ struct ConverterSheet: View {
     private func formats(for source: URL) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("converter.to", bundle: .module)
-                .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.52))
 
             HStack(spacing: 6) {
                 ForEach(targets, id: \.self) { option in
@@ -149,7 +150,7 @@ struct ConverterSheet: View {
             if source.pathExtension.lowercased() == "jpeg", target == .jpg {
                 Text("converter.jpegNote", bundle: .module)
                     .dsFont(.sans, .regular, 11, lineHeight: 1.4)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
         }
         .padding(.top, 18)

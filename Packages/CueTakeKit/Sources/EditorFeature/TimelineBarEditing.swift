@@ -101,7 +101,7 @@ struct TimelineBarEditing: ViewModifier {
             Text(verbatim: MediaTime(seconds: time).preciseTimecode)
                 .dsFont(.mono, .medium, 11)
             Text(verbatim: String(format: "%.2f s", max(0, end - start)))
-                .dsFont(.mono, .medium, 8)
+                .dsFont(.mono, .medium, 10)
                 .opacity(0.6)
         }
         .foregroundStyle(DS.Palette.inkInverse)

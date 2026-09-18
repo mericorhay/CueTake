@@ -256,6 +256,7 @@ struct AssistantSessionsView: View {
                         model.showsSessions = false
                     } label: {
                         Image(systemName: "xmark")
+                            .dsActionName("xmark")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(DS.Palette.ink(0.8))
                             .frame(width: 36, height: 36)
@@ -284,7 +285,7 @@ struct AssistantSessionsView: View {
                 if model.sessions.isEmpty {
                     Text("assistant.sessions.empty", bundle: .module)
                         .dsFont(.sans, .regular, 13)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .padding(18)
                     Spacer(minLength: 0)
                 } else {
@@ -349,8 +350,8 @@ struct AssistantSessionsView: View {
                         .lineLimit(1)
                     Spacer(minLength: 0)
                     Text(session.updatedAt, format: .relative(presentation: .named))
-                        .dsFont(.mono, .medium, 9)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.52))
                 }
                 Text(AssistantDestination.parse(session.preview).text)
                     .dsFont(.sans, .regular, 12)

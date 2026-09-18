@@ -28,7 +28,7 @@ struct EffectPanelShell<Content: View>: View {
                         .foregroundStyle(DS.Palette.ink)
                     Text(verbatim: "\(MediaTime(seconds: effect.start.seconds).preciseTimecode) – \(MediaTime(seconds: effect.end).preciseTimecode)")
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 Spacer(minLength: 0)
@@ -122,7 +122,7 @@ struct EffectSlider: View {
             HStack {
                 Image(systemName: symbol)
                     .font(.system(size: 11))
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(String(localized: key, bundle: .module))
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(DS.Palette.ink(0.6))
@@ -235,7 +235,7 @@ struct FilterInspector: View {
                         .truncationMode(.middle)
                     Text("editor.filter.lut.on \(table.size)", bundle: .module)
                         .dsFont(.sans, .regular, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 Spacer(minLength: 0)
                 Button {
@@ -390,7 +390,7 @@ struct SoundInspector: View {
                 )
                 Text("editor.sound.note", bundle: .module)
                     .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
         }
     }

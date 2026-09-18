@@ -90,6 +90,7 @@ struct ChangesSheet: View {
             Spacer(minLength: 0)
             Button(action: onClose) {
                 Image(systemName: "xmark")
+                    .dsActionName("xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)
@@ -198,7 +199,7 @@ struct ChangesSheet: View {
                 if model.changes.isEmpty {
                     Text("editor.changes.empty", bundle: .module)
                         .dsFont(.sans, .regular, 12)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 26)
                 } else {
@@ -219,8 +220,8 @@ struct ChangesSheet: View {
                             Spacer(minLength: 0)
 
                             Text(change.at.formatted(date: .omitted, time: .standard))
-                                .dsFont(.mono, .medium, 9)
-                                .foregroundStyle(DS.Palette.ink(0.3))
+                                .dsFont(.mono, .medium, 10)
+                                .foregroundStyle(DS.Palette.ink(0.52))
 
                             // Any edit, not just the newest: the ones after it stay.
                             if model.canUndoOnly(change.id) {

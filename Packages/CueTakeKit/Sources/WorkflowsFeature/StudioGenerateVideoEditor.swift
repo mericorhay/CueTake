@@ -60,7 +60,7 @@ struct StudioGenerateVideoEditor: View {
                             Text(verbatim: item.title)
                                 .dsFont(.sans, .semibold, 12)
                             Text(verbatim: item.provider.displayName)
-                                .dsFont(.mono, .medium, 8)
+                                .dsFont(.mono, .medium, 10)
                                 .opacity(0.6)
                         }
                         .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.75))
@@ -111,7 +111,7 @@ struct StudioGenerateVideoEditor: View {
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(DS.Palette.hairline(0.06)))
             Text("studio.generate.modelIDNote", bundle: .module)
                 .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.42))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
@@ -131,7 +131,7 @@ struct StudioGenerateVideoEditor: View {
                 HStack(alignment: .top, spacing: 8) {
                     Text(verbatim: "\(index + 1)")
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .frame(width: 18, alignment: .trailing)
                         .padding(.top, 2)
                     Text(verbatim: prompt)
@@ -156,7 +156,7 @@ struct StudioGenerateVideoEditor: View {
             if options.prompts.isEmpty {
                 Text("studio.generate.promptsFromSections", bundle: .module)
                     .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.42))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             HStack(alignment: .bottom, spacing: 6) {
@@ -170,6 +170,7 @@ struct StudioGenerateVideoEditor: View {
 
                 Button(action: addPrompts) {
                     Image(systemName: "plus")
+                        .dsActionName("plus")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(width: 32, height: 32)
@@ -282,8 +283,8 @@ struct StudioGenerateVideoEditor: View {
 
     private func label(_ key: String.LocalizationValue) -> some View {
         Text(String(localized: key, bundle: .module))
-            .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-            .foregroundStyle(DS.Palette.ink(0.38))
+            .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+            .foregroundStyle(DS.Palette.ink(0.52))
     }
 
     private func chips<Value: Hashable>(

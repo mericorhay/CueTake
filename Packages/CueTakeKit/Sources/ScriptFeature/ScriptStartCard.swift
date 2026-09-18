@@ -118,7 +118,7 @@ struct ScriptStartCard: View {
             HStack(spacing: 8) {
                 Text("script.paste.hint", bundle: .module)
                     .dsFont(.sans, .regular, 12, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 if let library, !pastedIsEmpty {
                     Button {
@@ -186,7 +186,7 @@ struct ScriptStartCard: View {
                     Spacer(minLength: 0)
                     Text(String(localized: "script.write.words \(ScriptBudget.maxWords(seconds: Double(seconds), localeIdentifier: localeIdentifier))", bundle: .module))
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 HStack(spacing: 6) {
@@ -323,7 +323,7 @@ struct ScriptStartCard: View {
 
     private func savedRow(_ library: ScriptLibraryStore) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "script.library.title", bundle: .module), size: 9, color: DS.Palette.ink(0.4))
+            DSKicker(String(localized: "script.library.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(library.scripts) { saved in
@@ -339,7 +339,7 @@ struct ScriptStartCard: View {
                                     .lineLimit(1)
                                 Text(String(localized: "script.library.words \(ScriptText.words(in: saved.text).count)", bundle: .module))
                                     .dsFont(.mono, .medium, 10)
-                                    .foregroundStyle(DS.Palette.ink(0.4))
+                                    .foregroundStyle(DS.Palette.ink(0.56))
                             }
                             .frame(width: 140, alignment: .leading)
                             .padding(.horizontal, 12)

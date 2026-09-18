@@ -201,7 +201,7 @@ private struct GenerationTileView: View {
         }
         .overlay(alignment: .topLeading) {
             Text(verbatim: "\(tile.id + 1)")
-                .dsFont(.mono, .semibold, 9)
+                .dsFont(.mono, .semibold, 10)
                 .foregroundStyle(tile.phase == .done ? DS.Palette.ink : DS.Palette.ink(0.55))
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)

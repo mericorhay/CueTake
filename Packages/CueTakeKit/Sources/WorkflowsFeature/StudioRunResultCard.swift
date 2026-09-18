@@ -30,7 +30,7 @@ struct StudioRunResultCard: View {
                         .foregroundStyle(DS.Palette.ink)
                     Text("studio.run.result \(summary.completed) \(summary.skipped)", bundle: .module)
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
                 Spacer(minLength: 0)
                 Button(action: onDismiss) {

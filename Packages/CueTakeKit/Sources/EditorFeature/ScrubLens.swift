@@ -30,8 +30,8 @@ struct ScrubLens: View {
                 .monospacedDigit()
 
             Text(Self.frameLabel(for: model))
-                .dsFont(.mono, .medium, 9)
-                .foregroundStyle(DS.Palette.ink(0.42))
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
         .frame(width: Self.width, height: Self.height)
         .background {

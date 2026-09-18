@@ -159,7 +159,8 @@ struct RootView: View {
                 onCreate: { model.go(to: .create) },
                 onOpenProject: { item in Task { await model.openProject(id: item.id) } },
                 onOpenAllProjects: { model.go(to: .projects) },
-                onOpenWorkflow: { model.go(to: .workflows) }
+                onOpenWorkflow: { model.go(to: .workflows) },
+                onTeleprompter: { model.startTeleprompter() }
             )
 
         case .create:

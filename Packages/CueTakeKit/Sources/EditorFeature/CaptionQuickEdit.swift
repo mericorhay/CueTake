@@ -73,7 +73,7 @@ struct CaptionQuickPanel: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text("editor.captionQuick.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 Button(action: onClose) {
@@ -203,8 +203,8 @@ struct CaptionQuickPanel: View {
             .buttonRepeatBehavior(.enabled)
             VStack(spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: value)
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -213,6 +213,7 @@ struct CaptionQuickPanel: View {
             .frame(maxWidth: .infinity)
             Button { withAnimation(DS.Motion.snap) { step(1) } } label: {
                 Image(systemName: "plus")
+                    .dsActionName("plus")
                     .font(.system(size: 12, weight: .bold))
                     .frame(width: 38, height: 38)
             }

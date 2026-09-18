@@ -120,7 +120,7 @@ struct CleanupPanel: View {
                                 .dsFont(.sans, .medium, 12)
                             Text(verbatim: "\(on)/\(items.count)")
                                 .dsFont(.mono, .medium, 10)
-                                .foregroundStyle(DS.Palette.ink(0.45))
+                                .foregroundStyle(DS.Palette.ink(0.56))
                         }
                         .foregroundStyle(on > 0 ? DS.Palette.ink : DS.Palette.ink(0.45))
                         .padding(.horizontal, 10)

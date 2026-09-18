@@ -86,7 +86,7 @@ struct SegmentInspector: View {
                 )
             )
             .dsFont(.mono, .medium, 10)
-            .foregroundStyle(DS.Palette.ink(0.35))
+            .foregroundStyle(DS.Palette.ink(0.52))
         }
     }
 
@@ -152,7 +152,7 @@ struct SegmentInspector: View {
                         if cue.isUserEdited {
                             Image(systemName: "pencil")
                                 .font(.system(size: 9))
-                                .foregroundStyle(DS.Palette.ink(0.3))
+                                .foregroundStyle(DS.Palette.ink(0.52))
                         }
                     }
                     .padding(.horizontal, 10)
@@ -221,7 +221,7 @@ struct SegmentInspector: View {
             if let note = SegmentInspector.note(for: segment.playback) {
                 Text(String(localized: note, bundle: .module))
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .transition(.opacity)
             }
         }
@@ -285,7 +285,7 @@ struct SegmentInspector: View {
                                     .foregroundStyle(DS.Palette.ink)
                                 Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
                                     .dsFont(.sans, .regular, 10)
-                                    .foregroundStyle(DS.Palette.ink(0.35))
+                                    .foregroundStyle(DS.Palette.ink(0.52))
                             }
 
                             Spacer(minLength: 0)
@@ -303,8 +303,8 @@ struct SegmentInspector: View {
                                 }
                             } else {
                                 Text(String(localized: SegmentInspector.statusLabel(take.status), bundle: .module))
-                                    .dsFont(.mono, .medium, 9)
-                                    .foregroundStyle(DS.Palette.ink(0.4))
+                                    .dsFont(.mono, .medium, 10)
+                                    .foregroundStyle(DS.Palette.ink(0.56))
                             }
                         }
                         .padding(.horizontal, 11)
@@ -343,7 +343,7 @@ struct SegmentInspector: View {
                 }
                 Text("editor.style.framing.note", bundle: .module)
                     .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -441,13 +441,13 @@ struct SegmentInspector: View {
                             .foregroundStyle(DS.Palette.ink)
                         Text(String(localized: "editor.style.analyzeStructureHint", bundle: .module))
                             .dsFont(.sans, .regular, 10)
-                            .foregroundStyle(DS.Palette.ink(0.42))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                             .lineLimit(2)
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                 }
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.05)))
@@ -469,7 +469,7 @@ struct SegmentInspector: View {
                         if let candidate = model.project.segments.first(where: { $0.id == suggestion.segmentID }) {
                             HStack(spacing: 7) {
                                 Text(suggestion.role.displayLabel)
-                                    .dsFont(.mono, .medium, 9)
+                                    .dsFont(.mono, .medium, 10)
                                     .foregroundStyle(DS.Palette.accent)
                                 Text(candidate.script.isEmpty ? candidate.title : candidate.script)
                                     .dsFont(.sans, .regular, 11)
@@ -477,8 +477,8 @@ struct SegmentInspector: View {
                                     .lineLimit(1)
                                 Spacer(minLength: 0)
                                 Text(suggestion.confidence.formatted(.percent.precision(.fractionLength(0))))
-                                    .dsFont(.mono, .medium, 9)
-                                    .foregroundStyle(DS.Palette.ink(0.38))
+                                    .dsFont(.mono, .medium, 10)
+                                    .foregroundStyle(DS.Palette.ink(0.52))
                             }
                         }
                     }
@@ -520,8 +520,8 @@ struct SegmentInspector: View {
 
     private func label(_ key: String.LocalizationValue) -> some View {
         Text(String(localized: key, bundle: .module))
-            .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-            .foregroundStyle(DS.Palette.ink(0.38))
+            .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+            .foregroundStyle(DS.Palette.ink(0.52))
     }
 
     private func empty(
@@ -540,7 +540,7 @@ struct SegmentInspector: View {
 
             Text(String(localized: hint, bundle: .module))
                 .dsFont(.sans, .regular, 11, lineHeight: 1.4)
-                .foregroundStyle(DS.Palette.ink(0.35))
+                .foregroundStyle(DS.Palette.ink(0.52))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(13)

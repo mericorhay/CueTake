@@ -32,7 +32,7 @@ public struct ProjectsScreen: View {
 
                 Text(LocalizedStringKey(isSelecting ? "projects.select.hintActive" : "projects.select.hint"), bundle: .module)
                     .dsFont(.sans, .regular, 13)
-                    .foregroundStyle(DS.Palette.ink(0.42))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .padding(.top, 6)
 
                 if projects.isEmpty {
@@ -199,7 +199,7 @@ public struct ProjectsScreen: View {
                     .transition(.scale.combined(with: .opacity))
             } else {
                 Text(project.duration)
-                    .dsFont(.mono, .medium, 9)
+                    .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)

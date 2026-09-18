@@ -159,7 +159,7 @@ public struct TeleprompterPanel: View {
                 model.togglePause()
             } label: {
                 Text(model.isPaused ? "▶" : "❚❚")
-                    .dsFont(.sans, .semibold, 9)
+                    .dsFont(.sans, .semibold, 10)
                     .foregroundStyle(model.isPaused ? DS.Palette.inkInverse : DS.Palette.ink)
                     .contentTransition(.opacity)
                     .animation(DS.Motion.snap, value: model.isPaused)
@@ -251,7 +251,7 @@ public struct TeleprompterPanel: View {
             HStack(spacing: 6) {
                 if let remaining = model.remaining {
                     Text(ScriptTiming.label(remaining))
-                        .dsFont(.mono, .medium, 9, letterSpacing: 0.04)
+                        .dsFont(.mono, .medium, 10, letterSpacing: 0.04)
                         .foregroundStyle(DS.Palette.ink(0.55))
                         .contentTransition(.numericText())
                 }
@@ -261,7 +261,7 @@ public struct TeleprompterPanel: View {
                             .fill(Self.paceColor(verdict))
                             .frame(width: 5, height: 5)
                         Text(Self.paceText(verdict, pace: pace))
-                            .dsFont(.mono, .medium, 9, letterSpacing: 0.04)
+                            .dsFont(.mono, .medium, 10, letterSpacing: 0.04)
                     }
                     .foregroundStyle(verdict == .good ? DS.Palette.ink(0.55) : Self.paceColor(verdict))
                     .transition(.opacity)

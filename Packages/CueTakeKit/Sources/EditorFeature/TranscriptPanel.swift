@@ -72,7 +72,7 @@ struct TranscriptPanel: View {
                     )
                 )
                 .dsFont(.sans, .regular, 11)
-                .foregroundStyle(DS.Palette.ink(0.35))
+                .foregroundStyle(DS.Palette.ink(0.52))
             }
 
             Spacer(minLength: 0)
@@ -89,6 +89,7 @@ struct TranscriptPanel: View {
                 }
             } label: {
                 Image(systemName: cleaning ? "chevron.left" : "xmark")
+                    .dsActionName(cleaning ? "chevron.left" : "xmark")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 30, height: 30)

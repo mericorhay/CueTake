@@ -51,10 +51,37 @@ extension DS {
         custom(.mono, .medium, size)
     }
 
+    /// Follows the reader's text size (Dynamic Type) from the size the design set. The root view
+    /// caps how far, so a layout drawn for the default size still holds together.
     public static func custom(_ family: FontFamily, _ weight: FontWeight, _ size: CGFloat) -> Font {
+        FontRegistry.ensureRegistered()
+        return .custom(fontName(family, weight), size: size, relativeTo: textStyle(for: size))
+    }
+
+    /// A face at exactly this size, whatever the reader's text size: for type whose size is itself
+    /// a setting, like the prompter's.
+    public static func fixed(_ family: FontFamily, _ weight: FontWeight, _ size: CGFloat) -> Font {
         FontRegistry.ensureRegistered()
         return .custom(fontName(family, weight), fixedSize: size)
     }
+
+    /// The system style a size grows with, so small labels and large titles scale as the system's own do.
+    static func textStyle(for size: CGFloat) -> Font.TextStyle {
+        switch size {
+        case ..<11.5: .caption2
+        case ..<12.5: .caption
+        case ..<13.5: .footnote
+        case ..<15.5: .subheadline
+        case ..<17.5: .body
+        case ..<20.5: .title3
+        case ..<24.5: .title2
+        case ..<30: .title
+        default: .largeTitle
+        }
+    }
+
+    /// How far the app's type follows the reader's text size.
+    public static let largestTextSize = DynamicTypeSize.xxLarge
 
     static func uiFont(_ family: FontFamily, _ weight: FontWeight, _ size: CGFloat) -> UIFont {
         FontRegistry.ensureRegistered()
@@ -99,12 +126,13 @@ extension View {
         _ weight: DS.FontWeight,
         _ size: CGFloat,
         lineHeight: CGFloat? = nil,
-        letterSpacing: CGFloat = 0
+        letterSpacing: CGFloat = 0,
+        fixed: Bool = false
     ) -> some View {
         let natural = DS.uiFont(family, weight, size).lineHeight
         let extra = lineHeight.map { max(0, $0 * size - natural) } ?? 0
         return self
-            .font(DS.custom(family, weight, size))
+            .font(fixed ? DS.fixed(family, weight, size) : DS.custom(family, weight, size))
             .tracking(letterSpacing * size)
             .lineSpacing(extra)
     }

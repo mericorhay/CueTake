@@ -75,7 +75,7 @@ struct TeamHome: View {
 
                 Text("team.point.private", bundle: .module)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
             .padding(.horizontal, 22)
             .padding(.top, 24)

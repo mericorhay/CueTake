@@ -299,8 +299,8 @@ public struct ScriptScreen: View {
 
             HStack {
                 Text("script.rewriteAs", bundle: .module)
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.14)
-                    .foregroundStyle(DS.Palette.ink(0.3))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.14)
+                    .foregroundStyle(DS.Palette.ink(0.52))
                 Spacer(minLength: 0)
                 if beforeRewrite[segment.id] != nil, working == nil {
                     Button {
@@ -329,7 +329,7 @@ public struct ScriptScreen: View {
             } else {
                 Text("script.rewrite.unavailable", bundle: .module)
                     .dsFont(.sans, .regular, 12, lineHeight: 1.4)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
         }
     }

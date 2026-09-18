@@ -55,7 +55,7 @@ struct CameraMotionPanel: View {
                 HStack(spacing: 6) {
                     Text("editor.zoom.feel", bundle: .module)
                         .dsFont(.sans, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.46))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                     Spacer(minLength: 4)
                     ForEach(CameraMotionRecipe.Feel.allCases, id: \.self) { feel in
                         let active = recipe.feel == feel
@@ -78,7 +78,7 @@ struct CameraMotionPanel: View {
 
             HStack(spacing: 9) {
                 Image(systemName: "plus.magnifyingglass")
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Slider(
                     value: Binding(
                         get: { recipe.amount },
@@ -239,7 +239,7 @@ struct CameraPanelHeader: View {
                 if let range {
                     Text(verbatim: "\(MediaTime(seconds: range.lowerBound).preciseTimecode) – \(MediaTime(seconds: range.upperBound).preciseTimecode)")
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
             }
@@ -269,6 +269,7 @@ struct CameraPanelDelete: View {
                 title
             } icon: {
                 Image(systemName: "trash")
+                    .dsActionName("trash")
             }
             .dsFont(.sans, .semibold, 12)
             .foregroundStyle(DS.Palette.accentWarm)

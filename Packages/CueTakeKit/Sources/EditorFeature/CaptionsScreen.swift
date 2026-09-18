@@ -398,10 +398,10 @@ public struct CaptionsScreen: View {
             }
 
             HStack(spacing: 8) {
-                DSKicker(String(localized: "captions.position", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                DSKicker(String(localized: "captions.position", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                 Text("captions.drag.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
@@ -421,7 +421,7 @@ public struct CaptionsScreen: View {
                         .dsFont(.sans, .semibold, 13)
                     if isCustomized {
                         Text("captions.tune.customized", bundle: .module)
-                            .dsFont(.mono, .medium, 8)
+                            .dsFont(.mono, .medium, 10)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
@@ -431,7 +431,7 @@ public struct CaptionsScreen: View {
                     Spacer(minLength: 0)
                     Text("captions.tune.allClips", bundle: .module)
                         .dsFont(.sans, .regular, 11)
-                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                     Image(systemName: "chevron.down")
                         .font(.system(size: 11, weight: .semibold))
                         .rotationEffect(.degrees(showsTuning ? 180 : 0))
@@ -468,6 +468,7 @@ public struct CaptionsScreen: View {
             report()
         } label: {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
                 .frame(width: 30, height: 30)
@@ -536,7 +537,7 @@ public struct CaptionsScreen: View {
         return VStack(alignment: .leading, spacing: 8) {
             if !all.isEmpty {
                 HStack {
-                    DSKicker(String(localized: "captions.count \(all.count)", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                    DSKicker(String(localized: "captions.count \(all.count)", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                     Spacer(minLength: 0)
                     if fastCount > 0 {
                         Label {
@@ -544,13 +545,13 @@ public struct CaptionsScreen: View {
                         } icon: {
                             Image(systemName: "hare.fill")
                         }
-                        .dsFont(.mono, .medium, 9)
+                        .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.accent)
                         .help(Text("captions.tooFast.hint", bundle: .module))
                     }
                     if edited > 0 {
                         Text("captions.editedCount \(edited)", bundle: .module)
-                            .dsFont(.mono, .medium, 9)
+                            .dsFont(.mono, .medium, 10)
                             .foregroundStyle(DS.Palette.lime.opacity(0.8))
                             .contentTransition(.numericText())
                     }
@@ -593,7 +594,7 @@ public struct CaptionsScreen: View {
 
                 if row.cue.isUserEdited {
                     Text("captions.edited", bundle: .module)
-                        .dsFont(.mono, .medium, 8)
+                        .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 2)
@@ -605,7 +606,7 @@ public struct CaptionsScreen: View {
 
                 Text(verbatim: String(format: "%.1fs", length))
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.3))
+                    .foregroundStyle(DS.Palette.ink(0.52))
                     .contentTransition(.numericText())
             }
 
@@ -667,8 +668,8 @@ public struct CaptionsScreen: View {
 
             VStack(spacing: 1) {
                 Text(title)
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: String(format: "%.1f s", value))
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -686,6 +687,7 @@ public struct CaptionsScreen: View {
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: 34, height: 34)
@@ -962,7 +964,7 @@ struct CaptionTuningPanel: View {
 
     private func row<Trailing: View>(_ key: String.LocalizationValue, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack {
-            DSKicker(String(localized: key, bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             trailing()
         }
@@ -998,6 +1000,7 @@ struct CaptionTuningPanel: View {
                     onCommit()
                 } label: {
                     Image(systemName: "nosign")
+                        .dsActionName("nosign")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(DS.Palette.ink(0.6))
                         .frame(width: 30, height: 30)
@@ -1041,7 +1044,7 @@ struct CaptionWindowControl: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                DSKicker(String(localized: "captions.window", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "captions.window", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 HStack(spacing: 4) {
                     choice("captions.window.all", isOn: window == nil) {
@@ -1096,8 +1099,8 @@ struct CaptionWindowControl: View {
             button("minus") { onStep(-0.5) }
             VStack(spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -1113,6 +1116,7 @@ struct CaptionWindowControl: View {
     private func button(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: 32, height: 32)

@@ -101,7 +101,7 @@ struct StylePackRow: View {
                                     .dsFont(.sans, .semibold, 12)
                                     .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink)
                                 Text(verbatim: packDetail(pack))
-                                    .dsFont(.sans, .regular, 9)
+                                    .dsFont(.sans, .regular, 10)
                                     .foregroundStyle(isOn ? DS.Palette.inkInverse.opacity(0.7) : DS.Palette.ink(0.45))
                                     .lineLimit(1)
                             }
@@ -142,13 +142,13 @@ struct CaptionMotionTuning: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                DSKicker(String(localized: "captions.tune.entrance", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "captions.tune.entrance", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 chips(CaptionEntrance.allCases, selected: look.resolvedEntrance, label: CaptionStyleCatalog.label) { value in
                     look.entrance = value
                 }
             }
             VStack(alignment: .leading, spacing: 6) {
-                DSKicker(String(localized: "captions.tune.emphasis", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                DSKicker(String(localized: "captions.tune.emphasis", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 chips(CaptionEmphasis.allCases, selected: look.resolvedEmphasis, label: CaptionStyleCatalog.label) { value in
                     look.emphasis = value
                     if value != .none, look.highlightColor == nil {

@@ -157,7 +157,7 @@ public struct SettingsScreen: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text("settings.profile.plan", bundle: .module)
                     .dsFont(.mono, .medium, 11)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
             }
 
             Spacer(minLength: 0)
@@ -226,7 +226,7 @@ public struct SettingsScreen: View {
 
             Text(value)
                 .dsFont(.sans, .regular, 13)
-                .foregroundStyle(DS.Palette.ink(0.38))
+                .foregroundStyle(DS.Palette.ink(0.52))
                 .lineLimit(1)
 
             if chevron {

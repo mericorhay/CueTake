@@ -198,7 +198,7 @@ public struct ExportScreen: View {
 
                     Text(verbatim: "\(Int(progress * 100))%")
                         .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
                 }
                 .padding(.top, 14)
@@ -216,8 +216,8 @@ public struct ExportScreen: View {
                     .foregroundStyle(DS.Palette.accent)
                     if let detail = model.failureDetail {
                         Text(verbatim: detail)
-                            .dsFont(.mono, .medium, 9)
-                            .foregroundStyle(DS.Palette.ink(0.4))
+                            .dsFont(.mono, .medium, 10)
+                            .foregroundStyle(DS.Palette.ink(0.56))
                             .lineLimit(3)
                             .textSelection(.enabled)
                     }
@@ -257,11 +257,11 @@ public struct ExportScreen: View {
     private var formatPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                DSKicker(String(localized: "export.format", bundle: .module), size: 9, color: DS.Palette.ink(0.38))
+                DSKicker(String(localized: "export.format", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                 Spacer(minLength: 0)
                 Text(Self.sizeEstimate(for: format))
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .contentTransition(.numericText())
             }
 
@@ -357,7 +357,7 @@ public struct ExportScreen: View {
                     .foregroundStyle(ink)
                 Text(stage.note)
                     .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.3))
+                    .foregroundStyle(DS.Palette.ink(0.52))
             }
 
             Spacer(minLength: 0)
@@ -389,7 +389,7 @@ public struct ExportScreen: View {
             if let summary = model.summary {
                 Text(verbatim: summary)
                     .dsFont(.mono, .medium, 11)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .padding(.bottom, model.droppedCaptions ? 6 : 18)
             }
             if model.droppedCaptions {

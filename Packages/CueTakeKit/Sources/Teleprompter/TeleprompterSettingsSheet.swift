@@ -20,7 +20,7 @@ public struct TeleprompterSettingsSheet: View {
 
             Text("teleprompter.hint", bundle: .module)
                 .dsFont(.sans, .regular, 10)
-                .foregroundStyle(DS.Palette.ink(0.3))
+                .foregroundStyle(DS.Palette.ink(0.52))
                 .padding(.top, 8)
         }
         .padding(.horizontal, 17)
@@ -43,7 +43,7 @@ public struct TeleprompterSettingsSheet: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            DSKicker(String(localized: "teleprompter.title", bundle: .module), size: 9, color: DS.Palette.ink(0.45))
+            DSKicker(String(localized: "teleprompter.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             Button {
                 model.isSettingsOpen = false

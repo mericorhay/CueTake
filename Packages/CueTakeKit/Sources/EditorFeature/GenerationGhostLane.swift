@@ -54,7 +54,7 @@ struct GenerationGhostLane: View {
                     .contentTransition(.symbolEffect(.replace))
                 if job.seconds * scale > 70 {
                     Text(verbatim: job.prompt)
-                        .dsFont(.sans, .semibold, 9)
+                        .dsFont(.sans, .semibold, 10)
                         .lineLimit(1)
                 }
             }

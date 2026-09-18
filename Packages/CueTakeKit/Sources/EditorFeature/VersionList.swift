@@ -21,7 +21,7 @@ struct VersionList: View {
                     if tools.versions.isEmpty {
                         Text("editor.versions.empty", bundle: .module)
                             .dsFont(.sans, .regular, 12)
-                            .foregroundStyle(DS.Palette.ink(0.4))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 20)
                     }
@@ -83,8 +83,8 @@ struct VersionList: View {
                     .foregroundStyle(manual ? DS.Palette.ink : DS.Palette.ink(0.65))
                     .lineLimit(1)
                 Text(verbatim: detail(version))
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.ink(0.35))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.52))
             }
 
             Spacer(minLength: 0)

@@ -65,7 +65,7 @@ struct CameraMotionLane: View {
                 .font(.system(size: 9, weight: .bold))
             if move.duration * scale > 72 {
                 Text(title(move.kind), bundle: .module)
-                    .dsFont(.sans, .semibold, 9)
+                    .dsFont(.sans, .semibold, 10)
                     .lineLimit(1)
             }
         }

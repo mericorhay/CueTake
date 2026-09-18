@@ -29,15 +29,15 @@ struct TimingReadout: View {
                 Image(systemName: "hand.point.up.left")
             }
             .dsFont(.sans, .regular, 10)
-            .foregroundStyle(DS.Palette.ink(0.45))
+            .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
     private func value(_ key: String.LocalizationValue, _ seconds: Double, isLength: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(String(localized: key, bundle: .module))
-                .dsFont(.mono, .medium, 8)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .dsFont(.mono, .medium, 10)
+                .foregroundStyle(DS.Palette.ink(0.56))
             Text(verbatim: isLength ? String(format: "%.2f s", max(0, seconds)) : MediaTime(seconds: seconds).preciseTimecode)
                 .dsFont(.mono, .medium, 13)
                 .foregroundStyle(DS.Palette.ink)

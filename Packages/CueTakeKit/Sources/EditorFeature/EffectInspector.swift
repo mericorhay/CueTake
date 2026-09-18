@@ -59,7 +59,7 @@ struct EffectInspector: View {
                     .foregroundStyle(DS.Palette.ink)
                 Text(verbatim: "\(MediaTime(seconds: effect.start.seconds).preciseTimecode) – \(MediaTime(seconds: effect.end).preciseTimecode) · \(String(format: "%.1f", effect.duration.seconds)) s")
                     .dsFont(.mono, .medium, 10)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .contentTransition(.numericText())
             }
             Spacer(minLength: 0)
@@ -79,7 +79,7 @@ struct EffectInspector: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TimingReadout(start: effect.start.seconds, end: effect.end)
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
@@ -119,7 +119,7 @@ struct EffectInspector: View {
 
     private var cutouts: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.effect.cutout", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.effect.cutout", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             HStack(spacing: 6) {
                 ForEach(Cutout.allCases, id: \.self) { cutout in
                     let isOn = settings.cutout == cutout
@@ -151,7 +151,7 @@ struct EffectInspector: View {
             }
             Text(Self.note(settings.cutout))
                 .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .contentTransition(.opacity)
         }
     }
@@ -299,7 +299,7 @@ struct EffectInspector: View {
 
     private var looks: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.effect.look", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            DSKicker(String(localized: "editor.effect.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(ToolDock.backgroundChoices, id: \.self) { style in
@@ -424,7 +424,7 @@ struct EffectInspector: View {
                                 .foregroundStyle(DS.Palette.ink)
                             Text("editor.effect.fineEdges.note", bundle: .module)
                                 .dsFont(.sans, .regular, 10)
-                                .foregroundStyle(DS.Palette.ink(0.45))
+                                .foregroundStyle(DS.Palette.ink(0.56))
                         }
                         Spacer(minLength: 0)
                     }
@@ -455,7 +455,7 @@ struct EffectInspector: View {
 
             Text("editor.background.note", bundle: .module)
                 .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
 
@@ -490,7 +490,7 @@ struct EffectInspector: View {
             HStack(spacing: 10) {
                 Image(systemName: symbol)
                     .font(.system(size: 11))
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Slider(
                     value: Binding(get: { value }, set: onChange),
                     in: 0...1,
@@ -506,8 +506,8 @@ struct EffectInspector: View {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
                 Text(String(localized: key, bundle: .module))
-                    .dsFont(.mono, .medium, 8)
-                    .foregroundStyle(DS.Palette.ink(0.4))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
                     .dsFont(.mono, .medium, 13)
                     .foregroundStyle(DS.Palette.ink)
@@ -523,6 +523,7 @@ struct EffectInspector: View {
     private func stepButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
                 .frame(width: 32, height: 32)

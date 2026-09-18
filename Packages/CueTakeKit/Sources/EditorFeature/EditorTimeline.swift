@@ -313,8 +313,8 @@ struct EditorTimeline: View {
                         .fill(DS.Palette.hairline(0.22))
                         .frame(width: 1, height: 5)
                     Text(MediaTime(seconds: seconds).timecode)
-                        .dsFont(.mono, .medium, 8)
-                        .foregroundStyle(DS.Palette.ink(0.34))
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .fixedSize()
                 }
                 .offset(x: CGFloat(seconds * scale))
@@ -412,14 +412,14 @@ struct EditorTimeline: View {
                     .shadow(color: .black.opacity(frames.isEmpty ? 0 : 0.6), radius: 3)
                 HStack(spacing: 5) {
                     Text(MediaTime(seconds: segment.barWeight).timecode)
-                        .dsFont(.mono, .medium, 9)
+                        .dsFont(.mono, .medium, 10)
                         .foregroundStyle(frames.isEmpty ? DS.Palette.inkInverse(0.55) : DS.Palette.ink(0.8))
 
                     // What is being done to this clip, on the clip. A speed set in a panel and
                     // visible only in that panel is a setting people forget they turned on.
                     if let badge = segment.playback.badge {
                         Text(badge)
-                            .dsFont(.mono, .medium, 8)
+                            .dsFont(.mono, .medium, 10)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 4)
                             .padding(.vertical, 2)

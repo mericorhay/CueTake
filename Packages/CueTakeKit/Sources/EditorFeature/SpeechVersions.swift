@@ -125,7 +125,7 @@ struct SpeechVersionsRow: View {
                     Image(systemName: source == .device ? "iphone" : "cloud")
                         .font(.system(size: 10, weight: .semibold))
                     Text(Self.name(source))
-                        .dsFont(.mono, .medium, 9)
+                        .dsFont(.mono, .medium, 10)
                     Spacer(minLength: 0)
                     if isOn {
                         Image(systemName: "checkmark.circle.fill")

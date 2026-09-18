@@ -85,8 +85,8 @@ public struct AssistantScreen: View {
                                     ? String(localized: "assistant.status.ready", bundle: .module)
                                     : String(localized: "assistant.status.offline", bundle: .module))
                         )
-                        .dsFont(.mono, .medium, 9, letterSpacing: 0.08)
-                        .foregroundStyle(DS.Palette.ink(0.45))
+                        .dsFont(.mono, .medium, 10, letterSpacing: 0.08)
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.opacity)
                     }
                 }
@@ -113,6 +113,7 @@ public struct AssistantScreen: View {
     private func glassIcon(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(DS.Palette.ink(0.9))
                 .frame(width: 42, height: 42)
@@ -171,7 +172,7 @@ public struct AssistantScreen: View {
                                 Spacer(minLength: 0)
                                 Image(systemName: "arrow.up.right")
                                     .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(DS.Palette.ink(0.35))
+                                    .foregroundStyle(DS.Palette.ink(0.52))
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 14)
@@ -317,6 +318,7 @@ public struct AssistantScreen: View {
                                 .transition(.scale.combined(with: .opacity))
                         } else {
                             Image(systemName: "arrow.up")
+                                .dsActionName("arrow.up")
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundStyle(canSend ? DS.Palette.inkInverse : DS.Palette.ink(0.4))
                                 .transition(.scale.combined(with: .opacity))

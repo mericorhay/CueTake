@@ -81,7 +81,7 @@ struct BrandSheet: View {
                 DSKicker(String(localized: "editor.brand.title", bundle: .module))
                 Text("editor.brand.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11, lineHeight: 1.3)
-                    .foregroundStyle(DS.Palette.ink(0.45))
+                    .foregroundStyle(DS.Palette.ink(0.56))
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
@@ -323,7 +323,7 @@ struct BrandSheet: View {
 
             Text("editor.brand.templates.hint", bundle: .module)
                 .dsFont(.sans, .regular, 11, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
 
             ForEach(tools.templates) { template in
                 HStack(spacing: 10) {
@@ -334,7 +334,7 @@ struct BrandSheet: View {
                             .lineLimit(1)
                         Text(Self.summary(template))
                             .dsFont(.mono, .medium, 10)
-                            .foregroundStyle(DS.Palette.ink(0.45))
+                            .foregroundStyle(DS.Palette.ink(0.56))
                             .lineLimit(1)
                     }
                     Spacer(minLength: 0)
@@ -415,8 +415,8 @@ struct BrandSheet: View {
 
     private func label(_ key: String.LocalizationValue) -> some View {
         Text(String(localized: key, bundle: .module))
-            .dsFont(.mono, .medium, 9, letterSpacing: 0.14)
-            .foregroundStyle(DS.Palette.ink(0.4))
+            .dsFont(.mono, .medium, 10, letterSpacing: 0.14)
+            .foregroundStyle(DS.Palette.ink(0.56))
     }
 }
 

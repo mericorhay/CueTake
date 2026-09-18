@@ -55,7 +55,7 @@ public struct OnboardingScreen: View {
                 Button(action: onFinish) {
                     Text("onboarding.skip", bundle: .module)
                         .dsFont(.sans, .medium, 14)
-                        .foregroundStyle(DS.Palette.ink(0.42))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                         .padding(.vertical, 14)
                         .padding(.horizontal, 4)
                         // Text alone hit-tests on its glyphs; this hands the padding over too.

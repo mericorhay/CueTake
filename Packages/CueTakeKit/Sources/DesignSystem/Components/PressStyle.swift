@@ -24,15 +24,23 @@ public struct DSPressStyle: ButtonStyle {
     ///   - dim: opacity at full press, on top of the scale.
     ///   - shape: hit shape for the label. Pass the control's own outline so the touch target
     ///     matches what is drawn; `nil` uses a rectangle, which is right for most labels.
-    public init(scale: CGFloat = 0.97, dim: Double = 1, shape: AnyShape? = nil) {
+    /// The smallest square a touch can land in, in points. Apple's guidelines ask for 44.
+    private let minimumTarget: CGFloat
+
+    public init(scale: CGFloat = 0.97, dim: Double = 1, shape: AnyShape? = nil, minimumTarget: CGFloat = 0) {
         self.scale = scale
         self.dim = dim
         self.shape = shape
+        self.minimumTarget = minimumTarget
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .contentShape(shape ?? AnyShape(Rectangle()))
+            // A small drawn control still takes a finger-sized touch: the frame grows around it,
+            // the drawing does not.
+            .frame(minWidth: minimumTarget, minHeight: minimumTarget)
+            .contentShape(minimumTarget > 0 ? AnyShape(Rectangle()) : (shape ?? AnyShape(Rectangle())))
             .scaleEffect(configuration.isPressed ? scale : 1)
             .opacity(configuration.isPressed ? dim : 1)
             // On the way down only, so a press taps once rather than twice.
@@ -60,7 +68,7 @@ extension ButtonStyle where Self == DSPressStyle {
 
     /// Press for small round controls, which can afford to move further.
     public static var dsPressIcon: DSPressStyle {
-        DSPressStyle(scale: 0.9, dim: 0.8, shape: AnyShape(Circle()))
+        DSPressStyle(scale: 0.9, dim: 0.8, shape: AnyShape(Circle()), minimumTarget: 44)
     }
 
     /// Press for a control with a known corner radius, so the touch target follows the drawn edge.

@@ -141,8 +141,8 @@ public struct WorkflowStudioScreen: View {
                 .textFieldStyle(.plain)
 
                 Text(Self.originLabel(model.definition.origin))
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
-                    .foregroundStyle(DS.Palette.ink(0.35))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.1)
+                    .foregroundStyle(DS.Palette.ink(0.52))
             }
 
             Spacer(minLength: 0)
@@ -206,6 +206,7 @@ public struct WorkflowStudioScreen: View {
                             ProgressView().tint(DS.Palette.inkInverse)
                         } else {
                             Image(systemName: "arrow.up")
+                                .dsActionName("arrow.up")
                                 .font(.system(size: 13, weight: .bold))
                         }
                     }
@@ -319,8 +320,8 @@ public struct WorkflowStudioScreen: View {
                     .foregroundStyle(DS.Palette.ink)
                 Spacer(minLength: 0)
                 Text(verbatim: "\(number)")
-                    .dsFont(.mono, .medium, 9)
-                    .foregroundStyle(DS.Palette.ink(0.3))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.52))
             }
 
             TextField(
@@ -355,7 +356,7 @@ public struct WorkflowStudioScreen: View {
                 } else {
                     Text("studio.section.dropClip", bundle: .module)
                         .dsFont(.sans, .regular, 10)
-                        .foregroundStyle(DS.Palette.ink(0.35))
+                        .foregroundStyle(DS.Palette.ink(0.52))
                         .frame(maxWidth: .infinity, minHeight: 26)
                         .overlay {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -502,8 +503,8 @@ public struct WorkflowStudioScreen: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("studio.clips", bundle: .module)
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
-                    .foregroundStyle(DS.Palette.ink(0.38))
+                    .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                    .foregroundStyle(DS.Palette.ink(0.52))
                 Spacer(minLength: 0)
                 if !model.clips.isEmpty, model.definition.sections.contains(where: { $0.clip == nil }) {
                     Button {
@@ -533,8 +534,8 @@ public struct WorkflowStudioScreen: View {
                                     .foregroundStyle(DS.Palette.ink)
                                     .lineLimit(1)
                                 Text(String(format: "%.1f s", clip.seconds))
-                                    .dsFont(.mono, .medium, 9)
-                                    .foregroundStyle(DS.Palette.ink(0.4))
+                                    .dsFont(.mono, .medium, 10)
+                                    .foregroundStyle(DS.Palette.ink(0.56))
                             }
                         }
                         .padding(.leading, 6)
@@ -766,11 +767,11 @@ public struct WorkflowStudioScreen: View {
 
     private func sectionHeader(_ key: String.LocalizationValue, trailing: String) -> some View {
         HStack {
-            DSKicker(String(localized: key, bundle: .module), size: 10, color: DS.Palette.ink(0.45))
+            DSKicker(String(localized: key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             Text(trailing)
                 .dsFont(.mono, .medium, 11)
-                .foregroundStyle(DS.Palette.ink(0.4))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .contentTransition(.numericText())
         }
     }
@@ -778,6 +779,7 @@ public struct WorkflowStudioScreen: View {
     private func iconButton(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
+                .dsActionName(symbol)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(DS.Palette.ink(0.7))
                 .frame(width: 34, height: 34)

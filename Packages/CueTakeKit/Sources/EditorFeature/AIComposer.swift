@@ -155,7 +155,7 @@ struct AIComposer: View {
                     }
                 }
                 .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.45))
+                .foregroundStyle(DS.Palette.ink(0.56))
                 .lineLimit(1)
                 .contentTransition(.numericText())
                 .id(sessionPulse)
@@ -275,7 +275,7 @@ struct AIComposer: View {
                 if !compact {
                     Text("editor.generate.note \(Int(model.fittedGenerationOptions(model.generationDefaults).seconds))", bundle: .module)
                         .dsFont(.sans, .regular, 10, lineHeight: 1.35)
-                        .foregroundStyle(DS.Palette.ink(0.42))
+                        .foregroundStyle(DS.Palette.ink(0.56))
                 }
             }
         }

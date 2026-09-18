@@ -173,6 +173,57 @@
         }
       }
     },
+    "home.teleprompter.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens a place for your script, then the camera"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önce metin alanını, sonra kamerayı açar"
+          }
+        }
+      }
+    },
+    "home.teleprompter.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste your words and start recording"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metnini yapıştır, hemen çekmeye başla"
+          }
+        }
+      }
+    },
+    "home.teleprompter.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teleprompter"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teleprompter"
+          }
+        }
+      }
+    },
     "home.workflow.meta": {
       "extractionState": "manual",
       "localizations": {
