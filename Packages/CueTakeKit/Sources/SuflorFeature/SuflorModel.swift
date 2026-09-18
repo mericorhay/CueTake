@@ -38,7 +38,23 @@ public final class SuflorModel {
     public var step: Step = .kind
     public private(set) var stage: Stage = .setup
     public var brief: SuflorBrief { didSet { save() } }
-    public var cues: [SuflorCue] { didSet { save() } }
+    /// Two flows kept side by side: the one the server wrote and the creator's own. Switching
+    /// pages never loses either.
+    public enum CueSource: String, CaseIterable, Sendable {
+        case ai, own
+    }
+
+    public var aiCues: [SuflorCue] { didSet { save() } }
+    public var ownCues: [SuflorCue] { didSet { save() } }
+    public var cueSource: CueSource { didSet { save() } }
+
+    /// The page being edited and read on stage.
+    public var cues: [SuflorCue] {
+        get { cueSource == .ai ? aiCues : ownCues }
+        set {
+            if cueSource == .ai { aiCues = newValue } else { ownCues = newValue }
+        }
+    }
     public var wordsPerMinute: Double { didSet { save(); engine?.setWordsPerMinute(wordsPerMinute) } }
     public var textSize: Double { didSet { save(); relayout() } }
 
@@ -79,7 +95,9 @@ public final class SuflorModel {
         self.defaults = defaults
         let decoder = JSONDecoder()
         brief = defaults.data(forKey: Keys.brief).flatMap { try? decoder.decode(SuflorBrief.self, from: $0) } ?? SuflorBrief()
-        cues = defaults.data(forKey: Keys.cues).flatMap { try? decoder.decode([SuflorCue].self, from: $0) } ?? []
+        aiCues = defaults.data(forKey: Keys.cues).flatMap { try? decoder.decode([SuflorCue].self, from: $0) } ?? []
+        ownCues = defaults.data(forKey: Keys.ownCues).flatMap { try? decoder.decode([SuflorCue].self, from: $0) } ?? []
+        cueSource = defaults.string(forKey: Keys.source).flatMap(CueSource.init(rawValue:)) ?? .ai
         let pace = defaults.double(forKey: Keys.pace)
         wordsPerMinute = pace > 0 ? pace : 130
         let size = defaults.double(forKey: Keys.size)
@@ -90,6 +108,8 @@ public final class SuflorModel {
     private enum Keys {
         static let brief = "suflor.brief"
         static let cues = "suflor.cues"
+        static let ownCues = "suflor.cues.own"
+        static let source = "suflor.cues.source"
         static let pace = "suflor.pace"
         static let size = "suflor.size"
         static let creator = "suflor.creator"
@@ -99,7 +119,9 @@ public final class SuflorModel {
     private func save() {
         let encoder = JSONEncoder()
         defaults.set(try? encoder.encode(brief), forKey: Keys.brief)
-        defaults.set(try? encoder.encode(cues), forKey: Keys.cues)
+        defaults.set(try? encoder.encode(aiCues), forKey: Keys.cues)
+        defaults.set(try? encoder.encode(ownCues), forKey: Keys.ownCues)
+        defaults.set(cueSource.rawValue, forKey: Keys.source)
         defaults.set(wordsPerMinute, forKey: Keys.pace)
         defaults.set(textSize, forKey: Keys.size)
     }
@@ -137,12 +159,13 @@ public final class SuflorModel {
                 writeError = String(localized: "suflor.write.empty", bundle: .module)
                 return
             }
-            cues = []
+            cueSource = .ai
+            aiCues = []
             step = .flow
             for cue in SuflorPlan(brief: brief, cues: written).ordered {
                 try? await Task.sleep(for: .milliseconds(110))
                 freshCues.insert(cue.id)
-                cues.append(cue)
+                aiCues.append(cue)
             }
             try? await Task.sleep(for: .seconds(1.2))
             freshCues = []
@@ -178,9 +201,18 @@ public final class SuflorModel {
     }
 
     /// Cards from the brief without the server: a skeleton to write over.
-    public func useTemplate() {
-        cues = SuflorTemplate.cues(for: brief)
+    /// The creator's own page: five empty cards, one of each part a sponsored stream needs, the
+    /// first time; whatever they wrote, every time after.
+    public func writeMyself() {
+        cueSource = .own
+        if ownCues.allSatisfy({ $0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+            ownCues = [.opening, .topic, .bridge, .ad, .cta].map { SuflorCue(role: $0, text: "") }
+        }
         step = .flow
+    }
+
+    public func show(_ source: CueSource) {
+        cueSource = source
     }
 
     public func add(_ role: SuflorCue.Role) {
@@ -462,36 +494,5 @@ extension SuflorCue.Role {
         case .rescue: String(localized: "suflor.role.rescue", bundle: .module)
         case .closing: String(localized: "suflor.role.closing", bundle: .module)
         }
-    }
-}
-
-/// Cards to write over when there is no server to write them.
-enum SuflorTemplate {
-    static func cues(for brief: SuflorBrief) -> [SuflorCue] {
-        let product = brief.product.isEmpty ? brief.brand : brief.product
-        let brand = brief.brand.isEmpty ? brief.product : brief.brand
-        let topic = brief.topic.isEmpty ? String(localized: "suflor.template.topicFallback", bundle: .module) : brief.topic
-        let must = brief.mustSay.joined(separator: " · ")
-        func text(_ key: String.LocalizationValue) -> String { String(localized: key, bundle: .module) }
-        var cues: [SuflorCue] = []
-        if brief.kind == .live {
-            cues.append(SuflorCue(role: .opening, text: String(format: text("suflor.template.opening"), topic)))
-            cues.append(SuflorCue(role: .topic, text: text("suflor.template.topic1")))
-            cues.append(SuflorCue(role: .topic, text: text("suflor.template.topic2")))
-        } else {
-            cues.append(SuflorCue(role: .opening, text: String(format: text("suflor.template.hook"), product)))
-        }
-        cues.append(SuflorCue(role: .bridge, text: String(format: text("suflor.template.bridge"), product)))
-        cues.append(SuflorCue(role: .ad, text: String(format: text("suflor.template.ad1"), brand, product)))
-        cues.append(SuflorCue(role: .ad, text: text("suflor.template.ad2")))
-        if !must.isEmpty {
-            cues.append(SuflorCue(role: .cta, text: String(format: text("suflor.template.cta"), must)))
-        }
-        if brief.kind == .live {
-            cues.append(SuflorCue(role: .rescue, text: text("suflor.template.rescue1")))
-            cues.append(SuflorCue(role: .rescue, text: text("suflor.template.rescue2")))
-        }
-        cues.append(SuflorCue(role: .closing, text: text("suflor.template.closing")))
-        return cues
     }
 }

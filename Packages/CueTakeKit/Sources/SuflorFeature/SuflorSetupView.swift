@@ -154,6 +154,21 @@ private struct SuflorKindStep: View {
     }
 }
 
+extension SuflorCue.Role {
+    /// What goes on an empty card of this kind.
+    var hint: String {
+        switch self {
+        case .opening: String(localized: "suflor.card.hint.opening", bundle: .module)
+        case .topic: String(localized: "suflor.card.hint.topic", bundle: .module)
+        case .bridge: String(localized: "suflor.card.hint.bridge", bundle: .module)
+        case .ad: String(localized: "suflor.card.hint.ad", bundle: .module)
+        case .cta: String(localized: "suflor.card.hint.cta", bundle: .module)
+        case .rescue: String(localized: "suflor.card.hint.rescue", bundle: .module)
+        case .closing: String(localized: "suflor.card.hint.closing", bundle: .module)
+        }
+    }
+}
+
 extension SuflorBrief.Platform {
     var title: String {
         switch self {
@@ -512,9 +527,9 @@ private struct SuflorBriefStep: View {
             }
             DSSecondaryButton(templateTitle) {
                 focused = nil
-                model.useTemplate()
+                model.writeMyself()
             }
-            if !model.cues.isEmpty {
+            if !model.aiCues.isEmpty || !model.ownCues.isEmpty {
                 Button {
                     model.next()
                 } label: {
@@ -573,6 +588,7 @@ private struct WriteButton: View {
 private struct SuflorFlowStep: View {
     @Bindable var model: SuflorModel
     @FocusState private var editing: UUID?
+    @Namespace private var pageSpace
 
     var body: some View {
         VStack(spacing: 0) {
@@ -580,6 +596,7 @@ private struct SuflorFlowStep: View {
                 VStack(alignment: .leading, spacing: 0) {
                     DSHeadline(String(localized: "suflor.flow.title", bundle: .module), size: 32)
                         .padding(.top, 26)
+                    pages.padding(.top, 14)
 
                     preview.padding(.top, 18)
                     controls.padding(.top, 12)
@@ -605,6 +622,48 @@ private struct SuflorFlowStep: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .overlay(alignment: .bottom) { stageButton }
+    }
+
+    /// Two pages, the AI's flow and the creator's own; the other one waits untouched.
+    private var pages: some View {
+        HStack(spacing: 4) {
+            pageTab(.ai, title: String(localized: "suflor.flow.page.ai", bundle: .module), symbol: "sparkles", count: model.aiCues.count)
+            pageTab(.own, title: String(localized: "suflor.flow.page.own", bundle: .module), symbol: "pencil", count: model.ownCues.count)
+        }
+        .padding(4)
+        .background(Capsule().fill(DS.Palette.hairline(0.06)))
+    }
+
+    private func pageTab(_ source: SuflorModel.CueSource, title: String, symbol: String, count: Int) -> some View {
+        let isOn = model.cueSource == source
+        return Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(DS.Motion.settle) {
+                if source == .own, model.ownCues.isEmpty { model.writeMyself() } else { model.show(source) }
+            }
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: symbol).font(.system(size: 12, weight: .semibold))
+                Text(title).dsFont(.sans, .semibold, 14)
+                if count > 0 {
+                    Text(verbatim: "\(count)")
+                        .dsFont(.mono, .medium, 10)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(isOn ? DS.Palette.inkInverse(0.14) : DS.Palette.hairline(0.1)))
+                }
+            }
+            .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background {
+                if isOn { Capsule().fill(DS.Palette.lime).matchedGeometryEffect(id: "page", in: pageSpace) }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.dsPress)
+        .disabled(source == .ai && model.aiCues.isEmpty)
+        .opacity(source == .ai && model.aiCues.isEmpty ? 0.45 : 1)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     private var preview: some View {
@@ -689,7 +748,7 @@ private struct SuflorFlowStep: View {
                 }
                 .accessibilityLabel(Text("suflor.card.more", bundle: .module))
             }
-            TextField(String(localized: "suflor.card.placeholder", bundle: .module), text: binding, axis: .vertical)
+            TextField(cue.role.hint, text: binding, axis: .vertical)
                 .focused($editing, equals: cue.id)
                 .dsFont(.sans, .medium, 16, lineHeight: 1.35)
                 .foregroundStyle(DS.Palette.ink)

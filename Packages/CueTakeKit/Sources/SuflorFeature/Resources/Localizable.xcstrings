@@ -75,13 +75,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep my cards"
+            "value": "Go to my cards"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kartlarımla devam et"
+            "value": "Kartlarıma git"
           }
         }
       }
@@ -211,13 +211,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start from a template"
+            "value": "I'll write it myself"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Şablonla başla"
+            "value": "Kendim yazacağım"
           }
         }
       }
@@ -562,6 +562,125 @@
         }
       }
     },
+    "suflor.card.hint.ad": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say it's a partnership, then what you think of it"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İş birliği olduğunu söyle, sonra ne düşündüğünü"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.bridge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you get from the topic to the product"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konudan ürüne nasıl geçeceksin"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.closing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How you say goodbye"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nasıl vedalaşacaksın"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.cta": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The code, the link, until when"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kod, link, ne zamana kadar"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.opening": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say hello, tell them what's coming"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selam ver, bugün ne olacağını söyle"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.rescue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A line for when you get stuck"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takılırsan söyleyeceğin cümle"
+          }
+        }
+      }
+    },
+    "suflor.card.hint.topic": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A point about today's topic"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü konuyla ilgili bir nokta"
+          }
+        }
+      }
+    },
     "suflor.card.more": {
       "extractionState": "manual",
       "localizations": {
@@ -575,23 +694,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kart seçenekleri"
-          }
-        }
-      }
-    },
-    "suflor.card.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What you'll say"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ne söyleyeceksin"
           }
         }
       }
@@ -813,6 +915,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kartların burada akacak."
+          }
+        }
+      }
+    },
+    "suflor.flow.page.ai": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI's flow"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI akışı"
+          }
+        }
+      }
+    },
+    "suflor.flow.page.own": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My flow"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benim akışım"
           }
         }
       }
@@ -2606,210 +2742,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adım %lld / 3"
-          }
-        }
-      }
-    },
-    "suflor.template.ad1": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This is a paid partnership with %1$@. I've been using %2$@ for a while and the difference shows."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu yayın %1$@ ile iş birliği içeriyor. %2$@ bir süredir hayatımda ve fark gerçekten belli."
-          }
-        }
-      }
-    },
-    "suflor.template.ad2": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What I like most: (write your own line here)."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "En sevdiğim yanı: (buraya kendi cümleni yaz)."
-          }
-        }
-      }
-    },
-    "suflor.template.bridge": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "And that's exactly why I want to tell you about %@."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tam da bu yüzden size bir şeyden bahsetmek istiyorum: %@."
-          }
-        }
-      }
-    },
-    "suflor.template.closing": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Thanks for being here, see you next time!"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Burada olduğunuz için teşekkürler, görüşürüz!"
-          }
-        }
-      }
-    },
-    "suflor.template.cta": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Don't miss it: %@"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kaçırmayın: %@"
-          }
-        }
-      }
-    },
-    "suflor.template.hook": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wait, before you scroll: I have to show you %@."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dur, geçmeden önce sana bunu göstermem lazım: %@."
-          }
-        }
-      }
-    },
-    "suflor.template.opening": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Welcome everyone! Today we're talking about %@, so stay till the end and say hi in the chat."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Herkese hoş geldiniz! Bugünün konusu: %@. Sonuna kadar kalın ve yoruma bir merhaba bırakın."
-          }
-        }
-      }
-    },
-    "suflor.template.rescue1": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "If you have a question about it, write it, I'll answer right away."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bununla ilgili sorusu olan yazsın, hemen cevaplıyorum."
-          }
-        }
-      }
-    },
-    "suflor.template.rescue2": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The link is in my profile, by the way."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu arada link profilimde, kaçırmayın."
-          }
-        }
-      }
-    },
-    "suflor.template.topic1": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drop your questions in the chat, I'm reading them all."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sorularınızı yoruma yazın, hepsini okuyorum."
-          }
-        }
-      }
-    },
-    "suflor.template.topic2": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "If you're enjoying this, a like pushes the stream to more people."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beğendiyseniz bir beğeni atın, yayın daha çok kişiye ulaşsın."
-          }
-        }
-      }
-    },
-    "suflor.template.topicFallback": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "some good things"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "güzel şeyler"
           }
         }
       }
