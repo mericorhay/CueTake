@@ -64,6 +64,20 @@ struct ProjectMergeTests {
         #expect(merged.collisions.isEmpty)
     }
 
+    @Test func wordsOnOnePhoneAndCaptionsOnTheOtherIsNotACollision() {
+        var start = base()
+        let cue = CaptionCue(text: "bir", range: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 1)))
+        start.segments[0].captions = [cue]
+        var mine = start
+        var theirs = start
+        mine.segments[0].script = "bir, düzeltilmiş"
+        theirs.segments[0].captions[0].text = "Bir!"
+        let merged = ProjectMerge.merge(base: start, mine: mine, theirs: theirs)
+        #expect(merged.project.segments[0].script == "bir, düzeltilmiş")
+        #expect(merged.project.segments[0].captions.first?.text == "Bir!")
+        #expect(merged.collisions.isEmpty)
+    }
+
     @Test func thingsAddedOnBothSidesAreAllThere() {
         let start = base()
         var mine = start

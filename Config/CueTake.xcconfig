@@ -8,9 +8,11 @@ PRODUCT_NAME = CueTake
 PRODUCT_BUNDLE_IDENTIFIER = com.orhay.cuetake
 DEVELOPMENT_TEAM = XYB3NLV654
 CODE_SIGN_STYLE = Automatic
+// iCloud (CloudKit) and push, for shared team projects. The App Store profile carries both.
+CODE_SIGN_ENTITLEMENTS = CueTake/CueTake.entitlements
 
 MARKETING_VERSION = 0.5.0
-CURRENT_PROJECT_VERSION = 99
+CURRENT_PROJECT_VERSION = 100
 
 // iPhone only, iOS 26 and up — see README for why the floor is that high.
 IPHONEOS_DEPLOYMENT_TARGET = 26.0

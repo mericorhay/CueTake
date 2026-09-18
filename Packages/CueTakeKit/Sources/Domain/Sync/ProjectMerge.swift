@@ -62,7 +62,11 @@ public enum ProjectMerge {
         scalar(\.captionWindow, "captionWindow")
         scalar(\.metadata, "metadata")
 
-        list(\.segments, "segments")
+        // Clips go deeper than the others: one person retyping a clip's words while another fixes
+        // its captions is the commonest collaboration there is, and it is not a collision.
+        let clips = mergeList(base: base.segments, mine: mine.segments, theirs: theirs.segments, combine: mergeSegment)
+        result.segments = clips.items
+        collisions += clips.clashes.map { Collision(field: "segments", id: $0) }
         list(\.recordings, "recordings")
         list(\.audio, "audio")
         list(\.overlays, "overlays")
@@ -97,7 +101,12 @@ public enum ProjectMerge {
 
     /// A list of things with identities, merged item by item, in an order both sides would
     /// recognise.
-    static func mergeList<T: Identifiable & Equatable>(base: [T], mine: [T], theirs: [T]) -> (items: [T], clashes: [UUID]) where T.ID == UUID {
+    static func mergeList<T: Identifiable & Equatable>(
+        base: [T],
+        mine: [T],
+        theirs: [T],
+        combine: ((T, T, T) -> (T, Bool))? = nil
+    ) -> (items: [T], clashes: [UUID]) where T.ID == UUID {
         let baseByID = Dictionary(base.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let mineByID = Dictionary(mine.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let theirsByID = Dictionary(theirs.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -112,7 +121,7 @@ public enum ProjectMerge {
             let others = theirsByID[id]
             switch (was, ours, others) {
             case let (was?, ours?, others?):
-                let (value, clash) = pick(base: was, mine: ours, theirs: others)
+                let (value, clash) = combine?(was, ours, others) ?? pick(base: was, mine: ours, theirs: others)
                 kept[id] = value
                 if clash { clashes.append(id) }
             case let (was?, nil, others?):
@@ -141,6 +150,45 @@ public enum ProjectMerge {
         )
         // Sorted for determinism: sets iterate in a different order on every run.
         return (order.compactMap { kept[$0] }, clashes.sorted { $0.uuidString < $1.uuidString })
+    }
+
+    /// One clip both sides touched, merged field by field: words, captions, takes and timing are
+    /// separate things, so changing different ones is not a collision.
+    static func mergeSegment(base: Segment, mine: Segment, theirs: Segment) -> (Segment, Bool) {
+        if mine == theirs { return (mine, false) }
+        if mine == base { return (theirs, false) }
+        if theirs == base { return (mine, false) }
+
+        var merged = mine
+        var clash = false
+        func field<T: Equatable>(_ path: WritableKeyPath<Segment, T>) {
+            let (value, collided) = pick(base: base[keyPath: path], mine: mine[keyPath: path], theirs: theirs[keyPath: path])
+            merged[keyPath: path] = value
+            if collided { clash = true }
+        }
+        field(\.role)
+        field(\.title)
+        field(\.script)
+        field(\.estimatedDuration)
+        field(\.teleprompter)
+        field(\.selectedTakeID)
+        field(\.playback)
+        field(\.background)
+        field(\.smartReframe)
+        field(\.cleanup)
+        field(\.metadata)
+
+        let takes = mergeList(base: base.takes, mine: mine.takes, theirs: theirs.takes)
+        merged.takes = takes.items
+        let captions = mergeList(base: base.captions, mine: mine.captions, theirs: theirs.captions)
+        merged.captions = captions.items
+        if !takes.clashes.isEmpty || !captions.clashes.isEmpty { clash = true }
+
+        // A chosen take that the merge took away falls back to one that is there.
+        if let chosen = merged.selectedTakeID, !merged.takes.contains(where: { $0.id == chosen }) {
+            merged.selectedTakeID = merged.takes.first?.id
+        }
+        return (merged, clash)
     }
 
     /// The order of a merged list. Whoever rearranged it decides the order; if both did, this

@@ -44,8 +44,10 @@ struct VolumeKeyTests {
     @Test func removingTheLastKeyLeavesNoCurveAtAll() {
         var clip = song()
         clip.setVolumeKey(at: 5, level: 0.5)
-        #expect(!clip.removeVolumeKey(near: 12))
-        #expect(clip.removeVolumeKey(near: 5.1))
+        let tooFar = clip.removeVolumeKey(near: 12)
+        let near = clip.removeVolumeKey(near: 5.1)
+        #expect(!tooFar)
+        #expect(near)
         #expect(clip.volumeKeys == nil)
     }
 
