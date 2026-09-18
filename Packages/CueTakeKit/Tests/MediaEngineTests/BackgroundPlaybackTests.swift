@@ -44,12 +44,41 @@ struct BackgroundPlaybackTests {
         try await Clips.writeClip(named: job.name, red: 0, green: 0, blue: 1, in: folder)
 
         let assembled = try await VideoComposer().compose(project: project, mediaDirectory: folder, renderBackgrounds: false)
+        Self.describe(assembled, label: "span \(span)")
+        for moment in [0.1, 1.0, 1.9] {
+            let colour = try? await Clips.averageColour(of: assembled, at: moment)
+            print("DIAG span \(span) at \(moment): \(String(describing: colour))")
+        }
         let inside = try await Clips.averageColour(of: assembled, at: (span.0 + span.1) / 2)
         #expect(inside.blue > 0.8 && inside.red < 0.2, "inside the effect the preview shows \(inside)")
         if span.0 > 0 {
             let before = try await Clips.averageColour(of: assembled, at: span.0 / 2)
             #expect(before.red > 0.8, "before the effect the preview shows \(before)")
         }
+    }
+
+    /// What the composition is made of, printed for the log.
+    static func describe(_ assembled: VideoComposer.Assembled, label: String) {
+        let composition = assembled.composition
+        print("DIAG \(label) duration \(composition.duration.seconds)")
+        for track in composition.tracks {
+            print("DIAG \(label) track \(track.trackID) \(track.mediaType.rawValue)")
+            for segment in track.segments {
+                let map = segment.timeMapping
+                print("DIAG \(label)   source \(map.source.start.seconds)+\(map.source.duration.seconds) -> \(map.target.start.seconds)+\(map.target.duration.seconds) empty=\(segment.isEmpty)")
+            }
+        }
+        for case let instruction as AVVideoCompositionInstruction in assembled.videoComposition.instructions {
+            print("DIAG \(label) instruction \(instruction.timeRange.start.seconds)+\(instruction.timeRange.duration.seconds)")
+            for layer in instruction.layerInstructions {
+                var a = CGAffineTransform.identity, b = CGAffineTransform.identity, range = CMTimeRange.invalid
+                let ramp = layer.getTransformRamp(for: instruction.timeRange.start, start: &a, end: &b, timeRange: &range)
+                var cropA = CGRect.zero, cropB = CGRect.zero, cropRange = CMTimeRange.invalid
+                let crop = layer.getCropRectangleRamp(for: instruction.timeRange.start, startCropRectangle: &cropA, endCropRectangle: &cropB, timeRange: &cropRange)
+                print("DIAG \(label)   layer \(layer.trackID) transform(\(ramp)) \(a) crop(\(crop)) \(cropA)")
+            }
+        }
+        print("DIAG \(label) render \(assembled.videoComposition.renderSize) custom \(String(describing: assembled.videoComposition.customVideoCompositorClass))")
     }
 
     /// The real render, start to end: red keyed out as the screen, black behind it, and the
