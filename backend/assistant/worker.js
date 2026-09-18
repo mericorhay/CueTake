@@ -413,14 +413,14 @@ async function ask(env, system, content, maxTokens) {
 const SPOKEN_VOICE = `HOW REAL CREATORS TALK — read this before writing anything.
 The cards are read aloud on a live stream. If a line would sound like a TV advert or a press release, it is wrong.
 
-This is a real-sounding Turkish live stream with an ad in the middle. Match this register, not these words:
+This is a real-sounding Turkish live stream with an ad in the middle. Match this register, not these words. It is an example of HOW to talk only: take nothing from it — not its topic (morning routine, coffee), not its details, and never a code, link, date or name. Things in ‹angle quotes› are gaps that the brief fills or that stay out:
 """
-Selam selam, hoş geldiniz. Bir iki dakika bekliyorum, herkes gelsin. Nereden izliyorsunuz, yazın bakayım yoruma. Ankara, İzmir… Almanya'dan bile var, oha.
+Selam selam, hoş geldiniz. Bir iki dakika bekliyorum, herkes gelsin. Nereden izliyorsunuz, yazın bakayım yoruma. Bayağı uzaktan gelen de var, oha.
 Bugün biraz dağınığım, kusura bakmayın, sabahtan beri çekimdeydim.
 Şimdi dün biriniz sormuş: "Sabah rutinin ne?" Valla çok matah bir rutinim yok, baştan söyleyeyim. Kalkıyorum, bir bardak su, sonra kahve. Kahvesiz insan değilim zaten. Telefona bakmamaya çalışıyorum ama olmuyor, yalan yok.
 Bu arada bir şey göstereceğim, çünkü bu hafta en çok bunu sordunuz. Önce şunu söyleyeyim: bu bir iş birliği, marka bana gönderdi. Ama beğenmediğim bir şeyi burada anlatmam, biliyorsunuz.
 İki haftadır kullanıyorum. İlk gün açıkçası "bu da diğerleri gibidir" dedim. Üçüncü gün falan şunu fark ettim… (brifte ne yazıyorsa, kendi cümlenle).
-Kod soran olmuş: kodum AYSE20, büyük harfle. Linki profile koydum, oradan girince kod zaten geliyor. Yarına kadar geçerliymiş, sonrasını ben de bilmiyorum.
+Kod soran olmuş: kodum ‹kod›, büyük harfle. Linki profile koydum, oradan girince kod zaten geliyor. ‹ne zamana kadar› geçerliymiş, sonrasını ben de bilmiyorum.
 Tamam, reklam kısmı bu kadar, sıkmayayım sizi. Soru varsa yazın, bakıyorum.
 """
 
@@ -429,7 +429,7 @@ What makes it sound real:
 - Talks to the chat: "yazın", "sormuşsunuz", "bakıyorum". Reacts to them.
 - One small honest doubt or a plain detail ("ilk gün emin değildim", "kutusu biraz büyük") makes praise believable.
 - Plain words. A filler now and then (valla, yani, bakın, şimdi, açıkçası) — at most one per card.
-- Facts said once, calmly: the code, where the link is, until when.
+- Facts said once, calmly: the code, where the link is, until when — and only facts the brief gives.
 
 Cringe → natural (never write the left side):
 - "Merhaba değerli takipçilerim!" → "Selam, hoş geldiniz."
@@ -463,6 +463,7 @@ For kind "video":
 Rules for every card:
 - At most 35 words.
 - The first ad card says plainly that this is a paid partnership, as advertising rules require (in Turkish, for example "Bu yayın X ile iş birliği içerir" or "reklam").
+- Codes, links, prices, dates and deadlines come only from <must_say> and <details>, written exactly as given. If none is given, do not mention a code, link, price or deadline at all.
 - Facts about the product come only from <details>, <must_say> and the names. Never guess what the product is, its category, what it does, its price or its results. Names are only names: "Spider-Man" as a product tells you its name, not that it is a toy, a case or a film.
 - When <details> is empty or does not say something a card needs, do not invent it: speak warmly without specifics, or leave a short blank in parentheses, in the locale's language, for the creator to fill, like "(what you like most about it)" — in Turkish "(en sevdiğin özelliği)".
 - Claim nothing the brief does not support: no health, medical, financial or "guaranteed" promises.
@@ -492,7 +493,30 @@ async function handleSuflor(body, env) {
     `<locale>${clean(body.locale, 20)}</locale>`;
   const answer = await ask(env, SUFLOR_PROMPT, content, 2500);
   if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));
-  return json({ cues: answer.reply });
+  const given = [brand, product, clean(brief.details, 2500), clean(brief.topic, 600), ...mustSay].join(" ");
+  return json({ cues: withoutInventedCodes(answer.reply, given, body.locale) });
+}
+
+// Something that looks like a discount code ("AYSE20", "YAZ-15", "KOD2024"): letters and digits
+// together, at least one of each, four characters or more. Word edges are Unicode-aware, so
+// Turkish capitals like İ and Ş stay part of the code.
+const CODE_LIKE = /(?<![\p{L}\d])(?=[\p{L}\-]*\d)(?=[\d\-]*\p{Lu})[\p{L}\d][\p{L}\d\-]{2,}[\p{L}\d](?![\p{L}\d])/gu;
+
+// The model is told to use only the brief's codes; this makes sure. Any code-like word in the
+// cards that the brief never gave is replaced by a gap the creator sees and fills.
+function withoutInventedCodes(reply, given, locale) {
+  const known = new Set((String(given).match(CODE_LIKE) || []).map((code) => code.toUpperCase()));
+  const gap = String(locale || "").toLowerCase().startsWith("tr") ? "(kod)" : "(code)";
+  const scrub = (text) => String(text).replace(CODE_LIKE, (code) => (known.has(code.toUpperCase()) ? code : gap));
+  try {
+    const start = reply.indexOf("{");
+    const end = reply.lastIndexOf("}");
+    const parsed = JSON.parse(reply.slice(start, end + 1));
+    for (const cue of parsed.cues || []) cue.text = scrub(cue.text || "");
+    return JSON.stringify(parsed);
+  } catch {
+    return scrub(reply);
+  }
 }
 
 async function handleScript(body, env) {
