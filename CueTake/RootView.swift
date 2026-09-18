@@ -23,6 +23,7 @@ struct RootView: View {
     @State private var pickedVideoLayer: PhotosPickerItem?
     @State private var pickedBrandLogo: PhotosPickerItem?
     @State private var showsTeam = false
+    @State private var showsCertificates = false
 
     var body: some View {
         ZStack {
@@ -329,9 +330,20 @@ struct RootView: View {
                 onCleanStorage: { Task { await model.cleanStorageNow() } },
                 // Teams are locked until tried on two phones; only the light can be previewed.
                 onTeam: model.isTeamSharingAvailable ? { showsTeam = true } : nil,
-                onPreviewLight: { showsTeam = true }
+                onPreviewLight: { showsTeam = true },
+                certificates: model.certificationSummary,
+                onCertificates: { showsCertificates = true }
             )
             .task { await model.refreshStorage() }
+            .fullScreenCover(isPresented: $showsCertificates) {
+                CertificatesScreen(
+                    progress: model.certification,
+                    canSign: model.dependencies.assistantClient.isConfigured,
+                    onName: { model.setCertificateName($0) },
+                    onSign: { await model.signCertificate($0) },
+                    onClose: { showsCertificates = false }
+                )
+            }
             .fullScreenCover(isPresented: $showsTeam) {
                 TeamScreen(isSharingAvailable: model.isTeamSharingAvailable, tools: model.teamTools) { showsTeam = false }
             }

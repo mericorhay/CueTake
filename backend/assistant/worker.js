@@ -6,9 +6,12 @@
 // Secrets (set with `wrangler secret put`, never committed):
 //   ANTHROPIC_API_KEY   the provider key
 //   APP_TOKEN           must match "appToken" in the app's AssistantEndpoint.json
+//   CERT_SIGNING_KEY    Ed25519 private JWK that signs certificates (see certificates.js)
 //
 // Request  POST /  { session, locale, messages: [{ role, text, context? }] }
 // Response 200     { reply, stop_reason }
+
+import { handleCertify, handleVerify, handleCertificateKey } from "./certificates.js";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "openai/gpt-oss-120b";
@@ -629,6 +632,9 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "");
     if (request.method === "GET" && path === "/health") return handleHealth(env, url);
+    // Public: anyone holding a certificate link can check it, with no app and no token.
+    if (request.method === "GET" && path === "/verify") return handleVerify(url, env);
+    if (request.method === "GET" && path === "/certificate-key") return handleCertificateKey(env);
     if (request.method !== "POST") return json({ error: "method" }, 405);
     if (!env.APP_TOKEN || request.headers.get("x-cuetake-app") !== env.APP_TOKEN) {
       console.log("unauthorized: app token missing or different from APP_TOKEN");
@@ -656,6 +662,10 @@ export default {
       return json({ error: "bad json" }, 400);
     }
 
+    if (path === "/certify") {
+      const result = await handleCertify(body, env, url.origin);
+      return json(result.body, result.status);
+    }
     if (path === "/edit") return handleEdit(body, env);
     if (path === "/workflow") return handleWorkflow(body, env);
     if (path === "/script") return handleScript(body, env);

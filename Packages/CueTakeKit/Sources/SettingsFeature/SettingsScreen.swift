@@ -15,14 +15,21 @@ public struct SettingsScreen: View {
     /// A preview of the light two phones make, behind a long press on the version: for trying the
     /// animation while teams themselves are switched off.
     private let onPreviewLight: (() -> Void)?
+    /// Where the creator stands toward the certificates, and the way in. Nil hides the row.
+    private let certificates: String?
+    private let onCertificates: (() -> Void)?
 
     public init(
         model: SettingsModel,
         storage: String? = nil,
         onCleanStorage: (() -> Void)? = nil,
         onTeam: (() -> Void)? = nil,
-        onPreviewLight: (() -> Void)? = nil
+        onPreviewLight: (() -> Void)? = nil,
+        certificates: String? = nil,
+        onCertificates: (() -> Void)? = nil
     ) {
+        self.certificates = certificates
+        self.onCertificates = onCertificates
         self.model = model
         self.storage = storage
         self.onCleanStorage = onCleanStorage
@@ -39,7 +46,13 @@ public struct SettingsScreen: View {
                 DSHeadline(String(localized: "settings.title", bundle: .module), size: 34)
 
                 profile
-                    .padding(.vertical, 22)
+                    .padding(.top, 22)
+                    .padding(.bottom, onCertificates == nil ? 22 : 12)
+
+                if let onCertificates {
+                    certificateRow(onCertificates)
+                        .padding(.bottom, 22)
+                }
 
                 VStack(spacing: 0) {
                     languageRow
@@ -164,6 +177,38 @@ public struct SettingsScreen: View {
         }
         .padding(15)
         .dsCard(radius: DS.Radius.card)
+    }
+
+    /// The way into the certificates, shown as the standing toward the next one.
+    private func certificateRow(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 13) {
+                Image(systemName: "rosette")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(DS.gradient(140, [DS.Palette.lime, DS.Palette.accentWarm])))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("settings.certificates", bundle: .module)
+                        .dsFont(.sans, .semibold, 15)
+                        .foregroundStyle(DS.Palette.ink)
+                    if let certificates {
+                        Text(verbatim: certificates)
+                            .dsFont(.sans, .regular, 12)
+                            .foregroundStyle(DS.Palette.ink(0.62))
+                    }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.52))
+                    .accessibilityHidden(true)
+            }
+            .padding(15)
+            .dsCard(radius: DS.Radius.card)
+        }
+        .buttonStyle(.dsPressCard)
     }
 
     // MARK: - Rows

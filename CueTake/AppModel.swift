@@ -178,6 +178,9 @@ final class AppModel {
     var activity: String?
     /// A short message that fades by itself: how listening went, what was restored.
     var notice: String?
+    /// Everything counted toward the certificates. See AppModel+Certification.
+    var certification = AppModel.loadCertification()
+    @ObservationIgnored var certificationClock: Task<Void, Never>?
     /// What the app takes on the phone, once measured.
     var storageBytes: Int64?
     /// Where the script screen and the studio go back to: the plan they came from, or Create.
@@ -578,6 +581,7 @@ final class AppModel {
             saved = ((try? await Self.saveToPhotoLibrary(written.url)) ?? false) ? .photos : .photosRefused
         }
         exportModel.succeed(url: written.url, destination: saved, format: project.format, droppedCaptions: written.droppedCaptions)
+        noteCertifiedExport(of: project)
     }
 
     /// A file name people can read, from the project title.

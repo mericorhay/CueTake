@@ -292,6 +292,7 @@ extension AppModel {
         scheduleSave()
         await refreshLibrary()
         studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
+        if !Task.isCancelled { noteCertifiedWorkflowRun() }
         if before.segments != project.segments {
             show(notice: String(localized: "workflow.undoable"))
         }

@@ -681,6 +681,125 @@
         }
       }
     },
+    "cert.earned %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You earned %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ sertifikasını kazandın"
+          }
+        }
+      }
+    },
+    "cert.error.notEarned": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This certificate is not earned yet."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu sertifika henüz kazanılmadı."
+          }
+        }
+      }
+    },
+    "cert.error.notReady": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signing is not switched on yet. Try again later."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İmzalama henüz açılmadı. Daha sonra tekrar dene."
+          }
+        }
+      }
+    },
+    "cert.error.offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not reach CueTake. Check your connection and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CueTake'e ulaşılamadı. Bağlantını kontrol edip tekrar dene."
+          }
+        }
+      }
+    },
+    "cert.error.refused": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server did not sign it: the requirements are not met yet."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunucu imzalamadı: şartlar henüz tamamlanmamış."
+          }
+        }
+      }
+    },
+    "cert.summary %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% to your next certificate"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sıradaki sertifikaya %%%lld"
+          }
+        }
+      }
+    },
+    "cert.summary.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every certificate earned"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tüm sertifikalar kazanıldı"
+          }
+        }
+      }
+    },
     "editor.video.importFailed": {
       "extractionState": "manual",
       "localizations": {

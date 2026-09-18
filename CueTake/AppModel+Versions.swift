@@ -37,6 +37,7 @@ extension AppModel {
         takeEditorEditsIfEditing()
         do {
             let version = try await dependencies.projectStore.saveVersion(of: project, name: name, kind: kind)
+            if kind == .manual { noteCertifiedVersion() }
             await refreshVersions()
             if kind == .manual {
                 show(notice: String(localized: "versions.saved \(version.name)"))

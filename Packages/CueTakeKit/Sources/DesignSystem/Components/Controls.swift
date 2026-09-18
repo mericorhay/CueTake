@@ -195,7 +195,7 @@ public struct DSKicker: View {
         _ text: String,
         size: CGFloat = 10,
         tracking: CGFloat = 0.16,
-        color: Color = DS.Palette.ink(0.4)
+        color: Color = DS.Palette.ink(0.56)
     ) {
         self.text = text
         self.size = size

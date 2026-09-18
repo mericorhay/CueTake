@@ -11,6 +11,7 @@ struct CueTakeApp: App {
             RootView(model: model)
                 // Type follows the reader's text size this far; past it the layouts stop holding.
                 .dynamicTypeSize(...DS.largestTextSize)
+                .task { model.startCertificationClock() }
         }
     }
 }
