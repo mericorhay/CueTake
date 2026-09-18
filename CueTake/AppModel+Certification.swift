@@ -2,6 +2,7 @@ import AIServices
 import Domain
 import EditorFeature
 import Foundation
+import Persistence
 import SettingsFeature
 import StudioFeature
 import UIKit
