@@ -25,6 +25,7 @@ struct OverlayInspector: View {
                     if case .text(let text) = overlay.content {
                         textControls(text)
                     }
+                    behindPerson
                     look
                     actions
                 }
@@ -148,6 +149,52 @@ struct OverlayInspector: View {
                 $0.content = .text(t)
             }
         }
+    }
+
+    // MARK: - Behind the person
+
+    /// The viral one: a title the person stands in front of.
+    private var behindPerson: some View {
+        let isOn = overlay.isBehindPerson
+        return Button {
+            withAnimation(DS.Motion.settle) {
+                model.updateOverlay(overlay.id, coalescing: "overlay-behind") { $0.isBehindPerson.toggle() }
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.and.background.dotted")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.lime)
+                    .frame(width: 34, height: 34)
+                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(isOn ? DS.Palette.lime : DS.Palette.lime.opacity(0.14)))
+                    .symbolEffect(.bounce, value: isOn)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("editor.overlay.behind", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.ink)
+                    Group {
+                        if isOn {
+                            Text("editor.overlay.behind.on", bundle: .module)
+                        } else {
+                            Text("editor.overlay.behind.off", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .regular, 11)
+                    .foregroundStyle(DS.Palette.ink(0.5))
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundStyle(isOn ? DS.Palette.lime : DS.Palette.ink(0.3))
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(isOn ? 0.1 : 0.05)))
+        }
+        .buttonStyle(.dsPress(radius: 14))
+        .sensoryFeedback(.selection, trigger: isOn)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     // MARK: - Look

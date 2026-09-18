@@ -49,6 +49,25 @@ extension EditorModel {
     /// Hands the compositor the filters as they are now, and redraws a paused picture with them.
     public func syncLiveFilters() {
         liveFilters.update(project.effects)
+        redrawPausedFrame()
+    }
+
+    /// Hands the compositor the overlays behind the people as they are now. The one selected is
+    /// left to the editor, which draws it on top with its handles until it is let go.
+    public func syncLiveBehind() {
+        liveBehind.update(project.overlays, editing: selectedOverlay, mediaDirectory: mediaDirectory)
+        guard project.overlays.contains(where: \.isBehindPerson) else { return }
+        redrawPausedFrame()
+    }
+
+    /// Hands the compositor the colour keys on the added videos as they are now.
+    public func syncLiveKeys() {
+        liveKeys.update(project.videoLayers)
+        guard project.videoLayers.contains(where: { $0.chroma != nil }) else { return }
+        redrawPausedFrame()
+    }
+
+    private func redrawPausedFrame() {
         guard let player, !isPlaying else { return }
         let time = player.currentTime()
         // AVPlayer may serve its cached paused frame after the live settings change. Reassigning

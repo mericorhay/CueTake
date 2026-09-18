@@ -57,7 +57,9 @@ public struct VideoComposer: Sendable {
         project: Project,
         mediaDirectory: URL,
         renderBackgrounds: Bool = true,
-        liveFilters: LiveFilters? = nil
+        liveFilters: LiveFilters? = nil,
+        liveBehind: LiveBehind? = nil,
+        liveKeys: LiveKeys? = nil
     ) async throws -> Assembled {
         // Any bought grades are read from beside the footage. Set here rather than by the editor
         // alone, so an export from anywhere in the app finds them too.
@@ -460,10 +462,22 @@ public struct VideoComposer: Sendable {
         videoComposition.instructions = layered.instructions
         // Filters need a compositor of their own. Only then: every other project keeps the
         // system's, which is also the only one the export's caption tool works with.
-        if project.effects.contains(where: { $0.filter != nil }) {
+        // Keyed videos and overlays behind a person are drawn there too.
+        let behind = project.overlays.contains(where: \.isBehindPerson)
+            ? (liveBehind ?? LiveBehind(project.overlays, mediaDirectory: mediaDirectory))
+            : nil
+        var keys: LiveKeys?
+        if project.videoLayers.contains(where: { $0.chroma != nil && !$0.isHidden }) {
+            let live = liveKeys ?? LiveKeys(project.videoLayers)
+            live.bind(layered.tracks)
+            keys = live
+        }
+        if project.effects.contains(where: { $0.filter != nil }) || keys != nil || behind != nil {
             let filters = liveFilters ?? LiveFilters(project.effects)
             videoComposition.customVideoCompositorClass = FilterCompositor.self
-            videoComposition.instructions = layered.instructions.map { FilterInstruction($0, filters: filters) }
+            videoComposition.instructions = layered.instructions.map {
+                FilterInstruction($0, filters: filters, keys: keys, behind: behind)
+            }
         }
 
         var assembled = Assembled(

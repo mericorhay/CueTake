@@ -217,6 +217,10 @@ public final class EditorModel {
     @ObservationIgnored var backgroundJobKey = ""
     /// The filters the preview's compositor reads on every frame, kept in step with the project.
     @ObservationIgnored let liveFilters = LiveFilters()
+    /// Overlays behind the people, read by the compositor as they are edited.
+    @ObservationIgnored let liveBehind = LiveBehind()
+    /// Colour keys on added videos, read by the compositor as a slider moves.
+    @ObservationIgnored let liveKeys = LiveKeys()
     /// Background replacements that could not be made this session, so they are not retried on
     /// every rebuild. Choosing the background again clears them.
     @ObservationIgnored var failedBackgrounds: Set<String> = []
@@ -254,11 +258,15 @@ public final class EditorModel {
         let assembled: VideoComposer.Assembled
         do {
             liveFilters.update(project.effects)
+            liveBehind.update(project.overlays, editing: selectedOverlay, mediaDirectory: mediaDirectory)
+            liveKeys.update(project.videoLayers)
             assembled = try await VideoComposer().compose(
                 project: project,
                 mediaDirectory: mediaDirectory,
                 renderBackgrounds: false,
-                liveFilters: liveFilters
+                liveFilters: liveFilters,
+                liveBehind: liveBehind,
+                liveKeys: liveKeys
             )
         } catch {
             // A build that was superseded or cancelled keeps the picture that is there. Only a real
@@ -412,6 +420,8 @@ public final class EditorModel {
                 return "\(effect.start.seconds)+\(effect.duration.seconds):\(effect.background?.token ?? "-"):\(sound)"
             }.joined(separator: ","),
             "filters:\(project.effects.contains { $0.filter != nil })",
+            // Overlays behind a person are read live; only whether there are any changes the build.
+            "behind:\(project.overlays.contains(where: \.isBehindPerson))",
             "backgrounds:" + backgroundSignature,
             // A transition film appearing changes the picture.
             "transition-films:" + readyTransitions.sorted().joined(separator: ","),
@@ -419,7 +429,7 @@ public final class EditorModel {
             "format:\(project.format.renderSize.width)x\(project.format.renderSize.height)",
             "main-video:\(project.mainVideoPlacement)|\(project.mainVideoVolume)|\(project.recordings.map { ($0.reframe ?? [], $0.cameraMotions ?? []) })",
             "video-layers:" + project.videoLayers.map { layer in
-                "\(layer.id)|\(layer.recordingID)|\(layer.start.seconds)|\(layer.sourceRange.start.seconds)|\(layer.sourceRange.duration.seconds)|\(layer.placement)|\(layer.volume)|\(layer.isMuted)|\(layer.isHidden)|\(layer.keyframes)|\(layer.focusKeyframes ?? [])"
+                "\(layer.id)|\(layer.recordingID)|\(layer.start.seconds)|\(layer.sourceRange.start.seconds)|\(layer.sourceRange.duration.seconds)|\(layer.placement)|\(layer.volume)|\(layer.isMuted)|\(layer.isHidden)|\(layer.keyframes)|\(layer.focusKeyframes ?? [])|\(layer.chroma != nil)"
             }.joined(separator: ","),
         ] + project.audio.map { clip in
             "audio:\(clip.id.uuidString)|\(clip.start.seconds)|\(clip.sourceRange.start.seconds)|\(clip.sourceRange.duration.seconds)|\(clip.gain)|\(clip.fadeIn.seconds)|\(clip.fadeOut.seconds)|\(clip.speed)|\(clip.isMuted)|\(clip.ducksUnderVoice)|\(AudioEffectRenderer.token(for: clip.effects))"

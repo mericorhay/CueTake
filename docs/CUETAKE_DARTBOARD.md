@@ -1,7 +1,7 @@
 # CueTake Dart Tahtası: Rakipler, Açıklar, Teknik Altyapı ve Plan
 
 > Tek rapor, tek otorite. Önceki bütün planlar (master plan, gap report, AI tool roadmap, timeline audit, tracking, zoom, workflow platform) bu dosyada birleştirildi ve kaldırıldı; eski hâlleri git geçmişinde duruyor.
-> Güncelleme: 18 Eylül 2026 · Kod: build 103 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
+> Güncelleme: 18 Eylül 2026 · Kod: build 104 · sürüm 0.5.0 · durum: [§0](#0-durum-panosu)
 
 ## İçindekiler
 
@@ -22,7 +22,7 @@
 
 ## 0. Durum panosu
 
-Son güncelleme: 18 Eylül 2026, build 103. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
+Son güncelleme: 18 Eylül 2026, build 104. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.
 
 | Hedef | Durum | Ne var / ne eksik |
 |---|---|---|
@@ -33,7 +33,7 @@ Son güncelleme: 18 Eylül 2026, build 103. ✅ bitti · 🟢 kodu bitti, cihazd
 | H5 Render/export güvenilirliği | 🟡 | Dayanıklı export (H.264 / altyazısız yeniden deneme), gerçek hata metni, dosya önbelleği. Metal çekirdek, arka plan export, kalite kapısı yok |
 | H6 Şablon/efekt/geçiş/görünüm | 🟢 | **15 geçiş**, önceden çizilen geçiş filmleri (her biri CI'da gerçek videoyla test ediliyor); bitmiş videodan **şablon** çıkarma ve başka videoya uygulama; satın alınan **.cube renk tabloları** (hazır görünümle üst üste, medya temizlikçisi silmiyor). Eksik: Metal efekt |
 | H7 Pro timeline | 🟡 | Güvenli silme (ripple + geri al), çoklu ses satırları ve mikser, kayıt bazında tutarlı kadraj, eklenen video gerçek bir satır, **proje sürümleri** (adlı + otomatik, temizlikçi sürüm videolarını korur), **ses eğrisi** (fade ve ducking'in üstüne çarpılan noktalar). Eksik: ana klip keyframe, hız eğrisi |
-| H8 Maske / yeşil perde | 🟡 | Kişi arka planı değiştirme var; nesne maskesi, chroma, metin-arkada yok |
+| H8 Maske / yeşil perde | 🟢 | Arka plan değişirken önde kalan: **kişi**, **nesne** (Apple ön plan maskesi, kareler arası yumuşatılmış) ya da **renk** (yeşil/mavi/seçilen; aralık, kenar, taşma). Eklenen videoda **yeşil perde** (canlı, sürüklerken yeniden kurulmuyor). **Yazı/fotoğraf kişinin arkasında** (compositor her karede kişi maskesiyle; seçiliyken önde). Eksik: dokunarak tek nesne seçme; AI asistanın bu alanları bilmesi (Worker prompt'u) |
 | H9 Müzik/SFX/beat/loudness | ⬜ | SFX ve ducking temeli var; beat motoru, LUFS, kütüphane yok |
 | H10 Çeviri/dublaj | ⬜ | — |
 | H11 AI ikiz / Restyle | 🟡 | BYOK video üretimi editörde ve workflow'da var; avatar, lipsync, restyle yok |

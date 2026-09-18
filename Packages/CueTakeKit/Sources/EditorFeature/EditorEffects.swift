@@ -188,6 +188,7 @@ extension EditorModel {
         right.duration = MediaTime(seconds: end - playhead)
         right.transform = overlay.transform
         right.animation = overlay.animation
+        right.isBehindPerson = overlay.isBehindPerson
         project.overlays[index] = left
         project.overlays.insert(right, at: index + 1)
         project.updatedAt = .now

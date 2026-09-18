@@ -3724,6 +3724,23 @@
         }
       }
     },
+    "editor.background.greenScreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green screen"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeşil perde"
+          }
+        }
+      }
+    },
     "editor.background.hint": {
       "extractionState": "manual",
       "localizations": {
@@ -6444,6 +6461,125 @@
         }
       }
     },
+    "editor.effect.cutout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT STAYS IN FRONT"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÖNDE NE KALSIN"
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.color": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk"
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.color.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For footage shot on a green or blue screen: that colour is taken out."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeşil ya da mavi perdede çekilmiş video için: o renk silinir."
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.person": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Person"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişi"
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.person.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "People are found in every frame on this phone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişiler her karede bu telefonda bulunur."
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.subject": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Object"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nesne"
+          }
+        }
+      }
+    },
+    "editor.effect.cutout.subject.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whatever stands out in front, a pet or a product. Slower than people."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önde duran her şey: evcil hayvan, ürün. Kişiye göre daha yavaş."
+          }
+        }
+      }
+    },
     "editor.effect.delete": {
       "extractionState": "manual",
       "localizations": {
@@ -6542,6 +6678,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Klibe sığdır"
+          }
+        }
+      }
+    },
+    "editor.effect.keyColor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perde rengi"
           }
         }
       }
@@ -7717,6 +7870,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kay"
+          }
+        }
+      }
+    },
+    "editor.overlay.behind": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behind the person"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişinin arkasında"
+          }
+        }
+      }
+    },
+    "editor.overlay.behind.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The person stands in front of it, like a magazine cover."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kişi yazının önünde durur, dergi kapağı gibi."
+          }
+        }
+      }
+    },
+    "editor.overlay.behind.on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behind the person when you are done. While selected it stays on top so you can move it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitirince kişinin arkasına geçer. Seçiliyken taşıyabilmen için önde durur."
           }
         }
       }
@@ -11543,6 +11747,142 @@
           "stringUnit": {
             "state": "translated",
             "value": "Bu video eklenemedi."
+          }
+        }
+      }
+    },
+    "editor.video.key": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GREEN SCREEN"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YEŞİL PERDE"
+          }
+        }
+      }
+    },
+    "editor.video.key.blue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mavi"
+          }
+        }
+      }
+    },
+    "editor.video.key.green": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeşil"
+          }
+        }
+      }
+    },
+    "editor.video.key.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        }
+      }
+    },
+    "editor.video.key.pick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renk"
+          }
+        }
+      }
+    },
+    "editor.video.key.softness": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edge"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kenar"
+          }
+        }
+      }
+    },
+    "editor.video.key.spill": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glow"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taşma"
+          }
+        }
+      }
+    },
+    "editor.video.key.tolerance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Range"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aralık"
           }
         }
       }

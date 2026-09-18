@@ -119,6 +119,9 @@ public struct VideoLayer: Identifiable, Hashable, Sendable, Codable {
     public var keyframes: [VideoKeyframe] = []
     /// Optional keeps documents written before build 55 source-compatible with synthesized Codable.
     public var focusKeyframes: [VideoFocusKeyframe]? = nil
+    /// A colour taken out of this video — footage shot on a green screen — so what is under it
+    /// shows through.
+    public var chroma: ChromaKey? = nil
 
     public init(id: UUID = UUID(), recordingID: Recording.ID, title: String, start: MediaTime = .zero, sourceRange: MediaTimeRange, placement: VideoPlacement = .inset) {
         self.id = id; self.recordingID = recordingID; self.title = title

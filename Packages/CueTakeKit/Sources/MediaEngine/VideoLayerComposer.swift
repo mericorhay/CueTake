@@ -52,7 +52,7 @@ extension VideoComposer {
     }
 
     /// Every movie gets its own video/audio track so overlapping footage shares one player clock.
-    func addVideoLayers(project: Project, directory: URL, composition: AVMutableComposition, base: [AVMutableVideoCompositionInstruction], render: CGSize) async throws -> (instructions: [AVMutableVideoCompositionInstruction], audio: [AVMutableAudioMixInputParameters]) {
+    func addVideoLayers(project: Project, directory: URL, composition: AVMutableComposition, base: [AVMutableVideoCompositionInstruction], render: CGSize) async throws -> (instructions: [AVMutableVideoCompositionInstruction], audio: [AVMutableAudioMixInputParameters], tracks: [CMPersistentTrackID: VideoLayer.ID]) {
         var tracks: [LayerTrack] = []
         var audio: [AVMutableAudioMixInputParameters] = []
         // Added videos play over the main video and end with it; with no main video they set the length.
@@ -149,6 +149,8 @@ extension VideoComposer {
         if composition.duration.seconds < end {
             composition.insertEmptyTimeRange(CMTimeRange(start: composition.duration, duration: CMTime(seconds: end - composition.duration.seconds, preferredTimescale: 600)))
         }
-        return (instructions, audio)
+        var ids: [CMPersistentTrackID: VideoLayer.ID] = [:]
+        for item in tracks { ids[item.track.trackID] = item.layer.id }
+        return (instructions, audio, ids)
     }
 }

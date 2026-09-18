@@ -52,9 +52,24 @@ public struct TimelineEffect: Identifiable, Hashable, Sendable, Codable {
     }
 }
 
+/// What is kept in front when a background is replaced.
+public enum Cutout: String, Hashable, Sendable, Codable, CaseIterable {
+    /// People, found by the device's person segmentation.
+    case person
+    /// Whatever stands out in front — a pet, a product, a person — found by the device's
+    /// foreground mask. Slower than `person`, and for anything that is not a person.
+    case subject
+    /// Everything but one colour: a green or blue screen (see `key`).
+    case color
+}
+
 /// How a background is replaced.
 public struct BackgroundSettings: Hashable, Sendable, Codable {
     public var style: ClipBackground
+    /// What stays in front. People unless chosen otherwise.
+    public var cutout: Cutout
+    /// The colour taken out, for `.color`.
+    public var key: ChromaKey?
     /// 0…1. For blur, how far out of focus the room goes; for dim, how dark it gets.
     public var strength: Double
     /// 0…1. How soft the edge around the person is — hair and shoulders look cut out when it is hard.
@@ -69,9 +84,13 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
         strength: Double = 0.5,
         feather: Double = 0.35,
         color: RGBAColor? = nil,
-        fineEdges: Bool = false
+        fineEdges: Bool = false,
+        cutout: Cutout = .person,
+        key: ChromaKey? = nil
     ) {
         self.style = style
+        self.cutout = cutout
+        self.key = key
         self.strength = min(max(strength, 0), 1)
         self.feather = min(max(feather, 0), 1)
         self.color = color
@@ -85,7 +104,15 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
         feather = (try? container.decodeIfPresent(Double.self, forKey: .feather)) ?? 0.35
         color = try? container.decodeIfPresent(RGBAColor.self, forKey: .color)
         fineEdges = (try? container.decodeIfPresent(Bool.self, forKey: .fineEdges)) ?? false
+        cutout = (try? container.decodeIfPresent(Cutout.self, forKey: .cutout)) ?? .person
+        key = try? container.decodeIfPresent(ChromaKey.self, forKey: .key)
     }
+
+    /// The key in use: the chosen one, or a green screen when none was chosen yet.
+    public var effectiveKey: ChromaKey { (key ?? .green).clamped }
+
+    /// Whether the edge slider means anything: a keyed colour has its own softness.
+    public var usesFeather: Bool { cutout != .color }
 
     /// Whether the strength slider means anything for this style.
     public var usesStrength: Bool { style == .blur || style == .dim }
@@ -95,7 +122,14 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
     public var token: String {
         var parts = [style.token]
         if usesStrength { parts.append("s\(Int((strength * 100).rounded()))") }
-        parts.append("f\(Int((feather * 100).rounded()))")
+        // People are the default and add nothing, so files rendered before there was a choice
+        // keep their names.
+        switch cutout {
+        case .person: break
+        case .subject: parts.append("subj")
+        case .color: parts.append(effectiveKey.token)
+        }
+        if usesFeather { parts.append("f\(Int((feather * 100).rounded()))") }
         if style == .color, let color {
             parts.append(String(color.hex.dropFirst()))
         }

@@ -849,6 +849,39 @@ struct ToolDock: View {
 
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
+                    // Footage shot on a screen: the screen's colour goes, a studio backdrop comes in,
+                    // and the inspector opens on the colour and its edge.
+                    Button {
+                        let range = backgroundSpan(at: index)
+                        open = nil
+                        withAnimation(DS.Motion.settle) {
+                            model.addBackground(
+                                BackgroundSettings(style: .studio, cutout: .color, key: .green),
+                                from: range.lowerBound,
+                                to: range.upperBound
+                            )
+                        }
+                    } label: {
+                        VStack(spacing: 6) {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color(red: 0, green: 0.78, blue: 0.25))
+                                .frame(width: 52, height: 52)
+                                .overlay {
+                                    Image(systemName: "eyedropper.halffull")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundStyle(Color.white.opacity(0.92))
+                                }
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .strokeBorder(DS.Palette.lime, lineWidth: 1.5)
+                                }
+                            Text("editor.background.greenScreen", bundle: .module)
+                                .dsFont(.sans, .medium, 10)
+                                .foregroundStyle(DS.Palette.ink(0.75))
+                        }
+                    }
+                    .buttonStyle(.dsPress(radius: 10))
+
                     ForEach(Self.backgroundChoices, id: \.self) { choice in
                         Button {
                             let range = backgroundSpan(at: index)

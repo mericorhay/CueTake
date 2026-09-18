@@ -19,6 +19,9 @@ public struct Overlay: Identifiable, Hashable, Sendable, Codable {
     public var duration: MediaTime
     public var transform: OverlayTransform
     public var animation: OverlayAnimation
+    /// Drawn behind the people in the picture rather than over them: a title a person stands in
+    /// front of. The picture is cut around them on every frame as it plays.
+    public var isBehindPerson: Bool = false
 
     public init(
         id: UUID = UUID(),
@@ -58,6 +61,21 @@ public struct Overlay: Identifiable, Hashable, Sendable, Codable {
         duration = (try? c.decode(MediaTime.self, forKey: .duration)) ?? MediaTime(seconds: 3)
         transform = (try? c.decode(OverlayTransform.self, forKey: .transform)) ?? OverlayTransform()
         animation = (try? c.decode(OverlayAnimation.self, forKey: .animation)) ?? .fade
+        isBehindPerson = (try? c.decodeIfPresent(Bool.self, forKey: .isBehindPerson)) ?? false
+    }
+
+    /// How much of it shows at a moment, fades included. Pop and slide are not motion that can
+    /// be drawn behind a person, so behind one they simply appear.
+    public func visibility(at seconds: Double) -> Double {
+        guard isVisible(at: seconds) else { return 0 }
+        var level = min(max(transform.opacity, 0), 1)
+        if animation == .fade {
+            let length = max(0.05, duration.seconds)
+            let edge = min(0.25, length * 0.3)
+            let into = seconds - start.seconds
+            level *= min(1, into / edge, (length - into) / edge)
+        }
+        return max(0, level)
     }
 }
 

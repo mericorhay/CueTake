@@ -75,7 +75,7 @@ struct OverlayCanvas: View {
             .aiGlow(model.glowToken(.overlay(overlay.id)), in: RoundedRectangle(cornerRadius: 6, style: .continuous), inset: 6)
             .scaleEffect(x: t.flipX ? -1 : 1, y: t.flipY ? -1 : 1)
             .rotationEffect(.degrees(t.rotation))
-            .opacity(t.opacity * (visible ? 1 : 0.35))
+            .opacity(Self.shown(overlay, selected: selected, visible: visible))
             .overlay {
                 if selected {
                     RoundedRectangle(cornerRadius: 4)
@@ -90,6 +90,14 @@ struct OverlayCanvas: View {
                 withAnimation(DS.Motion.snap) { model.select(overlay: overlay.id) }
             }
             .gesture(selected ? transformGesture(for: overlay, in: rect) : nil)
+    }
+
+    /// How much of an overlay the canvas draws. One behind the person is drawn into the video by
+    /// the compositor, under them; the canvas keeps only an invisible copy to tap, and draws it
+    /// on top again while it is selected so it can be moved with its handles.
+    static func shown(_ overlay: Overlay, selected: Bool, visible: Bool) -> Double {
+        if overlay.isBehindPerson, !selected { return 0.001 }
+        return overlay.transform.opacity * (visible ? 1 : 0.35)
     }
 
     /// The size handle, on the picture's lower corner wherever the picture has been turned to.

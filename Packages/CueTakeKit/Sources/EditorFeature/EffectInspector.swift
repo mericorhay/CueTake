@@ -16,6 +16,7 @@ struct EffectInspector: View {
     /// step would start forty renders a second; the change is made when the finger lifts.
     @State private var draftStrength: Double?
     @State private var draftFeather: Double?
+    @State private var draftKey: ChromaKey?
 
     private var settings: BackgroundSettings { effect.background ?? BackgroundSettings(style: .blur) }
 
@@ -26,6 +27,7 @@ struct EffectInspector: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     timing
+                    cutouts
                     looks
                     details
                     actions
@@ -113,6 +115,139 @@ struct EffectInspector: View {
         }
     }
 
+    // MARK: - What stays
+
+    private var cutouts: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            DSKicker(String(localized: "editor.effect.cutout", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+            HStack(spacing: 6) {
+                ForEach(Cutout.allCases, id: \.self) { cutout in
+                    let isOn = settings.cutout == cutout
+                    Button {
+                        withAnimation(DS.Motion.snap) {
+                            model.updateBackground(effect.id) {
+                                $0.cutout = cutout
+                                if cutout == .color, $0.key == nil { $0.key = .green }
+                            }
+                        }
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: Self.symbol(cutout))
+                                .font(.system(size: 15, weight: .medium))
+                                .symbolEffect(.bounce, value: isOn)
+                            Text(Self.label(cutout))
+                                .dsFont(.sans, .medium, 10)
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(isOn ? EffectLane.tint : DS.Palette.hairline(0.07)))
+                    }
+                    .buttonStyle(.dsPress(radius: 12))
+                    .sensoryFeedback(.selection, trigger: isOn)
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
+                }
+            }
+            Text(Self.note(settings.cutout))
+                .dsFont(.sans, .regular, 10, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.45))
+                .contentTransition(.opacity)
+        }
+    }
+
+    static func symbol(_ cutout: Cutout) -> String {
+        switch cutout {
+        case .person: "person.fill"
+        case .subject: "pawprint.fill"
+        case .color: "eyedropper.halffull"
+        }
+    }
+
+    static func label(_ cutout: Cutout) -> String {
+        switch cutout {
+        case .person: String(localized: "editor.effect.cutout.person", bundle: .module)
+        case .subject: String(localized: "editor.effect.cutout.subject", bundle: .module)
+        case .color: String(localized: "editor.effect.cutout.color", bundle: .module)
+        }
+    }
+
+    static func note(_ cutout: Cutout) -> String {
+        switch cutout {
+        case .person: String(localized: "editor.effect.cutout.person.note", bundle: .module)
+        case .subject: String(localized: "editor.effect.cutout.subject.note", bundle: .module)
+        case .color: String(localized: "editor.effect.cutout.color.note", bundle: .module)
+        }
+    }
+
+    /// The screen colour and its edge, when a colour is what goes. The sliders commit when the
+    /// finger lifts, like the others here: every change is a new render of the clip.
+    private var keyControls: some View {
+        let key = draftKey ?? settings.effectiveKey
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                ForEach([ChromaKey.green, ChromaKey.blue], id: \.color) { preset in
+                    let isOn = settings.effectiveKey.color == preset.color
+                    Button {
+                        model.updateBackground(effect.id, coalescing: "key-color") {
+                            var next = $0.effectiveKey
+                            next.color = preset.color
+                            $0.key = next
+                        }
+                    } label: {
+                        Circle()
+                            .fill(Color(red: preset.color.red, green: preset.color.green, blue: preset.color.blue))
+                            .frame(width: 26, height: 26)
+                            .overlay(Circle().stroke(isOn ? DS.Palette.lime : DS.Palette.hairline(0.2), lineWidth: isOn ? 2 : 1).padding(-3))
+                    }
+                    .buttonStyle(.dsPressIcon)
+                }
+                ColorPicker(
+                    String(localized: "editor.effect.keyColor", bundle: .module),
+                    selection: Binding(
+                        get: { Color(red: settings.effectiveKey.color.red, green: settings.effectiveKey.color.green, blue: settings.effectiveKey.color.blue) },
+                        set: { value in
+                            let resolved = value.resolve(in: EnvironmentValues())
+                            model.updateBackground(effect.id, coalescing: "key-color") {
+                                var next = $0.effectiveKey
+                                next.color = RGBAColor(
+                                    red: min(max(Double(resolved.red), 0), 1),
+                                    green: min(max(Double(resolved.green), 0), 1),
+                                    blue: min(max(Double(resolved.blue), 0), 1)
+                                )
+                                $0.key = next
+                            }
+                        }
+                    ),
+                    supportsOpacity: false
+                )
+                .dsFont(.sans, .medium, 11)
+                .foregroundStyle(DS.Palette.ink(0.7))
+            }
+            slider("editor.video.key.tolerance", symbol: "scope", value: key.tolerance,
+                   onChange: { value in draftKey = withKey { $0.tolerance = value } },
+                   onCommit: commitKey)
+            slider("editor.video.key.softness", symbol: "circle.dotted", value: key.softness,
+                   onChange: { value in draftKey = withKey { $0.softness = value } },
+                   onCommit: commitKey)
+            slider("editor.video.key.spill", symbol: "drop", value: key.spill,
+                   onChange: { value in draftKey = withKey { $0.spill = value } },
+                   onCommit: commitKey)
+        }
+    }
+
+    private func withKey(_ change: (inout ChromaKey) -> Void) -> ChromaKey {
+        var next = draftKey ?? settings.effectiveKey
+        change(&next)
+        return next.clamped
+    }
+
+    private func commitKey() {
+        guard let value = draftKey else { return }
+        model.updateBackground(effect.id, coalescing: "key") { $0.key = value }
+        draftKey = nil
+    }
+
     // MARK: - Look
 
     private var looks: some View {
@@ -175,17 +310,23 @@ struct EffectInspector: View {
                 )
             }
 
-            slider(
-                "editor.effect.feather",
-                symbol: "circle.dotted",
-                value: draftFeather ?? settings.feather,
-                onChange: { draftFeather = $0 },
-                onCommit: {
-                    guard let value = draftFeather else { return }
-                    model.updateBackground(effect.id, coalescing: "feather") { $0.feather = value }
-                    draftFeather = nil
-                }
-            )
+            if settings.cutout == .color {
+                keyControls
+            }
+
+            if settings.usesFeather {
+                slider(
+                    "editor.effect.feather",
+                    symbol: "circle.dotted",
+                    value: draftFeather ?? settings.feather,
+                    onChange: { draftFeather = $0 },
+                    onCommit: {
+                        guard let value = draftFeather else { return }
+                        model.updateBackground(effect.id, coalescing: "feather") { $0.feather = value }
+                        draftFeather = nil
+                    }
+                )
+            }
 
             if settings.style == .color {
                 HStack(spacing: 8) {
@@ -218,28 +359,30 @@ struct EffectInspector: View {
                 }
             }
 
-            Button {
-                model.updateBackground(effect.id, coalescing: "edges") { $0.fineEdges.toggle() }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: settings.fineEdges ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(settings.fineEdges ? DS.Palette.lime : DS.Palette.ink(0.4))
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("editor.effect.fineEdges", bundle: .module)
-                            .dsFont(.sans, .semibold, 12)
-                            .foregroundStyle(DS.Palette.ink)
-                        Text("editor.effect.fineEdges.note", bundle: .module)
-                            .dsFont(.sans, .regular, 10)
-                            .foregroundStyle(DS.Palette.ink(0.45))
+            if settings.cutout == .person {
+                Button {
+                    model.updateBackground(effect.id, coalescing: "edges") { $0.fineEdges.toggle() }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: settings.fineEdges ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(settings.fineEdges ? DS.Palette.lime : DS.Palette.ink(0.4))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("editor.effect.fineEdges", bundle: .module)
+                                .dsFont(.sans, .semibold, 12)
+                                .foregroundStyle(DS.Palette.ink)
+                            Text("editor.effect.fineEdges.note", bundle: .module)
+                                .dsFont(.sans, .regular, 10)
+                                .foregroundStyle(DS.Palette.ink(0.45))
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.06)))
                 }
-                .padding(10)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.06)))
+                .buttonStyle(.dsPress(radius: 12))
+                .accessibilityAddTraits(settings.fineEdges ? .isSelected : [])
             }
-            .buttonStyle(.dsPress(radius: 12))
-            .accessibilityAddTraits(settings.fineEdges ? .isSelected : [])
         }
     }
 

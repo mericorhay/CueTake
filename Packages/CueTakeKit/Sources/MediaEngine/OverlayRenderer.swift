@@ -12,13 +12,19 @@ import QuartzCore
 /// as fractions of the frame — with the one difference that Core Animation's y axis points up, so
 /// positions flip vertically and a clockwise turn on screen is a negative angle here.
 enum OverlayRenderer {
+    /// Overlays behind a person are not among them: the compositor draws those, under the people.
     static func layers(for overlays: [Overlay], renderSize: CGSize, mediaDirectory: URL) -> [CALayer] {
-        overlays.compactMap { overlay in
-            layer(for: overlay, renderSize: renderSize, mediaDirectory: mediaDirectory)
+        overlays.filter { !$0.isBehindPerson }.compactMap { overlay in
+            layer(for: overlay, renderSize: renderSize, mediaDirectory: mediaDirectory, still: false)
         }
     }
 
-    private static func layer(for overlay: Overlay, renderSize: CGSize, mediaDirectory: URL) -> CALayer? {
+    /// One overlay fully shown and without motion, for drawing into a single picture.
+    static func stillLayer(for overlay: Overlay, renderSize: CGSize, mediaDirectory: URL) -> CALayer? {
+        layer(for: overlay, renderSize: renderSize, mediaDirectory: mediaDirectory, still: true)
+    }
+
+    private static func layer(for overlay: Overlay, renderSize: CGSize, mediaDirectory: URL, still: Bool) -> CALayer? {
         let t = overlay.transform
         let content: CALayer
         let size: CGSize
@@ -62,6 +68,7 @@ enum OverlayRenderer {
         var transform = CATransform3DMakeRotation(-t.rotation * .pi / 180, 0, 0, 1)
         transform = CATransform3DScale(transform, t.flipX ? -1 : 1, t.flipY ? -1 : 1, 1)
         content.transform = transform
+        if still { return content }
         content.opacity = 0
         content.add(visibility(for: overlay), forKey: "visible")
 

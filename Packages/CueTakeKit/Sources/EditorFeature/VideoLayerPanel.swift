@@ -46,6 +46,7 @@ struct VideoLayerPanel: View {
                             .buttonStyle(.dsPress(radius: 14))
                         }
                         placement(layer)
+                        greenScreen(layer)
                         sound(layer)
                     } else {
                         mainPicture
@@ -390,6 +391,111 @@ struct VideoLayerPanel: View {
                 next.opacity = value
                 model.setVideoLayerPlacement(layer.id, next)
             }
+        }
+    }
+
+    // MARK: - Green screen
+
+    /// A video shot on a green or blue screen, with the screen taken out so what is under it
+    /// shows through.
+    private func greenScreen(_ layer: VideoLayer) -> some View {
+        let key = layer.chroma
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                DSKicker(String(localized: "editor.video.key", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                Spacer(minLength: 0)
+                if key != nil {
+                    Button {
+                        withAnimation(DS.Motion.settle) { model.updateVideoLayer(layer.id) { $0.chroma = nil } }
+                    } label: {
+                        Text("editor.video.key.off", bundle: .module)
+                            .dsFont(.sans, .medium, 11)
+                            .foregroundStyle(DS.Palette.ink(0.55))
+                    }
+                    .buttonStyle(.dsPress(radius: 10))
+                    .transition(.opacity)
+                }
+            }
+            HStack(spacing: 8) {
+                keySwatch(layer, .green, "editor.video.key.green", isOn: key?.color == ChromaKey.green.color)
+                keySwatch(layer, .blue, "editor.video.key.blue", isOn: key?.color == ChromaKey.blue.color)
+                ColorPicker(
+                    selection: Binding(
+                        get: { Color(red: key?.color.red ?? 0, green: key?.color.green ?? 0.78, blue: key?.color.blue ?? 0.25) },
+                        set: { color in
+                            let resolved = color.resolve(in: EnvironmentValues())
+                            let chosen = RGBAColor(
+                                red: min(max(Double(resolved.red), 0), 1),
+                                green: min(max(Double(resolved.green), 0), 1),
+                                blue: min(max(Double(resolved.blue), 0), 1)
+                            )
+                            model.updateVideoLayer(layer.id, coalescing: "video-layer-key-color-\(layer.id)") {
+                                var next = $0.chroma ?? .green
+                                next.color = chosen
+                                $0.chroma = next
+                            }
+                        }
+                    ),
+                    supportsOpacity: false
+                ) {
+                    Text("editor.video.key.pick", bundle: .module)
+                        .dsFont(.sans, .medium, 11)
+                        .foregroundStyle(DS.Palette.ink(0.75))
+                }
+                .fixedSize()
+            }
+            if let key {
+                VStack(spacing: 6) {
+                    slider("editor.video.key.tolerance", symbol: "scope", value: key.tolerance, range: 0...1) { value in
+                        updateKey(layer) { $0.tolerance = value }
+                    }
+                    slider("editor.video.key.softness", symbol: "circle.dotted", value: key.softness, range: 0...1) { value in
+                        updateKey(layer) { $0.softness = value }
+                    }
+                    slider("editor.video.key.spill", symbol: "drop", value: key.spill, range: 0...1) { value in
+                        updateKey(layer) { $0.spill = value }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .animation(DS.Motion.settle, value: key != nil)
+    }
+
+    private func keySwatch(_ layer: VideoLayer, _ preset: ChromaKey, _ label: String.LocalizationValue, isOn: Bool) -> some View {
+        Button {
+            withAnimation(DS.Motion.settle) {
+                model.updateVideoLayer(layer.id) {
+                    // A new colour keeps the edge already tuned.
+                    var next = $0.chroma ?? preset
+                    next.color = preset.color
+                    $0.chroma = next
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color(red: preset.color.red, green: preset.color.green, blue: preset.color.blue))
+                    .frame(width: 14, height: 14)
+                    .overlay(Circle().stroke(DS.Palette.hairline(0.3), lineWidth: 1))
+                Text(String(localized: label, bundle: .module))
+                    .dsFont(.sans, .medium, 11)
+            }
+            .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+            .padding(.horizontal, 11)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(isOn ? VideoLayerLane.tint : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 20))
+        .sensoryFeedback(.selection, trigger: isOn)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    private func updateKey(_ layer: VideoLayer, _ change: @escaping (inout ChromaKey) -> Void) {
+        model.updateVideoLayer(layer.id, coalescing: "video-layer-key-\(layer.id)") {
+            var next = $0.chroma ?? .green
+            change(&next)
+            $0.chroma = next.clamped
         }
     }
 

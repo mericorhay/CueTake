@@ -43,6 +43,8 @@ public enum TransitionRenderer {
         var base = project
         base.transitions = []
         base.effects = project.effects.filter { $0.filter == nil }
+        // Drawn over the finished frame by the compositor; in a film they would be drawn twice.
+        base.overlays = project.overlays.filter { !$0.isBehindPerson }
         return base
     }
 

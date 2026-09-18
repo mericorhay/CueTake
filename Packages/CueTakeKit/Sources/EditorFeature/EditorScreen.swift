@@ -448,6 +448,9 @@ public struct EditorScreen: View {
         .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
         // Filters are drawn by the compositor from a live copy: moved, stretched, changed, undone.
         .onChange(of: model.project.effects) { model.syncLiveFilters() }
+        .onChange(of: model.project.overlays) { model.syncLiveBehind() }
+        .onChange(of: model.selectedOverlay) { model.syncLiveBehind() }
+        .onChange(of: model.project.videoLayers) { model.syncLiveKeys() }
         .animation(DS.Motion.settle, value: model.selectedOverlay)
         .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil; model.selectedTransition = nil } }
         .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }

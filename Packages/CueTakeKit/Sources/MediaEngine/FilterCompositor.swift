@@ -36,6 +36,35 @@ public final class LiveFilters: @unchecked Sendable {
     }
 }
 
+/// Colour keys on added videos, read by the compositor on every frame, so the tolerance slider
+/// changes the picture as it moves instead of rebuilding the composition at every step.
+public final class LiveKeys: @unchecked Sendable {
+    private let lock = NSLock()
+    private var keys: [VideoLayer.ID: ChromaKey] = [:]
+    private var layers: [CMPersistentTrackID: VideoLayer.ID] = [:]
+
+    public init(_ layers: [VideoLayer] = []) {
+        update(layers)
+    }
+
+    public func update(_ layers: [VideoLayer]) {
+        var next: [VideoLayer.ID: ChromaKey] = [:]
+        for layer in layers {
+            if let key = layer.chroma { next[layer.id] = key.clamped }
+        }
+        lock.withLock { keys = next }
+    }
+
+    /// Which composition track plays which added video; set by each build.
+    func bind(_ tracks: [CMPersistentTrackID: VideoLayer.ID]) {
+        lock.withLock { layers = tracks }
+    }
+
+    func key(for track: CMPersistentTrackID) -> ChromaKey? {
+        lock.withLock { layers[track].flatMap { keys[$0] } }
+    }
+}
+
 /// A composition instruction the filter compositor understands: the same layers as the system's
 /// instructions, plus where to read the filters from.
 final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, @unchecked Sendable {
@@ -46,10 +75,21 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     let passthroughTrackID = kCMPersistentTrackID_Invalid
     let layers: [AVVideoCompositionLayerInstruction]
     let filters: LiveFilters
+    /// Colours taken out of added videos.
+    let keys: LiveKeys?
+    /// Overlays drawn behind the people.
+    let behind: LiveBehind?
     /// What shows where no layer draws.
     let background: CIColor
 
-    init(_ instruction: AVVideoCompositionInstruction, filters: LiveFilters) {
+    init(
+        _ instruction: AVVideoCompositionInstruction,
+        filters: LiveFilters,
+        keys: LiveKeys? = nil,
+        behind: LiveBehind? = nil
+    ) {
+        self.keys = keys
+        self.behind = behind
         timeRange = instruction.timeRange
         layers = instruction.layerInstructions
         let ids = Set(instruction.layerInstructions.map(\.trackID))
@@ -69,6 +109,8 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
     private let lock = NSLock()
     private var renderSize: CGSize = .zero
     private var cancelled = false
+    /// Used on `queue` only.
+    private let cutter = PersonCutter()
 
     var sourcePixelBufferAttributes: [String: any Sendable]? {
         [kCVPixelBufferPixelFormatTypeKey as String: [kCVPixelFormatType_32BGRA], kCVPixelBufferMetalCompatibilityKey as String: true]
@@ -113,13 +155,21 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                 // The first layer instruction is on top; paint from the bottom up.
                 for layer in instruction.layers.reversed() {
                     guard let pixels = request.sourceFrame(byTrackID: layer.trackID) else { continue }
-                    if let image = Self.place(pixels, layer: layer, at: time, renderHeight: size.height) {
+                    if let image = Self.place(pixels, layer: layer, at: time, renderHeight: size.height, key: instruction.keys?.key(for: layer.trackID)) {
                         frame = image.composited(over: frame)
                     }
                 }
 
                 for settings in instruction.filters.settings(at: time.seconds) {
                     frame = FilterLooks.apply(settings, to: frame, in: bounds)
+                }
+
+                // Last, so the people are found in the picture as it will be seen.
+                if let behind = instruction.behind {
+                    let showing = behind.showing(at: time.seconds)
+                    if !showing.isEmpty {
+                        frame = cutter.compose(frame.cropped(to: bounds), behind: showing, pictures: behind, in: bounds)
+                    }
                 }
 
                 context.render(frame.cropped(to: bounds), to: output, bounds: bounds, colorSpace: CGColorSpaceCreateDeviceRGB())
@@ -133,10 +183,13 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
         _ pixels: CVPixelBuffer,
         layer: AVVideoCompositionLayerInstruction,
         at time: CMTime,
-        renderHeight: CGFloat
+        renderHeight: CGFloat,
+        key: ChromaKey? = nil
     ) -> CIImage? {
         let sourceHeight = CGFloat(CVPixelBufferGetHeight(pixels))
         var image = CIImage(cvPixelBuffer: pixels)
+        // Keyed before it is placed: the source's own pixels, before any scaling blurs the edge.
+        if let key { image = ChromaCubes.shared.apply(key, to: image) }
 
         var cropStart = CGRect.zero, cropEnd = CGRect.zero
         var cropRange = CMTimeRange.invalid

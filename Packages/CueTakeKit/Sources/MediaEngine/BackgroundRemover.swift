@@ -189,6 +189,8 @@ public struct BackgroundRemover: Sendable {
         let bounds = CGRect(x: 0, y: 0, width: width, height: height)
         var lastTime = CMTime.invalid
         var written = 0.0
+        // The last frame's subject mask, already settled, which the next one is eased toward.
+        var previousSubject: CIImage?
 
         enum Frame {
             case end, skip
@@ -215,13 +217,14 @@ public struct BackgroundRemover: Sendable {
                     .cropped(to: bounds)
 
                 let composed: CIImage
-                if (try? sequence.perform([request], on: placed)) != nil,
-                   let maskBuffer = request.results?.first?.pixelBuffer {
-                    let mask = CIImage(cvPixelBuffer: maskBuffer)
-                    var fitted = mask.transformed(by: CGAffineTransform(
-                        scaleX: bounds.width / mask.extent.width,
-                        y: bounds.height / mask.extent.height
-                    ))
+                if settings.cutout == .color {
+                    // A keyed colour needs no mask of its own: the cube makes the screen see-through.
+                    let keyed = ChromaCubes.shared.apply(settings.effectiveKey, to: placed)
+                    composed = keyed.composited(over: Self.backdrop(settings, behind: placed, in: bounds)).cropped(to: bounds)
+                } else if let mask = settings.cutout == .subject
+                    ? Self.subjectMask(of: placed, in: bounds, after: &previousSubject, context: context)
+                    : Self.personMask(of: placed, in: bounds, request: request, sequence: sequence) {
+                    var fitted = mask
                     // A soft edge: the mask blurred a little, so hair and shoulders fade into the new
                     // background instead of looking cut out with scissors.
                     if settings.feather > 0.01 {
@@ -234,7 +237,7 @@ public struct BackgroundRemover: Sendable {
                     blend.maskImage = fitted
                     composed = blend.outputImage?.cropped(to: bounds) ?? placed
                 } else {
-                    // No person found in this frame: the frame as it is, so the clip never skips.
+                    // Nothing found in this frame: the frame as it is, so the clip never skips.
                     composed = placed
                 }
 
@@ -277,6 +280,69 @@ public struct BackgroundRemover: Sendable {
         try FileManager.default.moveItem(at: partial, to: destination)
         progress(1)
         return destination
+    }
+
+    /// The people in a frame, scaled to it. Nil when there is no one.
+    static func personMask(
+        of frame: CIImage,
+        in bounds: CGRect,
+        request: VNGeneratePersonSegmentationRequest,
+        sequence: VNSequenceRequestHandler
+    ) -> CIImage? {
+        guard (try? sequence.perform([request], on: frame)) != nil,
+              let buffer = request.results?.first?.pixelBuffer
+        else { return nil }
+        return fit(CIImage(cvPixelBuffer: buffer), to: bounds)
+    }
+
+    /// Everything that stands out in front of a frame, scaled to it. Nil when nothing does.
+    ///
+    /// The foreground mask is made for photos and knows nothing of the frame before, so its edge
+    /// would shimmer from frame to frame. Each mask is eased a third of the way back toward the
+    /// last one, and the result drawn out to pixels so the next frame blends with a picture, not
+    /// with a chain of every frame before it.
+    static func subjectMask(
+        of frame: CIImage,
+        in bounds: CGRect,
+        after previous: inout CIImage?,
+        context: CIContext
+    ) -> CIImage? {
+        let request = VNGenerateForegroundInstanceMaskRequest()
+        let handler = VNImageRequestHandler(ciImage: frame)
+        guard (try? handler.perform([request])) != nil,
+              let observation = request.results?.first,
+              !observation.allInstances.isEmpty,
+              let buffer = try? observation.generateScaledMaskForImage(forInstances: observation.allInstances, from: handler)
+        else {
+            previous = nil
+            return nil
+        }
+        var mask = fit(CIImage(cvPixelBuffer: buffer), to: bounds)
+        if let previous {
+            mask = previous.applyingFilter("CIDissolveTransition", parameters: [
+                kCIInputTargetImageKey: mask,
+                kCIInputTimeKey: 0.67,
+            ]).cropped(to: bounds)
+        }
+        // Only a mask drawn out to pixels is kept: keeping the recipe instead would chain every
+        // frame of the clip into the next one.
+        if let settled = context.createCGImage(mask, from: bounds, format: .L8, colorSpace: CGColorSpaceCreateDeviceGray()) {
+            mask = CIImage(cgImage: settled)
+            previous = mask
+        } else {
+            previous = nil
+        }
+        return mask
+    }
+
+    private static func fit(_ mask: CIImage, to bounds: CGRect) -> CIImage {
+        mask
+            .transformed(by: CGAffineTransform(translationX: -mask.extent.minX, y: -mask.extent.minY))
+            .transformed(by: CGAffineTransform(
+                scaleX: bounds.width / max(mask.extent.width, 1),
+                y: bounds.height / max(mask.extent.height, 1)
+            ))
+            .cropped(to: bounds)
     }
 
     static func isUsableCache(_ url: URL) -> Bool {
