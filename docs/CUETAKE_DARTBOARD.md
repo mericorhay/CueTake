@@ -697,6 +697,35 @@ Ekip (P2)                              CloudKit shared zones veya kendi backend'
 - **Model:** `Domain/Timeline/CameraGroup`; açı değişimi yeni klip kopyalamaz, gruptaki açıyı seçer.
 - **Donanım sınırı:** `AVCaptureMultiCamSession.hardwareCost` ve sistem baskısı izlenir; sınırı aşarsa çözünürlük düşer.
 
+### H16 — Canlı Suflör: başka uygulamada yayındayken yanında (P1, fark yaratan)
+
+**Fikir (kullanıcıdan, 2026-09-18):** Kişi TikTok/Instagram'da canlı yayın yapıyor ya da onların kamerasıyla çekiyor. Kamerasını değiştiremeyiz, ama yanında durabiliriz: yayından önce reklam brifi hazırlanır, yayında CueTake küçük bir PiP penceresinde ve Dynamic Island'da suflörlük yapar, bir butonla "şimdi ne konuşayım" önerisi verir.
+
+**Rakipte:** PiP'te yüzen teleprompter birkaç uygulamada var. Reklam brifi, zamanlama, köprü cümlesi, söylenmesi gerekenler listesi ve markaya rapor olan yok.
+
+**Kesin sınır — mikrofon paylaşılamaz:** iOS mikrofonu aynı anda tek uygulamaya verir. TikTok/IG yayını mikrofonu aldığı an bizim arka plan kaydımız kesilir (`audioDeviceInUseByAnotherClient`); arka planda yeniden başlatmak da mümkün değil. Bu yüzden **aynı telefonda yayın sırasında dinleme yok.** Test gerekmez, tasarım buna göre:
+- **Tek telefon (ana mod):** dinleme yayından *önce* (brif, prova, hız ölçümü). Yayında suflör provada ölçülen hızla ilerler; PiP düğmeleri elle kontrol (oynat/durdur = duraklat, ileri = sıradaki kart / "ne konuşayım", geri = önceki). "Ne konuşayım" dökümü değil brifi, geçen süreyi ve hangi kartta olunduğunu kullanır.
+- **İkinci telefon (tam mod):** yayını telefon A yapar, CueTake telefon B'de karşıda durur ve dinler. Söylenenler otomatik işaretlenir, takılma tespit edilir, köprü cümlesi son 2 dakikanın dökümünden gelir.
+- Yayın sonrası: TikTok/IG kaydı CueTake'e alınırsa döküm çıkar, söylenen/unutulan maddeler raporlanır.
+
+**Akış:**
+1. Ana sayfada "Canlı Suflör" kartı.
+2. Hazırlık: canlı mı çekim mi → reklam brifi (marka, ürün, kod/link, 2–3 zorunlu madde, zaman: "15. dk" ya da "ben basınca", ton; yaz ya da Worker hazırlasın: açılış, 3 madde, çağrı, 2 kurtarma cümlesi) → 20 sn prova (hız + mikrofon).
+3. "Sahneye çık": kart PiP'e dönüşür, "TikTok'u aç / Instagram'ı aç" düğmeleri, Island'da sayaç.
+4. Yayında PiP: reklama 30 sn kala amber halka, reklam anında marka rengi, karaoke metin; zorunlu maddeler listesi (tek telefonda elle, iki telefonda otomatik).
+5. Island: kompakt "Reklam 2:14" / "✓ 2/3"; genişte sıradaki cümle, "Sıradaki" ve "Takıldım".
+6. Rapor: reklam süresi, söylenen/unutulan, markaya gönderilebilir özet, "videoyu CueTake'e al".
+
+**Animasyonlar (Reduce Motion'a uyar):** kart→PiP matchedGeometry yayı; nefes alan 3 çubuk dalga; dolan amber halka, son 5 sn nabız; tik çizgisi çizilir; öneri bulanıktan netleşip aşağıdan gelir; kurtarma cümlesi 0.6 sn'de belirir; raporda sayılar sayarak yükselir.
+
+**Teknik:**
+- PiP: `AVPictureInPictureController.ContentSource(sampleBufferDisplayLayer:)`, suflör görünümü `CMSampleBuffer`'a çizilir; `UIBackgroundModes` += `audio`.
+- Worker: `/live-plan` (brif → kartlar), `/live-next` (bağlam → 3 öneri, ilki köprü cümlesi). Metin gider, ses gitmez.
+- Canlı Etkinlik: yeni widget eklentisi + App Intents düğmeleri; **yeni App ID ve provisioning profili gerekir (kullanıcı oluşturur).**
+- İkinci telefon: mevcut `SpeechEngine` (Türkçe `DictationTranscriber`), eşleşme QR ile, iletişim Multipeer.
+
+**Fazlar:** 1 brif + Worker · 2 PiP suflör + düğmeler · 3 Canlı Etkinlik/Island · 4 ikinci telefon modu · 5 rapor + animasyon cilası.
+
 ---
 
 ## 6. Ortak teknik altyapı
