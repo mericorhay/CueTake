@@ -375,6 +375,23 @@
         }
       }
     },
+    "suflor.brief.when.min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "min"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "dk"
+          }
+        }
+      }
+    },
     "suflor.brief.when.minute": {
       "extractionState": "manual",
       "localizations": {
@@ -409,36 +426,19 @@
         }
       }
     },
-    "suflor.brief.when.minuteShort": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MIN"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DK"
-          }
-        }
-      }
-    },
     "suflor.brief.when.minuteUnit": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "minutes after you press play"
+            "value": "after you press ▶"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "dakika sonra, ▶'ye bastıktan"
+            "value": "▶'ye bastıktan sonra"
           }
         }
       }

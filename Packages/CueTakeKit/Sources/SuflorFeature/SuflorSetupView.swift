@@ -397,31 +397,52 @@ private struct SuflorBriefStep: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .contentTransition(.opacity)
             if isMinute {
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text("\(minute)")
-                        .dsFont(.archivo, .extrabold, 44)
-                        .foregroundStyle(DS.Palette.amber)
-                        .contentTransition(.numericText(value: Double(minute)))
-                        .monospacedDigit()
-                    Text("suflor.brief.when.minuteUnit", bundle: .module)
-                        .dsFont(.sans, .medium, 15)
-                        .foregroundStyle(DS.Palette.ink(0.66))
-                    Spacer(minLength: 0)
-                    SuflorStepper(
-                        value: "\(minute)",
-                        caption: String(localized: "suflor.brief.when.minuteShort", bundle: .module),
-                        minusLabel: String(localized: "suflor.brief.when.earlier", bundle: .module),
-                        plusLabel: String(localized: "suflor.brief.when.later", bundle: .module),
-                        onMinus: { withAnimation(DS.Motion.snap) { model.brief.timing = .minute(max(1, minute - 1)) } },
-                        onPlus: { withAnimation(DS.Motion.snap) { model.brief.timing = .minute(min(180, minute + 1)) } }
-                    )
+                // One value, centred, with its buttons either side: the number and its unit share a
+                // baseline, the note sits under them, nothing else competes for the row.
+                HStack(spacing: 0) {
+                    minuteButton("minus", label: "suflor.brief.when.earlier") { max(1, minute - 1) }
+                    Spacer(minLength: 8)
+                    VStack(spacing: 2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 5) {
+                            Text(verbatim: "\(minute)")
+                                .dsFont(.archivo, .extrabold, 40)
+                                .foregroundStyle(DS.Palette.amber)
+                                .contentTransition(.numericText(value: Double(minute)))
+                                .monospacedDigit()
+                            Text("suflor.brief.when.min", bundle: .module)
+                                .dsFont(.sans, .semibold, 16)
+                                .foregroundStyle(DS.Palette.amber)
+                        }
+                        Text("suflor.brief.when.minuteUnit", bundle: .module)
+                            .dsFont(.sans, .regular, 12)
+                            .foregroundStyle(DS.Palette.ink(0.6))
+                            .multilineTextAlignment(.center)
+                    }
+                    .accessibilityElement(children: .combine)
+                    Spacer(minLength: 8)
+                    minuteButton("plus", label: "suflor.brief.when.later") { min(180, minute + 1) }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 10)
                 .dsCard(radius: 18)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
+    }
+
+    private func minuteButton(_ symbol: String, label: LocalizedStringKey, next: @escaping () -> Int) -> some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(DS.Motion.snap) { model.brief.timing = .minute(next()) }
+        } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(DS.Palette.ink)
+                .frame(width: 48, height: 48)
+                .background(Circle().fill(DS.Palette.hairline(0.08)))
+        }
+        .buttonStyle(.dsPressIcon)
+        .accessibilityLabel(Text(label, bundle: .module))
     }
 
     private var timingExplanation: String {

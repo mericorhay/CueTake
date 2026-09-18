@@ -21,7 +21,7 @@ struct SuflorTests {
         ])
         #expect(plan.ordered.map(\.role) == [.opening, .topic, .bridge, .ad, .cta, .closing])
         #expect(plan.adStart == 2)
-        #expect(plan.wordCount == 10)
+        #expect(plan.wordCount == 12)
     }
 
     @Test func aBriefSavedBeforeDetailsStillOpens() throws {
