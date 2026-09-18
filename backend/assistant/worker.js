@@ -306,8 +306,9 @@ async function askGroq(env, messages, options = {}) {
           messages: [{ role: "system", content: options.system || SYSTEM_PROMPT }, ...messages],
           ...(json ? { response_format: { type: "json_object" } } : {}),
           ...(reasoning && effort ? { reasoning_effort: effort } : {}),
-          // Qwen thinks out loud unless told not to show it; the app wants only the JSON.
-          ...(model.startsWith("qwen/") ? { reasoning_format: "hidden" } : {}),
+          // Qwen thinks out loud unless told not to show it; the app wants only the JSON. The
+          // sampling is Groq's recommendation for it.
+          ...(model.startsWith("qwen/") ? { reasoning_format: "hidden", temperature: 0.6, top_p: 0.95 } : {}),
         }),
       });
 
