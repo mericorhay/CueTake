@@ -448,9 +448,7 @@ public struct EditorScreen: View {
         .onChange(of: model.project.overlays.count) { model.loadOverlayImages() }
         // Filters are drawn by the compositor from a live copy: moved, stretched, changed, undone.
         .onChange(of: model.project.effects) { model.syncLiveFilters() }
-        .onChange(of: model.project.overlays) { model.syncLiveBehind() }
-        .onChange(of: model.selectedOverlay) { model.syncLiveBehind() }
-        .onChange(of: model.project.videoLayers) { model.syncLiveKeys() }
+        .modifier(LiveCompositorSync(model: model))
         .animation(DS.Motion.settle, value: model.selectedOverlay)
         .onChange(of: model.inspectedSegment) { _, id in if id != nil { editingCaption = nil; dockPanel = nil; model.selectedTransition = nil } }
         .onChange(of: model.selectedOverlay) { _, id in if id != nil { editingCaption = nil; dockPanel = nil } }
@@ -1325,6 +1323,19 @@ extension EditorModel.InspectorTab {
 ///
 /// Applied conditionally rather than with a zero-amplitude animation: an animation that is always
 /// running costs a redraw a frame forever, on a screen that is already drawing a video.
+/// Overlays behind the person and keyed videos are read live by the compositor: moved, changed,
+/// selected, undone. Its own modifier so the editor's long chain stays one the compiler can check.
+private struct LiveCompositorSync: ViewModifier {
+    let model: EditorModel
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: model.project.overlays) { model.syncLiveBehind() }
+            .onChange(of: model.selectedOverlay) { model.syncLiveBehind() }
+            .onChange(of: model.project.videoLayers) { model.syncLiveKeys() }
+    }
+}
+
 private struct PulseWhileSaving: ViewModifier {
     let isSaving: Bool
 
