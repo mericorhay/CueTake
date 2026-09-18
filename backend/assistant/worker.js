@@ -15,7 +15,7 @@ import { handleCertify, handleVerify, handleCertificateKey, handleReview } from 
 import { handleChallenge, handleRegister } from "./attest.js";
 
 const MODEL = "claude-opus-5";
-const GROQ_MODEL = "openai/gpt-oss-120b";
+const GROQ_MODEL = "qwen/qwen3.8-27b";
 // Per client, per minute. Enforced only when a rate-limit binding named LIMITER is configured
 // (see wrangler.toml); without one the worker still runs, unlimited.
 const RATE_KEY_HEADER = "cf-connecting-ip";
@@ -285,11 +285,10 @@ async function askAnthropic(env, messages, options = {}) {
   return { reply, stop_reason: result.stop_reason };
 }
 
-// Groq's OpenAI-compatible chat endpoint. gpt-oss-120b is the strongest reasoning model it serves
-// and writes Turkish well; the system prompt goes in as the first message.
-// Models tried in order. The first is the best editor; the next ones have their own, separate
-// rate limits, so a busy or too-small first model does not turn into an error for the user.
-const GROQ_FALLBACKS = ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"];
+// Groq's OpenAI-compatible chat endpoint; the system prompt goes in as the first message.
+// Models tried in order: Qwen first for its more natural Turkish, then gpt-oss. Each has its own
+// rate limit, so a busy, missing or too-small first model does not turn into an error for the user.
+const GROQ_FALLBACKS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 
 async function askGroq(env, messages, options = {}) {
   const models = [env.GROQ_MODEL || GROQ_MODEL, ...GROQ_FALLBACKS];
