@@ -92,6 +92,44 @@ struct ProjectVersionStoreTests {
         #expect(after.isEmpty)
     }
 
+    @Test func anUnreadableListDoesNotLoseTheVersionsBehindIt() async throws {
+        let (store, root) = try store()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let current = project()
+        try await store.save(current)
+        let first = try await store.saveVersion(of: current, name: "bir", kind: .manual)
+        let second = try await store.saveVersion(of: current, name: "iki", kind: .automatic)
+
+        // The list goes bad — a crash, or a later build that reads it differently.
+        let index = ProjectLayout(rootURL: root).versionsDirectory(for: current.id)
+            .appending(path: "index.json", directoryHint: .notDirectory)
+        try Data("not json".utf8).write(to: index)
+
+        let recovered = try await store.versions(of: current.id)
+        let found = Set(recovered.map(\.id))
+        #expect(found == [first.id, second.id])
+        // Recovered versions are the person's to delete, never trimmed as automatic ones.
+        #expect(recovered.allSatisfy { $0.kind == .manual })
+
+        // The next save keeps them rather than writing a list of one.
+        let third = try await store.saveVersion(of: current, name: "üç", kind: .manual)
+        let listedAfter = try await store.versions(of: current.id)
+        let after = Set(listedAfter.map(\.id))
+        #expect(after == [first.id, second.id, third.id])
+    }
+
+    @Test func theFirstVersionIsListedOnce() async throws {
+        let (store, root) = try store()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let current = project()
+        try await store.save(current)
+        _ = try await store.saveVersion(of: current, name: "ilk", kind: .manual)
+        let listed = try await store.versions(of: current.id)
+        #expect(listed.count == 1)
+    }
+
     @Test func aVersionOfAnotherProjectIsNotRestoredOverThisOne() async throws {
         let (store, root) = try store()
         defer { try? FileManager.default.removeItem(at: root) }

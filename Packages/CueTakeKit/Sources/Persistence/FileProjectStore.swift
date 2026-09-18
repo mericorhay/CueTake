@@ -86,16 +86,26 @@ public actor FileProjectStore: ProjectStore {
         try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
 
         let version = ProjectVersion(of: project, name: name, kind: kind)
+        // The list is read before the new document exists: with no index, reading rebuilds one
+        // from the files on the disk, and it would count this version twice.
+        var index = readIndex(project.id)
+
         // The document first, the index after: a crash between the two leaves an unlisted file,
         // never a listed version with nothing behind it.
         try ProjectDocumentCoder.encode(project)
             .write(to: document(version.id, in: folder), options: .atomic)
 
-        var index = readIndex(project.id)
         index.append(version)
         let dropped = Set(ProjectVersion.overflow(in: index))
         index.removeAll { dropped.contains($0.id) }
-        try writeIndex(index, for: project.id)
+        do {
+            try writeIndex(index, for: project.id)
+        } catch {
+            // Unlisted, the document could never be opened or cleared out; take it back with the
+            // failure rather than leave it on the disk for good.
+            try? fileManager.removeItem(at: document(version.id, in: folder))
+            throw error
+        }
         for id in dropped {
             try? fileManager.removeItem(at: document(id, in: folder))
         }
@@ -125,10 +135,38 @@ public actor FileProjectStore: ProjectStore {
 
     private func readIndex(_ id: Project.ID) -> [ProjectVersion] {
         let url = layout.versionsDirectory(for: id).appending(path: "index.json", directoryHint: .notDirectory)
-        guard let data = try? Data(contentsOf: url) else { return [] }
         // Dates at full precision, not ISO 8601: that drops the fraction of a second, and two
         // automatic versions taken in the same second would no longer know which is older.
-        return (try? JSONDecoder().decode([ProjectVersion].self, from: data)) ?? []
+        if let data = try? Data(contentsOf: url),
+           let index = try? JSONDecoder().decode([ProjectVersion].self, from: data) {
+            return index
+        }
+        // No index, or one that no longer reads. An empty answer here would be written back by
+        // the next save, and every version before it would vanish from the list while its file
+        // stayed on the disk. So the list is rebuilt from the documents that are actually there.
+        return recoveredIndex(id)
+    }
+
+    /// Versions found on the disk with no readable index: named by when they were written, and
+    /// kept as the person's own so nothing trims them without being asked.
+    private func recoveredIndex(_ id: Project.ID) -> [ProjectVersion] {
+        let folder = layout.versionsDirectory(for: id)
+        let files = (try? fileManager.contentsOfDirectory(
+            at: folder,
+            includingPropertiesForKeys: [.contentModificationDateKey]
+        )) ?? []
+        return files.compactMap { file -> ProjectVersion? in
+            guard file.pathExtension == "json",
+                  let versionID = UUID(uuidString: file.deletingPathExtension().lastPathComponent),
+                  let data = try? Data(contentsOf: file),
+                  let project = try? ProjectDocumentCoder.decode(data),
+                  project.id == id
+            else { return nil }
+            let written = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .now
+            var version = ProjectVersion(of: project, name: project.title, kind: .manual, savedAt: written)
+            version.id = versionID
+            return version
+        }
     }
 
     private func writeIndex(_ index: [ProjectVersion], for id: Project.ID) throws {
