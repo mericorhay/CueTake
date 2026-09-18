@@ -1,6 +1,8 @@
 import AIServices
 import Domain
+import EditorFeature
 import Foundation
+import StudioFeature
 import UIKit
 
 /// Counting toward the certificates: active time, finished projects, workflow runs and the tasks
