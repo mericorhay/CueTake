@@ -114,7 +114,7 @@ private nonisolated final class PlaybackDelegate: NSObject, AVPictureInPictureSa
     func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, didTransitionToRenderSize newRenderSize: CMVideoDimensions) {}
 
     func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, skipByInterval skipInterval: CMTime, completion completionHandler: @escaping () -> Void) {
-        engine.skip(forward: skipInterval.seconds > 0)
+        engine.nudge(seconds: skipInterval.seconds)
         completionHandler()
     }
 

@@ -13,6 +13,8 @@ import QuartzCore
 /// on the phone reads the same clock, so the two can never disagree.
 nonisolated final class SuflorEngine: @unchecked Sendable {
     nonisolated enum Event: Sendable {
+        /// The first play: the stream has begun.
+        case started
         case adStarted(Double)
         case adEnded(Double)
         case finished(Double)
@@ -36,6 +38,7 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
     private var adStarted = false
     private var adEnded = false
     private var hasFinished = false
+    private var announcedStart = false
 
     private let queue = DispatchQueue(label: "cuetake.suflor.frames", qos: .userInteractive)
     private var timer: DispatchSourceTimer?
@@ -54,7 +57,7 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
         self.kind = kind
         self.text = text
         self.fonts = fonts
-        clock = SuflorClock(end: Double(layout.end), holdAt: holds ? layout.adTop.map(Double.init) : nil, adAt: adAt)
+        clock = SuflorClock(end: Double(layout.end), holdAt: holds ? layout.adTop.map(Double.init) : nil, adAt: adAt, started: false)
         displayLayer.videoGravity = .resizeAspect
         var timebase: CMTimebase?
         CMTimebaseCreateWithSourceClock(allocator: kCFAllocatorDefault, sourceClock: CMClockGetHostTimeClock(), timebaseOut: &timebase)
@@ -108,6 +111,10 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
     /// Ad start, ad end and the finish, each once, from where the reading line has got to.
     private func noticeCrossings() -> [Event] {
         var events: [Event] = []
+        if !announcedStart, clock.started {
+            announcedStart = true
+            events.append(.started)
+        }
         let offset = CGFloat(clock.offset)
         let at = max(0, clock.elapsed - SuflorClock.countdown)
         if !adStarted, let top = layout.adTop, offset > top + layout.fontSize {
@@ -136,7 +143,7 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
     var isPlaying: Bool { lock.withLock { clock.isPlaying } }
 
     func setPlaying(_ playing: Bool) {
-        lock.withLock { clock.isPlaying = playing }
+        lock.withLock { clock.setPlaying(playing) }
     }
 
     func setDragging(_ dragging: Bool) {
@@ -157,6 +164,18 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
             }
             if clock.phase == .countdown { clock.elapsed = SuflorClock.countdown }
             clock.jump(to: Double(layout.skip(from: CGFloat(clock.offset), forward: forward)))
+        }
+    }
+
+    /// The floating window's skip buttons, which the system draws as ten seconds: ten seconds of
+    /// reading at the chosen pace, back or forward. Forward at the ad lets it go.
+    func nudge(seconds: Double) {
+        lock.withLock {
+            if seconds > 0, clock.phase == .holding {
+                clock.jump(to: clock.offset + 1)
+                return
+            }
+            clock.move(by: layout.speed(wordsPerMinute: wordsPerMinute) * seconds)
         }
     }
 

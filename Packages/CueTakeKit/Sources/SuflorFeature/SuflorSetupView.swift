@@ -114,7 +114,7 @@ private struct SuflorKindStep: View {
             withAnimation(DS.Motion.bloom) {
                 model.brief.kind = kind
                 if kind == .video { model.brief.timing = .none }
-                if kind == .live, model.brief.timing == .none { model.brief.timing = .minute(10) }
+                if kind == .live, model.brief.timing == .none { model.brief.timing = .minute(5) }
             }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
@@ -202,8 +202,11 @@ private struct SuflorBriefStep: View {
                         .focused($focused, equals: .topic)
                         .dsFont(.sans, .regular, 15)
                         .foregroundStyle(DS.Palette.ink)
+                        .frame(maxWidth: .infinity, minHeight: 52, alignment: .topLeading)
                         .padding(14)
-                        .dsCard(radius: 16)
+                        .contentShape(Rectangle())
+                        .onTapGesture { focused = .topic }
+                        .dsCard(radius: 16, border: focused == .topic ? DS.Palette.lime(0.6) : DS.Palette.hairline(0.07))
                 }
                 .padding(.top, 22)
 
@@ -228,10 +231,14 @@ private struct SuflorBriefStep: View {
                 .dsFont(.sans, .semibold, 16)
                 .foregroundStyle(DS.Palette.ink)
                 .submitLabel(.next)
+                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
                 .accessibilityLabel(Text(title))
         }
         .padding(.horizontal, 16)
-        .frame(minHeight: 52)
+        .frame(minHeight: 56)
+        // The whole card takes the tap, not just the line of text inside it.
+        .contentShape(Rectangle())
+        .onTapGesture { focused = field }
         .dsCard(radius: 16, border: focused == field ? DS.Palette.lime(0.6) : DS.Palette.hairline(0.07))
         .animation(DS.Motion.snap, value: focused)
     }
@@ -304,6 +311,11 @@ private struct SuflorBriefStep: View {
                     withAnimation(DS.Motion.snap) { model.brief.timing = .none }
                 }
             }
+            Text(timingExplanation)
+                .dsFont(.sans, .regular, 13, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.62))
+                .fixedSize(horizontal: false, vertical: true)
+                .contentTransition(.opacity)
             if isMinute {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text("\(minute)")
@@ -329,6 +341,14 @@ private struct SuflorBriefStep: View {
                 .dsCard(radius: 18)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
+        }
+    }
+
+    private var timingExplanation: String {
+        switch model.brief.timing {
+        case .minute(let value): String(localized: "suflor.brief.when.minute.explain \(value)", bundle: .module)
+        case .manual: String(localized: "suflor.brief.when.manual.explain", bundle: .module)
+        case .none: String(localized: "suflor.brief.when.none.explain", bundle: .module)
         }
     }
 
@@ -365,11 +385,29 @@ private struct SuflorBriefStep: View {
                 }
             }
             if let error = model.writeError {
-                Text(error)
-                    .dsFont(.sans, .medium, 13)
-                    .foregroundStyle(DS.Palette.accent)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .transition(.opacity)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(error)
+                        .dsFont(.sans, .medium, 13, lineHeight: 1.35)
+                        .foregroundStyle(DS.Palette.accent)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if model.writeNeedsCloud {
+                        Button {
+                            Task { await model.allowCloudAndWrite() }
+                        } label: {
+                            Text("suflor.write.allowCloud", bundle: .module)
+                                .dsFont(.sans, .semibold, 14)
+                                .foregroundStyle(DS.Palette.inkInverse)
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 44)
+                                .background(Capsule().fill(DS.Palette.lime))
+                        }
+                        .buttonStyle(.dsPress)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .dsCard(fill: DS.Palette.accent(0.08), radius: 16, border: DS.Palette.accent(0.3))
+                .transition(.opacity)
             }
             DSSecondaryButton(templateTitle) {
                 focused = nil

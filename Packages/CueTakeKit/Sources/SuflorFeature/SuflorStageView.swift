@@ -6,7 +6,7 @@ import UIKit
 /// What the stage's chrome shows, read from the engine four times a second. Equatable, so each
 /// change animates once instead of the whole screen redrawing with the words.
 private struct StageStatus: Equatable {
-    var phase: SuflorClock.Phase = .countdown
+    var phase: SuflorClock.Phase = .ready
     var countdown = 3
     var elapsed = 0
     var secondsToAd: Int?
@@ -51,6 +51,7 @@ struct SuflorStageView: View {
             DS.Palette.screen.ignoresSafeArea()
             prompter
             adGlow
+            if status.phase == .ready { readyOverlay }
             if status.phase == .countdown { countdown }
             if status.phase == .holding { holdCard }
             if flash { adFlash }
@@ -140,6 +141,50 @@ struct SuflorStageView: View {
     }
 
     // MARK: - Moments
+
+    /// On stage, not started: one big button, and what it is for. The stream is usually started
+    /// in the other app first, so the same button waits in the floating window too.
+    private var readyOverlay: some View {
+        VStack(spacing: 18) {
+            Button {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                model.togglePlaying()
+            } label: {
+                ZStack {
+                    Circle()
+                        .stroke(DS.Palette.lime(0.35), lineWidth: 2)
+                        .frame(width: 132, height: 132)
+                        .scaleEffect(reduceMotion ? 1 : 1.08)
+                        .modifier(Breathing(active: !reduceMotion))
+                    Circle()
+                        .fill(DS.Palette.lime)
+                        .frame(width: 104, height: 104)
+                        .shadow(color: DS.Palette.lime(0.45), radius: 26)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 38, weight: .bold))
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .offset(x: 3)
+                }
+            }
+            .buttonStyle(.dsPressIcon)
+            .accessibilityLabel(Text("suflor.stage.start", bundle: .module))
+            VStack(spacing: 6) {
+                Text("suflor.stage.ready.title", bundle: .module)
+                    .dsFont(.archivo, .bold, 22)
+                    .foregroundStyle(DS.Palette.ink)
+                Text("suflor.stage.ready.detail", bundle: .module)
+                    .dsFont(.sans, .regular, 14, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.ink(0.68))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 36)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.bottom, 200)
+        .background(DS.Palette.screen.opacity(0.72).ignoresSafeArea())
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+    }
 
     /// 3, 2, 1: each number lands with a bloom and a ring that empties with its second.
     private var countdown: some View {
@@ -375,6 +420,11 @@ struct SuflorStageView: View {
 
             floatButton
                 .padding(.horizontal, 12)
+            Text("suflor.stage.windowHint", bundle: .module)
+                .dsFont(.sans, .regular, 12)
+                .foregroundStyle(DS.Palette.ink(0.56))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
         }
         .padding(.bottom, 22)
     }
@@ -461,10 +511,8 @@ struct SuflorStageView: View {
                 Group {
                     if model.isFloating {
                         Text("suflor.stage.bringBack", bundle: .module)
-                    } else if model.brief.platform == .other {
-                        Text("suflor.stage.float", bundle: .module)
                     } else {
-                        Text("suflor.stage.floatTo \(model.brief.platform.title)", bundle: .module)
+                        Text("suflor.stage.float", bundle: .module)
                     }
                 }
                 .dsFont(.sans, .semibold, 16)
@@ -537,5 +585,21 @@ private struct AdSweep: View {
             }
         }
         .ignoresSafeArea()
+    }
+}
+
+/// A slow in-and-out, for the ring around the start button.
+private struct Breathing: ViewModifier {
+    let active: Bool
+    @State private var out = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(out ? 1.12 : 0.96)
+            .opacity(out ? 0.3 : 0.9)
+            .onAppear {
+                guard active else { return }
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) { out = true }
+            }
     }
 }

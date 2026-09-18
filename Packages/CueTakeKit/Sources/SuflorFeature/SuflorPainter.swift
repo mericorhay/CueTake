@@ -2,6 +2,7 @@ import CoreGraphics
 import CoreText
 import Domain
 import Foundation
+import QuartzCore
 import UIKit
 
 /// The words the floating window writes on itself, localized on the main actor beforehand.
@@ -14,6 +15,7 @@ nonisolated struct SuflorChromeText: Sendable {
     var hold: String
     var holdManual: String
     var done: String
+    var ready: String
 }
 
 /// Everything one frame needs, taken in one piece under the engine's lock.
@@ -148,6 +150,8 @@ nonisolated enum SuflorPainter {
         cg.fillPath()
 
         switch phase {
+        case .ready:
+            ready(cg, frame: frame, size: size)
         case .countdown:
             countdown(cg, frame: frame, size: size)
         case .holding:
@@ -159,6 +163,28 @@ nonisolated enum SuflorPainter {
                 pill(cg, center: CGPoint(x: size.width / 2, y: size.height - 40), text: frame.text.paused, font: fonts.chromeBold, ink: SuflorInk.white(0.92), fill: SuflorInk.white(0.16))
             }
         }
+    }
+
+    /// Not started: a play button the size of a thumb, and what it does.
+    private static func ready(_ cg: CGContext, frame: SuflorFrame, size: CGSize) {
+        cg.setFillColor(SuflorInk.screen.copy(alpha: 0.7) ?? SuflorInk.screen)
+        cg.fill(CGRect(origin: .zero, size: size))
+        let center = CGPoint(x: size.width / 2, y: size.height * 0.44)
+        let pulse = 0.5 + 0.5 * CGFloat(abs(sin(CACurrentMediaTime() * 1.6)))
+        cg.setStrokeColor(SuflorInk.lime(0.25 + 0.35 * pulse))
+        cg.setLineWidth(2)
+        cg.strokeEllipse(in: CGRect(x: center.x - 50 - 6 * pulse, y: center.y - 50 - 6 * pulse, width: 100 + 12 * pulse, height: 100 + 12 * pulse))
+        cg.setFillColor(SuflorInk.lime)
+        cg.fillEllipse(in: CGRect(x: center.x - 42, y: center.y - 42, width: 84, height: 84))
+        let triangle = CGMutablePath()
+        triangle.move(to: CGPoint(x: center.x - 11, y: center.y - 17))
+        triangle.addLine(to: CGPoint(x: center.x + 19, y: center.y))
+        triangle.addLine(to: CGPoint(x: center.x - 11, y: center.y + 17))
+        triangle.closeSubpath()
+        cg.setFillColor(SuflorInk.screen)
+        cg.addPath(triangle)
+        cg.fillPath()
+        text(cg, frame.text.ready, font: frame.fonts.chrome, ink: SuflorInk.white(0.9), left: CGPoint(x: 40, y: center.y + 86), maxWidth: size.width - 80)
     }
 
     /// 3, 2, 1 — each number landing with a ring that empties with its second.

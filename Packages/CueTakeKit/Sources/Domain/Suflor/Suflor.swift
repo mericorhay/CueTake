@@ -22,7 +22,7 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
     }
 
     public enum AdTiming: Codable, Hashable, Sendable {
-        /// The ad starts this many minutes after going on stage.
+        /// The ad starts this many minutes after the prompter is started.
         case minute(Int)
         /// The prompter waits before the ad until the speaker moves it on.
         case manual
@@ -47,7 +47,7 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         brand: String = "",
         product: String = "",
         mustSay: [String] = [],
-        timing: AdTiming = .minute(10),
+        timing: AdTiming = .minute(5),
         tone: String = "",
         topic: String = ""
     ) {
@@ -147,6 +147,8 @@ public struct SuflorPlan: Codable, Hashable, Sendable {
 /// a position too — the top of the ad section — where the flow waits for the minute or the tap.
 public struct SuflorClock: Hashable, Sendable {
     public enum Phase: Hashable, Sendable {
+        /// On stage but not started: waiting for the first play, which is when the stream starts.
+        case ready
         /// The three-second count before anything moves.
         case countdown
         case rolling
@@ -158,7 +160,10 @@ public struct SuflorClock: Hashable, Sendable {
 
     public var offset: Double = 0
     public var isPlaying = true
-    /// Seconds since going on stage.
+    /// False until the first play. Going on stage and going live are minutes apart — opening the
+    /// other app, starting the stream — and the words must not roll away in between.
+    public var started = true
+    /// Seconds since the first play: the stream's own clock.
     public var elapsed: Double = 0
     /// The ad section's top, or nil when there is nothing to wait for.
     public var holdAt: Double?
@@ -169,13 +174,16 @@ public struct SuflorClock: Hashable, Sendable {
     public var end: Double
     public static let countdown: Double = 3
 
-    public init(end: Double, holdAt: Double? = nil, adAt: Double? = nil) {
+    public init(end: Double, holdAt: Double? = nil, adAt: Double? = nil, started: Bool = true) {
         self.end = end
         self.holdAt = holdAt
         self.adAt = adAt
+        self.started = started
+        if !started { isPlaying = false }
     }
 
     public var phase: Phase {
+        if !started { return .ready }
         if elapsed < Self.countdown { return .countdown }
         if offset >= end { return .finished }
         if isHolding { return .holding }
@@ -195,13 +203,19 @@ public struct SuflorClock: Hashable, Sendable {
 
     /// Moves time on. Scrolls at `speed` points a second unless paused, counting down, held or done.
     public mutating func tick(_ seconds: Double, speed: Double) {
-        guard seconds > 0 else { return }
+        guard seconds > 0, started else { return }
         elapsed += seconds
         if let adAt, !released, elapsed >= adAt { released = true }
         guard isPlaying, elapsed >= Self.countdown else { return }
         var next = offset + speed * seconds
         if let holdAt, !released, offset <= holdAt, next > holdAt { next = holdAt }
         offset = min(max(0, next), end)
+    }
+
+    /// Play and pause. The first play starts the stream's clock.
+    public mutating func setPlaying(_ playing: Bool) {
+        if playing { started = true }
+        isPlaying = playing
     }
 
     /// The speaker's hand: dragging up or down. Moving past the hold lets the ad go.

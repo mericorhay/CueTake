@@ -6,32 +6,39 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-/// After the stage: what happened, in a form the brand can be sent.
+/// After the stage: the page the brand will get, shown as the hero, and what is needed to send it.
 ///
 /// Without listening during the stream there are two kinds of evidence. What the speaker ticked
 /// on stage, with the second they did; and — stronger — the saved recording of the stream,
 /// listened to on this phone, with the second and the sentence each item was said in and a frame
-/// from that moment. The PDF says which kind each line is.
+/// from that moment. The page says which kind each line is.
 struct SuflorReportView: View {
     @Bindable var model: SuflorModel
     let onClose: () -> Void
 
     @State private var pickedRecording: PhotosPickerItem?
     @State private var files: SuflorReportFiles?
+    @State private var language = SuflorReportLanguage.preferred
     @State private var shown = false
+    @State private var zoomed = false
     @FocusState private var editingName: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private struct RenderKey: Hashable {
+        var session: SuflorSession?
+        var language: SuflorReportLanguage
+    }
 
     var body: some View {
         ScrollView {
             if let session = model.session {
                 VStack(alignment: .leading, spacing: 0) {
                     header(session)
-                    stats(session).padding(.top, 24)
-                    checklist(session).padding(.top, 28)
-                    proofCard(session).padding(.top, 20)
+                    hero.padding(.top, 22)
+                    languagePicker.padding(.top, 24)
                     nameField.padding(.top, 20)
-                    actions(session).padding(.top, 26)
+                    proofCard(session).padding(.top, 20)
+                    actions.padding(.top, 24)
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 64)
@@ -42,9 +49,16 @@ struct SuflorReportView: View {
         .scrollDismissesKeyboard(.interactively)
         .background(DS.Palette.screen)
         .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : DS.Motion.settle.delay(0.15)) { shown = true }
+            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.9, dampingFraction: 0.78).delay(0.1)) {
+                shown = true
+            }
         }
-        .task(id: model.session) { await renderFiles() }
+        .task(id: RenderKey(session: model.session, language: language)) { await renderFiles() }
+        .fullScreenCover(isPresented: $zoomed) {
+            if let files {
+                ZoomedPage(image: files.thumbnail) { zoomed = false }
+            }
+        }
         .onChange(of: pickedRecording) { _, item in
             guard let item else { return }
             pickedRecording = nil
@@ -59,10 +73,12 @@ struct SuflorReportView: View {
         }
     }
 
-    // MARK: - Pieces
+    // MARK: - Header
 
     private func header(_ session: SuflorSession) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let items = session.plan.brief.mustSay
+        let delivered = items.filter { session.evidence(for: $0) != .missing }.count
+        return VStack(alignment: .leading, spacing: 0) {
             HStack {
                 DSKicker(String(localized: "suflor.report.kicker \(session.reportID)", bundle: .module), size: 11, tracking: 0.16)
                 Spacer(minLength: 0)
@@ -71,58 +87,131 @@ struct SuflorReportView: View {
             }
             DSHeadline(String(localized: "suflor.report.title", bundle: .module), size: 34)
                 .padding(.top, 10)
-            Text(session.plan.brief.brand.isEmpty ? session.plan.brief.product : "\(session.plan.brief.brand) · \(session.plan.brief.product)")
-                .dsFont(.sans, .medium, 15)
-                .foregroundStyle(DS.Palette.ink(0.66))
-                .padding(.top, 8)
+            HStack(spacing: 8) {
+                if !items.isEmpty {
+                    summaryChip(
+                        String(localized: "suflor.report.summary.items \(delivered) \(items.count)", bundle: .module),
+                        tint: delivered == items.count ? DS.Palette.lime : DS.Palette.amber
+                    )
+                }
+                if let ad = session.adDuration {
+                    summaryChip(String(localized: "suflor.report.summary.ad \(SuflorSession.clock(ad))", bundle: .module), tint: DS.Palette.accent)
+                }
+            }
+            .padding(.top, 12)
         }
     }
 
-    private func stats(_ session: SuflorSession) -> some View {
-        HStack(spacing: 10) {
-            stat(value: SuflorSession.clock(session.duration), label: String(localized: "suflor.report.stat.length", bundle: .module), tint: DS.Palette.ink)
-            stat(value: session.adStartedAt.map { SuflorSession.clock($0) } ?? "—", label: String(localized: "suflor.report.stat.adAt", bundle: .module), tint: DS.Palette.amber)
-            stat(value: session.adDuration.map { SuflorSession.clock($0) } ?? "—", label: String(localized: "suflor.report.stat.adLength", bundle: .module), tint: DS.Palette.accent)
+    private func summaryChip(_ text: String, tint: Color) -> some View {
+        Text(text)
+            .dsFont(.mono, .medium, 11, letterSpacing: 0.08)
+            .foregroundStyle(tint)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(tint.opacity(0.12)))
+    }
+
+    // MARK: - The page
+
+    /// The page itself, as the brand will see it: it tilts up into place, and a tap opens it large.
+    private var hero: some View {
+        Button {
+            if files != nil { zoomed = true }
+        } label: {
+            ZStack {
+                if let files {
+                    Image(uiImage: files.thumbnail)
+                        .resizable()
+                        .scaledToFit()
+                        .transition(.opacity)
+                } else {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.92))
+                        .aspectRatio(SuflorReportFiles.pageSize.width / SuflorReportFiles.pageSize.height, contentMode: .fit)
+                        .overlay(ProgressView().tint(DS.Palette.inkInverse))
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(alignment: .bottomTrailing) {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(DS.Palette.ink)
+                    .frame(width: 36, height: 36)
+                    .dsGlass(tint: DS.Palette.glass(0.7), in: Circle())
+                    .padding(10)
+            }
+            .shadow(color: .black.opacity(0.55), radius: 30, y: 22)
+            .background {
+                RadialGradient(colors: [DS.Palette.lime(0.18), .clear], center: .center, startRadius: 10, endRadius: 260)
+                    .blur(radius: 20)
+            }
         }
+        .buttonStyle(.dsPressCard)
+        .padding(.horizontal, 26)
+        .rotation3DEffect(.degrees(shown ? 0 : 24), axis: (x: 1, y: 0, z: 0), anchor: .bottom, perspective: 0.5)
+        .scaleEffect(shown ? 1 : 0.88)
         .opacity(shown ? 1 : 0)
-        .offset(y: shown ? 0 : 16)
+        .animation(DS.Motion.settle, value: files?.pdf)
+        .accessibilityLabel(Text("suflor.report.preview", bundle: .module))
     }
 
-    private func stat(value: String, label: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(value)
-                .dsFont(.archivo, .extrabold, 24)
-                .foregroundStyle(tint)
-                .contentTransition(.numericText())
-                .monospacedDigit()
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-            Text(label)
-                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.56))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .dsCard(radius: 18)
-        .accessibilityElement(children: .combine)
-    }
-
-    private func checklist(_ session: SuflorSession) -> some View {
-        let items = session.plan.brief.mustSay
-        return VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.report.said", bundle: .module))
-            if items.isEmpty {
-                Text("suflor.report.said.none", bundle: .module)
-                    .dsFont(.sans, .regular, 14)
-                    .foregroundStyle(DS.Palette.ink(0.56))
-            }
-            ForEach(Array(items.enumerated()), id: \.element) { index, item in
-                EvidenceRow(item: item, evidence: session.evidence(for: item), shown: shown)
-                    .animation(reduceMotion ? .easeOut(duration: 0.15) : DS.Motion.bloom.delay(0.25 + Double(index) * 0.12), value: shown)
+    private var languagePicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            DSKicker(String(localized: "suflor.report.language", bundle: .module))
+            HStack(spacing: 8) {
+                ForEach(SuflorReportLanguage.allCases) { option in
+                    SuflorChip(title: option.name, isOn: language == option) {
+                        withAnimation(DS.Motion.snap) { language = option }
+                    }
+                }
             }
         }
     }
+
+    // MARK: - Name
+
+    private var nameMissing: Bool {
+        model.creator.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var nameBorder: Color {
+        if editingName { return DS.Palette.lime(0.6) }
+        return nameMissing ? DS.Palette.amber.opacity(0.6) : DS.Palette.hairline(0.07)
+    }
+
+    private var nameField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                DSKicker(String(localized: "suflor.report.creator", bundle: .module))
+                Text("suflor.report.required", bundle: .module)
+                    .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(nameMissing ? DS.Palette.amber : DS.Palette.lime))
+            }
+            TextField(String(localized: "suflor.report.creator.placeholder", bundle: .module), text: $model.creator)
+                .focused($editingName)
+                .dsFont(.sans, .semibold, 16)
+                .foregroundStyle(DS.Palette.ink)
+                .textInputAutocapitalization(.words)
+                .submitLabel(.done)
+                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                .padding(.horizontal, 16)
+                .contentShape(Rectangle())
+                .onTapGesture { editingName = true }
+                .dsCard(radius: 16, border: nameBorder)
+            if nameMissing {
+                Text("suflor.report.creator.needed", bundle: .module)
+                    .dsFont(.sans, .regular, 12)
+                    .foregroundStyle(DS.Palette.amber)
+                    .transition(.opacity)
+            }
+        }
+        .animation(DS.Motion.snap, value: nameMissing)
+    }
+
+    // MARK: - Proof
 
     private func proofCard(_ session: SuflorSession) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -171,21 +260,9 @@ struct SuflorReportView: View {
         .dsCard(radius: 22)
     }
 
-    private var nameField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "suflor.report.creator", bundle: .module))
-            TextField(String(localized: "suflor.report.creator.placeholder", bundle: .module), text: $model.creator)
-                .focused($editingName)
-                .dsFont(.sans, .semibold, 16)
-                .foregroundStyle(DS.Palette.ink)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 52)
-                .dsCard(radius: 16, border: editingName ? DS.Palette.lime(0.6) : DS.Palette.hairline(0.07))
-                .submitLabel(.done)
-        }
-    }
+    // MARK: - Sending
 
-    private func actions(_ session: SuflorSession) -> some View {
+    private var actions: some View {
         VStack(spacing: 12) {
             if let files {
                 ShareLink(item: files.pdf, preview: SharePreview(Text("suflor.report.share.pdfTitle", bundle: .module), image: Image(uiImage: files.thumbnail))) {
@@ -199,12 +276,14 @@ struct SuflorReportView: View {
                     .background {
                         ZStack {
                             DS.gradient(150, [DS.Palette.accent, DS.Palette.accentWarm])
-                            SweepShine()
+                            if !nameMissing { SweepShine() }
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-                    .shadow(color: DS.Palette.accent(0.35), radius: 22, y: 12)
+                    .shadow(color: DS.Palette.accent(nameMissing ? 0 : 0.35), radius: 22, y: 12)
                 }
+                .disabled(nameMissing)
+                .opacity(nameMissing ? 0.4 : 1)
                 ShareLink(item: files.image, preview: SharePreview(Text("suflor.report.share.imageTitle", bundle: .module), image: Image(uiImage: files.thumbnail))) {
                     HStack(spacing: 10) {
                         Image(systemName: "photo")
@@ -215,8 +294,8 @@ struct SuflorReportView: View {
                     .frame(maxWidth: .infinity, minHeight: 52)
                     .dsCard(radius: DS.Radius.card)
                 }
-            } else {
-                ProgressView().tint(DS.Palette.ink).frame(minHeight: 56)
+                .disabled(nameMissing)
+                .opacity(nameMissing ? 0.4 : 1)
             }
             Button {
                 model.leaveReport()
@@ -228,6 +307,7 @@ struct SuflorReportView: View {
             }
             .buttonStyle(.dsPress)
         }
+        .animation(DS.Motion.snap, value: nameMissing)
     }
 
     private func renderFiles() async {
@@ -235,64 +315,33 @@ struct SuflorReportView: View {
         // A moment's pause lets typing in the name settle before the page is drawn again.
         try? await Task.sleep(for: .milliseconds(350))
         guard !Task.isCancelled else { return }
-        files = SuflorReportFiles.make(for: session)
+        let made = SuflorReportFiles.make(for: session, language: language)
+        withAnimation(DS.Motion.settle) { files = made }
     }
 }
 
-/// One item the brand asked for, with how we know.
-private struct EvidenceRow: View {
-    let item: String
-    let evidence: SuflorSession.Evidence
-    let shown: Bool
+/// The page full screen, to read every line before sending it.
+private struct ZoomedPage: View {
+    let image: UIImage
+    let onClose: () -> Void
+    @State private var scale: CGFloat = 1
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                Circle().fill(fill)
-                switch evidence {
-                case .missing:
-                    Image(systemName: "exclamationmark").font(.system(size: 12, weight: .heavy)).foregroundStyle(DS.Palette.inkInverse)
-                default:
-                    DrawnCheck(progress: shown ? 1 : 0)
-                        .stroke(DS.Palette.inkInverse, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
-                        .padding(6)
-                }
+        ZStack(alignment: .topTrailing) {
+            DS.Palette.page.ignoresSafeArea()
+            ScrollView([.horizontal, .vertical]) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 380 * scale)
+                    .padding(.vertical, 90)
+                    .padding(.horizontal, 12)
             }
-            .frame(width: 26, height: 26)
-            .scaleEffect(shown ? 1 : 0.3)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item)
-                    .dsFont(.sans, .semibold, 16)
-                    .foregroundStyle(DS.Palette.ink)
-                Group {
-                    switch evidence {
-                    case .heard(let proof):
-                        Text("suflor.report.heard \(SuflorSession.clock(proof.seconds)) \(proof.quote)", bundle: .module)
-                    case .ticked(let second):
-                        Text("suflor.report.ticked \(SuflorSession.clock(second))", bundle: .module)
-                    case .missing:
-                        Text("suflor.report.missing", bundle: .module)
-                    }
-                }
-                .dsFont(.sans, .regular, 13, lineHeight: 1.3)
-                .foregroundStyle(DS.Palette.ink(0.6))
-                .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .dsCard(radius: 18)
-        .opacity(shown ? 1 : 0)
-        .offset(y: shown ? 0 : 14)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var fill: Color {
-        switch evidence {
-        case .heard: DS.Palette.lime
-        case .ticked: DS.Palette.ink(0.86)
-        case .missing: DS.Palette.amber
+            .simultaneousGesture(MagnifyGesture().onChanged { value in scale = min(3, max(1, value.magnification)) })
+            DSCircleButton("✕", size: 44, fontSize: 15, style: .glass, action: onClose)
+                .padding(.top, 58)
+                .padding(.trailing, 18)
+                .accessibilityLabel(Text("suflor.report.close", bundle: .module))
         }
     }
 }

@@ -251,7 +251,7 @@
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "REKLAM NE ZAMAN"
+            "value": "REKLAM NE ZAMAN BAŞLASIN"
           }
         }
       }
@@ -296,7 +296,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "When I say"
+            "value": "When I start it"
           }
         },
         "tr": {
@@ -307,19 +307,53 @@
         }
       }
     },
+    "suflor.brief.when.manual.explain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The prompter waits before the ad until you press forward or “Start the ad now”."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suflör reklamdan önce bekler; ileriye ya da “Reklamı şimdi başlat”a basınca geçer."
+          }
+        }
+      }
+    },
     "suflor.brief.when.minute": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "At a minute"
+            "value": "At a set minute"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dakikasında"
+            "value": "Belirli dakikada"
+          }
+        }
+      }
+    },
+    "suflor.brief.when.minute.explain %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You talk freely; %lld minutes after you press play, the prompter moves to the ad by itself."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serbest konuşursun; ▶'ye bastıktan %lld dakika sonra suflör kendiliğinden reklama geçer."
           }
         }
       }
@@ -347,13 +381,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "minutes after going on stage"
+            "value": "minutes after you press play"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "dakika sonra, sahneye çıkıştan"
+            "value": "dakika sonra, ▶'ye bastıktan"
           }
         }
       }
@@ -364,13 +398,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No waiting"
+            "value": "Right away"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beklemeden"
+            "value": "Hemen"
+          }
+        }
+      }
+    },
+    "suflor.brief.when.none.explain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No waiting: the cards roll straight through, ad included."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beklemek yok: kartlar reklam dahil baştan sona akar."
           }
         }
       }
@@ -609,6 +660,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "DURDU"
+          }
+        }
+      }
+    },
+    "suflor.chrome.ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press ▶ when you go live"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yayına girince ▶'ye bas"
           }
         }
       }
@@ -936,41 +1004,168 @@
         }
       }
     },
-    "suflor.page.footer": {
+    "suflor.pdf.badge.heard": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prepared with CueTake Suflör. Times are from going on stage. \"Verified in the recording\" lines were found by listening to the saved stream on the creator's phone; \"Marked by the creator\" lines are the creator's own statement."
+            "value": "VERIFIED"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "CueTake Suflör ile hazırlandı. Süreler sahneye çıkıştan itibarendir. \"Kayıtta doğrulandı\" satırları, kaydedilen yayının yayıncının telefonunda dinlenmesiyle bulundu; \"Yayıncı işaretledi\" satırları yayıncının kendi beyanıdır."
+            "value": "DOĞRULANDI"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VERIFICADO"
           }
         }
       }
     },
-    "suflor.page.heard %@": {
+    "suflor.pdf.badge.missing": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "✓ Verified in the recording at %@"
+            "value": "NO EVIDENCE"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "✓ Kayıtta doğrulandı · %@"
+            "value": "KANIT YOK"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIN PRUEBA"
           }
         }
       }
     },
-    "suflor.page.kicker": {
+    "suflor.pdf.badge.ticked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MARKED"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İŞARETLENDİ"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MARCADO"
+          }
+        }
+      }
+    },
+    "suflor.pdf.footer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Times are counted from the start of the stream. VERIFIED lines were found by listening to the saved stream on the creator's phone, with the moment's frame. MARKED lines are the creator's own record, ticked while live."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süreler yayının başından itibaren sayılır. DOĞRULANDI satırları, kaydedilen yayın yayıncının telefonunda dinlenerek o anın karesiyle bulundu. İŞARETLENDİ satırları yayıncının canlıdayken tuttuğu kendi kaydıdır."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los tiempos se cuentan desde el inicio del directo. Las líneas VERIFICADO se encontraron escuchando la grabación en el teléfono del creador, con el fotograma del momento. Las líneas MARCADO son el registro del propio creador durante el directo."
+          }
+        }
+      }
+    },
+    "suflor.pdf.heard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Said at %@ in the recording"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayıtta %@ anında söylendi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dicho en el %@ de la grabación"
+          }
+        }
+      }
+    },
+    "suflor.pdf.items": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WHAT THE BRAND ASKED FOR"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MARKANIN İSTEDİKLERİ"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LO QUE PIDIÓ LA MARCA"
+          }
+        }
+      }
+    },
+    "suflor.pdf.items.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The brief had no must-say items."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brifte zorunlu madde yoktu."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El brief no tenía frases obligatorias."
+          }
+        }
+      }
+    },
+    "suflor.pdf.kicker": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -984,27 +1179,108 @@
             "state": "translated",
             "value": "SUFLÖR RAPORU"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INFORME DE TELEPROMPTER"
+          }
         }
       }
     },
-    "suflor.page.missing": {
+    "suflor.pdf.live": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "— No evidence"
+            "value": "Live stream"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "— Kanıt yok"
+            "value": "Canlı yayın"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Directo"
           }
         }
       }
     },
-    "suflor.page.script": {
+    "suflor.pdf.madeWith": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREPARED WITH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HAZIRLAYAN"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PREPARADO CON"
+          }
+        }
+      }
+    },
+    "suflor.pdf.missing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not found in the recording and not marked"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayıtta bulunmadı, işaretlenmedi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No encontrado en la grabación ni marcado"
+          }
+        }
+      }
+    },
+    "suflor.pdf.other": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other platform"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer platform"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otra plataforma"
+          }
+        }
+      }
+    },
+    "suflor.pdf.script": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -1018,27 +1294,223 @@
             "state": "translated",
             "value": "SUFLÖRDEKİ REKLAM METNİ"
           }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUION DEL ANUNCIO EN EL TELEPROMPTER"
+          }
         }
       }
     },
-    "suflor.page.ticked %@": {
+    "suflor.pdf.stamp.done": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "✓ Marked by the creator at %@"
+            "value": "DELIVERED"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "✓ Yayıncı işaretledi · %@"
+            "value": "TESLİM"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ENTREGADO"
           }
         }
       }
     },
-    "suflor.page.title": {
+    "suflor.pdf.stamp.partial": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PARTIAL"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KISMEN"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PARCIAL"
+          }
+        }
+      }
+    },
+    "suflor.pdf.stat.adAt": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad started at"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reklam başladı"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicio del anuncio"
+          }
+        }
+      }
+    },
+    "suflor.pdf.stat.adLength": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad length"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reklam süresi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración del anuncio"
+          }
+        }
+      }
+    },
+    "suflor.pdf.stat.length": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stream length"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yayın süresi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duración"
+          }
+        }
+      }
+    },
+    "suflor.pdf.stat.score": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Items delivered"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Teslim edilen madde"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puntos entregados"
+          }
+        }
+      }
+    },
+    "suflor.pdf.ticked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marked by the creator at %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yayıncı %@ anında işaretledi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marcado por el creador en el %@"
+          }
+        }
+      }
+    },
+    "suflor.pdf.timeline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TIMELINE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZAMAN ÇİZELGESİ"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CRONOLOGÍA"
+          }
+        }
+      }
+    },
+    "suflor.pdf.timeline.ad": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AD"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REKLAM"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ANUNCIO"
+          }
+        }
+      }
+    },
+    "suflor.pdf.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -1051,6 +1523,35 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reklam teslim raporu"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informe de entrega publicitaria"
+          }
+        }
+      }
+    },
+    "suflor.pdf.video": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video çekimi"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vídeo"
           }
         }
       }
@@ -1140,6 +1641,23 @@
         }
       }
     },
+    "suflor.report.creator.needed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The brand needs to know who delivered it: write your name to send the report."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marka teslim edeni bilmeli: raporu göndermek için adını yaz."
+          }
+        }
+      }
+    },
     "suflor.report.creator.placeholder": {
       "extractionState": "manual",
       "localizations": {
@@ -1153,23 +1671,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ad ya da @kullanıcı adı"
-          }
-        }
-      }
-    },
-    "suflor.report.heard %@ %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Heard in the recording at %1$@: “%2$@”"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kayıtta %1$@ anında duyuldu: “%2$@”"
           }
         }
       }
@@ -1191,19 +1692,36 @@
         }
       }
     },
-    "suflor.report.missing": {
+    "suflor.report.language": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No evidence yet. Add the recording to check."
+            "value": "REPORT LANGUAGE"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Henüz kanıt yok. Kontrol için kaydı ekle."
+            "value": "RAPOR DİLİ"
+          }
+        }
+      }
+    },
+    "suflor.report.preview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The report page. Tap to open it large."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rapor sayfası. Büyütmek için dokun."
           }
         }
       }
@@ -1293,36 +1811,19 @@
         }
       }
     },
-    "suflor.report.said": {
+    "suflor.report.required": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "WHAT THE BRAND ASKED FOR"
+            "value": "REQUIRED"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "MARKANIN İSTEDİKLERİ"
-          }
-        }
-      }
-    },
-    "suflor.report.said.none": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The brief had no must-say items."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brifte zorunlu madde yoktu."
+            "value": "ZORUNLU"
           }
         }
       }
@@ -1395,70 +1896,36 @@
         }
       }
     },
-    "suflor.report.stat.adAt": {
+    "suflor.report.summary.ad %@": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "AD STARTED AT"
+            "value": "AD %@"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "REKLAM BAŞLADI"
+            "value": "REKLAM %@"
           }
         }
       }
     },
-    "suflor.report.stat.adLength": {
+    "suflor.report.summary.items %lld %lld": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "AD LENGTH"
+            "value": "%1$lld/%2$lld DELIVERED"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "REKLAM SÜRESİ"
-          }
-        }
-      }
-    },
-    "suflor.report.stat.length": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ON STAGE"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SAHNEDE"
-          }
-        }
-      }
-    },
-    "suflor.report.ticked %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ticked by you at %@"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sen işaretledin, %@"
+            "value": "%1$lld/%2$lld TESLİM"
           }
         }
       }
@@ -1469,13 +1936,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delivered"
+            "value": "Ready for the brand"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Teslim edildi"
+            "value": "Markana hazır"
           }
         }
       }
@@ -1741,30 +2208,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Float and switch apps"
+            "value": "Float the window"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yüzdür ve uygulamaya geç"
-          }
-        }
-      }
-    },
-    "suflor.stage.floatTo %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Float and open %@"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yüzdür ve geç: %@"
+            "value": "Pencereyi yüzdür"
           }
         }
       }
@@ -1922,6 +2372,57 @@
         }
       }
     },
+    "suflor.stage.ready.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Float the window, start your stream, then press ▶ — here or in the floating window. The words wait until then."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pencereyi yüzdür, yayını başlat, sonra ▶'ye bas — burada ya da yüzen pencerede. Yazılar o zamana kadar bekler."
+          }
+        }
+      }
+    },
+    "suflor.stage.ready.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready when you are"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hazır, seni bekliyor"
+          }
+        }
+      }
+    },
+    "suflor.stage.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başlat"
+          }
+        }
+      }
+    },
     "suflor.stage.window": {
       "extractionState": "manual",
       "localizations": {
@@ -1935,6 +2436,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "YÜZEN"
+          }
+        }
+      }
+    },
+    "suflor.stage.windowHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the floating window: ▶ start and pause, ⏪ ⏩ ten seconds of reading back or forward."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yüzen pencerede: ▶ başlat ve durdur, ⏪ ⏩ on saniyelik okuma geri ya da ileri."
           }
         }
       }
@@ -2296,6 +2814,40 @@
         }
       }
     },
+    "suflor.write.allowCloud": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on cloud AI and write"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulut yapay zekâyı aç ve yaz"
+          }
+        }
+      }
+    },
+    "suflor.write.cloudOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writing the flow uses cloud AI, which is off in Settings."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Akışı yazmak bulut yapay zekâyı kullanıyor; Ayarlar'da kapalı."
+          }
+        }
+      }
+    },
     "suflor.write.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -2326,6 +2878,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Akış yazılamadı. Bağlantıyı ve Ayarlar'da bulut yapay zekânın açık olduğunu kontrol et."
+          }
+        }
+      }
+    },
+    "suflor.write.offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No connection. Check the internet and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bağlantı yok. İnterneti kontrol edip tekrar dene."
+          }
+        }
+      }
+    },
+    "suflor.write.server %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server did not answer (code %lld). Try again in a minute, or start from the template."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunucu cevap vermedi (kod %lld). Bir dakika sonra tekrar dene ya da şablonla başla."
           }
         }
       }

@@ -61,6 +61,20 @@ struct SuflorTests {
         #expect(clock.phase == .finished)
     }
 
+    @Test func nothingMovesUntilTheFirstPlay() {
+        var clock = SuflorClock(end: 500, holdAt: 100, adAt: 60, started: false)
+        #expect(clock.phase == .ready)
+        #expect(!clock.isPlaying)
+        clock.tick(120, speed: 50)
+        #expect(clock.elapsed == 0)
+        #expect(clock.offset == 0)
+        clock.setPlaying(true)
+        #expect(clock.phase == .countdown)
+        clock.tick(4, speed: 10)
+        #expect(clock.offset == 40)
+        #expect(clock.secondsToAd == 56)
+    }
+
     @Test func pausingAndDraggingMoveOnlyByHand() {
         var clock = SuflorClock(end: 500)
         clock.isPlaying = false

@@ -21,6 +21,15 @@ public final class SuflorModel {
         case setup, live, report
     }
 
+    /// Why the server could not write the cards, in terms the screen can act on.
+    public enum WriteError: Error, Sendable {
+        /// Cloud AI is off in Settings; the screen offers to turn it on.
+        case cloudOff
+        case offline
+        case server(Int)
+        case empty
+    }
+
     /// Writes cards from a brief on the server. Nil in a build without the assistant.
     public typealias Writer = (SuflorBrief, String) async throws -> [SuflorCue]
     /// Listens to a saved recording of the stream and finds where each item was said.
@@ -35,6 +44,10 @@ public final class SuflorModel {
 
     public private(set) var isWriting = false
     public var writeError: String?
+    /// True when the last failure was cloud AI being off, so the screen shows the switch.
+    public private(set) var writeNeedsCloud = false
+    /// Turns cloud AI on in Settings. Set by the app.
+    public var allowCloud: (() -> Void)?
     public private(set) var session: SuflorSession?
     public private(set) var isFloating = false
     public private(set) var canFloat = false
@@ -106,6 +119,7 @@ public final class SuflorModel {
         guard let writer, !isWriting else { return }
         isWriting = true
         writeError = nil
+        writeNeedsCloud = false
         defer { isWriting = false }
         do {
             let written = try await writer(brief, localeIdentifier)
@@ -122,9 +136,23 @@ public final class SuflorModel {
             }
             try? await Task.sleep(for: .seconds(1.2))
             freshCues = []
+        } catch WriteError.cloudOff {
+            writeNeedsCloud = true
+            writeError = String(localized: "suflor.write.cloudOff", bundle: .module)
+        } catch WriteError.offline {
+            writeError = String(localized: "suflor.write.offline", bundle: .module)
+        } catch WriteError.server(let status) {
+            writeError = String(localized: "suflor.write.server \(status)", bundle: .module)
         } catch {
-            writeError = String(localized: "suflor.write.failed", bundle: .module)
+            writeError = String(localized: "suflor.write.empty", bundle: .module)
         }
+    }
+
+    /// Turns cloud AI on and tries again.
+    public func allowCloudAndWrite() async {
+        allowCloud?()
+        writeNeedsCloud = false
+        await write()
     }
 
     /// Cards from the brief without the server: a skeleton to write over.
@@ -202,13 +230,17 @@ public final class SuflorModel {
 
     private func handle(_ event: SuflorEngine.Event) {
         switch event {
+        case .started:
+            // The report's clock is the stream's, not the stage's.
+            session?.startedAt = .now
         case .adStarted(let at): session?.adStartedAt = at
         case .adEnded(let at): session?.adEndedAt = at
         case .finished: break
         }
     }
 
-    /// Floats the window and opens the app the stream is on.
+    /// Floats the window, then opens the app the stream is on when it can be opened directly.
+    /// Never a website: if the app will not open, the window floats and the speaker switches.
     public func floatAway() {
         pip?.start()
         let platform = brief.platform
@@ -375,22 +407,23 @@ public final class SuflorModel {
             paused: String(localized: "suflor.chrome.paused", bundle: .module),
             hold: String(localized: "suflor.chrome.hold", bundle: .module),
             holdManual: String(localized: "suflor.chrome.holdManual", bundle: .module),
-            done: String(localized: "suflor.chrome.done", bundle: .module)
+            done: String(localized: "suflor.chrome.done", bundle: .module),
+            ready: String(localized: "suflor.chrome.ready", bundle: .module)
         )
     }
 
     // MARK: - Leaving for the other app
 
-    /// The app's own link first — it opens the app when installed — then its scheme.
+    /// The app's own scheme only; each is tried until one opens. A web address is never used:
+    /// it opens Safari when the app does not claim it, which is worse than staying put.
     private static func open(_ platform: SuflorBrief.Platform) async {
-        let links: [(String, String)] = switch platform {
-        case .tiktok: [("https://www.tiktok.com/", "tiktok://")]
-        case .instagram: [("https://www.instagram.com/", "instagram://camera")]
-        case .youtube: [("https://www.youtube.com/", "youtube://")]
+        let schemes: [String] = switch platform {
+        case .tiktok: ["snssdk1233://", "tiktok://"]
+        case .instagram: ["instagram://camera", "instagram://app"]
+        case .youtube: ["youtube://"]
         case .other: []
         }
-        for (web, scheme) in links {
-            if let url = URL(string: web), await UIApplication.shared.open(url, options: [.universalLinksOnly: true]) { return }
+        for scheme in schemes {
             if let url = URL(string: scheme), await UIApplication.shared.open(url) { return }
         }
     }

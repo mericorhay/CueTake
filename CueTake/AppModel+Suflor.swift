@@ -17,9 +17,20 @@ extension AppModel {
         if client.isConfigured {
             suflor.writer = { [weak self] brief, locale in
                 guard let self, self.settingsModel.settings.aiProcessing == .allowCloud else {
-                    throw AssistantClient.AssistantError.declined
+                    throw SuflorModel.WriteError.cloudOff
                 }
-                return try await client.writeSuflor(brief, localeIdentifier: locale)
+                do {
+                    return try await client.writeSuflor(brief, localeIdentifier: locale)
+                } catch AssistantClient.AssistantError.offline {
+                    throw SuflorModel.WriteError.offline
+                } catch AssistantClient.AssistantError.rejected(let status) {
+                    throw SuflorModel.WriteError.server(status)
+                } catch {
+                    throw SuflorModel.WriteError.empty
+                }
+            }
+            suflor.allowCloud = { [weak self] in
+                self?.settingsModel.update(\.aiProcessing, to: .allowCloud)
             }
         } else {
             suflor.writer = nil
