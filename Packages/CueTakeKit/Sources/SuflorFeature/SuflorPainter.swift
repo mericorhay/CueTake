@@ -2,6 +2,7 @@ import CoreGraphics
 import CoreText
 import Domain
 import Foundation
+import UIKit
 
 /// The words the floating window writes on itself, localized on the main actor beforehand.
 nonisolated struct SuflorChromeText: Sendable {
