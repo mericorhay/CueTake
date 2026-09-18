@@ -19,9 +19,9 @@
 import { isAttested } from "./attest.js";
 
 const LEVELS = {
-  creator: { title: "CueTake Creator", hours: 100, projects: 15, tasks: 0, runs: 0 },
-  advancedCreator: { title: "CueTake Advanced Creator", hours: 150, projects: 30, tasks: 11, runs: 0 },
-  workflowSpecialist: { title: "CueTake Workflow Specialist", hours: 200, projects: 40, tasks: 11, runs: 10 },
+  creator: { title: "CueTake Creator", hours: 20, projects: 8, tasks: 0, runs: 0 },
+  advancedCreator: { title: "CueTake Advanced Creator", hours: 40, projects: 15, tasks: 11, runs: 0 },
+  workflowSpecialist: { title: "CueTake Workflow Specialist", hours: 60, projects: 25, tasks: 11, runs: 10 },
 };
 
 export function base64url(bytes) {

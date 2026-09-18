@@ -47,18 +47,18 @@ struct CertificationTests {
 
     @Test func certificatesComeInOrderAndOnlyWhenEveryRequirementIsMet() {
         var progress = CertificationProgress()
-        progress.activeSeconds = 99 * 3600
-        for _ in 0..<15 { progress.noteFinished(project: UUID()) }
+        progress.activeSeconds = 19 * 3600
+        for _ in 0..<8 { progress.noteFinished(project: UUID()) }
         #expect(progress.award(at: start).isEmpty)
 
-        progress.activeSeconds = 100 * 3600
+        progress.activeSeconds = 20 * 3600
         #expect(progress.award(at: start) == [.creator])
         #expect(progress.highest == .creator)
         #expect(progress.next == .advancedCreator)
 
         // Hours and projects without the tasks: no Advanced.
-        progress.activeSeconds = 160 * 3600
-        for _ in 0..<20 { progress.noteFinished(project: UUID()) }
+        progress.activeSeconds = 45 * 3600
+        for _ in 0..<10 { progress.noteFinished(project: UUID()) }
         #expect(progress.award(at: start).isEmpty)
         #expect(progress.standing(for: .advancedCreator).tasksLeft.count == CertificationTask.allCases.count)
 
@@ -66,8 +66,8 @@ struct CertificationTests {
         #expect(progress.award(at: start) == [.advancedCreator])
 
         // The specialist needs a review that does not exist yet: never awarded on the phone.
-        progress.activeSeconds = 300 * 3600
-        for _ in 0..<20 { progress.noteFinished(project: UUID()) }
+        progress.activeSeconds = 70 * 3600
+        for _ in 0..<10 { progress.noteFinished(project: UUID()) }
         for _ in 0..<10 { progress.noteWorkflowRun(at: start) }
         let specialist = progress.standing(for: .workflowSpecialist)
         #expect(specialist.readyForReview)
@@ -119,8 +119,8 @@ struct CertificationTests {
 
     @Test func aCertificateKeepsItsIDAndTheProgressSurvivesAReload() throws {
         var progress = CertificationProgress()
-        progress.activeSeconds = 100 * 3600
-        for _ in 0..<15 { progress.noteFinished(project: UUID()) }
+        progress.activeSeconds = 20 * 3600
+        for _ in 0..<8 { progress.noteFinished(project: UUID()) }
         progress.complete(.cleanup, at: start)
         progress.holderName = "Meriç"
         _ = progress.award(at: start)

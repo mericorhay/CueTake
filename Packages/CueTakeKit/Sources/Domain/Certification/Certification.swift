@@ -10,18 +10,18 @@ public enum CertificationLevel: String, CaseIterable, Codable, Sendable, Compara
     /// not count.
     public var requiredHours: Double {
         switch self {
-        case .creator: 100
-        case .advancedCreator: 150
-        case .workflowSpecialist: 200
+        case .creator: 20
+        case .advancedCreator: 40
+        case .workflowSpecialist: 60
         }
     }
 
     /// Finished projects: exported at least once.
     public var requiredProjects: Int {
         switch self {
-        case .creator: 15
-        case .advancedCreator: 30
-        case .workflowSpecialist: 40
+        case .creator: 8
+        case .advancedCreator: 15
+        case .workflowSpecialist: 25
         }
     }
 
