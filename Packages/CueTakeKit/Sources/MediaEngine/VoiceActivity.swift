@@ -56,9 +56,9 @@ public struct VoiceActivity: Sendable {
             guard let block = CMSampleBufferGetDataBuffer(sample) else { continue }
             // Whole samples only: an empty buffer, or a stray byte past the last sample, must not
             // be copied into an array that has no room for it.
-            let count = CMBlockBufferGetDataLength(block) / MemoryLayout<Float>.size
-            guard count > 0 else { continue }
-            var data = [Float](repeating: 0, count: count)
+            let samples = CMBlockBufferGetDataLength(block) / MemoryLayout<Float>.size
+            guard samples > 0 else { continue }
+            var data = [Float](repeating: 0, count: samples)
             data.withUnsafeMutableBytes { bytes in
                 guard let base = bytes.baseAddress else { return }
                 _ = CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: bytes.count, destination: base)
