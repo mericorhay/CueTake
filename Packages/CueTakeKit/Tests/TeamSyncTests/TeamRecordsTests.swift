@@ -27,7 +27,9 @@ struct TeamRecordsTests {
         let back = try TeamRecords.project(from: record)
         // The same document; dates are kept to the second, as on disk.
         #expect(TeamRecords.same(back, original))
-        #expect(back.segments.map { $0.script } == original.segments.map { $0.script })
+        let words = back.segments.map { $0.script }
+        let wordsBefore = original.segments.map { $0.script }
+        #expect(words == wordsBefore)
     }
 
     @Test func aProjectReadBackIsTheSameAsTheOneInMemory() throws {
