@@ -440,7 +440,9 @@ Cringe → natural (never write the left side):
 - "Arkadaşlar" at the start of every card → vary it, or just start talking.
 - Stacked exclamation marks, rhetorical questions in a row, hashtags, slogans → none.
 
-In other languages keep the same register: how that language's creators really talk on a live stream, not how its adverts sound.`;
+In other languages keep the same register: how that language's creators really talk on a live stream, not how its adverts sound.
+
+When <creator_voice> is given, it is THIS creator's own speech, transcribed from their videos. It outranks the sample above: write the cards the way they talk — their words, their rhythm, their fillers, how they greet and address people. Take only their manner, never their content: no facts, names or products from it.`;
 
 const SUFLOR_PROMPT = SPOKEN_VOICE + `
 
@@ -486,6 +488,7 @@ async function handleSuflor(body, env) {
     `<tone>${clean(brief.tone, 60)}</tone>\n` +
     `<topic>\n${clean(brief.topic, 600)}\n</topic>\n` +
     `<details>\n${clean(brief.details, 2500)}\n</details>\n` +
+    (body.voice ? `<creator_voice>\n${clean(body.voice, 4000)}\n</creator_voice>\n` : "") +
     `<locale>${clean(body.locale, 20)}</locale>`;
   const answer = await ask(env, SUFLOR_PROMPT, content, 2500);
   if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));

@@ -2916,6 +2916,108 @@
         }
       }
     },
+    "suflor.voice.found %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words of your own speech from your videos go with the brief, so the flow sounds like you. Only when this is on."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videolarındaki konuşmandan %lld kelime brifle birlikte gider, akış senin ağzından yazılır. Sadece bu açıkken."
+          }
+        }
+      }
+    },
+    "suflor.voice.looking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking through your videos…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Videoların taranıyor…"
+          }
+        }
+      }
+    },
+    "suflor.voice.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No transcribed videos yet. Record one in the studio and add captions, and this turns on."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz dökümü çıkmış videon yok. Stüdyoda bir video çekip altyazı çıkarınca açılır."
+          }
+        }
+      }
+    },
+    "suflor.voice.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapalı"
+          }
+        }
+      }
+    },
+    "suflor.voice.on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Açık"
+          }
+        }
+      }
+    },
+    "suflor.voice.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write it like me"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benim gibi konuşsun"
+          }
+        }
+      }
+    },
     "suflor.write.allowCloud": {
       "extractionState": "manual",
       "localizations": {

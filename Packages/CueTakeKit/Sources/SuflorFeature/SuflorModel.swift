@@ -31,7 +31,7 @@ public final class SuflorModel {
     }
 
     /// Writes cards from a brief on the server. Nil in a build without the assistant.
-    public typealias Writer = (SuflorBrief, String) async throws -> [SuflorCue]
+    public typealias Writer = (SuflorBrief, String, String?) async throws -> [SuflorCue]
     /// Listens to a saved recording of the stream and finds where each item was said.
     public typealias Verifier = (URL, [String]) async throws -> [SuflorProof]
 
@@ -57,6 +57,13 @@ public final class SuflorModel {
     public private(set) var freshCues: Set<UUID> = []
 
     public var writer: Writer?
+    /// Gathers the creator's speech from their videos. Set by the app.
+    public var voiceLoader: (() async -> String?)?
+    /// Write the cards in the creator's own voice, from their videos.
+    public var useMyVoice: Bool { didSet { defaults.set(useMyVoice, forKey: Keys.voice) } }
+    /// Words of the creator's speech found; nil until looked for.
+    public private(set) var voiceWords: Int?
+    @ObservationIgnored private var voiceSample: String?
     public var verifier: Verifier?
     public var localeIdentifier: String
 
@@ -77,6 +84,7 @@ public final class SuflorModel {
         wordsPerMinute = pace > 0 ? pace : 130
         let size = defaults.double(forKey: Keys.size)
         textSize = size > 0 ? size : 30
+        useMyVoice = defaults.bool(forKey: Keys.voice)
     }
 
     private enum Keys {
@@ -85,6 +93,7 @@ public final class SuflorModel {
         static let pace = "suflor.pace"
         static let size = "suflor.size"
         static let creator = "suflor.creator"
+        static let voice = "suflor.voice"
     }
 
     private func save() {
@@ -122,7 +131,8 @@ public final class SuflorModel {
         writeNeedsCloud = false
         defer { isWriting = false }
         do {
-            let written = try await writer(brief, localeIdentifier)
+            let voice = useMyVoice ? voiceSample : nil
+            let written = try await writer(brief, localeIdentifier, voice)
             guard !written.isEmpty else {
                 writeError = String(localized: "suflor.write.empty", bundle: .module)
                 return
@@ -146,6 +156,18 @@ public final class SuflorModel {
         } catch {
             writeError = String(localized: "suflor.write.empty", bundle: .module)
         }
+    }
+
+    /// Looks through the creator's videos for their speech. Cheap to repeat: the brief step asks
+    /// each time it opens, so a video transcribed a minute ago counts.
+    public func refreshVoice() async {
+        guard let voiceLoader else {
+            voiceWords = 0
+            return
+        }
+        voiceSample = await voiceLoader()
+        voiceWords = SuflorVoice.wordCount(voiceSample)
+        if voiceWords == 0 { useMyVoice = false }
     }
 
     /// Turns cloud AI on and tries again.

@@ -35,6 +35,18 @@ struct SuflorTests {
         #expect(try JSONDecoder().decode(SuflorBrief.self, from: old) == brief)
     }
 
+    @Test func theVoiceSampleTakesNewestSpeechUpToTheLimit() {
+        func transcript(_ count: Int, _ word: String) -> Transcript {
+            Transcript(localeIdentifier: "tr-TR", words: words(Array(repeating: word, count: count).joined(separator: " ")))
+        }
+        #expect(SuflorVoice.sample(from: [transcript(40, "a")]) == nil)
+        let sample = SuflorVoice.sample(from: [transcript(50, "yeni"), transcript(3, "kısa"), transcript(80, "eski")], maxWords: 100)
+        #expect(SuflorVoice.wordCount(sample) == 100)
+        #expect(sample?.hasPrefix("yeni") == true)
+        #expect(sample?.contains("kısa") == false)
+        #expect(sample?.components(separatedBy: "\n\n").count == 2)
+    }
+
     @Test func modelTextIsReadAroundTheJSON() {
         let cues = SuflorPlan.cues(fromModelText: #"İşte: {"cues":[{"role":"bridge","text":"Bu arada"},{"role":"weird","text":"x"},{"role":"ad","text":""}]} bitti"#)
         #expect(cues.map(\.role) == [.bridge, .topic])

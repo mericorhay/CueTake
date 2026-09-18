@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import SwiftUI
+import UIKit
 
 /// The three steps before the stage.
 struct SuflorSetupView: View {
@@ -229,13 +230,73 @@ private struct SuflorBriefStep: View {
                 }
                 .padding(.top, 22)
 
-                actions.padding(.top, 28)
+                if model.writer != nil { voiceCard.padding(.top, 22) }
+                actions.padding(.top, 22)
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 40)
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
+        .task { await model.refreshVoice() }
+    }
+
+    /// Write like me: the creator's own speech from their videos as the model's example.
+    private var voiceCard: some View {
+        let words = model.voiceWords ?? 0
+        let available = words > 0
+        return Button {
+            guard available else { return }
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(DS.Motion.bloom) { model.useMyVoice.toggle() }
+        } label: {
+            HStack(alignment: .top, spacing: 14) {
+                ZStack {
+                    Circle().fill(model.useMyVoice ? DS.Palette.lime : DS.Palette.hairline(0.08))
+                    Image(systemName: "waveform")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(model.useMyVoice ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+                        .symbolEffect(.bounce, value: model.useMyVoice)
+                }
+                .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("suflor.voice.title", bundle: .module)
+                        .dsFont(.sans, .semibold, 16)
+                        .foregroundStyle(DS.Palette.ink)
+                    Group {
+                        if model.voiceWords == nil {
+                            Text("suflor.voice.looking", bundle: .module)
+                        } else if available {
+                            Text("suflor.voice.found \(words)", bundle: .module)
+                        } else {
+                            Text("suflor.voice.none", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .regular, 13, lineHeight: 1.3)
+                    .foregroundStyle(DS.Palette.ink(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Capsule()
+                    .fill(model.useMyVoice ? DS.Palette.lime : DS.Palette.hairline(0.14))
+                    .frame(width: 46, height: 28)
+                    .overlay(alignment: model.useMyVoice ? .trailing : .leading) {
+                        Circle().fill(model.useMyVoice ? DS.Palette.inkInverse : DS.Palette.ink(0.8)).padding(3)
+                    }
+                    .padding(.top, 8)
+            }
+            .padding(16)
+            .dsCard(fill: model.useMyVoice ? DS.Palette.lime(0.08) : DS.Palette.surface, radius: 20, border: model.useMyVoice ? DS.Palette.lime(0.45) : DS.Palette.hairline(0.07))
+            .opacity(available || model.voiceWords == nil ? 1 : 0.55)
+        }
+        .buttonStyle(.dsPressCard)
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(voiceState)
+    }
+
+    private var voiceState: Text {
+        if model.useMyVoice { return Text("suflor.voice.on", bundle: .module) }
+        return Text("suflor.voice.off", bundle: .module)
     }
 
     private func field(_ key: String.LocalizationValue, text: Binding<String>, field: Field) -> some View {

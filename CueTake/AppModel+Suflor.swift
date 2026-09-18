@@ -2,6 +2,7 @@ import AIServices
 import AVFoundation
 import Domain
 import Foundation
+import Persistence
 import SettingsFeature
 import SpeechEngine
 import SuflorFeature
@@ -15,12 +16,12 @@ extension AppModel {
         suflor.localeIdentifier = project.localeIdentifier
         let client = dependencies.assistantClient
         if client.isConfigured {
-            suflor.writer = { [weak self] brief, locale in
+            suflor.writer = { [weak self] brief, locale, voice in
                 guard let self, self.settingsModel.settings.aiProcessing == .allowCloud else {
                     throw SuflorModel.WriteError.cloudOff
                 }
                 do {
-                    return try await client.writeSuflor(brief, localeIdentifier: locale)
+                    return try await client.writeSuflor(brief, localeIdentifier: locale, voice: voice)
                 } catch AssistantClient.AssistantError.offline {
                     throw SuflorModel.WriteError.offline
                 } catch AssistantClient.AssistantError.rejected(let status) {
@@ -35,12 +36,33 @@ extension AppModel {
         } else {
             suflor.writer = nil
         }
+        suflor.voiceLoader = { [weak self] in await self?.suflorVoiceSample() }
         let speech = dependencies.speech
         let locale = project.localeIdentifier
         suflor.verifier = { url, items in
             try await Self.findSaid(items, in: url, speech: speech, localeIdentifier: locale)
         }
         go(to: .suflor)
+    }
+
+    /// The creator's speech from their latest videos: the open project first, then the library,
+    /// newest first, until there is enough to hear how they talk.
+    func suflorVoiceSample() async -> String? {
+        var transcripts = Self.transcripts(of: project)
+        let others = library
+            .filter { $0.id != project.id }
+            .sorted { $0.updatedAt > $1.updatedAt }
+            .prefix(8)
+        for summary in others {
+            if SuflorVoice.wordCount(SuflorVoice.sample(from: transcripts)) >= 450 { break }
+            guard let other = try? await dependencies.projectStore.load(summary.id) else { continue }
+            transcripts += Self.transcripts(of: other)
+        }
+        return SuflorVoice.sample(from: transcripts)
+    }
+
+    private static func transcripts(of project: Project) -> [Transcript] {
+        project.segments.flatMap(\.takes).compactMap(\.transcript).filter { !$0.words.isEmpty }
     }
 
     /// Listens to a recording on this phone and returns where each item was first said, with a

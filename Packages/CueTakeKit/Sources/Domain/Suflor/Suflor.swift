@@ -256,6 +256,32 @@ public struct SuflorClock: Hashable, Sendable {
     }
 }
 
+/// The creator's own way of talking, taken from what they said in their videos, so the cards can
+/// be written in their voice instead of a generic one.
+public enum SuflorVoice {
+    /// Enough speech to hear a way of talking in; less is just noise.
+    public static let minimumWords = 60
+
+    /// Up to `maxWords` of the creator's speech, newest first, one recording per paragraph. Nil
+    /// when there is too little to go on.
+    public static func sample(from transcripts: [Transcript], maxWords: Int = 450) -> String? {
+        var paragraphs: [String] = []
+        var count = 0
+        for transcript in transcripts {
+            let words = transcript.words.map(\.text).filter { !$0.isEmpty }
+            guard words.count >= 8, count < maxWords else { continue }
+            let taken = Array(words.prefix(maxWords - count))
+            paragraphs.append(taken.joined(separator: " "))
+            count += taken.count
+        }
+        return count >= minimumWords ? paragraphs.joined(separator: "\n\n") : nil
+    }
+
+    public static func wordCount(_ sample: String?) -> Int {
+        sample?.split(whereSeparator: \.isWhitespace).count ?? 0
+    }
+}
+
 /// Where in a recording something the brand asked for was said.
 public struct SuflorProof: Codable, Hashable, Sendable, Identifiable {
     public var id: String { item + "@\(Int(seconds))" }
