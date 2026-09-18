@@ -79,6 +79,8 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
     let keys: LiveKeys?
     /// Overlays drawn behind the people.
     let behind: LiveBehind?
+    /// The track whose picture is laid over a blurred, frame-filling copy of itself.
+    let backdropTrack: CMPersistentTrackID?
     /// What shows where no layer draws.
     let background: CIColor
 
@@ -86,8 +88,10 @@ final class FilterInstruction: NSObject, AVVideoCompositionInstructionProtocol, 
         _ instruction: AVVideoCompositionInstruction,
         filters: LiveFilters,
         keys: LiveKeys? = nil,
-        behind: LiveBehind? = nil
+        behind: LiveBehind? = nil,
+        backdropTrack: CMPersistentTrackID? = nil
     ) {
+        self.backdropTrack = backdropTrack
         self.keys = keys
         self.behind = behind
         timeRange = instruction.timeRange
@@ -156,6 +160,9 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
                 for layer in instruction.layers.reversed() {
                     guard let pixels = request.sourceFrame(byTrackID: layer.trackID) else { continue }
                     if let image = Self.place(pixels, layer: layer, at: time, renderHeight: size.height, key: instruction.keys?.key(for: layer.trackID)) {
+                        if layer.trackID == instruction.backdropTrack {
+                            frame = Self.backdrop(of: image, in: bounds).composited(over: frame)
+                        }
                         frame = image.composited(over: frame)
                     }
                 }
@@ -223,6 +230,25 @@ final class FilterCompositor: NSObject, AVVideoCompositing, @unchecked Sendable 
             }
         }
         return image
+    }
+
+    /// A fitted picture blown up to cover the frame and blurred: the fill behind a landscape clip
+    /// in a vertical video. Blurred small and scaled back up, so it costs little per frame.
+    static func backdrop(of placed: CIImage, in bounds: CGRect) -> CIImage {
+        let extent = placed.extent
+        guard extent.width > 1, extent.height > 1, !extent.isInfinite else { return CIImage.empty() }
+        let cover = max(bounds.width / extent.width, bounds.height / extent.height) * 1.08
+        let small: CGFloat = 0.125
+        let covered = placed
+            .transformed(by: CGAffineTransform(translationX: -extent.midX, y: -extent.midY))
+            .transformed(by: CGAffineTransform(scaleX: cover * small, y: cover * small))
+            .transformed(by: CGAffineTransform(translationX: bounds.midX * small, y: bounds.midY * small))
+        return covered
+            .clampedToExtent()
+            .applyingGaussianBlur(sigma: 5)
+            .transformed(by: CGAffineTransform(scaleX: 1 / small, y: 1 / small))
+            .applyingFilter("CIColorControls", parameters: [kCIInputBrightnessKey: -0.08, kCIInputSaturationKey: 0.9])
+            .cropped(to: bounds)
     }
 
     /// A placed clip with a transition's movement on it, in Core Image's bottom-up render space.

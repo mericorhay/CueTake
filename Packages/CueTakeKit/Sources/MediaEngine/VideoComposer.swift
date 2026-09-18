@@ -102,6 +102,8 @@ public struct VideoComposer: Sendable {
 
         var cursor = CMTime.zero
         var instructions: [AVMutableVideoCompositionInstruction] = []
+        /// Where the main picture sits whole in the frame over a blurred copy of itself.
+        var backdrops: [CMTimeRange] = []
         /// The voice's level from each moment on, for sound effects that change it.
         var voiceLevels: [(time: CMTime, gain: Float)] = []
         var effectTracks: [String: AVAssetTrack] = [:]
@@ -278,10 +280,18 @@ public struct VideoComposer: Sendable {
                     // Keep the long-standing static instruction for ordinary clips. A ramp with
                     // identical endpoints is needlessly rejected by some iOS AVFoundation builds
                     // when the source has been time-scaled.
+                    var wanted = project.mainVideoPlacement
+                    if segment.fillsFrame == true { wanted.fillsFrame = true }
+                    let placed = Self.framed(wanted, natural: trackNatural, preferred: trackPreferred, render: renderSize, moving: recordingMoves)
+                    // A clip of another shape sits whole in the frame; what it leaves empty is
+                    // filled with itself, blurred, instead of black bars.
+                    if !placed.fillsFrame, Self.coversFrame(project.mainVideoPlacement) {
+                        backdrops.append(CMTimeRange(start: pieceCursor, duration: pieceTarget))
+                    }
                     let geometry = VideoFrameGeometry(
                         natural: trackNatural,
                         preferred: trackPreferred,
-                        placement: Self.framed(project.mainVideoPlacement, natural: trackNatural, preferred: trackPreferred, render: renderSize, moving: recordingMoves),
+                        placement: placed,
                         render: renderSize
                     )
                     layer.setTransform(geometry.transform, at: pieceCursor)
@@ -467,7 +477,7 @@ public struct VideoComposer: Sendable {
         videoComposition.instructions = layered.instructions
         // Filters need a compositor of their own. Only then: every other project keeps the
         // system's, which is also the only one the export's caption tool works with.
-        // Keyed videos and overlays behind a person are drawn there too.
+        // Keyed videos, overlays behind a person and blurred fills are drawn there too.
         let behind = project.overlays.contains(where: \.isBehindPerson)
             ? (liveBehind ?? LiveBehind(project.overlays, mediaDirectory: mediaDirectory))
             : nil
@@ -477,11 +487,14 @@ public struct VideoComposer: Sendable {
             live.bind(layered.tracks)
             keys = live
         }
-        if project.effects.contains(where: { $0.filter != nil }) || keys != nil || behind != nil {
+        if project.effects.contains(where: { $0.filter != nil }) || keys != nil || behind != nil || !backdrops.isEmpty {
             let filters = liveFilters ?? LiveFilters(project.effects)
+            let mainTrack = videoTrack.trackID
             videoComposition.customVideoCompositorClass = FilterCompositor.self
-            videoComposition.instructions = layered.instructions.map {
-                FilterInstruction($0, filters: filters, keys: keys, behind: behind)
+            videoComposition.instructions = layered.instructions.map { instruction in
+                let middle = instruction.timeRange.start + CMTimeMultiplyByFloat64(instruction.timeRange.duration, multiplier: 0.5)
+                let filled = backdrops.contains { $0.containsTime(middle) }
+                return FilterInstruction(instruction, filters: filters, keys: keys, behind: behind, backdropTrack: filled ? mainTrack : nil)
             }
         }
 
@@ -518,6 +531,12 @@ public struct VideoComposer: Sendable {
     /// A recording that is tracked or moved anywhere is filled in every clip cut from it. The
     /// track sits in one clip's range; the rest of the same video, fitted, shrank to a picture in
     /// bars the moment the cut came — worst of all across a transition.
+    /// Whether the main video is meant to take the whole frame, rather than a part of a split.
+    static func coversFrame(_ placement: VideoPlacement) -> Bool {
+        let frame = placement.bounded
+        return frame.x < 0.001 && frame.y < 0.001 && frame.width > 0.999 && frame.height > 0.999
+    }
+
     static func framed(_ placement: VideoPlacement, natural: CGSize, preferred: CGAffineTransform, render: CGSize, moving: Bool = false) -> VideoPlacement {
         guard !placement.fillsFrame else { return placement }
         if moving {

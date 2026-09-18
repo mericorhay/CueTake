@@ -9166,6 +9166,74 @@
         }
       }
     },
+    "editor.style.framing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FRAME"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÇERÇEVE"
+          }
+        }
+      }
+    },
+    "editor.style.framing.fill": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doldur"
+          }
+        }
+      }
+    },
+    "editor.style.framing.fit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sığdır"
+          }
+        }
+      }
+    },
+    "editor.style.framing.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A clip of another shape shows whole, over a blurred copy of itself. Fill crops it to the frame."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farklı şekildeki klip bütün görünür, arkasını kendi bulanık hâli doldurur. Doldur, çerçeveye kırpar."
+          }
+        }
+      }
+    },
     "editor.style.notes": {
       "extractionState": "manual",
       "localizations": {

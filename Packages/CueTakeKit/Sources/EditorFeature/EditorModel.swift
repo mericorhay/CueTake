@@ -411,7 +411,7 @@ public final class EditorModel {
             let take = segment.selectedTake
             let range = take.map { "\($0.id.uuidString):\($0.sourceRange.start.seconds):\($0.sourceRange.duration.seconds)" } ?? "-"
             let playback = segment.playback
-            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)"
+            return "\(range)|\(playback.speed)|\(playback.isReversed)|\(playback.freeze?.seconds ?? -1)|\(segment.fillsFrame ?? false)"
         } + [
             // Transitions draw from a second track: any change rebuilds the picture.
             "transitions:" + project.transitions.map { "\($0.after.uuidString):\($0.kind.rawValue):\($0.duration)" }.joined(separator: ","),

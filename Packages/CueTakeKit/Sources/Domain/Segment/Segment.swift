@@ -29,6 +29,9 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
     public var smartReframe: [VideoFocusKeyframe] = []
     /// Set on the pieces a cleanup cut this clip into, so the cut can be opened again.
     public var cleanup: CleanupOrigin? = nil
+    /// True crops the clip to fill the frame. Nil lets a clip of another shape — landscape in a
+    /// vertical video — sit whole in the frame over a blurred copy of itself.
+    public var fillsFrame: Bool? = nil
     public var metadata: [String: String]
 
     public init(
@@ -74,6 +77,7 @@ public struct Segment: Identifiable, Hashable, Sendable, Codable {
         background = try? container.decodeIfPresent(ClipBackground.self, forKey: .background)
         smartReframe = try container.decodeIfPresent([VideoFocusKeyframe].self, forKey: .smartReframe) ?? []
         cleanup = try? container.decodeIfPresent(CleanupOrigin.self, forKey: .cleanup)
+        fillsFrame = try? container.decodeIfPresent(Bool.self, forKey: .fillsFrame)
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
     }
 

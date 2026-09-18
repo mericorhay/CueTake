@@ -332,6 +332,21 @@ struct SegmentInspector: View {
     private var style: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
+                label("editor.style.framing")
+                HStack(spacing: 6) {
+                    toggle("editor.style.framing.fit", symbol: "rectangle.center.inset.filled", isOn: segment.fillsFrame != true, enabled: true) {
+                        withAnimation(DS.Motion.snap) { model.updateSegment(at: index) { $0.fillsFrame = nil } }
+                    }
+                    toggle("editor.style.framing.fill", symbol: "arrow.up.left.and.arrow.down.right", isOn: segment.fillsFrame == true, enabled: true) {
+                        withAnimation(DS.Motion.snap) { model.updateSegment(at: index) { $0.fillsFrame = true } }
+                    }
+                }
+                Text("editor.style.framing.note", bundle: .module)
+                    .dsFont(.sans, .regular, 10, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.ink(0.45))
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
                 label("editor.style.role")
 
                 FlowLayout(horizontalSpacing: 5, verticalSpacing: 5) {
