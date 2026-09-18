@@ -173,6 +173,74 @@
         }
       }
     },
+    "home.suflor.badge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NEW"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YENİ"
+          }
+        }
+      }
+    },
+    "home.suflor.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepares the sponsor's lines and floats them beside your live stream."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reklamın cümlelerini hazırlar ve canlı yayınının yanında yüzdürür."
+          }
+        }
+      }
+    },
+    "home.suflor.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A prompter floating over TikTok or Instagram while you're live."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Canlı yayında TikTok'un, Instagram'ın üstünde süzülen suflör."
+          }
+        }
+      }
+    },
+    "home.suflor.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suflör"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suflör"
+          }
+        }
+      }
+    },
     "home.teleprompter.hint": {
       "extractionState": "manual",
       "localizations": {

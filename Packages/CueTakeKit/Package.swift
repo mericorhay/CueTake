@@ -14,7 +14,7 @@ let modules: [String] = [
     "Domain",
     "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync",
     "DesignSystem", "Teleprompter", "BumpKit",
-    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature",
+    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature", "SuflorFeature",
 ]
 
 func engine(_ name: String, _ dependencies: [Target.Dependency] = ["Domain"]) -> Target {
@@ -69,6 +69,8 @@ let package = Package(
         uiModule("AssistantFeature", ["Domain", "DesignSystem"]),
         // Teams: making one, joining one, and the light that plays when two phones meet.
         uiModule("TeamFeature", ["Domain", "DesignSystem", "BumpKit", "TeamSync"]),
+        // The prompter that floats beside another app's camera during a live stream.
+        uiModule("SuflorFeature", ["Domain", "DesignSystem"]),
         uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),

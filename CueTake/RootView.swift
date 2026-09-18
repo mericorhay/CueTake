@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 import ScriptFeature
 import SettingsFeature
 import StudioFeature
+import SuflorFeature
 import SwiftUI
 import TeamFeature
 import WorkflowsFeature
@@ -38,7 +39,7 @@ struct RootView: View {
                 .id(model.screen)
                 // Every flow screen's back button reads this and shows the stage it belongs to,
                 // with the journey map one tap away. Root screens have the tab bar instead.
-                .environment(\.dsJourney, model.screen.isRoot || model.screen == .onboarding ? nil : model.journeyContext)
+                .environment(\.dsJourney, model.screen.isRoot || model.screen == .onboarding || model.screen == .suflor ? nil : model.journeyContext)
                 .ignoresSafeArea(.container)
                 // Each screen plays the design's own `scin` entrance on arrival, so only the
                 // exit is described here: without it the outgoing screen is cut rather than
@@ -161,7 +162,8 @@ struct RootView: View {
                 onOpenProject: { item in Task { await model.openProject(id: item.id) } },
                 onOpenAllProjects: { model.go(to: .projects) },
                 onOpenWorkflow: { model.go(to: .workflows) },
-                onTeleprompter: { model.startTeleprompter() }
+                onTeleprompter: { model.startTeleprompter() },
+                onSuflor: { model.startSuflor() }
             )
 
         case .create:
@@ -322,6 +324,9 @@ struct RootView: View {
                     onResend: { model.resendWorkflowDelivery() }
                 )
             }
+
+        case .suflor:
+            SuflorScreen(model: model.suflorModel) { model.go(to: .home) }
 
         case .settings:
             SettingsScreen(

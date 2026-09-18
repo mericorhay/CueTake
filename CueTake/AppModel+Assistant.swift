@@ -173,6 +173,7 @@ extension AppModel {
         case .workflows: "Workflows"
         case .workflowDetail: "Workflow studio"
         case .settings: "Settings"
+        case .suflor: "Suflör (live-stream prompter)"
         }
     }
 

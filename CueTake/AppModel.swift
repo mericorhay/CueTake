@@ -14,6 +14,7 @@ import ScriptFeature
 import SpeechEngine
 import SettingsFeature
 import StudioFeature
+import SuflorFeature
 import SwiftUI
 import TeamSync
 import WorkflowsFeature
@@ -36,6 +37,8 @@ enum Screen: Hashable {
     case workflows
     case workflowDetail
     case settings
+    /// The prompter that floats beside TikTok or Instagram during a live stream.
+    case suflor
 
     /// The four screens that sit under the tab bar.
     var isRoot: Bool {
@@ -63,6 +66,8 @@ final class AppModel {
     /// Scripts kept for reuse and the brand voice the AI writes in.
     let scriptLibrary = ScriptLibraryStore()
     let exportModel = ExportModel()
+    /// The suflör keeps its brief and cards between visits, like the prompter keeps its layout.
+    let suflorModel = SuflorModel()
     let settingsModel: SettingsModel
 
     private(set) var studioModel: StudioModel

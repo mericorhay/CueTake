@@ -97,6 +97,7 @@ public struct HomeScreen: View {
     private let onOpenAllProjects: () -> Void
     private let onOpenWorkflow: () -> Void
     private let onTeleprompter: () -> Void
+    private let onSuflor: () -> Void
 
     public init(
         recents: [LibraryItem] = LibraryItem.sampleRecents,
@@ -104,9 +105,11 @@ public struct HomeScreen: View {
         onOpenProject: @escaping (LibraryItem) -> Void,
         onOpenAllProjects: @escaping () -> Void,
         onOpenWorkflow: @escaping () -> Void,
-        onTeleprompter: @escaping () -> Void = {}
+        onTeleprompter: @escaping () -> Void = {},
+        onSuflor: @escaping () -> Void = {}
     ) {
         self.onTeleprompter = onTeleprompter
+        self.onSuflor = onSuflor
         self.recents = recents
         self.onCreate = onCreate
         self.onOpenProject = onOpenProject
@@ -120,6 +123,7 @@ public struct HomeScreen: View {
                 header
                 createCard
                 teleprompterCard
+                suflorCard
                 recentSection
                 workflowSection
             }
@@ -246,6 +250,48 @@ public struct HomeScreen: View {
         .accessibilityHint(Text("home.teleprompter.hint", bundle: .module))
         .padding(.horizontal, 22)
         .padding(.top, 12)
+    }
+
+    // MARK: - Suflör
+
+    /// The prompter for a live stream on another app: it floats in the corner of TikTok or
+    /// Instagram and rolls the brand's lines at the speaker's pace.
+    private var suflorCard: some View {
+        Button(action: onSuflor) {
+            HStack(spacing: 14) {
+                SuflorMiniWindow()
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 7) {
+                        Text("home.suflor.title", bundle: .module)
+                            .dsFont(.sans, .semibold, 16)
+                            .foregroundStyle(DS.Palette.ink)
+                        Text("home.suflor.badge", bundle: .module)
+                            .dsFont(.mono, .medium, 9, letterSpacing: 0.14)
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(DS.Palette.accent))
+                    }
+                    Text("home.suflor.subtitle", bundle: .module)
+                        .dsFont(.sans, .regular, 13)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.52))
+                    .accessibilityHidden(true)
+            }
+            .padding(14)
+            .frame(minHeight: 44)
+            .dsCard(radius: 20)
+        }
+        .buttonStyle(.dsPressCard)
+        .accessibilityHint(Text("home.suflor.hint", bundle: .module))
+        .padding(.horizontal, 22)
+        .padding(.top, 10)
     }
 
     // MARK: - Recent
@@ -397,5 +443,40 @@ struct LibraryCardBackground: View {
         } else {
             item.fill.view
         }
+    }
+}
+
+/// A tiny floating window with lines rolling up through it and a live dot breathing: the suflör
+/// explained without a word.
+private struct SuflorMiniWindow: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let widths: [CGFloat] = [24, 30, 18, 28, 22, 32, 16, 26]
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1 / 30, paused: reduceMotion)) { context in
+            let t = context.date.timeIntervalSinceReferenceDate
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 11, style: .continuous).fill(DS.Palette.screen)
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(widths.indices, id: \.self) { index in
+                        Capsule()
+                            .fill(index % 3 == 1 ? DS.Palette.lime : DS.Palette.ink(0.8))
+                            .frame(width: widths[index], height: 3)
+                    }
+                }
+                .padding(.leading, 7)
+                .offset(y: 30 - CGFloat((t * 7).truncatingRemainder(dividingBy: 28)))
+                Circle()
+                    .fill(DS.Palette.accent)
+                    .frame(width: 5, height: 5)
+                    .opacity(0.5 + 0.5 * abs(sin(t * .pi)))
+                    .offset(x: 34, y: 5)
+            }
+            .frame(width: 46, height: 60)
+            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(DS.Palette.lime(0.35), lineWidth: 1))
+            .offset(y: reduceMotion ? 0 : CGFloat(sin(t * 1.3)) * 1.5)
+        }
+        .frame(width: 46, height: 60)
     }
 }
