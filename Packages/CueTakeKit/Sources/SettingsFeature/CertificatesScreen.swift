@@ -669,7 +669,7 @@ enum QRCode {
 
 // MARK: - Names and colours
 
-extension CertificationLevel: @retroactive Identifiable {
+extension CertificationLevel: Identifiable {
     public var id: String { rawValue }
 
     var title: String {
