@@ -106,12 +106,15 @@ public struct VideoPatch: Hashable, Sendable {
     public var muted: Bool?
     public var hidden: Bool?
     public var mirrored: Bool?
+    /// A screen colour to take out, `#RRGGBB`, or `none` to put the video back as shot.
+    public var screen: String?
 
     public init(
         start: Double? = nil, end: Double? = nil, sourceStart: Double? = nil, x: Double? = nil, y: Double? = nil,
         width: Double? = nil, height: Double? = nil, opacity: Double? = nil, volume: Double? = nil,
-        muted: Bool? = nil, hidden: Bool? = nil, mirrored: Bool? = nil
+        muted: Bool? = nil, hidden: Bool? = nil, mirrored: Bool? = nil, screen: String? = nil
     ) {
+        self.screen = screen
         self.start = start; self.end = end; self.sourceStart = sourceStart; self.x = x; self.y = y
         self.width = width; self.height = height; self.opacity = opacity; self.volume = volume
         self.muted = muted; self.hidden = hidden; self.mirrored = mirrored

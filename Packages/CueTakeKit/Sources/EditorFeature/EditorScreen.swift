@@ -698,6 +698,13 @@ public struct EditorScreen: View {
         }
         // Pictures and text, over the captions, moved with the fingers.
         .overlay { OverlayCanvas(model: model) }
+        // Over everything while it waits for its tap.
+        .overlay {
+            if model.pickingSubject != nil {
+                SubjectPicker(model: model)
+                    .transition(.opacity)
+            }
+        }
         // An added video being worked on is placed right here, beside its timeline.
         .overlay {
             if model.placedPiece != nil {

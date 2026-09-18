@@ -109,6 +109,8 @@ public final class EditorModel {
     public var selectedVideoLayer: VideoLayer.ID?
     /// The shot video itself is being placed on the canvas — see StagePiece.
     public var isPlacingMainVideo = false
+    /// A background effect waiting for a tap on the picture to say which thing stays in front.
+    public var pickingSubject: TimelineEffect.ID?
     /// Makes videos with a model, on the user's own key. Set by the app.
     @ObservationIgnored public var clipGenerator: ClipGenerator?
     /// Whether a provider has a key, for the generate panel. Set by the app.

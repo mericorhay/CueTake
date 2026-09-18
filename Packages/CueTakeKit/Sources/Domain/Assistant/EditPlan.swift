@@ -235,13 +235,16 @@ public struct EditPlan: Codable, Sendable, Equatable {
         public var background: String?
         public var font: String?
         public var animation: String?
+        /// Behind the people in the picture, or back in front of them.
+        public var behind: Bool?
 
         public init(
             text: String? = nil, start: Double? = nil, duration: Double? = nil, end: Double? = nil,
             x: Double? = nil, y: Double? = nil, scale: Double? = nil, rotation: Double? = nil,
             opacity: Double? = nil, flipX: Bool? = nil, flipY: Bool? = nil, color: String? = nil,
-            background: String? = nil, font: String? = nil, animation: String? = nil
+            background: String? = nil, font: String? = nil, animation: String? = nil, behind: Bool? = nil
         ) {
+            self.behind = behind
             self.text = text
             self.start = start
             self.duration = duration
@@ -507,7 +510,9 @@ extension EditPlan.Operation: Codable {
                 to: f.number("to") ?? f.number("end"),
                 strength: f.number("strength") ?? f.number("amount"),
                 feather: f.number("feather") ?? f.number("edge"),
-                color: f.string("color")
+                color: f.string("color"),
+                keep: f.string("keep"),
+                screen: f.string("screen")
             ))
         case "removeEffect":
             guard let effect = f.string("effect") ?? f.string("id") else { self = unknown; return }
@@ -617,7 +622,8 @@ extension EditPlan.Operation: Codable {
             start: f.number("start"), end: f.number("end"), sourceStart: f.number("sourceStart"),
             x: f.number("x"), y: f.number("y"), width: f.number("width") ?? f.number("w"),
             height: f.number("height") ?? f.number("h"), opacity: f.number("opacity"),
-            volume: f.number("volume"), muted: f.flag("muted"), hidden: f.flag("hidden"), mirrored: f.flag("mirrored")
+            volume: f.number("volume"), muted: f.flag("muted"), hidden: f.flag("hidden"), mirrored: f.flag("mirrored"),
+            screen: f.string("screen")
         )
     }
 
@@ -637,7 +643,8 @@ extension EditPlan.Operation: Codable {
             color: f.string("color"),
             background: f.string("background"),
             font: f.string("font"),
-            animation: f.string("animation")
+            animation: f.string("animation"),
+            behind: f.flag("behind")
         )
         return patch == EditPlan.OverlayPatch() ? nil : patch
     }
@@ -653,7 +660,7 @@ extension EditPlan.Operation: Codable {
             try put("x", patch.x); try put("y", patch.y); try put("scale", patch.scale)
             try put("rotation", patch.rotation); try put("opacity", patch.opacity); try put("flipX", patch.flipX)
             try put("flipY", patch.flipY); try put("color", patch.color); try put("background", patch.background)
-            try put("font", patch.font); try put("animation", patch.animation)
+            try put("font", patch.font); try put("animation", patch.animation); try put("behind", patch.behind)
         }
         switch self {
         case .cut(let clip, let from, let to):
@@ -725,6 +732,7 @@ extension EditPlan.Operation: Codable {
             try put("clip", request.clip); try put("style", request.style ?? "none")
             try put("from", request.from); try put("to", request.to)
             try put("strength", request.strength); try put("feather", request.feather); try put("color", request.color)
+            try put("keep", request.keep); try put("screen", request.screen)
         case .removeEffect(let effect):
             try put("effect", effect)
         case .setFilter(let r):
@@ -745,7 +753,7 @@ extension EditPlan.Operation: Codable {
             try put("start", p.start); try put("end", p.end); try put("sourceStart", p.sourceStart)
             try put("x", p.x); try put("y", p.y); try put("width", p.width); try put("height", p.height)
             try put("opacity", p.opacity); try put("volume", p.volume); try put("muted", p.muted)
-            try put("hidden", p.hidden); try put("mirrored", p.mirrored)
+            try put("hidden", p.hidden); try put("mirrored", p.mirrored); try put("screen", p.screen)
         case .layoutVideos(let layout):
             try put("layout", layout)
         case .removeVideo(let video):
@@ -818,7 +826,8 @@ extension EditPlan {
             case .setBackground(let request):
                 .setBackground(BackgroundRequest(
                     clip: request.clip.map(refs.clip), style: request.style, from: request.from, to: request.to,
-                    strength: request.strength, feather: request.feather, color: request.color
+                    strength: request.strength, feather: request.feather, color: request.color,
+                    keep: request.keep, screen: request.screen
                 ))
             case .removeEffect(let effect): .removeEffect(effect: refs.effect(effect))
             case .setFilter(let r): .setFilter(r.resolving(effect: refs.effect, clip: refs.clip))
@@ -861,6 +870,10 @@ public struct BackgroundRequest: Hashable, Sendable {
     public var strength: Double?
     public var feather: Double?
     public var color: String?
+    /// What stays in front: `person` (the default), `subject`, or `screen` for a keyed colour.
+    public var keep: String?
+    /// The screen colour taken out, `#RRGGBB`, when `keep` is `screen`. Green when not given.
+    public var screen: String?
 
     public init(
         clip: String? = nil,
@@ -869,8 +882,12 @@ public struct BackgroundRequest: Hashable, Sendable {
         to: Double? = nil,
         strength: Double? = nil,
         feather: Double? = nil,
-        color: String? = nil
+        color: String? = nil,
+        keep: String? = nil,
+        screen: String? = nil
     ) {
+        self.keep = keep
+        self.screen = screen
         self.clip = clip
         self.style = style
         self.from = from

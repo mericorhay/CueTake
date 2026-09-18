@@ -185,6 +185,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var background: String?
         public var font: String?
         public var animation: String
+        /// Drawn behind the people in the picture.
+        public var behind: Bool? = nil
     }
 
     /// A background (or later another tool) from one moment of the finished video to another.
@@ -200,6 +202,10 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var color: String?
         /// A filter's or sound effect's settings that differ from their defaults.
         public var values: [String: Double]?
+        /// For a background, what stays in front when it is not people: `subject` or `screen`.
+        public var keep: String? = nil
+        /// The screen colour taken out, when `keep` is `screen`.
+        public var screen: String? = nil
     }
 
     /// An added video: `at`/`length` on the finished video, `file` where in its own file it
@@ -219,6 +225,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var muted: Bool?
         public var hidden: Bool?
         public var keys: [[Double]]?
+        /// The screen colour taken out of it, for footage shot on a green or blue screen.
+        public var screen: String? = nil
     }
 
     public struct Voice: Codable, Sendable, Equatable {
@@ -434,7 +442,8 @@ extension EditDocument {
                     color: color,
                     background: background,
                     font: font,
-                    animation: overlay.animation.rawValue
+                    animation: overlay.animation.rawValue,
+                    behind: overlay.isBehindPerson ? true : nil
                 )
             }
         }
@@ -475,7 +484,9 @@ extension EditDocument {
                     strength: settings.flatMap { $0.usesStrength ? r2($0.strength) : nil },
                     feather: settings.map { r2($0.feather) },
                     color: settings?.color?.hex,
-                    values: Self.values(of: effect)
+                    values: Self.values(of: effect),
+                    keep: settings.flatMap { Self.keep($0.cutout) },
+                    screen: settings.flatMap { $0.cutout == .color ? $0.effectiveKey.color.hex : nil }
                 )
             },
             videos: project.videoLayers.isEmpty ? nil : project.videoLayers.enumerated().map { i, layer in
@@ -496,7 +507,8 @@ extension EditDocument {
                     // [at on the finished video, x, y, w, h]
                     keys: layer.keyframes.isEmpty ? nil : layer.orderedKeyframes.map {
                         [r2(layer.start.seconds + $0.time), r2($0.placement.x), r2($0.placement.y), r2($0.placement.width), r2($0.placement.height)]
-                    }
+                    },
+                    screen: layer.chroma?.color.hex
                 )
             },
             mainVolume: project.mainVideoVolume < 0.999 ? r2(project.mainVideoVolume) : nil,
@@ -536,6 +548,15 @@ extension EditDocument {
                 self.clips[index].lost = track.lost.isEmpty ? nil : track.lost
             }
             clipStart += segment.barWeight
+        }
+    }
+
+    /// What stays in front of a background, as the model reads it; people say nothing.
+    static func keep(_ cutout: Cutout) -> String? {
+        switch cutout {
+        case .person: nil
+        case .subject: "subject"
+        case .color: "screen"
         }
     }
 

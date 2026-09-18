@@ -1095,6 +1095,15 @@ extension EditorModel {
                 if let strength = request.strength { settings.strength = min(max(strength > 1 ? strength / 100 : strength, 0), 1) }
                 if let feather = request.feather { settings.feather = min(max(feather > 1 ? feather / 100 : feather, 0), 1) }
                 if let hex = request.color { settings.color = RGBAColor(hex: hex) }
+                switch request.keep?.lowercased() {
+                case "subject", "object": settings.cutout = .subject
+                case "screen", "color", "colour", "chroma":
+                    settings.cutout = .color
+                    var key = ChromaKey.green
+                    if let hex = request.screen, let color = RGBAColor(hex: hex) { key.color = color }
+                    settings.key = key
+                default: break
+                }
                 let effect = TimelineEffect(
                     start: MediaTime(seconds: range.lowerBound),
                     duration: MediaTime(seconds: range.upperBound - range.lowerBound),
@@ -1247,6 +1256,15 @@ extension EditorModel {
                         if let volume = patch.volume { $0.volume = FilterRequest.unit(volume) }
                         if let muted = patch.muted { $0.isMuted = muted }
                         if let hidden = patch.hidden { $0.isHidden = hidden }
+                        if let screen = patch.screen {
+                            if screen.lowercased() == "none" {
+                                $0.chroma = nil
+                            } else {
+                                var key = $0.chroma ?? .green
+                                if let color = RGBAColor(hex: screen) { key.color = color }
+                                $0.chroma = key
+                            }
+                        }
                     }
                     return [.videoLayer(uuid)]
                 }
@@ -1520,6 +1538,7 @@ extension EditorModel {
         if let flip = patch.flipX { overlay.transform.flipX = flip }
         if let flip = patch.flipY { overlay.transform.flipY = flip }
         if let animation = patch.animation.flatMap({ OverlayAnimation(rawValue: $0) }) { overlay.animation = animation }
+        if let behind = patch.behind { overlay.isBehindPerson = behind }
         if case .text(var content) = overlay.content {
             if let text = patch.text, !text.isEmpty { content.text = text }
             if let color = patch.color.flatMap({ RGBAColor(hex: $0) }) { content.color = color }

@@ -63,6 +63,20 @@ public enum Cutout: String, Hashable, Sendable, Codable, CaseIterable {
     case color
 }
 
+/// A point on the picture, 0…1 from the left and from the top.
+public struct SubjectPoint: Hashable, Sendable, Codable {
+    public var x: Double
+    public var y: Double
+
+    public init(x: Double, y: Double) {
+        self.x = min(max(x, 0), 1)
+        self.y = min(max(y, 0), 1)
+    }
+
+    /// To a hundredth: a tap that lands a pixel away is the same choice.
+    var token: String { "p\(Int((x * 100).rounded()))x\(Int((y * 100).rounded()))" }
+}
+
 /// How a background is replaced.
 public struct BackgroundSettings: Hashable, Sendable, Codable {
     public var style: ClipBackground
@@ -70,6 +84,9 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
     public var cutout: Cutout
     /// The colour taken out, for `.color`.
     public var key: ChromaKey?
+    /// For `.subject`, the one thing tapped on: 0…1 from the left and from the top of the first
+    /// frame. The render follows it from frame to frame. Nil keeps everything in front.
+    public var subjectPoint: SubjectPoint?
     /// 0…1. For blur, how far out of focus the room goes; for dim, how dark it gets.
     public var strength: Double
     /// 0…1. How soft the edge around the person is — hair and shoulders look cut out when it is hard.
@@ -86,8 +103,10 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
         color: RGBAColor? = nil,
         fineEdges: Bool = false,
         cutout: Cutout = .person,
-        key: ChromaKey? = nil
+        key: ChromaKey? = nil,
+        subjectPoint: SubjectPoint? = nil
     ) {
+        self.subjectPoint = subjectPoint
         self.style = style
         self.cutout = cutout
         self.key = key
@@ -106,6 +125,7 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
         fineEdges = (try? container.decodeIfPresent(Bool.self, forKey: .fineEdges)) ?? false
         cutout = (try? container.decodeIfPresent(Cutout.self, forKey: .cutout)) ?? .person
         key = try? container.decodeIfPresent(ChromaKey.self, forKey: .key)
+        subjectPoint = try? container.decodeIfPresent(SubjectPoint.self, forKey: .subjectPoint)
     }
 
     /// The key in use: the chosen one, or a green screen when none was chosen yet.
@@ -126,7 +146,9 @@ public struct BackgroundSettings: Hashable, Sendable, Codable {
         // keep their names.
         switch cutout {
         case .person: break
-        case .subject: parts.append("subj")
+        case .subject:
+            parts.append("subj")
+            if let point = subjectPoint { parts.append(point.token) }
         case .color: parts.append(effectiveKey.token)
         }
         if usesFeather { parts.append("f\(Int((feather * 100).rounded()))") }

@@ -1,6 +1,7 @@
 import CoreGraphics
 import CoreImage
 import CoreMedia
+import CoreVideo
 import Domain
 import Foundation
 import Testing
@@ -111,5 +112,42 @@ struct CutoutTests {
         let middleX = Double(left + right) / 2 / Double(width)
         #expect(abs(middleY - 0.2) < 0.05)
         #expect(abs(middleX - 0.25) < 0.08)
+    }
+
+    /// Labels: thing 1 in the top left corner, thing 2 in the bottom right.
+    private func labels() throws -> CVPixelBuffer {
+        var made: CVPixelBuffer?
+        CVPixelBufferCreate(nil, 10, 10, kCVPixelFormatType_OneComponent8, nil, &made)
+        let buffer = try #require(made)
+        CVPixelBufferLockBaseAddress(buffer, [])
+        let base = try #require(CVPixelBufferGetBaseAddress(buffer)).assumingMemoryBound(to: UInt8.self)
+        let stride = CVPixelBufferGetBytesPerRow(buffer)
+        for y in 0..<10 {
+            for x in 0..<10 {
+                base[y * stride + x] = x < 3 && y < 3 ? 1 : (x >= 7 && y >= 7 ? 2 : 0)
+            }
+        }
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+        return buffer
+    }
+
+    @Test func theTappedThingIsTheOneKeptAndFollowed() throws {
+        let buffer = try labels()
+        let top = try #require(BackgroundRemover.instance(near: CGPoint(x: 0.1, y: 0.1), in: buffer))
+        #expect(top.label == 1)
+        #expect(abs(top.centre.x - 0.15) < 0.001)
+        #expect(abs(top.centre.y - 0.15) < 0.001)
+        // Beside both, nearer the second: the nearest one, not everything.
+        let near = try #require(BackgroundRemover.instance(near: CGPoint(x: 0.6, y: 0.65), in: buffer))
+        #expect(near.label == 2)
+        #expect(abs(near.centre.x - 0.85) < 0.001)
+    }
+
+    @Test func aTappedPointIsPartOfTheRendersName() {
+        let all = BackgroundSettings(style: .black, cutout: .subject)
+        let one = BackgroundSettings(style: .black, cutout: .subject, subjectPoint: SubjectPoint(x: 0.3, y: 0.7))
+        let other = BackgroundSettings(style: .black, cutout: .subject, subjectPoint: SubjectPoint(x: 0.6, y: 0.7))
+        #expect(Set([all.token, one.token, other.token]).count == 3)
+        #expect(SubjectPoint(x: 2, y: -1) == SubjectPoint(x: 1, y: 0))
     }
 }

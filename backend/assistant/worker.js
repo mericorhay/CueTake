@@ -104,9 +104,9 @@ clips[]: id, role, at/length (on the finished video), footage (seconds of record
   words [[text,start,end]] in THAT clip's footage seconds (index = position), captions [[id,text,start,end]] in clip footage seconds, takes,
   tracked (the camera follows the speaker's face), lost [finished-video seconds where the face was lost].
   A moment in clip footage f is at clip.at + f/speed on the finished video.
-audio[], style (caption look), captionWindow, overlays[] (at/length on the finished video, x,y centre 0..1 from left/top, scale 1 = default),
-effects[] (e..: kind background|filter|sound, style = background style / filter look / sound preset, from/to on the finished video, values = non-default settings),
-videos[] (v..: added videos over the main one: at/length on the finished video, file = where in its own file it starts, x,y,w,h top-left fractions, keys [[t,x,y,w,h]]),
+audio[], style (caption look), captionWindow, overlays[] (at/length on the finished video, x,y centre 0..1 from left/top, scale 1 = default, behind = drawn behind the people),
+effects[] (e..: kind background|filter|sound, style = background style / filter look / sound preset, from/to on the finished video, values = non-default settings, keep/screen = what a background keeps in front, see setBackground),
+videos[] (v..: added videos over the main one: at/length on the finished video, file = where in its own file it starts, x,y,w,h top-left fractions, keys [[t,x,y,w,h]], screen = green-screen colour taken out),
 cameraMoves[] (m..: at/length on the finished video, kind push|pull|punch|hold, amount = how much closer at the peak, feel),
 mainVolume, twoListeners, videoModel, voice, fonts, animations,
 history[] (earlier requests in this session, oldest first: asked, did, changes — the current document already includes those edits).
@@ -119,17 +119,20 @@ Footage: cut{clip,from,to} removeWords{clip,words:[index]} trimPauses{clip|null,
 Captions: setCaptionText{caption,text} captionTiming{caption,start,end} splitCaption{caption} mergeCaption{caption} removeCaption{caption}
   shiftCaptions{clip|null,by} captionWindow{from|null,to|null} useTranscript{clip|null,source device|cloud} (only when twoListeners)
   captionStyle{preset (pop clean karaoke bold boxed minimal neon story punch beast spotlight typewriter bounce podcast subtle news comic emoji glow focus: punch/beast/bounce/comic/emoji are loud short-video looks, subtle/podcast/news/clean read like subtitles, typewriter reveals words as said),size 0.018-0.075,maxWords 1-8,textCase natural|uppercase|lowercase,textColor "#RRGGBB",highlightColor "#RRGGBB"|"none",backgroundColor "#RRGGBBAA"|"none",font,position 0.08-0.92}
-Text: addText{text,start,duration,x,y,scale,rotation,color,background,font,animation none|fade|pop|slideUp}
+Text: addText{text,start,duration,x,y,scale,rotation,color,background,font,animation none|fade|pop|slideUp,behind true|false}
+  (behind: the person stands in front of the text, the magazine-cover look; best big, bold and high in the frame)
   updateOverlay{overlay,...addText fields,end,opacity,flipX,flipY} duplicateOverlay{overlay,start} splitOverlay{overlay,at} removeOverlay{overlay}
 Looks: setFilter{effect|null,clip|null,from,to,look natural|vivid|cinematic|warm|cool|vintage|fade|chrome|instant|dramatic|mono|noir,
   intensity 0-1,brightness -1..1,contrast -1..1,saturation -1..1,warmth -1..1,vignette 0-1,sharpness 0-1}
-  setBackground{clip|null,from,to,style none|blur|dim|studio|black|white|green|color,strength 0-1,feather 0-1,color "#RRGGBB"}
+  setBackground{clip|null,from,to,style none|blur|dim|studio|black|white|green|color,strength 0-1,feather 0-1,color "#RRGGBB",keep person|subject|screen,screen "#RRGGBB"}
+  (keep: what stays in front; person by default, subject for a pet or product, screen for footage shot on a green/blue screen, then screen = that colour, green if omitted)
 Sound: setSound{effect|null,clip|null,from,to,preset clean|echo|hall|room|telephone|radio|megaphone|robot|underwater|deep|chipmunk,amount 0-1,pitch -12..12,volume dB -24..12}
   updateAudio{audio,gainDb -60..6,fadeIn,fadeOut,start,muted,ducksUnderVoice} removeAudio{audio}
   voiceCleanup{noiseReduction,voiceEnhance,deRumble} mainVolume{volume 0-1}
 Effects: retimeEffect{effect,from,to} splitEffect{effect,at} removeEffect{effect}
   (setFilter/setSound with effect changes that effect; without it lays a new one over from..to, else the clip, else the whole video)
-Videos: updateVideo{video,start,end,sourceStart,x,y,width,height,opacity,volume,muted,hidden,mirrored}
+Videos: updateVideo{video,start,end,sourceStart,x,y,width,height,opacity,volume,muted,hidden,mirrored,screen "#RRGGBB"|"none"}
+  (screen: take a green/blue screen out of that video so the main video shows through; "none" puts it back)
   keyframeVideo{video,at,x,y,width,height,opacity} (its place at a moment; several make it move) layoutVideos{layout sideBySide|stacked|pictureInPicture|grid}
   splitVideo{video,at} removeVideo{video}
   generateVideo{prompt,at,seconds 4-10,as broll|clip} (only when videoModel is set: makes a new shot with the user's video model;

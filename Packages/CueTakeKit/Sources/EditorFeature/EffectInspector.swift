@@ -236,6 +236,53 @@ struct EffectInspector: View {
         }
     }
 
+    /// Everything in front, or the one thing tapped on.
+    private var subjectChoice: some View {
+        let chosen = settings.subjectPoint != nil
+        return HStack(spacing: 8) {
+            Button {
+                withAnimation(DS.Motion.snap) { model.pickingSubject = effect.id }
+            } label: {
+                Label {
+                    if chosen {
+                        Text("editor.effect.pick.again", bundle: .module)
+                    } else {
+                        Text("editor.effect.pick", bundle: .module)
+                    }
+                } icon: {
+                    Image(systemName: "hand.tap")
+                }
+                .dsFont(.sans, .semibold, 12)
+                .foregroundStyle(DS.Palette.inkInverse)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(EffectLane.tint))
+            }
+            .buttonStyle(.dsPress(radius: 20))
+
+            if chosen {
+                Button {
+                    withAnimation(DS.Motion.snap) {
+                        model.updateBackground(effect.id, coalescing: "subject-point") { $0.subjectPoint = nil }
+                    }
+                } label: {
+                    Text("editor.effect.pick.all", bundle: .module)
+                        .dsFont(.sans, .medium, 12)
+                        .foregroundStyle(DS.Palette.ink(0.75))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPress(radius: 20))
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .animation(DS.Motion.snap, value: chosen)
+        .onDisappear {
+            if model.pickingSubject == effect.id { model.pickingSubject = nil }
+        }
+    }
+
     private func withKey(_ change: (inout ChromaKey) -> Void) -> ChromaKey {
         var next = draftKey ?? settings.effectiveKey
         change(&next)
@@ -312,6 +359,10 @@ struct EffectInspector: View {
 
             if settings.cutout == .color {
                 keyControls
+            }
+
+            if settings.cutout == .subject {
+                subjectChoice
             }
 
             if settings.usesFeather {

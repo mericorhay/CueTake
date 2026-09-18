@@ -191,6 +191,8 @@ public struct BackgroundRemover: Sendable {
         var written = 0.0
         // The last frame's subject mask, already settled, which the next one is eased toward.
         var previousSubject: CIImage?
+        // Where the chosen thing was in the last frame: the tap, then wherever it moved to.
+        var follow = settings.subjectPoint.map { CGPoint(x: $0.x, y: $0.y) }
 
         enum Frame {
             case end, skip
@@ -222,7 +224,7 @@ public struct BackgroundRemover: Sendable {
                     let keyed = ChromaCubes.shared.apply(settings.effectiveKey, to: placed)
                     composed = keyed.composited(over: Self.backdrop(settings, behind: placed, in: bounds)).cropped(to: bounds)
                 } else if let mask = settings.cutout == .subject
-                    ? Self.subjectMask(of: placed, in: bounds, after: &previousSubject, context: context)
+                    ? Self.subjectMask(of: placed, in: bounds, after: &previousSubject, following: &follow, context: context)
                     : Self.personMask(of: placed, in: bounds, request: request, sequence: sequence) {
                     var fitted = mask
                     // A soft edge: the mask blurred a little, so hair and shoulders fade into the new
@@ -305,15 +307,24 @@ public struct BackgroundRemover: Sendable {
         of frame: CIImage,
         in bounds: CGRect,
         after previous: inout CIImage?,
+        following point: inout CGPoint?,
         context: CIContext
     ) -> CIImage? {
         let request = VNGenerateForegroundInstanceMaskRequest()
         let handler = VNImageRequestHandler(ciImage: frame)
         guard (try? handler.perform([request])) != nil,
               let observation = request.results?.first,
-              !observation.allInstances.isEmpty,
-              let buffer = try? observation.generateScaledMaskForImage(forInstances: observation.allInstances, from: handler)
+              !observation.allInstances.isEmpty
         else {
+            previous = nil
+            return nil
+        }
+        var instances = observation.allInstances
+        if let wanted = point, let chosen = Self.instance(near: wanted, in: observation.instanceMask) {
+            instances = IndexSet(integer: chosen.label)
+            point = chosen.centre
+        }
+        guard let buffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler) else {
             previous = nil
             return nil
         }
@@ -333,6 +344,46 @@ public struct BackgroundRemover: Sendable {
             previous = nil
         }
         return mask
+    }
+
+    /// The thing at a point of a frame's instance labels, and where its middle is now.
+    ///
+    /// The one under the point when there is one; otherwise the one whose middle is nearest,
+    /// so a thing that moved since the last frame, or a tap just beside it, still finds it.
+    /// Points are 0…1 from the left and the top; the labels' first row is the top.
+    static func instance(near point: CGPoint, in labels: CVPixelBuffer) -> (label: Int, centre: CGPoint)? {
+        CVPixelBufferLockBaseAddress(labels, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(labels, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(labels) else { return nil }
+        let width = CVPixelBufferGetWidth(labels), height = CVPixelBufferGetHeight(labels)
+        let stride = CVPixelBufferGetBytesPerRow(labels)
+        guard width > 0, height > 0 else { return nil }
+        let bytes = base.assumingMemoryBound(to: UInt8.self)
+
+        var sums: [Int: (x: Double, y: Double, count: Double)] = [:]
+        for y in 0..<height {
+            let row = bytes + y * stride
+            for x in 0..<width {
+                let label = Int(row[x])
+                guard label != 0 else { continue }
+                let sum = sums[label] ?? (0, 0, 0)
+                sums[label] = (sum.x + Double(x), sum.y + Double(y), sum.count + 1)
+            }
+        }
+        guard !sums.isEmpty else { return nil }
+        func centre(_ label: Int) -> CGPoint {
+            let sum = sums[label]!
+            return CGPoint(x: (sum.x / sum.count + 0.5) / Double(width), y: (sum.y / sum.count + 0.5) / Double(height))
+        }
+        let px = min(max(Int(point.x * Double(width)), 0), width - 1)
+        let py = min(max(Int(point.y * Double(height)), 0), height - 1)
+        let under = Int(bytes[py * stride + px])
+        if under != 0 { return (under, centre(under)) }
+        let nearest = sums.keys.min { a, b in
+            let ca = centre(a), cb = centre(b)
+            return hypot(ca.x - point.x, ca.y - point.y) < hypot(cb.x - point.x, cb.y - point.y)
+        }
+        return nearest.map { ($0, centre($0)) }
     }
 
     private static func fit(_ mask: CIImage, to bounds: CGRect) -> CIImage {
