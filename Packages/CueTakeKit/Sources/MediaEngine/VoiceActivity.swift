@@ -54,10 +54,14 @@ public struct VoiceActivity: Sendable {
         var count = 0
         while let sample = output.copyNextSampleBuffer() {
             guard let block = CMSampleBufferGetDataBuffer(sample) else { continue }
-            let length = CMBlockBufferGetDataLength(block)
-            var data = [Float](repeating: 0, count: length / MemoryLayout<Float>.size)
+            // Whole samples only: an empty buffer, or a stray byte past the last sample, must not
+            // be copied into an array that has no room for it.
+            let count = CMBlockBufferGetDataLength(block) / MemoryLayout<Float>.size
+            guard count > 0 else { continue }
+            var data = [Float](repeating: 0, count: count)
             data.withUnsafeMutableBytes { bytes in
-                _ = CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: bytes.baseAddress!)
+                guard let base = bytes.baseAddress else { return }
+                _ = CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: bytes.count, destination: base)
             }
             for value in data {
                 sum += value * value

@@ -259,7 +259,8 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
         guard !file.contains("/"), !file.hasPrefix(".") else { return }
         let destination = folder.appending(path: file, directoryHint: .notDirectory)
         guard !FileManager.default.fileExists(atPath: destination.path(percentEncoded: false)) else { return }
-        try? FileManager.default.copyItem(at: source, to: destination)
+        // Marked as here only once it is: a failed copy is fetched again next time.
+        guard (try? FileManager.default.copyItem(at: source, to: destination)) != nil else { return }
         await ledger.markUploaded(file, for: projectID)
     }
 

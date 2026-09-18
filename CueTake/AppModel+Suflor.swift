@@ -2,6 +2,7 @@ import AIServices
 import AVFoundation
 import Domain
 import Foundation
+import SettingsFeature
 import SpeechEngine
 import SuflorFeature
 import UIKit
