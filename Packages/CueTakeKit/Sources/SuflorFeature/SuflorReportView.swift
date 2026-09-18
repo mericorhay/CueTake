@@ -159,23 +159,10 @@ struct SuflorReportView: View {
                 .scrollIndicators(.hidden)
             }
             if model.verifier != nil {
+                let isVerifying = model.isVerifying
+                let hasProofs = !session.proofs.isEmpty
                 PhotosPicker(selection: $pickedRecording, matching: .videos) {
-                    HStack(spacing: 8) {
-                        if model.isVerifying {
-                            ProgressView().tint(DS.Palette.inkInverse)
-                            Text("suflor.report.proof.listening", bundle: .module)
-                        } else if session.proofs.isEmpty {
-                            Image(systemName: "plus")
-                            Text("suflor.report.proof.add", bundle: .module)
-                        } else {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                            Text("suflor.report.proof.again", bundle: .module)
-                        }
-                    }
-                    .dsFont(.sans, .semibold, 15)
-                    .foregroundStyle(DS.Palette.inkInverse)
-                    .frame(maxWidth: .infinity, minHeight: 50)
-                    .background(Capsule().fill(DS.Palette.lime))
+                    RecordingPickerLabel(isVerifying: isVerifying, hasProofs: hasProofs)
                 }
                 .disabled(model.isVerifying)
             }
@@ -340,6 +327,32 @@ private struct ProofTile: View {
                 .frame(width: 120, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// The picker's label. Nonisolated because PhotosPicker builds its label off the main actor;
+/// the body is still drawn on it.
+private nonisolated struct RecordingPickerLabel: View {
+    let isVerifying: Bool
+    let hasProofs: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if isVerifying {
+                ProgressView().tint(DS.Palette.inkInverse)
+                Text("suflor.report.proof.listening", bundle: .module)
+            } else if !hasProofs {
+                Image(systemName: "plus")
+                Text("suflor.report.proof.add", bundle: .module)
+            } else {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                Text("suflor.report.proof.again", bundle: .module)
+            }
+        }
+        .dsFont(.sans, .semibold, 15)
+        .foregroundStyle(DS.Palette.inkInverse)
+        .frame(maxWidth: .infinity, minHeight: 50)
+        .background(Capsule().fill(DS.Palette.lime))
     }
 }
 
