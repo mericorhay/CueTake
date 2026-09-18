@@ -70,7 +70,7 @@ extension AppModel {
             promptModel.advance(to: 3)
             var fresh = Project(title: draft.title, format: promptModel.platform.defaultFormat, localeIdentifier: localeIdentifier)
             fresh.segments = draft.segments.map(Segment.init(draft:))
-            settingsModel.settings.applyStyle(to: &fresh)
+            settingsModel.settings.applyNewProjectDefaults(to: &fresh)
 
             promptModel.advance(to: 4)
             try? await dependencies.projectStore.save(fresh)

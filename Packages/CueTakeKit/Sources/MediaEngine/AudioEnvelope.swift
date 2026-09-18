@@ -73,6 +73,16 @@ struct AudioEnvelope {
 
         points.sort { $0.t < $1.t }
 
+        // Drawn keys multiply the automatic curve. Resampled at every breakpoint of either, so a
+        // key never cancels a fade or a duck — and a clip without keys takes exactly the old path.
+        let keys = clip.orderedVolumeKeys
+        if !keys.isEmpty {
+            var times = Set(points.map { $0.t })
+            for key in keys { times.insert(key.time) }
+            let base = points
+            points = times.sorted().map { t in (t: t, level: level(at: t, in: base) * clip.automation(at: t)) }
+        }
+
         var ramps: [Ramp] = []
         for (previous, next) in zip(points, points.dropFirst()) {
             let duration = next.t - previous.t
@@ -89,6 +99,17 @@ struct AudioEnvelope {
             )
         }
         return ramps
+    }
+
+    /// The automatic curve at a moment, between its breakpoints.
+    static func level(at t: Double, in points: [(t: Double, level: Double)]) -> Double {
+        guard let first = points.first else { return 1 }
+        if t <= first.t { return first.level }
+        for (a, b) in zip(points, points.dropFirst()) where t <= b.t {
+            let span = b.t - a.t
+            return span > 0.000001 ? a.level + (b.level - a.level) * (t - a.t) / span : b.level
+        }
+        return points[points.count - 1].level
     }
 
     /// Overlapping duck windows become one. Two sentences half a second apart should not make the

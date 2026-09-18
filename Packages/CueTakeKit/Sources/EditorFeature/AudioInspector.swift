@@ -45,10 +45,95 @@ struct AudioInspector: View {
 
             fades
 
+            curve
+
             speed
 
             effects
         }
+    }
+
+    // MARK: - Volume curve
+
+    /// The level at the playhead, drawn into the curve. Placed after the fades because it is the
+    /// same idea by hand: the fades are the curve's two ends, this is anywhere in between.
+    private var curve: some View {
+        let key = model.volumeKeyAtPlayhead(clip.id)
+        let over = model.playheadOffset(in: clip.id) != nil
+        let value = model.automationAtPlayhead(clip.id)
+        let count = clip.orderedVolumeKeys.count
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                DSKicker(String(localized: "editor.audio.curve", bundle: .module), size: 9, color: DS.Palette.ink(0.42))
+                if count > 0 {
+                    Text("editor.audio.curve.count \(count)", bundle: .module)
+                        .dsFont(.sans, .regular, 10)
+                        .foregroundStyle(DS.Palette.ink(0.4))
+                        .contentTransition(.numericText())
+                }
+                Spacer(minLength: 0)
+                if count > 0 {
+                    Button {
+                        withAnimation(DS.Motion.settle) { model.clearVolumeKeys(clip.id) }
+                    } label: {
+                        Text("editor.audio.curve.clear", bundle: .module)
+                            .dsFont(.sans, .medium, 10)
+                            .foregroundStyle(DS.Palette.ink(0.55))
+                    }
+                    .buttonStyle(.dsPress(radius: 10))
+                }
+            }
+
+            if over {
+                HStack(spacing: 10) {
+                    Image(systemName: key == nil ? "diamond" : "diamond.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(key == nil ? DS.Palette.ink(0.4) : AudioLane.tint(for: clip.role))
+                        .contentTransition(.symbolEffect(.replace))
+                        .frame(width: 18)
+                    Slider(
+                        value: Binding(
+                            get: { value },
+                            set: { model.setVolumeKeyAtPlayhead(clip.id, level: $0) }
+                        ),
+                        in: VolumeKey.levelRange
+                    )
+                    .tint(AudioLane.tint(for: clip.role))
+                    Text(verbatim: "%\(Int((value * 100).rounded()))")
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .frame(width: 40, alignment: .trailing)
+                        .contentTransition(.numericText())
+                    if key != nil {
+                        Button {
+                            withAnimation(DS.Motion.snap) { model.removeVolumeKeyAtPlayhead(clip.id) }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(DS.Palette.ink(0.6))
+                                .frame(width: 26, height: 26)
+                                .background(Circle().fill(DS.Palette.hairline(0.08)))
+                        }
+                        .buttonStyle(.dsPressIcon)
+                        .accessibilityLabel(Text("editor.audio.curve.remove", bundle: .module))
+                    }
+                }
+                Group {
+                    if key == nil {
+                        Text("editor.audio.curve.hintAdd", bundle: .module)
+                    } else {
+                        Text("editor.audio.curve.hintEdit", bundle: .module)
+                    }
+                }
+                .dsFont(.sans, .regular, 10)
+                .foregroundStyle(DS.Palette.ink(0.4))
+            } else {
+                Text("editor.audio.curve.outside", bundle: .module)
+                    .dsFont(.sans, .regular, 10)
+                    .foregroundStyle(DS.Palette.ink(0.4))
+            }
+        }
+        .animation(reduceMotion ? nil : DS.Motion.snap, value: key?.id)
     }
 
     // MARK: - Header

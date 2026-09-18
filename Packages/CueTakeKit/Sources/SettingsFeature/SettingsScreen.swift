@@ -10,11 +10,19 @@ public struct SettingsScreen: View {
     /// What the app takes on the phone, or nil while it is measured.
     private let storage: String?
     private let onCleanStorage: (() -> Void)?
+    /// Opens the team screen. Nil where there is none.
+    private let onTeam: (() -> Void)?
 
-    public init(model: SettingsModel, storage: String? = nil, onCleanStorage: (() -> Void)? = nil) {
+    public init(
+        model: SettingsModel,
+        storage: String? = nil,
+        onCleanStorage: (() -> Void)? = nil,
+        onTeam: (() -> Void)? = nil
+    ) {
         self.model = model
         self.storage = storage
         self.onCleanStorage = onCleanStorage
+        self.onTeam = onTeam
     }
 
     @State private var showsConverter = false
@@ -77,6 +85,16 @@ public struct SettingsScreen: View {
                     }
                     .buttonStyle(.dsPress)
 
+                    if let onTeam {
+                        Button(action: onTeam) {
+                            row(
+                                String(localized: "settings.team", bundle: .module),
+                                value: String(localized: "settings.team.value", bundle: .module)
+                            )
+                        }
+                        .buttonStyle(.dsPress)
+                    }
+
                     if let onCleanStorage {
                         Button(action: onCleanStorage) {
                             row(
@@ -88,7 +106,7 @@ public struct SettingsScreen: View {
                         .buttonStyle(.dsPress)
                     }
 
-                    staticRow("settings.subscription", String(localized: "settings.subscription.value", bundle: .module))
+                    // No subscription row until there is a subscription: it said "Pro" to everyone.
                     staticRow("settings.version", Self.version, isLast: true)
                 }
                 .dsCard(radius: DS.Radius.card)

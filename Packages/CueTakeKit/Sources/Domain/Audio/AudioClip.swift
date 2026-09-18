@@ -41,6 +41,9 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
     public var effects: AudioEffects
     /// The row of the audio lane the user put this sound in. Nil lets the lane choose.
     public var lane: Int?
+    /// Points drawn on the volume curve (see `VolumeKey`). Nil in every project written before
+    /// there were any, and for every clip nobody drew on.
+    public var volumeKeys: [VolumeKey]?
 
     public init(
         id: UUID = UUID(),
@@ -105,7 +108,14 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
             isMuted: isMuted,
             ducksUnderVoice: ducksUnderVoice,
             effects: effects
-        ).withLane(lane)
+        ).withLane(lane).withVolumeKeys(volumeKeys)
+    }
+
+    func withVolumeKeys(_ keys: [VolumeKey]?) -> AudioClip {
+        var copy = self
+        // New identities for the keys too: two clips sharing key ids would edit each other.
+        copy.volumeKeys = keys?.map { VolumeKey(time: $0.time, level: $0.level) }
+        return copy
     }
 
     func withLane(_ lane: Int?) -> AudioClip {

@@ -1003,6 +1003,9 @@ extension EditorModel {
         guard offset > 0.15, clip.timelineDuration.seconds - offset > 0.15 else { return }
 
         let sourceOffset = offset * clip.speed
+        // Both halves meet at the level the curve had at the cut, or the volume would jump there.
+        let drawn = !(clip.volumeKeys ?? []).isEmpty
+        let levelAtCut = clip.automation(at: offset)
 
         record("editor.change.split", symbol: "scissors")
         var left = clip
@@ -1011,6 +1014,10 @@ extension EditorModel {
             duration: MediaTime(seconds: sourceOffset)
         )
         left.fadeOut = MediaTime(seconds: 0)
+        if drawn {
+            left.volumeKeys = left.volumeKeys?.filter { $0.time <= offset }
+            left.setVolumeKey(at: offset, level: levelAtCut)
+        }
 
         var right = clip.copyWithNewIdentity()
         right.start = MediaTime(seconds: playhead)
@@ -1019,6 +1026,10 @@ extension EditorModel {
             duration: clip.sourceRange.duration - MediaTime(seconds: sourceOffset)
         )
         right.fadeIn = MediaTime(seconds: 0)
+        if drawn {
+            right.shiftVolumeKeys(by: -offset)
+            right.setVolumeKey(at: 0, level: levelAtCut)
+        }
 
         if let index = project.audio.firstIndex(where: { $0.id == id }) {
             project.audio[index] = left

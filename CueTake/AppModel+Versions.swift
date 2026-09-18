@@ -5,6 +5,13 @@ import Persistence
 
 /// Saved states of the open project: taken by hand, or by the app before something big.
 extension AppModel {
+    /// Shared projects need iCloud on the developer account and in the signing profile. The build
+    /// says whether it has them (`CueTakeTeams` in Info.plist), so switching teams on is a change
+    /// of configuration, never of code — and a build without it never touches CloudKit.
+    var isTeamSharingAvailable: Bool {
+        (Bundle.main.object(forInfoDictionaryKey: "CueTakeTeams") as? Bool) == true
+    }
+
     var versionTools: VersionTools {
         VersionTools(
             versions: projectVersions,

@@ -47,17 +47,6 @@ public protocol ProjectStore: Sendable {
     func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws
 }
 
-/// Stores without somewhere to keep versions simply have none; the editor hides the list.
-extension ProjectStore {
-    public func versions(of id: Project.ID) async throws -> [ProjectVersion] { [] }
-    public func saveVersion(of project: Project, name: String, kind: ProjectVersion.Kind) async throws -> ProjectVersion {
-        throw ProjectStoreError.notFound(project.id)
-    }
-    public func loadVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws -> Project {
-        throw ProjectStoreError.notFound(version)
-    }
-    public func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws {}
-}
 
 public struct ProjectLayout: Hashable, Sendable {
     public var rootURL: URL
@@ -141,5 +130,37 @@ public actor InMemoryProjectStore: ProjectStore {
 
     public func delete(_ id: Project.ID) {
         projects[id] = nil
+        versionDocuments = versionDocuments.filter { $0.value.id != id }
+        versionIndex[id] = nil
+    }
+
+    // Versions, kept in memory like everything else here.
+    private var versionIndex: [Project.ID: [ProjectVersion]] = [:]
+    private var versionDocuments: [ProjectVersion.ID: Project] = [:]
+
+    public func versions(of id: Project.ID) -> [ProjectVersion] {
+        (versionIndex[id] ?? []).sorted { $0.savedAt > $1.savedAt }
+    }
+
+    public func saveVersion(of project: Project, name: String, kind: ProjectVersion.Kind) -> ProjectVersion {
+        let version = ProjectVersion(of: project, name: name, kind: kind)
+        var index = versionIndex[project.id] ?? []
+        index.append(version)
+        let dropped = Set(ProjectVersion.overflow(in: index))
+        index.removeAll { dropped.contains($0.id) }
+        versionIndex[project.id] = index
+        versionDocuments[version.id] = project
+        for id in dropped { versionDocuments[id] = nil }
+        return version
+    }
+
+    public func loadVersion(_ version: ProjectVersion.ID, of id: Project.ID) throws -> Project {
+        guard let project = versionDocuments[version], project.id == id else { throw ProjectStoreError.notFound(version) }
+        return project
+    }
+
+    public func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) {
+        versionIndex[id]?.removeAll { $0.id == version }
+        versionDocuments[version] = nil
     }
 }

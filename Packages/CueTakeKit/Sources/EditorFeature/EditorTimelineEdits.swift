@@ -25,6 +25,8 @@ extension EditorModel {
         updateAudio(id) {
             $0.start = MediaTime(seconds: clip.start.seconds + shift / speed)
             $0.sourceRange = MediaTimeRange(start: MediaTime(seconds: newSourceStart), duration: MediaTime(seconds: newLength))
+            // The drawn volume stays on the music it was drawn on, not at a distance from an edge.
+            $0.shiftVolumeKeys(by: -shift / speed)
         }
     }
 

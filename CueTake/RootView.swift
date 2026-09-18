@@ -11,6 +11,7 @@ import ScriptFeature
 import SettingsFeature
 import StudioFeature
 import SwiftUI
+import TeamFeature
 import WorkflowsFeature
 
 /// Hosts every screen and the tab bar. Features never navigate to each other directly —
@@ -21,6 +22,7 @@ struct RootView: View {
     @State private var pickedFootage: [PhotosPickerItem] = []
     @State private var pickedVideoLayer: PhotosPickerItem?
     @State private var pickedBrandLogo: PhotosPickerItem?
+    @State private var showsTeam = false
 
     var body: some View {
         ZStack {
@@ -323,9 +325,13 @@ struct RootView: View {
             SettingsScreen(
                 model: model.settingsModel,
                 storage: model.storageLabel,
-                onCleanStorage: { Task { await model.cleanStorageNow() } }
+                onCleanStorage: { Task { await model.cleanStorageNow() } },
+                onTeam: { showsTeam = true }
             )
             .task { await model.refreshStorage() }
+            .fullScreenCover(isPresented: $showsTeam) {
+                TeamScreen(isSharingAvailable: model.isTeamSharingAvailable) { showsTeam = false }
+            }
         }
     }
 

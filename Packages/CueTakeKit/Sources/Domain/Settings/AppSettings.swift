@@ -104,6 +104,14 @@ extension AppSettings {
         return CaptionStyle.preset(preset, position: remembersStyle ? (captionPosition ?? .lowerThird) : .lowerThird)
     }
 
+    /// Everything a new project takes from Settings. The recording quality applies whether or not
+    /// the look is remembered: it was chosen once, on purpose, and the studio records whatever
+    /// the project's format says — before this the picker changed nothing at all.
+    public func applyNewProjectDefaults(to project: inout Project) {
+        project.format.resolution = captureResolution
+        applyStyle(to: &project)
+    }
+
     /// Gives a new project the remembered look. Does nothing when remembering is off.
     public func applyStyle(to project: inout Project) {
         guard remembersStyle else { return }

@@ -13,8 +13,8 @@ let ui: [SwiftSetting] = concurrency + [.defaultIsolation(MainActor.self)]
 let modules: [String] = [
     "Domain",
     "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine",
-    "DesignSystem", "Teleprompter",
-    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature",
+    "DesignSystem", "Teleprompter", "BumpKit",
+    "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature",
 ]
 
 func engine(_ name: String, _ dependencies: [Target.Dependency] = ["Domain"]) -> Target {
@@ -49,6 +49,10 @@ let package = Package(
         // Shared UI.
         uiModule("DesignSystem", []),
         uiModule("Teleprompter", ["Domain", "DesignSystem"]),
+        // The light two phones make when they touch. No dependencies, and nothing depends on it
+        // but the screen that shows it: the showiest code in the app must not be able to break
+        // anything else.
+        .target(name: "BumpKit", swiftSettings: ui),
 
         // Features never import each other; the app target routes between them.
         uiModule("OnboardingFeature", ["DesignSystem"]),
@@ -60,6 +64,8 @@ let package = Package(
         // MediaEngine for the format converter, which is the one piece of Settings that does
         // real work to a file.
         uiModule("AssistantFeature", ["Domain", "DesignSystem"]),
+        // Teams: making one, joining one, and the light that plays when two phones meet.
+        uiModule("TeamFeature", ["Domain", "DesignSystem", "BumpKit"]),
         uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),

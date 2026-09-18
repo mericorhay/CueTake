@@ -67,6 +67,13 @@ struct AudioLane: View {
                 .padding(.vertical, 5)
                 .allowsHitTesting(false)
 
+            if !clip.orderedVolumeKeys.isEmpty {
+                curve(for: clip)
+                    .padding(.vertical, 4)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+
             HStack(spacing: 5) {
                 Image(systemName: Self.symbol(for: clip))
                     .font(.system(size: 9, weight: .semibold))
@@ -114,6 +121,33 @@ struct AudioLane: View {
                 }
             }
         )
+    }
+
+    /// The drawn volume, as a line over the waveform with a dot on each key. Full height is the
+    /// top of the key range, so "as set" sits at the middle and a boost is visibly above it.
+    private func curve(for clip: AudioClip) -> some View {
+        let keys = clip.orderedVolumeKeys
+        let length = max(clip.timelineDuration.seconds, 0.01)
+        let top = VolumeKey.levelRange.upperBound
+        return Canvas(opaque: false) { context, size in
+            guard size.width > 1, size.height > 1 else { return }
+            func point(_ time: Double, _ level: Double) -> CGPoint {
+                CGPoint(
+                    x: size.width * CGFloat(time / length),
+                    y: size.height * CGFloat(1 - min(max(level / top, 0), 1))
+                )
+            }
+            var line = Path()
+            line.move(to: point(0, clip.automation(at: 0)))
+            for key in keys { line.addLine(to: point(key.time, key.level)) }
+            line.addLine(to: point(length, clip.automation(at: length)))
+            context.stroke(line, with: .color(DS.Palette.ink(0.85)), lineWidth: 1.5)
+            for key in keys {
+                let centre = point(key.time, key.level)
+                let dot = Path(ellipseIn: CGRect(x: centre.x - 3, y: centre.y - 3, width: 6, height: 6))
+                context.fill(dot, with: .color(DS.Palette.ink))
+            }
+        }
     }
 
     /// Peaks, drawn as bars.

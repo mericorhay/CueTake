@@ -259,7 +259,7 @@ final class AppModel {
             localeIdentifier: Locale.current.identifier
         )
         // Your look, not the default one, if you have one.
-        settingsModel.settings.applyStyle(to: &fresh)
+        settingsModel.settings.applyNewProjectDefaults(to: &fresh)
         try? await store.save(fresh)
 
         guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else { return }
@@ -797,7 +797,7 @@ final class AppModel {
             // Framed for where it is going: a YouTube script is a landscape project from the start.
             var fresh = Project(title: draft.title, format: promptModel.platform.defaultFormat, localeIdentifier: locale)
             fresh.segments = draft.segments.map(Segment.init(draft:))
-            settingsModel.settings.applyStyle(to: &fresh)
+            settingsModel.settings.applyNewProjectDefaults(to: &fresh)
 
             promptModel.advance(to: 4)
             try? await dependencies.projectStore.save(fresh)

@@ -3231,6 +3231,125 @@
         }
       }
     },
+    "editor.audio.curve": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "VOLUME CURVE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SES EĞRİSİ"
+          }
+        }
+      }
+    },
+    "editor.audio.curve.clear": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizle"
+          }
+        }
+      }
+    },
+    "editor.audio.curve.count %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld points"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld nokta"
+          }
+        }
+      }
+    },
+    "editor.audio.curve.hintAdd": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moving the slider puts a point here, at the playhead."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydırıcıyı oynatınca buraya, oynatma çizgisine bir nokta konur."
+          }
+        }
+      }
+    },
+    "editor.audio.curve.hintEdit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This point is under the playhead. Fades and ducking still apply on top."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu nokta oynatma çizgisinin altında. Geçişler ve kısma yine üstüne uygulanır."
+          }
+        }
+      }
+    },
+    "editor.audio.curve.outside": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move the playhead over this sound to draw its volume."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sesini çizmek için oynatma çizgisini bu sesin üstüne getir."
+          }
+        }
+      }
+    },
+    "editor.audio.curve.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this point"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu noktayı kaldır"
+          }
+        }
+      }
+    },
     "editor.audio.denoise": {
       "extractionState": "manual",
       "localizations": {
