@@ -698,6 +698,23 @@
         }
       }
     },
+    "cert.error.device": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This phone could not prove it is running the App Store version of CueTake. Update the app and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu telefon CueTake'in App Store sürümünü çalıştırdığını kanıtlayamadı. Uygulamayı güncelleyip tekrar dene."
+          }
+        }
+      }
+    },
     "cert.error.notEarned": {
       "extractionState": "manual",
       "localizations": {
@@ -762,6 +779,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sunucu imzalamadı: şartlar henüz tamamlanmamış."
+          }
+        }
+      }
+    },
+    "cert.error.review": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The review could not be finished. Try again in a minute."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değerlendirme tamamlanamadı. Bir dakika sonra tekrar dene."
           }
         }
       }

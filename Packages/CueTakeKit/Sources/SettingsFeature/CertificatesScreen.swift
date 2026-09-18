@@ -13,6 +13,9 @@ public struct CertificatesScreen: View {
     private let onName: (String) -> Void
     /// Has the server sign a certificate. Nil on success, otherwise the words to show.
     private let onSign: (CertificationLevel) async -> String?
+    private let reviewCandidates: [ReviewCandidate]
+    /// Sends a finished project for review. Nil on a verdict, otherwise the words to show.
+    private let onReview: (UUID) async -> String?
     private let onClose: () -> Void
 
     @State private var shown: CertificationLevel?
@@ -24,8 +27,12 @@ public struct CertificatesScreen: View {
         canSign: Bool,
         onName: @escaping (String) -> Void,
         onSign: @escaping (CertificationLevel) async -> String?,
+        reviewCandidates: [ReviewCandidate] = [],
+        onReview: @escaping (UUID) async -> String? = { _ in nil },
         onClose: @escaping () -> Void
     ) {
+        self.reviewCandidates = reviewCandidates
+        self.onReview = onReview
         self.progress = progress
         self.canSign = canSign
         self.onName = onName
@@ -45,6 +52,9 @@ public struct CertificatesScreen: View {
                         earned: progress.earned[level],
                         isNext: progress.next == level,
                         appeared: appeared,
+                        review: progress.review,
+                        reviewCandidates: reviewCandidates,
+                        onReview: onReview,
                         onShow: { shown = level }
                     )
                 }
@@ -210,7 +220,13 @@ private struct LevelCard: View {
     let earned: Date?
     let isNext: Bool
     let appeared: Bool
+    let review: SignedReview?
+    let reviewCandidates: [ReviewCandidate]
+    let onReview: (UUID) async -> String?
     let onShow: () -> Void
+
+    @State private var reviewing = false
+    @State private var reviewProblem: String?
 
     private var level: CertificationLevel { standing.level }
 
@@ -254,7 +270,7 @@ private struct LevelCard: View {
             }
 
             if level.requiresReview {
-                review
+                reviewSection
             }
 
             if earned != nil {
@@ -366,25 +382,124 @@ private struct LevelCard: View {
         }
     }
 
-    private var review: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "person.crop.rectangle.badge.checkmark")
-                .font(.system(size: 16))
-                .foregroundStyle(DS.Palette.ink(0.62))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("cert.review.title", bundle: .module)
-                    .dsFont(.sans, .semibold, 13)
-                    .foregroundStyle(DS.Palette.ink(0.85))
-                Text("cert.review.soon", bundle: .module)
-                    .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+    /// The project review: what it asks, the last verdict, and the way to send a project.
+    private var reviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "person.crop.rectangle.badge.checkmark")
+                    .font(.system(size: 16))
+                    .foregroundStyle(DS.Palette.ink(0.62))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("cert.review.title", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.ink(0.85))
+                    Text("cert.review.explain \(SignedReview.passingScore)", bundle: .module)
+                        .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if let review {
+                verdict(review)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            if standing.readyForReview && review?.passed != true {
+                Menu {
+                    ForEach(reviewCandidates) { candidate in
+                        Button(candidate.title) {
+                            Task { await send(candidate.id) }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if reviewing {
+                            ProgressView().tint(DS.Palette.inkInverse)
+                            Text("cert.review.sending", bundle: .module)
+                        } else if review == nil {
+                            Text("cert.review.send", bundle: .module)
+                        } else {
+                            Text("cert.review.again", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .semibold, 14)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Capsule().fill(level.tint))
+                }
+                .disabled(reviewing || reviewCandidates.isEmpty)
+            } else if review == nil {
+                Text("cert.review.later", bundle: .module)
+                    .dsFont(.sans, .regular, 12)
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let reviewProblem {
+                Text(verbatim: reviewProblem)
+                    .dsFont(.sans, .medium, 12)
+                    .foregroundStyle(DS.Palette.accent)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.05)))
+        .animation(.snappy, value: review)
+    }
+
+    private func verdict(_ review: SignedReview) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Text(verbatim: "\(review.score)")
+                    .dsFont(.archivo, .extrabold, 28)
+                    .foregroundStyle(review.passed ? level.tint : DS.Palette.accent)
+                    .contentTransition(.numericText())
+                VStack(alignment: .leading, spacing: 2) {
+                    if review.passed {
+                        Text("cert.review.passed", bundle: .module)
+                            .dsFont(.sans, .semibold, 13)
+                            .foregroundStyle(level.tint)
+                    } else {
+                        Text("cert.review.notYet \(SignedReview.passingScore)", bundle: .module)
+                            .dsFont(.sans, .semibold, 13)
+                            .foregroundStyle(DS.Palette.accent)
+                    }
+                    Text(verbatim: review.projectTitle)
+                        .dsFont(.sans, .regular, 12)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .lineLimit(1)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            feedback(review.strengths, symbol: "hand.thumbsup", tint: level.tint)
+            feedback(review.improvements, symbol: "arrow.up.forward", tint: DS.Palette.accentWarm)
+        }
+    }
+
+    private func feedback(_ items: [String], symbol: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Image(systemName: symbol)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(tint)
+                        .accessibilityHidden(true)
+                    Text(verbatim: item)
+                        .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+                        .foregroundStyle(DS.Palette.ink(0.8))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private func send(_ id: UUID) async {
+        reviewing = true
+        reviewProblem = nil
+        reviewProblem = await onReview(id)
+        reviewing = false
     }
 }
 
@@ -652,6 +767,17 @@ private struct CertificateCard: View {
                 .dsFont(.mono, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.9))
         }
+    }
+}
+
+/// A finished project that can be sent for review.
+public struct ReviewCandidate: Identifiable, Hashable, Sendable {
+    public var id: UUID
+    public var title: String
+
+    public init(id: UUID, title: String) {
+        self.id = id
+        self.title = title
     }
 }
 

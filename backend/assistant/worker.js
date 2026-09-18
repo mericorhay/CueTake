@@ -11,7 +11,8 @@
 // Request  POST /  { session, locale, messages: [{ role, text, context? }] }
 // Response 200     { reply, stop_reason }
 
-import { handleCertify, handleVerify, handleCertificateKey } from "./certificates.js";
+import { handleCertify, handleVerify, handleCertificateKey, handleReview } from "./certificates.js";
+import { handleChallenge, handleRegister } from "./attest.js";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "openai/gpt-oss-120b";
@@ -662,6 +663,18 @@ export default {
       return json({ error: "bad json" }, 400);
     }
 
+    if (path === "/attest/challenge") {
+      const result = await handleChallenge(env);
+      return json(result.body, result.status);
+    }
+    if (path === "/attest/register") {
+      const result = await handleRegister(body, env);
+      return json(result.body, result.status);
+    }
+    if (path === "/review") {
+      const result = await handleReview(body, env, (system, content, maxTokens) => ask(env, system, content, maxTokens));
+      return json(result.body, result.status);
+    }
     if (path === "/certify") {
       const result = await handleCertify(body, env, url.origin);
       return json(result.body, result.status);

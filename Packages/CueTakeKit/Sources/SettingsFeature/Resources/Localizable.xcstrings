@@ -324,19 +324,121 @@
         }
       }
     },
-    "cert.review.soon": {
+    "cert.review.again": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A finished project is looked at by the CueTake team. Reviews open soon; everything else can be completed now."
+            "value": "Send another project"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bitmiş bir projen CueTake ekibi tarafından incelenir. Değerlendirmeler yakında açılıyor; diğer tüm şartları şimdiden tamamlayabilirsin."
+            "value": "Başka bir proje gönder"
+          }
+        }
+      }
+    },
+    "cert.review.explain %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send one finished project. It is read against five criteria — structure, pacing, captions, sound, visual polish — and needs %lld of 100."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitmiş bir projeni gönder. Beş ölçüte göre okunur — yapı, tempo, altyazı, ses, görsel özen — ve 100 üzerinden %lld ister."
+          }
+        }
+      }
+    },
+    "cert.review.later": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open once the other requirements are met."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diğer şartlar tamamlanınca açılır."
+          }
+        }
+      }
+    },
+    "cert.review.notYet %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not yet — %lld needed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz değil — %lld gerekli"
+          }
+        }
+      }
+    },
+    "cert.review.passed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passed"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçti"
+          }
+        }
+      }
+    },
+    "cert.review.send": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send a project for review"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projeni değerlendirmeye gönder"
+          }
+        }
+      }
+    },
+    "cert.review.sending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviewing…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Değerlendiriliyor…"
           }
         }
       }

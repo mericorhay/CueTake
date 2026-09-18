@@ -341,6 +341,8 @@ struct RootView: View {
                     canSign: model.dependencies.assistantClient.isConfigured,
                     onName: { model.setCertificateName($0) },
                     onSign: { await model.signCertificate($0) },
+                    reviewCandidates: model.reviewCandidates,
+                    onReview: { await model.requestReview(of: $0) },
                     onClose: { showsCertificates = false }
                 )
             }

@@ -2,6 +2,7 @@ import AIServices
 import Domain
 import EditorFeature
 import Foundation
+import SettingsFeature
 import StudioFeature
 import UIKit
 
@@ -9,6 +10,8 @@ import UIKit
 /// projects show were done. Kept on the phone; signed by the server when one is earned.
 extension AppModel {
     static let certificationKey = "certification.v1"
+    /// Proves requests come from the real app, where the phone and the build allow it.
+    static let attestor = AppAttestor(client: AppDependencies.live.assistantClient)
 
     static func loadCertification() -> CertificationProgress {
         guard let data = UserDefaults.standard.data(forKey: certificationKey),
@@ -83,12 +86,13 @@ extension AppModel {
         guard let id = certification.certificateID(for: level) else {
             return String(localized: "cert.error.notEarned")
         }
-        let request = AssistantClient.CertificateRequest(
+        var request = AssistantClient.CertificateRequest(
             level: level,
             id: id,
             name: certification.holderName ?? "",
             progress: certification
         )
+        request.attest = await Self.attestor.proof()
         do {
             let signed = try await dependencies.assistantClient.certify(request)
             certification.signed[level] = signed
@@ -98,8 +102,42 @@ extension AppModel {
             return String(localized: "cert.error.refused")
         } catch AssistantClient.AssistantError.rejected(let status) where status == 501 {
             return String(localized: "cert.error.notReady")
+        } catch AssistantClient.AssistantError.rejected(let status) where status == 403 {
+            return String(localized: "cert.error.device")
         } catch {
             return String(localized: "cert.error.offline")
+        }
+    }
+
+    /// Finished projects that can be sent for review, newest first.
+    var reviewCandidates: [ReviewCandidate] {
+        library
+            .filter { certification.finishedProjects.contains($0.id) }
+            .sorted { $0.updatedAt > $1.updatedAt }
+            .map { ReviewCandidate(id: $0.id, title: $0.title) }
+    }
+
+    /// Sends a finished project to the reviewer. Nil when a verdict came back; otherwise what to say.
+    func requestReview(of id: Project.ID) async -> String? {
+        do {
+            let project = try await dependencies.projectStore.load(id)
+            var request = try AssistantClient.ReviewRequest(installID: certification.installID, project: project)
+            request.attest = await Self.attestor.proof()
+            let review = try await dependencies.assistantClient.review(request)
+            certification.review = review
+            announce(certification.award(at: .now))
+            saveCertification()
+            return nil
+        } catch AssistantClient.AssistantError.rejected(let status) where status == 501 {
+            return String(localized: "cert.error.notReady")
+        } catch AssistantClient.AssistantError.rejected(let status) where status == 403 {
+            return String(localized: "cert.error.device")
+        } catch AssistantClient.AssistantError.rejected {
+            return String(localized: "cert.error.review")
+        } catch AssistantClient.AssistantError.offline {
+            return String(localized: "cert.error.offline")
+        } catch {
+            return String(localized: "cert.error.review")
         }
     }
 

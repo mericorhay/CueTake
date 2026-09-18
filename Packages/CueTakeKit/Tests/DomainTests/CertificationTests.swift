@@ -75,6 +75,21 @@ struct CertificationTests {
         #expect(progress.award(at: start).isEmpty)
     }
 
+    @Test func aPassedSignedReviewCompletesTheSpecialist() {
+        var progress = CertificationProgress()
+        progress.activeSeconds = 300 * 3600
+        for _ in 0..<45 { progress.noteFinished(project: UUID()) }
+        for task in CertificationTask.allCases { progress.complete(task, at: start) }
+        for _ in 0..<10 { progress.noteWorkflowRun(at: start) }
+        #expect(progress.award(at: start) == [.creator, .advancedCreator])
+
+        progress.review = SignedReview(projectTitle: "t", score: 61, passed: false, strengths: [], improvements: ["Hook"], date: start, payload: "p", signature: "s")
+        #expect(progress.award(at: start).isEmpty)
+        progress.review?.score = 78
+        progress.review?.passed = true
+        #expect(progress.award(at: start) == [.workflowSpecialist])
+    }
+
     @Test func aLevelIsNotSkipped() {
         var progress = CertificationProgress()
         progress.activeSeconds = 500 * 3600

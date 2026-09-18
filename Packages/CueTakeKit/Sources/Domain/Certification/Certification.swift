@@ -91,6 +91,8 @@ public struct CertificationProgress: Codable, Hashable, Sendable {
     public var reviewRequested: Date?
     /// The name printed on certificates, as the creator wrote it. Nil prints none.
     public var holderName: String?
+    /// The latest review of a finished project, as the server signed it.
+    public var review: SignedReview?
 
     /// When time was last counted, and when the person last did something.
     public var lastTick: Date?
@@ -210,8 +212,8 @@ public struct CertificationProgress: Codable, Hashable, Sendable {
             projects: finishedProjects.count,
             tasksDone: CertificationTask.allCases.filter { tasks[$0] != nil },
             workflowRuns: workflowRuns,
-            // No review service yet: nobody can be passed until there is one.
-            reviewPassed: false,
+            // Only a review the server signed counts; the phone cannot pass itself.
+            reviewPassed: review?.passed ?? false,
             holdsPrevious: level.previous.map { earned[$0] != nil } ?? true
         )
     }
@@ -249,6 +251,42 @@ public struct CertificationProgress: Codable, Hashable, Sendable {
         }
         return "CT-" + id
     }
+}
+
+/// A finished project as the server's reviewer saw it, signed so the certificate server can trust
+/// it came from the review and not from the phone.
+public struct SignedReview: Codable, Hashable, Sendable {
+    public var projectTitle: String
+    public var score: Int
+    public var passed: Bool
+    public var strengths: [String]
+    public var improvements: [String]
+    public var date: Date
+    public var payload: String
+    public var signature: String
+
+    public init(
+        projectTitle: String,
+        score: Int,
+        passed: Bool,
+        strengths: [String],
+        improvements: [String],
+        date: Date,
+        payload: String,
+        signature: String
+    ) {
+        self.projectTitle = projectTitle
+        self.score = score
+        self.passed = passed
+        self.strengths = strengths
+        self.improvements = improvements
+        self.date = date
+        self.payload = payload
+        self.signature = signature
+    }
+
+    /// The score a project needs.
+    public static let passingScore = 70
 }
 
 /// A certificate as the server signed it. `payload` is what was signed, as sent; `signature`
