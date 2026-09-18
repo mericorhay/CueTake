@@ -4,6 +4,7 @@ import CoreMedia
 import CoreVideo
 import Domain
 import Foundation
+import ImageIO
 import Testing
 @testable import MediaEngine
 
@@ -112,6 +113,54 @@ struct CutoutTests {
         let middleX = Double(left + right) / 2 / Double(width)
         #expect(abs(middleY - 0.2) < 0.05)
         #expect(abs(middleX - 0.25) < 0.08)
+    }
+
+    /// The picture inside comes out the right way up: a photo red on top and blue below is still
+    /// red on top once drawn behind the person. It came out upside down on the phone once.
+    @Test func aBehindPictureIsTheRightWayUp() throws {
+        let folder = URL(filePath: NSTemporaryDirectory()).appending(path: "behind-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+
+        // 20×20: red rows on top, blue rows below, in the file as it is stored.
+        let side = 20
+        var pixels = [UInt8](repeating: 255, count: side * side * 4)
+        for y in 0..<side {
+            for x in 0..<side {
+                let i = (y * side + x) * 4
+                pixels[i] = y < side / 2 ? 255 : 0
+                pixels[i + 1] = 0
+                pixels[i + 2] = y < side / 2 ? 0 : 255
+            }
+        }
+        let photo = try pixels.withUnsafeMutableBytes { raw -> CGImage in
+            let context = try #require(CGContext(
+                data: raw.baseAddress, width: side, height: side, bitsPerComponent: 8, bytesPerRow: side * 4,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ))
+            return try #require(context.makeImage())
+        }
+        let file = folder.appending(path: "photo.png", directoryHint: .notDirectory)
+        let destination = try #require(CGImageDestinationCreateWithURL(file as CFURL, "public.png" as CFString, 1, nil))
+        CGImageDestinationAddImage(destination, photo, nil)
+        #expect(CGImageDestinationFinalize(destination))
+
+        var overlay = Overlay(content: .image(relativePath: "photo.png", aspect: 1), start: .zero, duration: MediaTime(seconds: 2))
+        overlay.isBehindPerson = true
+        let image = try #require(LiveBehind.draw(overlay, size: CGSize(width: 200, height: 200), mediaDirectory: folder))
+
+        let width = image.width, height = image.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        _ = bytes.withUnsafeMutableBytes { raw in
+            CGContext(
+                data: raw.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )?.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
+        // The photo is half the frame wide, centred: rows 50…150. Row 60 is near its top.
+        let upper = (60 * width + 100) * 4, lower = (140 * width + 100) * 4
+        #expect(bytes[upper] > 200 && bytes[upper + 2] < 60)
+        #expect(bytes[lower + 2] > 200 && bytes[lower] < 60)
     }
 
     /// Labels: thing 1 in the top left corner, thing 2 in the bottom right.

@@ -67,8 +67,14 @@ enum OverlayRenderer {
         content.position = CGPoint(x: renderSize.width * t.x, y: renderSize.height * (1 - t.y))
         var transform = CATransform3DMakeRotation(-t.rotation * .pi / 180, 0, 0, 1)
         transform = CATransform3DScale(transform, t.flipX ? -1 : 1, t.flipY ? -1 : 1, 1)
+        if still {
+            // Drawn with `render(in:)` into a y-up bitmap, iOS places the layer right but draws
+            // text and pictures inside it upside down — the export's tool corrects for that, a
+            // plain bitmap does not. Turned over in place, so where it sits does not change.
+            content.transform = CATransform3DScale(transform, 1, -1, 1)
+            return content
+        }
         content.transform = transform
-        if still { return content }
         content.opacity = 0
         content.add(visibility(for: overlay), forKey: "visible")
 
