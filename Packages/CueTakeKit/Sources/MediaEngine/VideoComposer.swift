@@ -47,6 +47,11 @@ public struct VideoComposer: Sendable {
 
     /// Assembles the project's selected takes, in segment order.
     ///
+    /// Every file the composition plays is opened through `AssetCache`, never as a local
+    /// `AVURLAsset`: a track holds its asset weakly, and a composition built from a track whose
+    /// asset has gone plays nothing and fails with -11800 (-12780). That is how a finished
+    /// background render once never reached the preview.
+    ///
     /// - Parameter mediaDirectory: where `Recording.relativePath` resolves against. The document
     ///   stores paths relative to the project because the container path changes between installs.
     /// - Parameter renderBackgrounds: render any missing background replacement first (export).
@@ -221,7 +226,7 @@ public struct VideoComposer: Sendable {
                                 destination: destination
                             )
                         }
-                        let copy = processed.map { AVURLAsset(url: $0) }
+                        let copy = processed.map { AssetCache.shared.asset(for: $0) }
                         if let copy,
                            let copyTrack = try? await copy.loadTracks(withMediaType: .video).first,
                            let copyDuration = try? await copy.load(.duration),
@@ -371,7 +376,7 @@ public struct VideoComposer: Sendable {
                 if project.voiceEffects.isActive,
                    let url = await cleaner.cleanedAudio(for: recording, effects: project.voiceEffects, in: mediaDirectory) {
                     voiceFile = url
-                    baseTrack = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first
+                    baseTrack = try? await AssetCache.shared.asset(for: url).loadTracks(withMediaType: .audio).first
                 }
                 if baseTrack == nil {
                     baseTrack = try? await original.loadTracks(withMediaType: .audio).first
@@ -393,7 +398,7 @@ public struct VideoComposer: Sendable {
                         let key = "\(recording.id)-\(voiceToken)-\(settings.token)"
                         if effectTracks[key] == nil,
                            let url = await SoundEffectRenderer().rendered(settings, recording: recording, voice: voiceFile, voiceToken: voiceToken, in: mediaDirectory),
-                           let rendered = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first {
+                           let rendered = try? await AssetCache.shared.asset(for: url).loadTracks(withMediaType: .audio).first {
                             effectTracks[key] = rendered
                         }
                         track = effectTracks[key] ?? baseTrack
@@ -414,7 +419,7 @@ public struct VideoComposer: Sendable {
             if playback.freeze == nil, !playback.isReversed, project.voiceEffects.isActive {
                 if cleanedVoice[recording.id] == nil,
                    let url = await cleaner.cleanedAudio(for: recording, effects: project.voiceEffects, in: mediaDirectory),
-                   let track = try? await AVURLAsset(url: url).loadTracks(withMediaType: .audio).first {
+                   let track = try? await AssetCache.shared.asset(for: url).loadTracks(withMediaType: .audio).first {
                     cleanedVoice[recording.id] = track
                 }
                 // Same timeline as the recording, so the take's own range addresses it directly.
@@ -425,7 +430,7 @@ public struct VideoComposer: Sendable {
             // A reversed clip's sound, written backwards to its own file. Starts at zero like the
             // reversed picture, so the same range addresses both.
             if !hasAudio, let reversedAudio,
-               let track = try? await AVURLAsset(url: reversedAudio).loadTracks(withMediaType: .audio).first {
+               let track = try? await AssetCache.shared.asset(for: reversedAudio).loadTracks(withMediaType: .audio).first {
                 hasAudio = (try? audioTrack.insertTimeRange(soundRange, of: track, at: cursor)) != nil
             }
             if !hasAudio, playback.freeze == nil, !playback.isReversed,
@@ -614,7 +619,7 @@ public struct VideoComposer: Sendable {
             ) else { continue }
 
             let url = await renderer.source(for: clip, in: mediaDirectory)
-            let asset = AVURLAsset(url: url)
+            let asset = AssetCache.shared.asset(for: url)
             guard let source = try? await asset.loadTracks(withMediaType: .audio).first,
                   let assetDuration = try? await asset.load(.duration)
             else { continue }
@@ -812,9 +817,12 @@ public struct VideoComposer: Sendable {
             second.composition = composition
             second.videoComposition = plain
             second.audioMix = nil
-            return try await write(second, to: destination) { value in
+            let written = try await write(second, to: destination) { value in
                 onProgress?(0.6 + value * 0.4)
             }
+            // The filtered file's tracks hold it weakly; it must outlive the second write.
+            withExtendedLifetime(asset) {}
+            return written
         }
 
         // A passthrough preset ignores the video composition and hands back the source frames,
