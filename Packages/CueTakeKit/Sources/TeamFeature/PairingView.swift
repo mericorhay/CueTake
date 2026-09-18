@@ -175,7 +175,15 @@ struct PairingView: View {
         guard phase == .sensing, peer != nil else { return }
         problem = nil
         phase = .contact
-        guard role == .joiner else { return }
+        guard role == .joiner else {
+            // The other phone answers with who it is within a moment, or it is not going to —
+            // not signed in to iCloud, or gone. The light does not wait for ever.
+            Task {
+                try? await Task.sleep(for: .seconds(12))
+                if phase == .contact, waiting == nil { fail("team.pair.failed") }
+            }
+            return
+        }
         do {
             let me = try await tools.me()
             link?.send(.identity(userRecordName: me))

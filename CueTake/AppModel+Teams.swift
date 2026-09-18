@@ -1,5 +1,6 @@
 import CloudKit
 import Domain
+import EditorFeature
 import Foundation
 import Persistence
 import TeamFeature
