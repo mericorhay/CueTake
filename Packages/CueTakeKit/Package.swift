@@ -68,7 +68,7 @@ let package = Package(
         // real work to a file.
         uiModule("AssistantFeature", ["Domain", "DesignSystem"]),
         // Teams: making one, joining one, and the light that plays when two phones meet.
-        uiModule("TeamFeature", ["Domain", "DesignSystem", "BumpKit"]),
+        uiModule("TeamFeature", ["Domain", "DesignSystem", "BumpKit", "TeamSync"]),
         uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),

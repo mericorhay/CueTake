@@ -319,8 +319,15 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
         CKRecordZone.ID(zoneName: team.zoneName, ownerName: team.ownerName)
     }
 
+    /// Forgets a team this phone left or ended.
+    public func drop(_ team: TeamInfo) async {
+        var teams = await ledger.teams()
+        teams.removeAll { $0.id == team.id }
+        await ledger.saveTeams(teams)
+    }
+
     /// Adds a team this phone made or joined, so its projects are followed from now on.
-    func adopt(_ team: TeamInfo) async {
+    public func adopt(_ team: TeamInfo) async {
         var teams = await ledger.teams()
         teams.removeAll { $0.id == team.id }
         teams.append(team)

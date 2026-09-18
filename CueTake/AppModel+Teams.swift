@@ -1,6 +1,8 @@
+import CloudKit
 import Domain
 import Foundation
 import Persistence
+import TeamFeature
 import TeamSync
 
 /// Shared team projects: this app's side of `TeamSyncEngine`.
@@ -18,6 +20,65 @@ extension AppModel: TeamLibrary {
         teamSync = engine
         await engine.start()
         teams = await engine.teams()
+        // Invites opened from Messages or Mail, including one that launched the app.
+        ShareInbox.shared.onAccept = { [weak self] metadata in
+            Task { await self?.acceptInvite(metadata) }
+        }
+    }
+
+    private var teamSharing: TeamSharing { TeamSharing(containerIdentifier: Self.teamContainer) }
+
+    func acceptInvite(_ metadata: CKShare.Metadata) async {
+        guard let engine = teamSync else { return }
+        do {
+            let team = try await teamSharing.accept(metadata)
+            await engine.adopt(team)
+            await engine.refresh()
+            teams = await engine.teams()
+            show(notice: String(localized: "team.joined \(team.name)"))
+        } catch {
+            show(notice: String(localized: "team.joinFailed"))
+        }
+    }
+
+    /// Everything the team screens can do, or nil in a build without teams.
+    var teamTools: TeamTools? {
+        guard let engine = teamSync else { return nil }
+        let sharing = teamSharing
+        return TeamTools(
+            teams: teams,
+            currentProject: projectHasContent ? (id: project.id, title: project.title) : nil,
+            container: CKContainer(identifier: Self.teamContainer),
+            makeTeam: { name in
+                let (team, _) = try await sharing.makeTeam(named: name)
+                await engine.adopt(team)
+                return team
+            },
+            share: { team in try await sharing.share(of: team) },
+            me: { try await sharing.me().recordName },
+            letIn: { name, team in try await sharing.letIn(CKRecord.ID(recordName: name), to: team) },
+            join: { url in
+                let team = try await sharing.join(url)
+                await engine.adopt(team)
+                await engine.refresh()
+                return team
+            },
+            addCurrentProject: { [weak self] team in
+                guard let self else { return }
+                takeEditorEditsIfEditing()
+                await engine.add(project, to: team)
+                teams = await engine.teams()
+            },
+            leave: { [weak self] team in
+                try await sharing.leave(team)
+                await engine.drop(team)
+                self?.teams = await engine.teams()
+            },
+            refresh: { [weak self] in
+                await engine.refresh()
+                self?.teams = await engine.teams()
+            }
+        )
     }
 
     /// After a project is saved: if it is shared, the team hears about it.

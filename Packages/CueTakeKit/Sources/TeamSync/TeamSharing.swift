@@ -62,7 +62,7 @@ public struct TeamSharing: Sendable {
     public func letIn(_ userRecordID: CKRecord.ID, to team: TeamInfo) async throws -> URL? {
         let share = try await share(of: team)
         let lookup = CKUserIdentity.LookupInfo(userRecordID: userRecordID)
-        let participants = try await container.shareParticipants(forUserIdentityLookupInfos: [lookup])
+        let participants = try await container.shareParticipants(for: [lookup])
         guard let participant = try participants[lookup]?.get() else { throw Failure.notFound }
         participant.permission = .readWrite
         share.addParticipant(participant)

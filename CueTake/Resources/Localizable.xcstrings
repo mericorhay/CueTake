@@ -1600,6 +1600,40 @@
         }
       }
     },
+    "team.joinFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The invite could not be opened. Ask for a new one."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Davet açılamadı. Yenisini iste."
+          }
+        }
+      }
+    },
+    "team.joined %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You joined “%@”."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” ekibine katıldın."
+          }
+        }
+      }
+    },
     "versions.auto.beforeRestore": {
       "extractionState": "manual",
       "localizations": {

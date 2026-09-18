@@ -10,17 +10,28 @@ import SwiftUI
 public struct TeamScreen: View {
     /// Whether the app can reach shared iCloud storage. False until the account side is done.
     let isSharingAvailable: Bool
+    /// What a build with teams can do. Nil shows the honest "not yet" screen.
+    let tools: TeamTools?
     let onClose: () -> Void
 
     @State private var phase: BumpPhase = .idle
     @State private var rehearsal: Task<Void, Never>?
 
-    public init(isSharingAvailable: Bool, onClose: @escaping () -> Void) {
+    public init(isSharingAvailable: Bool, tools: TeamTools? = nil, onClose: @escaping () -> Void) {
         self.isSharingAvailable = isSharingAvailable
+        self.tools = tools
         self.onClose = onClose
     }
 
     public var body: some View {
+        if isSharingAvailable, let tools {
+            TeamHome(tools: tools, onClose: onClose)
+        } else {
+            preview
+        }
+    }
+
+    private var preview: some View {
         BumpStage(phase: phase) {
             content
         } card: {

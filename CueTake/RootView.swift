@@ -330,7 +330,7 @@ struct RootView: View {
             )
             .task { await model.refreshStorage() }
             .fullScreenCover(isPresented: $showsTeam) {
-                TeamScreen(isSharingAvailable: model.isTeamSharingAvailable) { showsTeam = false }
+                TeamScreen(isSharingAvailable: model.isTeamSharingAvailable, tools: model.teamTools) { showsTeam = false }
             }
         }
     }
