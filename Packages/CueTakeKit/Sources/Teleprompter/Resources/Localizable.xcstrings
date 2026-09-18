@@ -35,6 +35,40 @@
         }
       }
     },
+    "teleprompter.backdrop.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yok"
+          }
+        }
+      }
+    },
+    "teleprompter.backdrop.on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Var"
+          }
+        }
+      }
+    },
     "teleprompter.countdown.none": {
       "extractionState": "manual",
       "localizations": {
@@ -273,6 +307,23 @@
         }
       }
     },
+    "teleprompter.preset.camera": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera"
+          }
+        }
+      }
+    },
     "teleprompter.preset.compact": {
       "extractionState": "manual",
       "localizations": {
@@ -358,6 +409,23 @@
         }
       }
     },
+    "teleprompter.row.backdrop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Panel"
+          }
+        }
+      }
+    },
     "teleprompter.row.countdown": {
       "extractionState": "manual",
       "localizations": {
@@ -422,6 +490,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hız koçu"
+          }
+        }
+      }
+    },
+    "teleprompter.size.bigger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bigger text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazıyı büyüt"
+          }
+        }
+      }
+    },
+    "teleprompter.size.smaller": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smaller text"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yazıyı küçült"
           }
         }
       }
@@ -541,6 +643,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Genişlik"
+          }
+        }
+      }
+    },
+    "teleprompter.speed.faster": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faster"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hızlandır"
+          }
+        }
+      }
+    },
+    "teleprompter.speed.slower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slower"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yavaşlat"
           }
         }
       }

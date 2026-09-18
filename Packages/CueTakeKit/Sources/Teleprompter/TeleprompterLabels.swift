@@ -7,6 +7,7 @@ import Foundation
 extension TeleprompterModel.Preset {
     var labelKey: String.LocalizationValue {
         switch self {
+        case .camera: "teleprompter.preset.camera"
         case .compact: "teleprompter.preset.compact"
         case .band: "teleprompter.preset.band"
         case .full: "teleprompter.preset.full"

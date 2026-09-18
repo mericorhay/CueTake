@@ -42,16 +42,25 @@ public struct TeleprompterPanel: View {
         .padding(.horizontal, 14)
         .frame(width: rect.width, height: rect.height, alignment: .topLeading)
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(DS.Palette.screen.opacity(model.panelFillOpacity))
-                )
+            if model.showsBackdrop {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(DS.Palette.screen.opacity(model.panelFillOpacity))
+                    )
+            } else if model.isDragging {
+                // Nothing behind the words, except while it is held: then its edge, so the reader
+                // can see what they are moving.
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(.black.opacity(0.18))
+            }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(DS.Palette.hairline(model.isDragging ? 0.34 : 0.12), lineWidth: 1)
+            if model.showsBackdrop || model.isDragging {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(DS.Palette.hairline(model.isDragging ? 0.34 : 0.12), lineWidth: 1)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         // The hit area is the panel itself. The gestures used to sit outside `.position`, which
@@ -68,7 +77,7 @@ public struct TeleprompterPanel: View {
         .overlay(alignment: .top) { progressLine.padding(.top, 1) }
         .overlay(alignment: .top) { readout }
         .shadow(
-            color: .black.opacity(0.5),
+            color: .black.opacity(model.showsBackdrop ? 0.5 : 0),
             radius: model.isDragging ? 35 : 20,
             y: model.isDragging ? 30 : 16
         )
@@ -127,6 +136,23 @@ public struct TeleprompterPanel: View {
 
             Spacer(minLength: 0)
 
+            // Speed and size within reach during the take: the voice sets the pace, the reader
+            // can still hurry it or hold it back, and make the words bigger without a sheet.
+            // A narrow panel leaves them to the sheet and the pinch rather than overflow.
+            if frameSize.width * model.frame.width / 100 >= 280 {
+                stepper(
+                    label: model.speedLabel,
+                    less: String(localized: "teleprompter.speed.slower", bundle: .module),
+                    more: String(localized: "teleprompter.speed.faster", bundle: .module)
+                ) { model.nudgeSpeed($0) }
+
+                stepper(
+                    label: "A",
+                    less: String(localized: "teleprompter.size.smaller", bundle: .module),
+                    more: String(localized: "teleprompter.size.bigger", bundle: .module)
+                ) { model.nudgeTextSize($0) }
+            }
+
             // Holding a line while you ad-lib, then picking it up again, is the single most
             // common thing a reader needs mid-take and the one no competitor puts within reach.
             Button {
@@ -146,20 +172,6 @@ public struct TeleprompterPanel: View {
             .buttonStyle(.dsPress)
 
             Button {
-                model.cyclePreset()
-            } label: {
-                Text(model.preset.uppercasedLabel(locale: .current))
-                    .dsFont(.mono, .medium, 9, letterSpacing: 0.08)
-                    .foregroundStyle(DS.Palette.ink)
-                    .contentTransition(.opacity)
-                    .animation(DS.Motion.snap, value: model.preset)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(DS.Palette.hairline(0.1)))
-            }
-            .buttonStyle(.dsPress)
-
-            Button {
                 model.isSettingsOpen.toggle()
             } label: {
                 Text("Aa")
@@ -171,6 +183,37 @@ public struct TeleprompterPanel: View {
             .buttonStyle(.dsPress)
         }
         .padding(.bottom, 8)
+    }
+
+    /// A value with a step down and a step up, compact enough for the header.
+    private func stepper(label: String, less: String, more: String, step: @escaping (Double) -> Void) -> some View {
+        HStack(spacing: 0) {
+            Button { step(-1) } label: {
+                Image(systemName: "minus")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonRepeatBehavior(.enabled)
+            .accessibilityLabel(Text(verbatim: less))
+            Text(verbatim: label)
+                .dsFont(.mono, .medium, 10)
+                .contentTransition(.numericText())
+                .frame(minWidth: 24)
+            Button { step(1) } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .buttonRepeatBehavior(.enabled)
+            .accessibilityLabel(Text(verbatim: more))
+        }
+        .foregroundStyle(DS.Palette.ink)
+        .buttonStyle(.dsPress)
+        .background(Capsule().fill(.black.opacity(model.showsBackdrop ? 0 : 0.35)))
+        .background(Capsule().fill(DS.Palette.hairline(0.1)))
+        .sensoryFeedback(.selection, trigger: label)
     }
 
     // MARK: - Script
@@ -194,6 +237,10 @@ public struct TeleprompterPanel: View {
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .clipped()
+        // Floating over the picture, the words carry their own shade: a tight dark edge and a
+        // soft one, so white text reads on a white wall.
+        .shadow(color: .black.opacity(model.showsBackdrop ? 0 : 0.9), radius: 1.5)
+        .shadow(color: .black.opacity(model.showsBackdrop ? 0 : 0.55), radius: 6)
     }
 
     /// How far through the script, and how the reading is going: time left and the pace, coloured

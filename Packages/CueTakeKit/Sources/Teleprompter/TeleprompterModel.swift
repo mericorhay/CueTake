@@ -31,6 +31,9 @@ public final class TeleprompterModel {
     }
 
     public enum Preset: String, CaseIterable, Sendable {
+        /// Just under the camera, where the eyes are closest to looking into the lens. Below the
+        /// top bar, so it never meets the Dynamic Island.
+        case camera = "Camera"
         case compact = "Compact"
         case band = "Band"
         case full = "Full"
@@ -56,6 +59,7 @@ public final class TeleprompterModel {
 
     // Verbatim from the design's PRESETS table.
     static let portraitPresets: [Preset: Frame] = [
+        .camera: Frame(x: 4, y: 13, width: 92, height: 24),
         .compact: Frame(x: 28, y: 60, width: 44, height: 18),
         .band: Frame(x: 5, y: 56, width: 90, height: 26),
         .full: Frame(x: 5, y: 16, width: 90, height: 62),
@@ -63,6 +67,7 @@ public final class TeleprompterModel {
     ]
 
     static let landscapePresets: [Preset: Frame] = [
+        .camera: Frame(x: 20, y: 8, width: 60, height: 34),
         .compact: Frame(x: 34, y: 56, width: 32, height: 30),
         .band: Frame(x: 8, y: 58, width: 84, height: 32),
         .full: Frame(x: 6, y: 12, width: 88, height: 68),
@@ -72,8 +77,11 @@ public final class TeleprompterModel {
     public private(set) var segments: [Segment] = []
     public private(set) var position: ScriptPosition?
 
-    public var frame = Frame(x: 5, y: 56, width: 90, height: 26)
-    public var preset: Preset = .band
+    public var frame = Frame(x: 4, y: 13, width: 92, height: 24)
+    public var preset: Preset = .camera
+    /// A panel behind the words. Off by default: the words float over the picture, so the reader
+    /// sees themselves while they read, and a shadow keeps them legible on any background.
+    public var showsBackdrop = false
     public var isDragging = false
     public var isLandscape = false
 
@@ -81,7 +89,7 @@ public final class TeleprompterModel {
     /// the floor for comfortable reading-to-camera around 36 — the old ceiling was below the point
     /// where the feature starts working. Pinching the panel drives this directly.
     public static let textSizeRange: ClosedRange<Double> = 14...64
-    public var textSize: Double = 20
+    public var textSize: Double = 26
     /// Panel opacity, 10–100. The panel fill is `opacity / 145`, as in the design.
     public var opacity: Double = 78
     /// Scroll speed, 0–100, displayed as 0.6×–1.6×.
@@ -141,6 +149,7 @@ public final class TeleprompterModel {
         public var readingLine: Double
         public var coachesPace: Bool
         public var countdown: Int?
+        public var showsBackdrop: Bool?
     }
 
     @ObservationIgnored private var portraitFrame: Frame?
@@ -160,7 +169,8 @@ public final class TeleprompterModel {
             landscape: isLandscape ? frame : landscapeFrame,
             readingLine: readingLine,
             coachesPace: coachesPace,
-            countdown: countdown
+            countdown: countdown,
+            showsBackdrop: showsBackdrop
         )
     }
 
@@ -201,10 +211,12 @@ public final class TeleprompterModel {
         readingLine = min(max(Self.readingLineRange.lowerBound, saved.readingLine), Self.readingLineRange.upperBound)
         coachesPace = saved.coachesPace
         countdown = min(max(saved.countdown ?? 3, 0), 30)
+        showsBackdrop = saved.showsBackdrop ?? false
         portraitFrame = saved.portrait
         landscapeFrame = saved.landscape
-        let savedPreset = Preset(rawValue: saved.preset) ?? .band
-        if savedPreset == .custom, let custom = saved.portrait {
+        // Settings from before the floating prompter start under the camera like everyone else.
+        let savedPreset = saved.showsBackdrop == nil ? .camera : (Preset(rawValue: saved.preset) ?? .camera)
+        if savedPreset == .custom, saved.showsBackdrop != nil, let custom = saved.portrait {
             preset = .custom
             frame = custom
         } else {
@@ -291,7 +303,7 @@ public final class TeleprompterModel {
     }
 
     public func cyclePreset() {
-        let order: [Preset] = [.compact, .band, .full, .corner]
+        let order: [Preset] = [.camera, .compact, .band, .full, .corner]
         let index = order.firstIndex(of: preset).map { $0 + 1 } ?? 0
         apply(order[index % order.count])
     }
@@ -315,6 +327,16 @@ public final class TeleprompterModel {
     public var panelFillOpacity: Double { opacity / 145 }
 
     public var speedLabel: String { String(format: "%.1f×", 0.6 + speed / 100) }
+
+    /// One step of the speed control on the panel: a tenth of the multiplier.
+    public func nudgeSpeed(_ direction: Double) {
+        speed = min(max(0, speed + direction * 10), 100)
+    }
+
+    /// One step of the text size control on the panel.
+    public func nudgeTextSize(_ direction: Double) {
+        setTextSize(textSize + direction * 3)
+    }
 
     /// Per-word appearance for the current segment.
     public func wordStyles(accent: Color, ink: Color, inkInverse: Color, lime: Color) -> [WordStyle] {

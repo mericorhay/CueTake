@@ -59,7 +59,7 @@ public struct TeleprompterSettingsSheet: View {
 
     private var presetRow: some View {
         HStack(spacing: 6) {
-            ForEach([TeleprompterModel.Preset.compact, .band, .full, .corner], id: \.self) { preset in
+            ForEach([TeleprompterModel.Preset.camera, .compact, .band, .full, .corner], id: \.self) { preset in
                 presetButton(preset)
             }
         }
@@ -152,8 +152,10 @@ public struct TeleprompterSettingsSheet: View {
             }) {
                 "\(Int(model.frame.height.rounded()))%"
             }
-            sliderRow(String(localized: "teleprompter.slider.opacity", bundle: .module), value: $model.opacity, in: 10...100, step: 1) {
-                "\(Int(model.opacity))%"
+            if model.showsBackdrop {
+                sliderRow(String(localized: "teleprompter.slider.opacity", bundle: .module), value: $model.opacity, in: 10...100, step: 1) {
+                    "\(Int(model.opacity))%"
+                }
             }
         case .flow:
             sliderRow(String(localized: "teleprompter.slider.speed", bundle: .module), value: $model.speed, in: 0...100, step: 1) {
@@ -226,6 +228,13 @@ public struct TeleprompterSettingsSheet: View {
                 label: { $0.label },
                 isOn: { model.alignment == $0 },
                 select: { model.alignment = $0 }
+            )
+            segmentedRow(
+                String(localized: "teleprompter.row.backdrop", bundle: .module),
+                options: [false, true],
+                label: { $0 ? String(localized: "teleprompter.backdrop.on", bundle: .module) : String(localized: "teleprompter.backdrop.off", bundle: .module) },
+                isOn: { model.showsBackdrop == $0 },
+                select: { model.showsBackdrop = $0 }
             )
             segmentedRow(
                 String(localized: "teleprompter.row.mirror", bundle: .module),
