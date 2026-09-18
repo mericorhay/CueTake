@@ -16,6 +16,7 @@ final class SuflorPiP: NSObject {
     private let delegate: PlaybackDelegate
     private var possibleObservation: NSKeyValueObservation?
     private var fellBack = false
+    private var observers: [NSObjectProtocol] = []
 
     /// Tells the stage when the window opens and closes, and whether it can.
     var onActiveChange: ((Bool) -> Void)?
@@ -48,6 +49,26 @@ final class SuflorPiP: NSObject {
             Task { @MainActor in self?.possibleChanged(possible) }
         }
         self.controller = controller
+        watchAudio()
+    }
+
+    /// Instagram's camera, a call, Siri: each takes the sound, and ours stays off unless it is
+    /// asked back. Without it the window's buttons stop answering.
+    private func watchAudio() {
+        guard observers.isEmpty else { return }
+        let center = NotificationCenter.default
+        let mixing = !fellBack
+        observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { note in
+            let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            guard raw == AVAudioSession.InterruptionType.ended.rawValue else { return }
+            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+        })
+        observers.append(center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+        })
+        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+        })
     }
 
     private func possibleChanged(_ possible: Bool) {
@@ -77,6 +98,8 @@ final class SuflorPiP: NSObject {
     }
 
     func detach() {
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
+        observers = []
         possibleObservation = nil
         controller?.stopPictureInPicture()
         controller = nil

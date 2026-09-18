@@ -227,7 +227,12 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
 
     private func render(_ frame: SuflorFrame) {
         let renderer = displayLayer.sampleBufferRenderer
-        if renderer.status == .failed { renderer.flush() }
+        // Another app taking the camera or the sound, or the phone locking, leaves the renderer
+        // needing a flush before it decodes again; without one it shows black for good.
+        if renderer.status == .failed || renderer.requiresFlushToResumeDecoding {
+            renderer.flush()
+            format = nil
+        }
         guard renderer.isReadyForMoreMediaData, let pixels = makePixelBuffer() else { return }
 
         CVPixelBufferLockBaseAddress(pixels, [])
