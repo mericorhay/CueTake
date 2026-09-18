@@ -17,6 +17,10 @@ final class SuflorPiP: NSObject {
     private var possibleObservation: NSKeyValueObservation?
     private var fellBack = false
     private var observers: [NSObjectProtocol] = []
+    /// Silence, played for real: iOS keeps an app running behind another only while it is making
+    /// sound. Without it the phone puts us to sleep the moment a camera opens, and the window,
+    /// which we draw ourselves, goes black and stops answering its buttons.
+    private var keepAlive = SuflorKeepAlive()
 
     /// Tells the stage when the window opens and closes, and whether it can.
     var onActiveChange: ((Bool) -> Void)?
@@ -49,6 +53,7 @@ final class SuflorPiP: NSObject {
             Task { @MainActor in self?.possibleChanged(possible) }
         }
         self.controller = controller
+        keepAlive.start()
         watchAudio()
     }
 
@@ -58,17 +63,30 @@ final class SuflorPiP: NSObject {
         guard observers.isEmpty else { return }
         let center = NotificationCenter.default
         let mixing = !fellBack
-        observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { note in
+        observers.append(center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             guard raw == AVAudioSession.InterruptionType.ended.rawValue else { return }
-            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+            Task { @MainActor in self?.wakeAudio(mixing: mixing) }
         })
-        observers.append(center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+        observers.append(center.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                // Everything audio was torn down: build the silence again from scratch.
+                self?.keepAlive.stop()
+                self?.keepAlive = SuflorKeepAlive()
+                self?.wakeAudio(mixing: mixing)
+            }
         })
-        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-            Task { @MainActor in Self.activateAudio(mixing: mixing) }
+        observers.append(center.addObserver(forName: .AVAudioEngineConfigurationChange, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.keepAlive.start() }
         })
+        observers.append(center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.wakeAudio(mixing: mixing) }
+        })
+    }
+
+    private func wakeAudio(mixing: Bool) {
+        Self.activateAudio(mixing: mixing)
+        keepAlive.start()
     }
 
     private func possibleChanged(_ possible: Bool) {
@@ -81,6 +99,7 @@ final class SuflorPiP: NSObject {
             guard let self, !self.isPossible, !self.fellBack else { return }
             self.fellBack = true
             Self.activateAudio(mixing: false)
+            self.keepAlive.start()
             self.controller?.invalidatePlaybackState()
         }
     }
@@ -103,6 +122,7 @@ final class SuflorPiP: NSObject {
         possibleObservation = nil
         controller?.stopPictureInPicture()
         controller = nil
+        keepAlive.stop()
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
@@ -110,6 +130,41 @@ final class SuflorPiP: NSObject {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.playback, mode: .moviePlayback, options: mixing ? [.mixWithOthers] : [])
         try? session.setActive(true)
+    }
+}
+
+/// A second of silence on a loop, mixed under whatever the other app plays.
+private nonisolated final class SuflorKeepAlive: @unchecked Sendable {
+    private let engine = AVAudioEngine()
+    private let player = AVAudioPlayerNode()
+    private var buffer: AVAudioPCMBuffer?
+
+    func start() {
+        if buffer == nil {
+            guard let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1),
+                  let silence = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 44_100) else { return }
+            silence.frameLength = silence.frameCapacity
+            if let samples = silence.floatChannelData?[0] {
+                samples.update(repeating: 0, count: Int(silence.frameLength))
+            }
+            engine.attach(player)
+            engine.connect(player, to: engine.mainMixerNode, format: format)
+            buffer = silence
+        }
+        guard let buffer else { return }
+        if !engine.isRunning {
+            engine.prepare()
+            guard (try? engine.start()) != nil else { return }
+        }
+        if !player.isPlaying {
+            player.scheduleBuffer(buffer, at: nil, options: .loops)
+            player.play()
+        }
+    }
+
+    func stop() {
+        player.stop()
+        engine.stop()
     }
 }
 

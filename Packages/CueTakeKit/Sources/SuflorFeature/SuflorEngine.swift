@@ -228,9 +228,10 @@ nonisolated final class SuflorEngine: @unchecked Sendable {
     private func render(_ frame: SuflorFrame) {
         let renderer = displayLayer.sampleBufferRenderer
         // Another app taking the camera or the sound, or the phone locking, leaves the renderer
-        // needing a flush before it decodes again; without one it shows black for good.
+        // needing a flush before it decodes again; without one it shows black for good. The last
+        // frame stays up meanwhile, so the window never blinks to black.
         if renderer.status == .failed || renderer.requiresFlushToResumeDecoding {
-            renderer.flush()
+            renderer.flush(removingDisplayedImage: false, completionHandler: nil)
             format = nil
         }
         guard renderer.isReadyForMoreMediaData, let pixels = makePixelBuffer() else { return }
