@@ -18,6 +18,8 @@ public enum PairingMessage: Codable, Sendable, Equatable {
     case invite(url: URL, team: String)
     /// The inviter said no.
     case declined
+    /// The joiner is in: the invite was accepted. Only now does the inviter's phone celebrate.
+    case joined
 }
 
 /// What happens while two phones find each other, as the screen needs to hear it.

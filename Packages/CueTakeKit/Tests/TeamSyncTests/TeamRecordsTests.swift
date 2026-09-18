@@ -25,7 +25,19 @@ struct TeamRecordsTests {
         let record = try TeamRecords.newRecord(for: original, in: zone)
         #expect(record.recordID.recordName == original.id.uuidString)
         let back = try TeamRecords.project(from: record)
-        #expect(back == original)
+        // The same document; dates are kept to the second, as on disk.
+        #expect(TeamRecords.same(back, original))
+        #expect(back.segments == original.segments)
+    }
+
+    @Test func aProjectReadBackIsTheSameAsTheOneInMemory() throws {
+        // What the loop guard rests on: a round trip through a document is "no change".
+        let original = project()
+        let back = try TeamRecords.project(from: TeamRecords.newRecord(for: original, in: zone))
+        #expect(TeamRecords.same(original, back))
+        var edited = back
+        edited.title = "başka"
+        #expect(!TeamRecords.same(original, edited))
     }
 
     @Test func theDocumentGoesInTheEncryptedFields() throws {

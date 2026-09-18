@@ -87,6 +87,18 @@ public enum TeamRecords {
         }
     }
 
+    /// Whether two projects say the same thing, as a document would.
+    ///
+    /// Not `==`: documents keep dates to the second, so a project read back from disk is never
+    /// `==` to the same project in memory, and every "nothing changed" check would say something
+    /// did — which is how two phones end up sending one project back and forth for ever.
+    public static func same(_ a: Project, _ b: Project) -> Bool {
+        guard let left = try? ProjectDocumentCoder.encode(a),
+              let right = try? ProjectDocumentCoder.encode(b)
+        else { return false }
+        return left == right
+    }
+
     // MARK: - Media
 
     /// Footage and pictures, one record per file, named after the project and the file so the same

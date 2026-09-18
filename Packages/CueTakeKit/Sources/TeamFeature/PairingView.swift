@@ -22,6 +22,8 @@ struct PairingView: View {
     @State private var peer: String?
     @State private var canMeasure = true
     @State private var waiting: String?
+    /// The other phone has said who it is; from here the wait is for people and iCloud, not it.
+    @State private var heardFrom = false
     @State private var joined: String?
     @State private var problem: String?
 
@@ -180,7 +182,7 @@ struct PairingView: View {
             // not signed in to iCloud, or gone. The light does not wait for ever.
             Task {
                 try? await Task.sleep(for: .seconds(12))
-                if phase == .contact, waiting == nil { fail("team.pair.failed") }
+                if phase == .contact, !heardFrom { fail("team.pair.failed") }
             }
             return
         }
@@ -195,17 +197,21 @@ struct PairingView: View {
     private func received(_ message: PairingMessage) async {
         switch message {
         case .identity(let name) where role == .inviter:
+            heardFrom = true
             waiting = name
         case .invite(let url, let teamName) where role == .joiner:
             do {
                 _ = try await tools.join(url)
                 joined = teamName
                 phase = .connected
+                link?.send(.joined)
             } catch {
                 fail("team.pair.failed")
             }
         case .declined where role == .joiner:
             fail("team.pair.declined")
+        case .joined where role == .inviter:
+            phase = .connected
         default:
             break
         }
@@ -220,7 +226,12 @@ struct PairingView: View {
                 return
             }
             link?.send(.invite(url: url, team: team.name))
-            phase = .connected
+            // Their phone accepting is what makes it true; it says so with `.joined`. Until then
+            // the light stays at the touch, and gives up if nothing comes.
+            Task {
+                try? await Task.sleep(for: .seconds(20))
+                if phase == .contact { fail("team.pair.failed") }
+            }
         } catch {
             fail("team.pair.failed")
         }

@@ -58,7 +58,7 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
         guard let (team, scope) = await team(containing: id) else { return }
         // A save of what just arrived is not a change. Without this, two phones would hand the
         // same project back and forth for ever: each saving what the other sent, each sending it.
-        if let current = await library?.teamProject(id), let agreed = await ledger.base(of: id), current == agreed {
+        if let current = await library?.teamProject(id), let agreed = await ledger.base(of: id), TeamRecords.same(current, agreed) {
             return
         }
         let zone = zoneID(for: team)
@@ -123,7 +123,7 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
         }
         guard let projectID = UUID(uuidString: name), let project = await library?.teamProject(projectID) else { return nil }
         // Already what the server has: nothing to send (the engine drops the pending change).
-        if let agreed = await ledger.base(of: projectID), agreed == project, await ledger.lastRecord(of: projectID) != nil {
+        if let agreed = await ledger.base(of: projectID), TeamRecords.same(agreed, project), await ledger.lastRecord(of: projectID) != nil {
             return nil
         }
         let record = await ledger.lastRecord(of: projectID) ?? CKRecord(recordType: TeamRecords.projectType, recordID: id)
@@ -226,7 +226,7 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
             let mine = await library?.teamProject(theirs.id)
             await ledger.setLastRecord(record, of: theirs.id)
 
-            guard let mine, let base, mine != base else {
+            guard let mine, let base, !TeamRecords.same(mine, base) else {
                 // Nothing here that the server does not already have: theirs simply stands.
                 await ledger.setBase(theirs)
                 await library?.adoptFromTeam(theirs)
@@ -237,7 +237,7 @@ public actor TeamSyncEngine: CKSyncEngineDelegate {
             await library?.adoptFromTeam(merged.project)
             if !merged.collisions.isEmpty { await library?.teamCollided(merged.collisions, in: theirs.id) }
             // What was merged in from this phone still has to reach the others.
-            if merged.project != theirs {
+            if !TeamRecords.same(merged.project, theirs) {
                 syncEngine.state.add(pendingRecordZoneChanges: [.saveRecord(record.recordID)])
             }
 
