@@ -233,7 +233,8 @@ struct RootView: View {
                 onAllowCloudAI: model.dependencies.assistantClient.isConfigured
                     ? { model.settingsModel.update(\.aiProcessing, to: .allowCloud) }
                     : nil,
-                brandTools: model.brandTools
+                brandTools: model.brandTools,
+                versionTools: model.versionTools
             )
             // A different project is a different editor: its playback is prepared afresh.
             .id(ObjectIdentifier(model.editorModel))

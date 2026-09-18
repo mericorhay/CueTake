@@ -5203,6 +5203,23 @@
         }
       }
     },
+    "editor.change.versionRestore": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Went back to a version"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürüme geri dönüldü"
+          }
+        }
+      }
+    },
     "editor.change.videoLayerAdjust": {
       "extractionState": "manual",
       "localizations": {
@@ -5471,6 +5488,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Şimdi kaydet"
+          }
+        }
+      }
+    },
+    "editor.changes.tab.edits": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu oturum"
+          }
+        }
+      }
+    },
+    "editor.changes.tab.versions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versions"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürümler"
           }
         }
       }
@@ -11135,6 +11186,159 @@
           "stringUnit": {
             "state": "translated",
             "value": "Geri al"
+          }
+        }
+      }
+    },
+    "editor.versions.delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete version"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sürümü sil"
+          }
+        }
+      }
+    },
+    "editor.versions.detail %@ %@ %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ · %3$lld clips"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$@ · %3$lld klip"
+          }
+        }
+      }
+    },
+    "editor.versions.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No versions yet. Save one before a big change, and you can always come back to it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Henüz sürüm yok. Büyük bir değişiklikten önce birini kaydet, her zaman geri dönebilirsin."
+          }
+        }
+      }
+    },
+    "editor.versions.namePlaceholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name, e.g. Sent to the client"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad, örn. Müşteriye giden"
+          }
+        }
+      }
+    },
+    "editor.versions.restore": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go back"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri dön"
+          }
+        }
+      }
+    },
+    "editor.versions.restore.confirm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go back to this version"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu sürüme dön"
+          }
+        }
+      }
+    },
+    "editor.versions.restore.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What is open now is kept as a version first, so you can come back to it."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şu an açık olan hâl önce sürüm olarak saklanır; ona da geri dönebilirsin."
+          }
+        }
+      }
+    },
+    "editor.versions.restore.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go back to “%@”?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” sürümüne dönülsün mü?"
+          }
+        }
+      }
+    },
+    "editor.versions.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kaydet"
           }
         }
       }

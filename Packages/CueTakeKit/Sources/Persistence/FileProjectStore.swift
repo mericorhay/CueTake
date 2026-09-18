@@ -75,6 +75,69 @@ public actor FileProjectStore: ProjectStore {
         try? fileManager.removeItem(at: layout.directory(for: id))
     }
 
+    // MARK: - Versions
+
+    public func versions(of id: Project.ID) throws -> [ProjectVersion] {
+        readIndex(id).sorted { $0.savedAt > $1.savedAt }
+    }
+
+    public func saveVersion(of project: Project, name: String, kind: ProjectVersion.Kind) throws -> ProjectVersion {
+        let folder = layout.versionsDirectory(for: project.id)
+        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        let version = ProjectVersion(of: project, name: name, kind: kind)
+        // The document first, the index after: a crash between the two leaves an unlisted file,
+        // never a listed version with nothing behind it.
+        try ProjectDocumentCoder.encode(project)
+            .write(to: document(version.id, in: folder), options: .atomic)
+
+        var index = readIndex(project.id)
+        index.append(version)
+        let dropped = Set(ProjectVersion.overflow(in: index))
+        index.removeAll { dropped.contains($0.id) }
+        try writeIndex(index, for: project.id)
+        for id in dropped {
+            try? fileManager.removeItem(at: document(id, in: folder))
+        }
+        return version
+    }
+
+    public func loadVersion(_ version: ProjectVersion.ID, of id: Project.ID) throws -> Project {
+        let url = document(version, in: layout.versionsDirectory(for: id))
+        guard let data = try? Data(contentsOf: url) else { throw ProjectStoreError.notFound(version) }
+        let project = try ProjectDocumentCoder.decode(data)
+        // A version is a state of this project, never another one: a document that says otherwise
+        // was put there by something else and is not restored over the user's work.
+        guard project.id == id else { throw ProjectStoreError.notFound(version) }
+        return project
+    }
+
+    public func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) throws {
+        var index = readIndex(id)
+        index.removeAll { $0.id == version }
+        try writeIndex(index, for: id)
+        try? fileManager.removeItem(at: document(version, in: layout.versionsDirectory(for: id)))
+    }
+
+    private func document(_ version: ProjectVersion.ID, in folder: URL) -> URL {
+        folder.appending(path: "\(version.uuidString).json", directoryHint: .notDirectory)
+    }
+
+    private func readIndex(_ id: Project.ID) -> [ProjectVersion] {
+        let url = layout.versionsDirectory(for: id).appending(path: "index.json", directoryHint: .notDirectory)
+        guard let data = try? Data(contentsOf: url) else { return [] }
+        // Dates at full precision, not ISO 8601: that drops the fraction of a second, and two
+        // automatic versions taken in the same second would no longer know which is older.
+        return (try? JSONDecoder().decode([ProjectVersion].self, from: data)) ?? []
+    }
+
+    private func writeIndex(_ index: [ProjectVersion], for id: Project.ID) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let url = layout.versionsDirectory(for: id).appending(path: "index.json", directoryHint: .notDirectory)
+        try encoder.encode(index).write(to: url, options: .atomic)
+    }
+
     private func read(_ id: Project.ID) throws -> Project {
         let url = layout.documentURL(for: id)
         guard let data = try? Data(contentsOf: url) else {

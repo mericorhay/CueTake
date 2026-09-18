@@ -77,6 +77,25 @@ struct MediaJanitorTests {
         #expect(!left.contains("lut-old.cube"))
     }
 
+    @Test func footageOnlyAnOldVersionUsesStays() throws {
+        let media = try folder()
+        defer { try? FileManager.default.removeItem(at: media) }
+
+        let now = Recording(relativePath: "media/now.mov", format: .vertical1080, camera: .front, duration: MediaTime(seconds: 5))
+        let before = Recording(relativePath: "media/before.mov", format: .vertical1080, camera: .front, duration: MediaTime(seconds: 5))
+        func take(_ recording: Recording) -> Segment {
+            let take = Take(recordingID: recording.id, sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 5)), status: .ready)
+            return Segment(role: .hook, script: "", takes: [take], selectedTakeID: take.id)
+        }
+        let current = Project(title: "t", localeIdentifier: "en", segments: [take(now)], recordings: [now])
+        let version = Project(title: "t", localeIdentifier: "en", segments: [take(before)], recordings: [before])
+
+        for name in ["now.mov", "before.mov", "nobody.mov"] { touch(name, in: media) }
+
+        _ = MediaJanitor.clean(project: current, mediaDirectory: media, keepOriginals: false, versions: [version])
+        #expect(names(in: media) == ["now.mov", "before.mov"])
+    }
+
     @Test func cachesTheCurrentSettingsReadStay() throws {
         let media = try folder()
         defer { try? FileManager.default.removeItem(at: media) }

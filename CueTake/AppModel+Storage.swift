@@ -45,20 +45,30 @@ extension AppModel {
 
         let store = dependencies.projectStore
         let open = project
-        var jobs: [(project: Project, media: URL, keepOriginals: Bool)] = []
+        var jobs: [(project: Project, media: URL, keepOriginals: Bool, versions: [Project])] = []
         for summary in (try? await store.summaries()) ?? [] {
             guard let media = try? await store.mediaDirectory(for: summary.id) else { continue }
+            // Every saved version's footage stays: a version is only worth keeping if it opens whole.
+            var versions: [Project] = []
+            for version in (try? await store.versions(of: summary.id)) ?? [] {
+                if let saved = try? await store.loadVersion(version.id, of: summary.id) { versions.append(saved) }
+            }
             if summary.id == open.id {
-                jobs.append((open, media, true))
+                jobs.append((open, media, true, versions))
             } else if let stored = try? await store.load(summary.id) {
-                jobs.append((stored, media, false))
+                jobs.append((stored, media, false, versions))
             }
         }
         let work = jobs
         return await Task.detached(priority: .utility) {
             var freed = MediaJanitor.cleanTemporaryFiles(olderThan: temporaryAge)
             for job in work {
-                freed += MediaJanitor.clean(project: job.project, mediaDirectory: job.media, keepOriginals: job.keepOriginals)
+                freed += MediaJanitor.clean(
+                    project: job.project,
+                    mediaDirectory: job.media,
+                    keepOriginals: job.keepOriginals,
+                    versions: job.versions
+                )
             }
             return freed
         }.value

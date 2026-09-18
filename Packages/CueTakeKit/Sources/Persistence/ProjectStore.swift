@@ -6,6 +6,7 @@ import Foundation
 //     Projects/<project-id>/
 //         project.json     versioned Project document (source of truth)
 //         media/           recording files, referenced by Recording.relativePath
+//         versions/        saved states: index.json plus one project document each
 //
 // SwiftData only indexes projects for fast listing (see ProjectIndexEntry). It is never the
 // domain model: @Model classes are not Sendable and do not keep array order.
@@ -37,6 +38,25 @@ public protocol ProjectStore: Sendable {
     func load(_ id: Project.ID) async throws -> Project
     func save(_ project: Project) async throws
     func delete(_ id: Project.ID) async throws
+
+    /// Saved states of a project, newest first. See `ProjectVersion`.
+    func versions(of id: Project.ID) async throws -> [ProjectVersion]
+    /// Keeps `project` as it is now under `name`, throwing away automatic versions past the limit.
+    func saveVersion(of project: Project, name: String, kind: ProjectVersion.Kind) async throws -> ProjectVersion
+    func loadVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws -> Project
+    func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws
+}
+
+/// Stores without somewhere to keep versions simply have none; the editor hides the list.
+extension ProjectStore {
+    public func versions(of id: Project.ID) async throws -> [ProjectVersion] { [] }
+    public func saveVersion(of project: Project, name: String, kind: ProjectVersion.Kind) async throws -> ProjectVersion {
+        throw ProjectStoreError.notFound(project.id)
+    }
+    public func loadVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws -> Project {
+        throw ProjectStoreError.notFound(version)
+    }
+    public func deleteVersion(_ version: ProjectVersion.ID, of id: Project.ID) async throws {}
 }
 
 public struct ProjectLayout: Hashable, Sendable {
@@ -56,6 +76,11 @@ public struct ProjectLayout: Hashable, Sendable {
 
     public func mediaDirectory(for projectID: Project.ID) -> URL {
         directory(for: projectID).appending(path: "media", directoryHint: .isDirectory)
+    }
+
+    /// Saved states: `versions/index.json` lists them, `versions/<id>.json` is each document.
+    public func versionsDirectory(for projectID: Project.ID) -> URL {
+        directory(for: projectID).appending(path: "versions", directoryHint: .isDirectory)
     }
 
     public func url(for recording: Recording, in projectID: Project.ID) -> URL {

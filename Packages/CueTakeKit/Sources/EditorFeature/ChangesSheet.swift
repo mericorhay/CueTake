@@ -1,4 +1,5 @@
 import DesignSystem
+import Domain
 import SwiftUI
 
 /// What you have done to this video, and how to take it back.
@@ -18,21 +19,53 @@ struct ChangesSheet: View {
     let saveLabel: String
     let isSaving: Bool
     let onSave: () -> Void
+    /// Saved versions of the project. Nil where there is nowhere to keep them.
+    let versionTools: VersionTools?
     let onClose: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var confirmingRevert = false
     /// An edit waiting for "yes" because taking it back also takes back later ones.
     @State private var pendingUndo: (entry: ChangeEntry, caught: [ChangeEntry])?
+    @State private var showsVersions = false
+    @State private var versionName = ""
+    @State private var pendingRestore: ProjectVersion?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            controls
-            saveRow
-            list
+            if versionTools != nil { tabs }
+            if showsVersions, let versionTools {
+                VersionList(
+                    tools: versionTools,
+                    name: $versionName,
+                    onRestore: { pendingRestore = $0 }
+                )
+                .transition(.opacity)
+            } else {
+                controls
+                saveRow
+                list
+            }
         }
         .background(DS.Palette.screen)
+        .animation(DS.Motion.snap, value: showsVersions)
+        .onAppear { versionTools?.refresh() }
+        .confirmationDialog(
+            String(localized: "editor.versions.restore.title \(pendingRestore?.name ?? "")", bundle: .module),
+            isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
+            titleVisibility: .visible
+        ) {
+            if let pending = pendingRestore {
+                Button(String(localized: "editor.versions.restore.confirm", bundle: .module)) {
+                    versionTools?.restore(pending)
+                    pendingRestore = nil
+                    onClose()
+                }
+            }
+        } message: {
+            Text("editor.versions.restore.message", bundle: .module)
+        }
         .confirmationDialog(
             String(localized: "editor.changes.undoThis.also \(pendingUndo?.caught.count ?? 0)", bundle: .module),
             isPresented: Binding(get: { pendingUndo != nil }, set: { if !$0 { pendingUndo = nil } }),
@@ -67,6 +100,30 @@ struct ChangesSheet: View {
         .padding(.horizontal, 20)
         .padding(.top, 22)
         .padding(.bottom, 14)
+    }
+
+    /// History of this session, or saved states of the whole project: two different questions
+    /// ("what did I just do" and "what did it look like on Tuesday"), so two lists, not one.
+    private var tabs: some View {
+        HStack(spacing: 6) {
+            tab("editor.changes.tab.edits", symbol: "list.bullet", isOn: !showsVersions) { showsVersions = false }
+            tab("editor.changes.tab.versions", symbol: "clock.arrow.circlepath", isOn: showsVersions) { showsVersions = true }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 12)
+    }
+
+    private func tab(_ key: String.LocalizationValue, symbol: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(String(localized: key, bundle: .module), systemImage: symbol)
+                .dsFont(.sans, .semibold, 12)
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .background(Capsule().fill(isOn ? DS.Palette.lime : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 20))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     private var controls: some View {

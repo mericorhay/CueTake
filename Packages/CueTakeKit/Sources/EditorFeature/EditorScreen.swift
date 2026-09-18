@@ -39,7 +39,8 @@ public struct EditorScreen: View {
         onTranscribe: @escaping () -> Void = {},
         onAIEdit: AIRequester? = nil,
         onAllowCloudAI: (() -> Void)? = nil,
-        brandTools: BrandTools? = nil
+        brandTools: BrandTools? = nil,
+        versionTools: VersionTools? = nil
     ) {
         self.model = model
         self.onPrepare = onPrepare
@@ -56,12 +57,14 @@ public struct EditorScreen: View {
         self.onAIEdit = onAIEdit
         self.onAllowCloudAI = onAllowCloudAI
         self.brandTools = brandTools
+        self.versionTools = versionTools
     }
 
     private let onAIEdit: AIRequester?
     private let onAllowCloudAI: (() -> Void)?
     /// The brand's colours and the ways of making a video, from the app. Nil hides them.
     private let brandTools: BrandTools?
+    private let versionTools: VersionTools?
 
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
@@ -393,6 +396,7 @@ public struct EditorScreen: View {
                 saveLabel: saveLabel,
                 isSaving: isSaving,
                 onSave: onSave,
+                versionTools: versionTools,
                 onClose: { showsChanges = false }
             )
             .presentationDetents([.medium, .large])

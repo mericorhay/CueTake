@@ -157,6 +157,8 @@ final class AppModel {
     var isPickingVideoLayer = false
     /// The brand's logo is being chosen from the photo library.
     var isPickingBrandLogo = false
+    /// Saved states of the open project, newest first. See `AppModel+Versions`.
+    var projectVersions: [ProjectVersion] = []
     /// What the app is busy with, or nil. Shown as an overlay: importing thirty clips and
     /// transcribing them takes real time, and an app that goes quiet for a minute reads as frozen.
     var busy: String?
@@ -1134,6 +1136,7 @@ final class AppModel {
         }
         editorModel.project = project
         go(to: .editor)
+        Task { await takeAutomaticVersionIfDue() }
     }
 
     /// Takes the editor's edits back.

@@ -36,7 +36,10 @@ public enum MediaJanitor {
     ///
     /// - Parameter keepOriginals: leave recordings and pictures no clip points at any more, removing
     ///   only caches. For the project open in the editor, whose undo can still bring a clip back.
-    public static func clean(project: Project, mediaDirectory: URL, keepOriginals: Bool) -> Int64 {
+    /// - Parameter versions: saved states of the project. What they use is the user's footage
+    ///   too — deleting it would make going back to a version open a video with holes in it —
+    ///   so their originals stay; their caches do not, since those are made again on demand.
+    public static func clean(project: Project, mediaDirectory: URL, keepOriginals: Bool, versions: [Project] = []) -> Int64 {
         let fileManager = FileManager.default
         guard let files = try? fileManager.contentsOfDirectory(at: mediaDirectory, includingPropertiesForKeys: Array(sizeKeys)) else {
             return 0
@@ -98,6 +101,10 @@ public enum MediaJanitor {
             if let table = effect.filter?.lut { keep.insert(name(table.file)) }
         }
 
+        for version in versions {
+            keep.formUnion(originals(of: version))
+        }
+
         var freed: Int64 = 0
         for url in files {
             let file = url.lastPathComponent
@@ -111,6 +118,20 @@ public enum MediaJanitor {
             }
         }
         return freed
+    }
+
+    /// The files a project was made from, as opposed to the ones the app made from them.
+    static func originals(of project: Project) -> Set<String> {
+        func name(_ path: String) -> String { (path as NSString).lastPathComponent }
+        var kept = Set(project.recordings.map { name($0.relativePath) })
+        kept.formUnion(project.audio.map { name($0.relativePath) })
+        for overlay in project.overlays {
+            if case .image(let path, _) = overlay.content { kept.insert(name(path)) }
+        }
+        for effect in project.effects {
+            if let table = effect.filter?.lut { kept.insert(name(table.file)) }
+        }
+        return kept
     }
 
     /// Files the app writes for itself and can write again.
