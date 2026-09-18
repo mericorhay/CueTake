@@ -13,6 +13,7 @@
 
 import { handleCertify, handleVerify, handleCertificateKey, handleReview } from "./certificates.js";
 import { handleChallenge, handleRegister } from "./attest.js";
+import { voiceFor } from "./voices.js";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "qwen/qwen3.8-27b";
@@ -407,46 +408,38 @@ async function ask(env, system, content, maxTokens) {
 
 // The suflör: cards a creator reads from a small floating window while live on TikTok or
 // Instagram, or while filming a sponsored video with their camera.
-// How creators actually talk, for the suflör. Written for this app, not taken from anyone. It sits
-// at the very start of the system prompt and never changes, so the provider can cache it: about
-// 900 tokens that cost a fraction of a cent per request, and half that when cached.
-const SPOKEN_VOICE = `HOW REAL CREATORS TALK — read this before writing anything.
+// How creators actually talk, for the suflör: a long live-stream sample in the request's
+// language (voices.js), then what makes it sound real. Fixed per language, so the provider can
+// cache it; the Turkish one is about 1,800 tokens, a fraction of a cent a request.
+function spokenVoice(locale) {
+  return `HOW REAL CREATORS TALK — read this before writing anything.
 The cards are read aloud on a live stream. If a line would sound like a TV advert or a press release, it is wrong.
 
-This is a real-sounding Turkish live stream with an ad in the middle. Match this register, not these words. It is an example of HOW to talk only: take nothing from it — not its topic (morning routine, coffee), not its details, and never a code, link, date or name. Things in ‹angle quotes› are gaps that the brief fills or that stay out:
+Below is a made-up live stream with an ad in the middle, in sections: going live, talking to chat, the topic, the bridge into the ad, the code and link, getting stuck, out of the ad, closing. For each card you write, pick the section that fits it and match how it talks there; ignore the rest. It shows HOW to talk only: take nothing from it — not its topics (coffee, headphones, motivation), not its jokes or details, and never a code, link, date or name. Things in ‹angle quotes› are gaps that the brief fills or that stay out.
 """
-Selam selam, hoş geldiniz. Bir iki dakika bekliyorum, herkes gelsin. Nereden izliyorsunuz, yazın bakayım yoruma. Bayağı uzaktan gelen de var, oha.
-Bugün biraz dağınığım, kusura bakmayın, sabahtan beri çekimdeydim.
-Şimdi dün biriniz sormuş: "Sabah rutinin ne?" Valla çok matah bir rutinim yok, baştan söyleyeyim. Kalkıyorum, bir bardak su, sonra kahve. Kahvesiz insan değilim zaten. Telefona bakmamaya çalışıyorum ama olmuyor, yalan yok.
-Bu arada bir şey göstereceğim, çünkü bu hafta en çok bunu sordunuz. Önce şunu söyleyeyim: bu bir iş birliği, marka bana gönderdi. Ama beğenmediğim bir şeyi burada anlatmam, biliyorsunuz.
-İki haftadır kullanıyorum. İlk gün açıkçası "bu da diğerleri gibidir" dedim. Üçüncü gün falan şunu fark ettim… (brifte ne yazıyorsa, kendi cümlenle).
-Kod soran olmuş: kodum ‹kod›, büyük harfle. Linki profile koydum, oradan girince kod zaten geliyor. ‹ne zamana kadar› geçerliymiş, sonrasını ben de bilmiyorum.
-Tamam, reklam kısmı bu kadar, sıkmayayım sizi. Soru varsa yazın, bakıyorum.
+${voiceFor(locale).trim()}
 """
 
 What makes it sound real:
 - Short sentences, mostly 4 to 12 words. One thought per sentence.
-- Talks to the chat: "yazın", "sormuşsunuz", "bakıyorum". Reacts to them.
-- One small honest doubt or a plain detail ("ilk gün emin değildim", "kutusu biraz büyük") makes praise believable.
-- Plain words. A filler now and then (valla, yani, bakın, şimdi, açıkçası) — at most one per card.
+- Talks to the chat and reacts to it.
+- One small honest doubt or a plain detail makes praise believable.
+- Plain words. A filler now and then — at most one per card.
 - Facts said once, calmly: the code, where the link is, until when — and only facts the brief gives.
 
-Cringe → natural (never write the left side):
+Cringe → natural (never write the left side; Turkish examples, the same holds in every language):
 - "Merhaba değerli takipçilerim!" → "Selam, hoş geldiniz."
 - "Sizlerle harika bir ürünü paylaşmaktan mutluluk duyuyorum!" → "Bir şey göstereceğim, çok sordunuz."
 - "Bu ürün hayatımı değiştirdi!" → "İki haftadır kullanıyorum, şunu fark ettim."
 - "Mükemmel, muhteşem, inanılmaz!" → one concrete, small observation.
 - "Kaçırmayın!!!" → "Yarına kadar geçerliymiş."
-- "Arkadaşlar" at the start of every card → vary it, or just start talking.
+- The same greeting at the start of every card → vary it, or just start talking.
 - Stacked exclamation marks, rhetorical questions in a row, hashtags, slogans → none.
 
-In other languages keep the same register: how that language's creators really talk on a live stream, not how its adverts sound.
-
 When <creator_voice> is given, it is THIS creator's own speech, transcribed from their videos. It outranks the sample above: write the cards the way they talk — their words, their rhythm, their fillers, how they greet and address people. Take only their manner, never their content: no facts, names or products from it.`;
+}
 
-const SUFLOR_PROMPT = SPOKEN_VOICE + `
-
-You write the cards a creator reads from a small floating prompter while live-streaming on TikTok, Instagram or YouTube, or while filming a sponsored video with that app's own camera.
+const SUFLOR_TASK = `You write the cards a creator reads from a small floating prompter while live-streaming on TikTok, Instagram or YouTube, or while filming a sponsored video with that app's own camera.
 Answer with ONE JSON object and nothing else:
 {"cues":[{"role":"<opening|topic|bridge|ad|cta|rescue|closing>","text":"<what they say>"}]}
 Write in the language of <locale> (tr means Turkish), exactly as described above: the creator talking to their own chat, first person. No stage directions, quotes, emoji or hashtags.
@@ -491,10 +484,27 @@ async function handleSuflor(body, env) {
     `<details>\n${clean(brief.details, 2500)}\n</details>\n` +
     (body.voice ? `<creator_voice>\n${clean(body.voice, 4000)}\n</creator_voice>\n` : "") +
     `<locale>${clean(body.locale, 20)}</locale>`;
-  const answer = await ask(env, SUFLOR_PROMPT, content, 2500);
+  const system = spokenVoice(body.locale) + "\n\n" + SUFLOR_TASK;
+  let answer = await ask(env, system, content, 2500);
+  // Now and then the model answers with no cards at all; a second try almost always has them,
+  // so the creator never sees "nothing came back" for a hiccup.
+  if (!answer.error && !hasCues(answer.reply)) {
+    console.log("suflor: empty cards, asking again");
+    answer = await ask(env, system, content, 2500);
+  }
   if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));
   const given = [brand, product, clean(brief.details, 2500), clean(brief.topic, 600), ...mustSay].join(" ");
   return json({ cues: withoutInventedCodes(answer.reply, given, body.locale) });
+}
+
+function hasCues(reply) {
+  try {
+    const text = String(reply || "");
+    const parsed = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+    return Array.isArray(parsed.cues) && parsed.cues.some((cue) => String(cue.text || "").trim());
+  } catch {
+    return false;
+  }
 }
 
 // Something that looks like a discount code ("AYSE20", "YAZ-15", "KOD2024"): letters and digits
