@@ -726,6 +726,12 @@ Ekip (P2)                              CloudKit shared zones veya kendi backend'
 
 **Fazlar:** 1 brif + Worker · 2 PiP suflör + düğmeler · 3 Canlı Etkinlik/Island · 4 ikinci telefon modu · 5 rapor + animasyon cilası.
 
+**Durum (2026-09-18, build 113–115):**
+- **Karar:** dinleme yok (mikrofon paylaşılamıyor), ikinci telefon modu yok (UX'i kötü bulundu). Suflör sabit hızda akar; hız, punto, sürükleyerek aşağı/yukarı ve kart atlama elle.
+- **Yapıldı:** `SuflorFeature` modülü (brif 3 adım, AI kartları `/suflor` Worker'da + şablon, canlı önizleme, sahne: 3-2-1, reklam bekleme halkası, reklam anı süpürmesi, tik çizimi; PiP `AVSampleBufferDisplayLayer` ile, sistem düğmeleri durdur/kart atla; rapor: istatistikler, kanıt satırları, Fotoğraflar'dan kayıt ekleyip cihazda dinleyerek doğrulama + kare, PDF ve PNG paylaşımı). Domain: `SuflorBrief/Cue/Plan/Clock/Proof/Session` + `SuflorTests`. `UIBackgroundModes` += `audio`.
+- **Açık:** cihazda PiP testi (mixWithOthers ile açılıyor mu, TikTok canlıyken pencere yaşıyor mu); Canlı Etkinlik/Dynamic Island (widget eklentisi + yeni App ID/profil gerekir); App Review notu (audio modu yalnız PiP için); konumlandırma "reklam teslim aracı", dağıtım PDF altbilgisi + ajanslar.
+- **Rakip:** Beast Floating Teleprompter, Teleprompter™, VoicePrompter, Teleprompter: Floating Notes zaten PiP'te yüzüyor; VoicePrompter yüzerken ses takibi iddia ediyor — doğrulanmadı.
+
 ---
 
 ## 6. Ortak teknik altyapı
