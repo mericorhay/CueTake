@@ -22,6 +22,9 @@ public struct Overlay: Identifiable, Hashable, Sendable, Codable {
     /// Drawn behind the people in the picture rather than over them: a title a person stands in
     /// front of. The picture is cut around them on every frame as it plays.
     public var isBehindPerson: Bool = false
+    /// Set on a picture drawn from a brand template, so its words can be changed and the picture
+    /// drawn again.
+    public var template: OverlayTemplate? = nil
 
     public init(
         id: UUID = UUID(),
@@ -62,6 +65,7 @@ public struct Overlay: Identifiable, Hashable, Sendable, Codable {
         transform = (try? c.decode(OverlayTransform.self, forKey: .transform)) ?? OverlayTransform()
         animation = (try? c.decode(OverlayAnimation.self, forKey: .animation)) ?? .fade
         isBehindPerson = (try? c.decodeIfPresent(Bool.self, forKey: .isBehindPerson)) ?? false
+        template = try? c.decodeIfPresent(OverlayTemplate.self, forKey: .template)
     }
 
     /// How much of it shows at a moment, fades included. Pop and slide are not motion that can
@@ -76,6 +80,25 @@ public struct Overlay: Identifiable, Hashable, Sendable, Codable {
             level *= min(1, into / edge, (length - into) / edge)
         }
         return max(0, level)
+    }
+}
+
+/// What a template picture was drawn from: which template, every line of it, its colour, its
+/// look and its face.
+public struct OverlayTemplate: Hashable, Sendable, Codable {
+    public var id: String
+    /// Each line by its slot's name.
+    public var texts: [String: String]
+    public var accent: RGBAColor
+    public var isLight: Bool
+    public var font: String
+
+    public init(id: String, texts: [String: String], accent: RGBAColor, isLight: Bool, font: String) {
+        self.id = id
+        self.texts = texts
+        self.accent = accent
+        self.isLight = isLight
+        self.font = font
     }
 }
 

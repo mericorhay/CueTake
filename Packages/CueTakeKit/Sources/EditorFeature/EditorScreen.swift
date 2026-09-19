@@ -70,6 +70,8 @@ public struct EditorScreen: View {
     @State private var dockPanel: ToolDock.Item?
     @State private var pickingImage = false
     @State private var showsTemplates = false
+    /// The template picture whose words are being changed, or nil when adding a new one.
+    @State private var templateTarget: Overlay.ID?
     @State private var pickedImage: PhotosPickerItem?
     /// Set while the phone is on its side: the picture takes the height of the screen.
     @State private var landscapePreviewHeight: CGFloat?
@@ -389,11 +391,20 @@ public struct EditorScreen: View {
         .sheet(isPresented: $showsTemplates) {
             AdTemplateSheet(
                 brandColor: brandTools.map { CaptionOverlay.color($0.kit.primary) },
-                onAdd: { data, style in
+                editing: templateTarget.flatMap { id in model.project.overlays.first { $0.id == id }?.template },
+                onAdd: { data, style, template in
                     showsTemplates = false
-                    withAnimation(DS.Motion.bloom) { addTemplate(data, style: style) }
+                    if let id = templateTarget {
+                        model.replaceTemplateImage(id, with: data, template: template)
+                    } else {
+                        withAnimation(DS.Motion.bloom) { addTemplate(data, style: style, template: template) }
+                    }
+                    templateTarget = nil
                 },
-                onClose: { showsTemplates = false }
+                onClose: {
+                    showsTemplates = false
+                    templateTarget = nil
+                }
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
@@ -596,10 +607,20 @@ public struct EditorScreen: View {
         .animation(DS.Motion.bloom, value: model.aiChanges.isEmpty)
     }
 
+    /// Opens a template picture's words for changing; nil for any other picture or text.
+    private func templateEditor(for overlay: Overlay) -> (() -> Void)? {
+        guard overlay.template != nil else { return nil }
+        return {
+            model.pause()
+            templateTarget = overlay.id
+            showsTemplates = true
+        }
+    }
+
     /// A filled-in template on the timeline at the playhead: where its kind of picture usually
     /// sits, four seconds long, popping in. From there it is an ordinary picture to move and time.
-    private func addTemplate(_ data: Data, style: AdStyle) {
-        guard model.addImageOverlay(from: data), let id = model.selectedOverlay else { return }
+    private func addTemplate(_ data: Data, style: AdStyle, template: OverlayTemplate) {
+        guard model.addImageOverlay(from: data, template: template), let id = model.selectedOverlay else { return }
         let spot = style.placement
         model.updateOverlay(id, coalescing: "template") {
             $0.transform.x = spot.x
@@ -969,7 +990,8 @@ public struct EditorScreen: View {
                 model: model,
                 overlay: overlay,
                 onClose: { withAnimation(DS.Motion.settle) { model.select(overlay: nil) } },
-                onType: { typing = .overlay(overlay.id) }
+                onType: { typing = .overlay(overlay.id) },
+                onEditTemplate: templateEditor(for: overlay)
             )
         } else if let id = model.inspectedSegment,
                   let index = model.project.segments.firstIndex(where: { $0.id == id }) {
@@ -1021,6 +1043,7 @@ public struct EditorScreen: View {
                     onAddImage: { pickingImage = true },
                     onTemplates: {
                         model.pause()
+                        templateTarget = nil
                         showsTemplates = true
                     },
                     onShowAIChanges: { showsAIChanges = true },

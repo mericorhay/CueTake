@@ -12,6 +12,8 @@ struct OverlayInspector: View {
     let onClose: () -> Void
     /// Opens typing above the keyboard.
     var onType: () -> Void = {}
+    /// Opens a template picture's words for changing. Nil for anything that is not a template.
+    var onEditTemplate: (() -> Void)? = nil
 
     private var end: Double { overlay.start.seconds + overlay.duration.seconds }
 
@@ -21,6 +23,20 @@ struct OverlayInspector: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    if let onEditTemplate {
+                        Button(action: onEditTemplate) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "character.cursor.ibeam")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("editor.template.edit", bundle: .module)
+                                    .dsFont(.sans, .semibold, 14)
+                            }
+                            .foregroundStyle(DS.Palette.inkInverse)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(Capsule().fill(DS.Palette.lime))
+                        }
+                        .buttonStyle(.dsPress)
+                    }
                     timing
                     if case .text(let text) = overlay.content {
                         textControls(text)

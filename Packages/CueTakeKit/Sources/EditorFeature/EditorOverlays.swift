@@ -19,9 +19,35 @@ extension EditorModel {
     /// The long edge is capped at 2400 points: bigger than any overlay needs at 4K, and a 48 MP
     /// photo would otherwise sit in memory for the whole edit.
     @discardableResult
-    public func addImageOverlay(from data: Data) -> Bool {
+    public func addImageOverlay(from data: Data, template: OverlayTemplate? = nil) -> Bool {
+        guard let stored = storeOverlayImage(data) else { return false }
+        var overlay = Overlay(
+            content: .image(relativePath: stored.path, aspect: stored.aspect),
+            start: MediaTime(seconds: playhead)
+        )
+        overlay.template = template
+        record("editor.change.overlayAdd", symbol: "photo")
+        project.overlays.append(overlay)
+        overlayImages[overlay.id] = stored.image
+        select(overlay: overlay.id)
+        project.updatedAt = .now
+        return true
+    }
+
+    /// A template picture drawn again with new words: same place, size and time, new picture.
+    public func replaceTemplateImage(_ id: Overlay.ID, with data: Data, template: OverlayTemplate) {
+        guard project.overlays.contains(where: { $0.id == id }), let stored = storeOverlayImage(data) else { return }
+        updateOverlay(id, coalescing: "overlay-template") {
+            $0.content = .image(relativePath: stored.path, aspect: stored.aspect)
+            $0.template = template
+        }
+        overlayImages[id] = stored.image
+    }
+
+    /// Writes a picture upright into the project's media folder.
+    private func storeOverlayImage(_ data: Data) -> (path: String, aspect: Double, image: UIImage)? {
         guard let mediaDirectory, let source = UIImage(data: data), source.size.width > 0, source.size.height > 0 else {
-            return false
+            return nil
         }
         let longest = max(source.size.width, source.size.height)
         let factor = min(1, 2400 / longest)
@@ -32,22 +58,12 @@ extension EditorModel {
         let upright = UIGraphicsImageRenderer(size: size, format: format).image { _ in
             source.draw(in: CGRect(origin: .zero, size: size))
         }
-        guard let png = upright.pngData() else { return false }
+        guard let png = upright.pngData() else { return nil }
 
         let name = "overlay-\(UUID().uuidString).png"
         let url = mediaDirectory.appending(path: name, directoryHint: .notDirectory)
-        guard (try? png.write(to: url, options: .atomic)) != nil else { return false }
-
-        let overlay = Overlay(
-            content: .image(relativePath: "media/\(name)", aspect: Double(size.width / size.height)),
-            start: MediaTime(seconds: playhead)
-        )
-        record("editor.change.overlayAdd", symbol: "photo")
-        project.overlays.append(overlay)
-        overlayImages[overlay.id] = upright
-        select(overlay: overlay.id)
-        project.updatedAt = .now
-        return true
+        guard (try? png.write(to: url, options: .atomic)) != nil else { return nil }
+        return ("media/\(name)", Double(size.width / size.height), upright)
     }
 
     /// Adds a line of text at the playhead and selects it.

@@ -3,10 +3,11 @@ import Domain
 import SwiftUI
 import UIKit
 
-// Picture templates for a sponsored video: a discount code, a price tag, a launch stamp, a
-// partnership tag — thirty of them, sorted by the kind of brand they suit. Each is filled in with
-// the brand's name, a line and a detail in the brand's colour, drawn as a picture and laid on the
-// timeline at the playhead like any other picture, so it can be moved, timed and sized there.
+// Picture templates for a sponsored video — a discount code, a price tag, a coupon, a poll, a
+// before and after — sorted by the kind of brand they suit. Every line of a template is its own
+// field, with the brand's colour, a dark or light look and a choice of face. The template is drawn
+// as a picture and laid on the timeline at the playhead like any other picture; what it was drawn
+// from is kept on it, so its words can be changed there and the picture drawn again.
 
 /// The kinds of brand the templates are sorted by.
 enum AdCategory: String, CaseIterable, Identifiable {
@@ -49,102 +50,248 @@ enum AdCategory: String, CaseIterable, Identifiable {
     }
 }
 
-/// How a template is drawn.
-enum AdStyle: String {
-    case codeCard, lowerThird, badge, priceTag, bigTitle, linkPill, review, countdown, newDrop, ticket, collab
+/// One line of a template, filled in by the creator.
+enum AdSlot: String, CaseIterable {
+    case brand, label, title, detail, code, price, oldPrice, number, note, date, place, cta, optionA, optionB, item1, item2, item3
 
-    /// Where it lands on the frame, and how wide it is as a share of the frame's width.
-    var placement: (x: Double, y: Double, width: Double) {
+    var name: String {
         switch self {
-        case .codeCard: (0.5, 0.74, 0.62)
-        case .lowerThird: (0.5, 0.82, 0.86)
-        case .badge: (0.74, 0.24, 0.32)
-        case .priceTag: (0.5, 0.72, 0.58)
-        case .bigTitle: (0.5, 0.26, 0.84)
-        case .linkPill: (0.5, 0.86, 0.56)
-        case .review: (0.5, 0.72, 0.7)
-        case .countdown: (0.5, 0.18, 0.66)
-        case .newDrop: (0.5, 0.3, 0.62)
-        case .ticket: (0.5, 0.72, 0.72)
-        case .collab: (0.5, 0.16, 0.6)
+        case .brand: String(localized: "editor.template.slot.brand", bundle: .module)
+        case .label: String(localized: "editor.template.slot.label", bundle: .module)
+        case .title: String(localized: "editor.template.slot.title", bundle: .module)
+        case .detail: String(localized: "editor.template.slot.detail", bundle: .module)
+        case .code: String(localized: "editor.template.slot.code", bundle: .module)
+        case .price: String(localized: "editor.template.slot.price", bundle: .module)
+        case .oldPrice: String(localized: "editor.template.slot.oldPrice", bundle: .module)
+        case .number: String(localized: "editor.template.slot.number", bundle: .module)
+        case .note: String(localized: "editor.template.slot.note", bundle: .module)
+        case .date: String(localized: "editor.template.slot.date", bundle: .module)
+        case .place: String(localized: "editor.template.slot.place", bundle: .module)
+        case .cta: String(localized: "editor.template.slot.cta", bundle: .module)
+        case .optionA: String(localized: "editor.template.slot.optionA", bundle: .module)
+        case .optionB: String(localized: "editor.template.slot.optionB", bundle: .module)
+        case .item1: String(localized: "editor.template.slot.item1", bundle: .module)
+        case .item2: String(localized: "editor.template.slot.item2", bundle: .module)
+        case .item3: String(localized: "editor.template.slot.item3", bundle: .module)
         }
     }
 }
 
-/// One template: a style with a first draft of its words, in the viewer's language.
+/// The faces a template's big lines can take.
+enum AdFont: String, CaseIterable {
+    case display, clean, mono
+
+    var title: String {
+        switch self {
+        case .display: String(localized: "editor.template.font.display", bundle: .module)
+        case .clean: String(localized: "editor.template.font.clean", bundle: .module)
+        case .mono: String(localized: "editor.template.font.mono", bundle: .module)
+        }
+    }
+
+    func font(_ size: CGFloat) -> Font {
+        switch self {
+        case .display: DS.fixed(.archivo, .extrabold, size)
+        case .clean: DS.fixed(.sans, .semibold, size * 0.94)
+        case .mono: DS.fixed(.mono, .medium, size * 0.86)
+        }
+    }
+}
+
+/// How a template is drawn, and which lines it has.
+enum AdStyle: String, CaseIterable {
+    case codeCard, coupon, priceTag, spotlight, badge, stat, bigTitle, lowerThird, newDrop, countdown, promoStrip
+    case review, quote, checklist, beforeAfter, poll, giveaway, ticket, location, linkPill, ctaButton, collab
+
+    var slots: [AdSlot] {
+        switch self {
+        case .codeCard: [.label, .code, .note, .brand]
+        case .coupon: [.number, .label, .code, .date, .brand]
+        case .priceTag: [.title, .price, .oldPrice, .brand]
+        case .spotlight: [.label, .title, .price, .brand]
+        case .badge: [.number, .label, .brand]
+        case .stat: [.number, .title, .detail, .brand]
+        case .bigTitle: [.brand, .title, .detail]
+        case .lowerThird: [.brand, .title, .detail]
+        case .newDrop: [.label, .title, .detail, .brand]
+        case .countdown: [.title, .detail, .brand]
+        case .promoStrip: [.title, .detail]
+        case .review: [.title, .detail, .brand]
+        case .quote: [.title, .detail]
+        case .checklist: [.title, .item1, .item2, .item3, .brand]
+        case .beforeAfter: [.optionA, .title, .optionB, .detail]
+        case .poll: [.title, .optionA, .optionB]
+        case .giveaway: [.title, .item1, .item2, .item3, .brand]
+        case .ticket: [.brand, .title, .detail, .date]
+        case .location: [.place, .detail, .cta]
+        case .linkPill: [.title, .brand]
+        case .ctaButton: [.detail, .cta, .brand]
+        case .collab: [.brand, .title]
+        }
+    }
+
+    /// Where it lands on the frame — its centre, from the left and the top — and how wide it is
+    /// as a share of the frame's width.
+    var placement: (x: Double, y: Double, width: Double) {
+        switch self {
+        case .codeCard: (0.5, 0.72, 0.64)
+        case .coupon: (0.5, 0.7, 0.72)
+        case .priceTag: (0.5, 0.74, 0.62)
+        case .spotlight: (0.5, 0.66, 0.62)
+        case .badge: (0.75, 0.22, 0.32)
+        case .stat: (0.5, 0.3, 0.62)
+        case .bigTitle: (0.5, 0.24, 0.86)
+        case .lowerThird: (0.5, 0.84, 0.88)
+        case .newDrop: (0.5, 0.3, 0.64)
+        case .countdown: (0.5, 0.16, 0.7)
+        case .promoStrip: (0.5, 0.5, 1.1)
+        case .review: (0.5, 0.72, 0.72)
+        case .quote: (0.5, 0.3, 0.8)
+        case .checklist: (0.5, 0.66, 0.7)
+        case .beforeAfter: (0.5, 0.74, 0.86)
+        case .poll: (0.5, 0.62, 0.66)
+        case .giveaway: (0.5, 0.66, 0.72)
+        case .ticket: (0.5, 0.72, 0.76)
+        case .location: (0.5, 0.8, 0.62)
+        case .linkPill: (0.5, 0.86, 0.58)
+        case .ctaButton: (0.5, 0.82, 0.62)
+        case .collab: (0.5, 0.14, 0.62)
+        }
+    }
+}
+
+/// One template: a style, a first draft of every line in the viewer's language, and a colour.
 struct AdTemplate: Identifiable, Hashable {
     let id: String
     let category: AdCategory
     let style: AdStyle
-    let headline: String
-    let detail: String
+    let texts: [AdSlot: String]
     /// The colour it suggests when the brand has none of its own.
     let accent: UInt32
+    let isLight: Bool
 
     private static var turkish: Bool { Locale.current.language.languageCode?.identifier == "tr" }
     private static func say(_ tr: String, _ en: String) -> String { turkish ? tr : en }
 
-    private init(_ id: String, _ category: AdCategory, _ style: AdStyle, _ headline: String, _ detail: String, _ accent: UInt32) {
+    private init(_ id: String, _ category: AdCategory, _ style: AdStyle, _ accent: UInt32, light: Bool = false, _ texts: [AdSlot: String]) {
         self.id = id
         self.category = category
         self.style = style
-        self.headline = headline
-        self.detail = detail
+        self.texts = texts
         self.accent = accent
+        self.isLight = light
     }
 
     static let all: [AdTemplate] = [
         // Beauty
-        AdTemplate("beauty.code", .beauty, .codeCard, say("İndirim kodu", "Discount code"), "GLOW20", 0xF7A8C4),
-        AdTemplate("beauty.review", .beauty, .review, say("İki haftada fark ettim", "Two weeks in, I can tell"), say("Cildim teşekkür ediyor", "My skin says thanks"), 0xF7A8C4),
-        AdTemplate("beauty.new", .beauty, .newDrop, say("Yeni serum", "New serum"), say("Şimdi raflarda", "Out now"), 0xE9C9A6),
+        AdTemplate("beauty.code", .beauty, .codeCard, 0xF7A8C4, [.label: say("İndirim kodu", "Discount code"), .code: "GLOW20", .note: say("Tüm ürünlerde · Pazar'a kadar", "Sitewide · until Sunday"), .brand: "Glow"]),
+        AdTemplate("beauty.review", .beauty, .review, 0xF7A8C4, light: true, [.title: say("İki haftada fark ettim, cildim daha parlak", "Two weeks in and my skin is brighter"), .detail: say("14 gündür kullanıyorum", "Using it for 14 days"), .brand: "Glow"]),
+        AdTemplate("beauty.new", .beauty, .newDrop, 0xE9C9A6, [.label: say("YENİ", "NEW"), .title: say("C vitamini serumu", "Vitamin C serum"), .detail: say("Şimdi raflarda", "Out now"), .brand: "Glow"]),
+        AdTemplate("beauty.beforeafter", .beauty, .beforeAfter, 0xF7A8C4, [.optionA: say("ÖNCE", "BEFORE"), .title: say("Mat ve yorgun", "Dull and tired"), .optionB: say("SONRA", "AFTER"), .detail: say("Aydınlık ve nemli", "Bright and hydrated")]),
+        AdTemplate("beauty.checklist", .beauty, .checklist, 0xF7A8C4, light: true, [.title: say("Neden seviyorum", "Why I love it"), .item1: say("Parfümsüz", "Fragrance-free"), .item2: say("Hassas cilde uygun", "Good for sensitive skin"), .item3: say("Hızlı emiliyor", "Absorbs fast"), .brand: "Glow"]),
         // Fashion
-        AdTemplate("fashion.title", .fashion, .bigTitle, say("Yeni sezon", "New season"), say("Koleksiyon yayında", "The collection is live"), 0x111111),
-        AdTemplate("fashion.price", .fashion, .priceTag, say("Keten gömlek", "Linen shirt"), "899 ₺", 0xD8C3A5),
-        AdTemplate("fashion.countdown", .fashion, .countdown, say("Son 24 saat", "Last 24 hours"), say("Sepette %30", "30% off at checkout"), 0xFF5A4F),
+        AdTemplate("fashion.title", .fashion, .bigTitle, 0xFFFFFF, [.brand: "Atelier", .title: say("Yeni sezon", "New season"), .detail: say("Koleksiyon yayında", "The collection is live")]),
+        AdTemplate("fashion.price", .fashion, .priceTag, 0xD8C3A5, light: true, [.title: say("Keten gömlek", "Linen shirt"), .price: "899 ₺", .oldPrice: "1.299 ₺", .brand: "Atelier"]),
+        AdTemplate("fashion.countdown", .fashion, .countdown, 0xFF5A4F, light: true, [.title: say("Son 24 saat", "Last 24 hours"), .detail: say("Sepette %30 indirim", "30% off at checkout"), .brand: "Atelier"]),
+        AdTemplate("fashion.strip", .fashion, .promoStrip, 0xFFB840, [.title: say("SEZON SONU", "END OF SEASON"), .detail: "%50"]),
+        AdTemplate("fashion.poll", .fashion, .poll, 0xFF5A4F, light: true, [.title: say("Hangisini alayım?", "Which one should I get?"), .optionA: say("Siyah", "Black"), .optionB: say("Bej", "Beige")]),
         // Food & drink
-        AdTemplate("food.badge", .food, .badge, "%25", say("İNDİRİM", "OFF"), 0xFFB840),
-        AdTemplate("food.price", .food, .priceTag, say("Menü", "Combo"), "149 ₺", 0xFF7A3D),
-        AdTemplate("food.link", .food, .linkPill, say("Sipariş linki bio'da", "Order link in bio"), "", 0x2FBF71),
+        AdTemplate("food.badge", .food, .badge, 0xFFB840, [.number: "%25", .label: say("İNDİRİM", "OFF"), .brand: "Lezzet"]),
+        AdTemplate("food.price", .food, .priceTag, 0xFF7A3D, light: true, [.title: say("Burger menü", "Burger combo"), .price: "149 ₺", .oldPrice: "189 ₺", .brand: "Lezzet"]),
+        AdTemplate("food.location", .food, .location, 0xFF5A4F, light: true, [.place: "Lezzet Kadıköy", .detail: say("Moda Cad. No: 12", "12 Moda Street"), .cta: say("Bugün gel", "Come today")]),
+        AdTemplate("food.cta", .food, .ctaButton, 0x2FBF71, [.detail: say("İlk siparişe ücretsiz teslimat", "Free delivery on your first order"), .cta: say("Şimdi sipariş ver", "Order now"), .brand: "Lezzet"]),
+        AdTemplate("food.coupon", .food, .coupon, 0xFFB840, light: true, [.number: "%20", .label: say("İLK SİPARİŞ", "FIRST ORDER"), .code: "AFIYET", .date: say("31 Ekim'e kadar", "Until 31 October"), .brand: "Lezzet"]),
         // Tech
-        AdTemplate("tech.new", .tech, .newDrop, say("Yeni model", "The new model"), say("Ön siparişte", "Pre-order now"), 0x3D8BFF),
-        AdTemplate("tech.review", .tech, .review, say("Pil iki gün gitti", "The battery lasted two days"), say("Bir ay kullandım", "After a month of use"), 0x3D8BFF),
-        AdTemplate("tech.code", .tech, .codeCard, say("Kodla ek indirim", "Extra off with code"), "TECH15", 0x6C5CE7),
+        AdTemplate("tech.new", .tech, .newDrop, 0x3D8BFF, [.label: say("YENİ", "NEW"), .title: say("Yeni kulaklık", "The new earbuds"), .detail: say("Ön siparişte", "Pre-order now"), .brand: "Pulse"]),
+        AdTemplate("tech.stat", .tech, .stat, 0x3D8BFF, [.number: say("2 kat", "2×"), .title: say("daha uzun pil", "the battery life"), .detail: say("Bir ay kullandım", "After a month of use"), .brand: "Pulse"]),
+        AdTemplate("tech.spotlight", .tech, .spotlight, 0x6C5CE7, [.label: say("ÖNE ÇIKAN", "SPOTLIGHT"), .title: "Pulse Pro", .price: "4.999 ₺", .brand: "Pulse"]),
+        AdTemplate("tech.checklist", .tech, .checklist, 0x3D8BFF, [.title: say("3 sebep", "3 reasons"), .item1: say("Gürültü engelleme", "Noise cancelling"), .item2: say("30 saat pil", "30-hour battery"), .item3: say("Suya dayanıklı", "Water resistant"), .brand: "Pulse"]),
+        AdTemplate("tech.code", .tech, .codeCard, 0x6C5CE7, [.label: say("Kodla ek indirim", "Extra off with code"), .code: "TECH15", .note: say("Sadece bu hafta", "This week only"), .brand: "Pulse"]),
         // Gaming
-        AdTemplate("gaming.collab", .gaming, .collab, say("İş birliği", "Partnership"), "", 0x9B5CFF),
-        AdTemplate("gaming.code", .gaming, .codeCard, say("Oyun içi kod", "In-game code"), "LOOT2026", 0x9B5CFF),
-        AdTemplate("gaming.countdown", .gaming, .countdown, say("Etkinlik bitiyor", "Event ends soon"), say("Son 3 gün", "3 days left"), 0x00E5A8),
+        AdTemplate("gaming.collab", .gaming, .collab, 0x9B5CFF, [.brand: "Nova Games", .title: say("İş birliği", "Partnership")]),
+        AdTemplate("gaming.code", .gaming, .codeCard, 0x9B5CFF, [.label: say("Oyun içi kod", "In-game code"), .code: "LOOT2026", .note: say("Efsanevi kostüm hediye", "A legendary skin, free"), .brand: "Nova Games"]),
+        AdTemplate("gaming.countdown", .gaming, .countdown, 0x00E5A8, [.title: say("Etkinlik bitiyor", "Event ends soon"), .detail: say("Son 3 gün", "3 days left"), .brand: "Nova Games"]),
+        AdTemplate("gaming.giveaway", .gaming, .giveaway, 0x9B5CFF, [.title: say("Çekiliş", "Giveaway"), .item1: say("Takip et", "Follow"), .item2: say("Arkadaşını etiketle", "Tag a friend"), .item3: say("Yorum yaz", "Leave a comment"), .brand: "Nova Games"]),
+        AdTemplate("gaming.poll", .gaming, .poll, 0x00E5A8, [.title: say("Hangi karakter?", "Which character?"), .optionA: say("Savaşçı", "Warrior"), .optionB: say("Büyücü", "Mage")]),
         // Fitness
-        AdTemplate("fitness.title", .fitness, .bigTitle, say("30 gün meydan okuma", "30-day challenge"), say("Benimle başla", "Start with me"), 0xC6F24A),
-        AdTemplate("fitness.badge", .fitness, .badge, "%40", say("ÜYELİK", "MEMBERSHIP"), 0xC6F24A),
+        AdTemplate("fitness.title", .fitness, .bigTitle, 0xC6F24A, [.brand: "Fit+", .title: say("30 gün meydan okuma", "30-day challenge"), .detail: say("Benimle başla", "Start with me")]),
+        AdTemplate("fitness.badge", .fitness, .badge, 0xC6F24A, [.number: "%40", .label: say("ÜYELİK", "MEMBERSHIP"), .brand: "Fit+"]),
+        AdTemplate("fitness.stat", .fitness, .stat, 0xC6F24A, [.number: "-6 kg", .title: say("8 haftada", "in 8 weeks"), .detail: say("Programı takip ettim", "I followed the plan"), .brand: "Fit+"]),
+        AdTemplate("fitness.beforeafter", .fitness, .beforeAfter, 0xC6F24A, [.optionA: say("1. GÜN", "DAY 1"), .title: say("10 şınav", "10 push-ups"), .optionB: say("30. GÜN", "DAY 30"), .detail: say("40 şınav", "40 push-ups")]),
+        AdTemplate("fitness.cta", .fitness, .ctaButton, 0xC6F24A, [.detail: say("İlk hafta ücretsiz", "First week free"), .cta: say("Hemen katıl", "Join now"), .brand: "Fit+"]),
         // Travel
-        AdTemplate("travel.ticket", .travel, .ticket, say("Kapadokya kaçamağı", "A weekend in Cappadocia"), say("3 gece · Kahvaltı dahil", "3 nights · Breakfast included"), 0x1FB5C9),
-        AdTemplate("travel.title", .travel, .bigTitle, say("Nereye gidiyoruz?", "Where to next?"), say("Rota linkte", "Route in the link"), 0x1FB5C9),
-        AdTemplate("travel.link", .travel, .linkPill, say("Erken rezervasyon linkte", "Early booking in the link"), "", 0xFFB840),
+        AdTemplate("travel.ticket", .travel, .ticket, 0x1FB5C9, light: true, [.brand: "Rota", .title: say("Kapadokya kaçamağı", "A weekend in Cappadocia"), .detail: say("3 gece · Kahvaltı dahil", "3 nights · Breakfast included"), .date: "12–15 EKİM"]),
+        AdTemplate("travel.title", .travel, .bigTitle, 0x1FB5C9, [.brand: "Rota", .title: say("Nereye gidiyoruz?", "Where to next?"), .detail: say("Rota linkte", "Route in the link")]),
+        AdTemplate("travel.link", .travel, .linkPill, 0xFFB840, [.title: say("Erken rezervasyon linkte", "Early booking in the link"), .brand: "Rota"]),
+        AdTemplate("travel.location", .travel, .location, 0x1FB5C9, light: true, [.place: "Uçhisar", .detail: say("Kapadokya, Nevşehir", "Cappadocia, Türkiye"), .cta: say("Haritada gör", "See on the map")]),
+        AdTemplate("travel.coupon", .travel, .coupon, 0x1FB5C9, [.number: "%15", .label: say("OTEL İNDİRİMİ", "HOTEL DISCOUNT"), .code: "ROTA15", .date: say("Kasım sonuna kadar", "Until the end of November"), .brand: "Rota"]),
         // Apps & finance
-        AdTemplate("finance.code", .finance, .codeCard, say("Davet kodu", "Invite code"), "HOSGELDIN", 0x2FBF71),
-        AdTemplate("finance.link", .finance, .linkPill, say("Uygulamayı indir", "Get the app"), "", 0x3D8BFF),
+        AdTemplate("finance.code", .finance, .codeCard, 0x2FBF71, [.label: say("Davet kodu", "Invite code"), .code: "HOSGELDIN", .note: say("İlk yatırıma 100 ₺ hediye", "₺100 on your first deposit"), .brand: "Cüzdan"]),
+        AdTemplate("finance.link", .finance, .linkPill, 0x3D8BFF, [.title: say("Uygulamayı indir", "Get the app"), .brand: "Cüzdan"]),
+        AdTemplate("finance.stat", .finance, .stat, 0x2FBF71, [.number: "%0", .title: say("komisyon", "commission"), .detail: say("İlk 3 ay", "For the first 3 months"), .brand: "Cüzdan"]),
+        AdTemplate("finance.checklist", .finance, .checklist, 0x2FBF71, light: true, [.title: say("2 dakikada hesap", "An account in 2 minutes"), .item1: say("Uygulamayı indir", "Download the app"), .item2: say("Kodu gir", "Enter the code"), .item3: say("Hediyeni al", "Get your gift"), .brand: "Cüzdan"]),
+        AdTemplate("finance.cta", .finance, .ctaButton, 0x3D8BFF, [.detail: say("Linki profilde", "Link in profile"), .cta: say("Ücretsiz başla", "Start free"), .brand: "Cüzdan"]),
         // Home & living
-        AdTemplate("home.price", .home, .priceTag, say("Kahve makinesi", "Coffee machine"), "2.499 ₺", 0xB08968),
-        AdTemplate("home.review", .home, .review, say("Sabahlarım değişti", "My mornings changed"), say("Her gün kullanıyorum", "I use it every day"), 0xB08968),
+        AdTemplate("home.price", .home, .priceTag, 0xB08968, light: true, [.title: say("Kahve makinesi", "Coffee machine"), .price: "2.499 ₺", .oldPrice: "3.199 ₺", .brand: "Evim"]),
+        AdTemplate("home.review", .home, .review, 0xB08968, light: true, [.title: say("Sabahlarım gerçekten değişti", "My mornings really changed"), .detail: say("Her gün kullanıyorum", "I use it every day"), .brand: "Evim"]),
+        AdTemplate("home.spotlight", .home, .spotlight, 0xB08968, [.label: say("ÇOK SATAN", "BESTSELLER"), .title: say("Keten nevresim", "Linen bedding"), .price: "1.199 ₺", .brand: "Evim"]),
+        AdTemplate("home.quote", .home, .quote, 0xB08968, [.title: say("Ev, en çok vakit geçirdiğin yer olmalı.", "Home should be your favourite place."), .detail: "Evim"]),
+        AdTemplate("home.strip", .home, .promoStrip, 0xB08968, [.title: say("EV HAFTASI", "HOME WEEK"), .detail: "%30"]),
         // Education
-        AdTemplate("education.ticket", .education, .ticket, say("Canlı ders", "Live class"), say("Salı 20:00 · Ücretsiz", "Tuesday 8 pm · Free"), 0x6C5CE7),
-        AdTemplate("education.badge", .education, .badge, "%50", say("İLK AY", "FIRST MONTH"), 0x6C5CE7),
+        AdTemplate("education.ticket", .education, .ticket, 0x6C5CE7, light: true, [.brand: "Akademi", .title: say("Canlı ders", "Live class"), .detail: say("Ücretsiz · Kayıt linkte", "Free · Sign up in the link"), .date: say("SALI 20:00", "TUE 8 PM")]),
+        AdTemplate("education.badge", .education, .badge, 0x6C5CE7, [.number: "%50", .label: say("İLK AY", "FIRST MONTH"), .brand: "Akademi"]),
+        AdTemplate("education.checklist", .education, .checklist, 0x6C5CE7, [.title: say("Bu derste", "In this class"), .item1: say("Temelleri öğren", "Learn the basics"), .item2: say("Proje yap", "Build a project"), .item3: say("Sertifika al", "Get a certificate"), .brand: "Akademi"]),
+        AdTemplate("education.stat", .education, .stat, 0x6C5CE7, [.number: "12.000+", .title: say("öğrenci", "students"), .detail: say("Sen de katıl", "Join them"), .brand: "Akademi"]),
+        AdTemplate("education.quote", .education, .quote, 0x6C5CE7, light: true, [.title: say("Hiç bu kadar kolay öğrenmemiştim.", "I've never learned this easily."), .detail: say("Bir öğrenci", "A student")]),
         // Events
-        AdTemplate("events.ticket", .events, .ticket, say("Festival", "Festival"), say("12 Ekim · İstanbul", "12 October · Istanbul"), 0xFF5A4F),
-        AdTemplate("events.countdown", .events, .countdown, say("Biletler tükeniyor", "Tickets selling out"), say("Son 100 bilet", "Last 100 tickets"), 0xFF5A4F),
+        AdTemplate("events.ticket", .events, .ticket, 0xFF5A4F, light: true, [.brand: "Fest", .title: say("Yaz festivali", "Summer festival"), .detail: say("İstanbul · Kapılar 18:00", "Istanbul · Doors 6 pm"), .date: "12.10"]),
+        AdTemplate("events.countdown", .events, .countdown, 0xFF5A4F, light: true, [.title: say("Biletler tükeniyor", "Tickets selling out"), .detail: say("Son 100 bilet", "Last 100 tickets"), .brand: "Fest"]),
+        AdTemplate("events.giveaway", .events, .giveaway, 0xFF5A4F, [.title: say("2 bilet kazan", "Win 2 tickets"), .item1: say("Beğen", "Like"), .item2: say("Arkadaşını etiketle", "Tag a friend"), .item3: say("Paylaş", "Share"), .brand: "Fest"]),
+        AdTemplate("events.location", .events, .location, 0xFF5A4F, [.place: "KüçükÇiftlik Park", .detail: say("Maçka, İstanbul", "Maçka, Istanbul"), .cta: say("Yol tarifi", "Directions")]),
+        AdTemplate("events.strip", .events, .promoStrip, 0xFF5A4F, [.title: say("BİLETLER SATIŞTA", "TICKETS ON SALE"), .detail: "LIVE"]),
         // Partnership
-        AdTemplate("partnership.lower", .partnership, .lowerThird, say("İş birliği", "Paid partnership"), say("Bu video reklam içerir", "This video contains an ad"), 0xFF5A4F),
-        AdTemplate("partnership.collab", .partnership, .collab, say("İş birliği", "Partnership"), "", 0x111111),
+        AdTemplate("partnership.lower", .partnership, .lowerThird, 0xFF5A4F, [.brand: say("Marka", "Brand"), .title: say("İş birliği", "Paid partnership"), .detail: say("Bu video reklam içerir", "This video contains an ad")]),
+        AdTemplate("partnership.collab", .partnership, .collab, 0xFFFFFF, [.brand: say("Marka", "Brand"), .title: say("İş birliği", "Partnership")]),
+        AdTemplate("partnership.cta", .partnership, .ctaButton, 0xFF5A4F, light: true, [.detail: say("Kodum açıklamada", "My code is in the description"), .cta: say("Linke dokun", "Tap the link"), .brand: say("Marka", "Brand")]),
+        AdTemplate("partnership.link", .partnership, .linkPill, 0xC6F24A, [.title: say("Link bio'da", "Link in bio"), .brand: say("Marka", "Brand")]),
     ]
 }
 
-/// What the creator fills in: the same across templates, so switching keeps the brand.
+/// What the creator fills in.
 struct AdTemplateFields: Equatable {
-    var brand: String
-    var headline: String
-    var detail: String
+    var texts: [AdSlot: String]
     var accent: Color
+    var isLight: Bool
+    var font: AdFont
+
+    func text(_ slot: AdSlot) -> String { texts[slot] ?? "" }
+
+    /// For keeping on the picture.
+    func stored(templateID: String) -> OverlayTemplate {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        UIColor(accent).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        return OverlayTemplate(
+            id: templateID,
+            texts: Dictionary(uniqueKeysWithValues: texts.map { ($0.key.rawValue, $0.value) }),
+            accent: RGBAColor(red: Double(red), green: Double(green), blue: Double(blue), alpha: Double(alpha)),
+            isLight: isLight,
+            font: font.rawValue
+        )
+    }
+
+    init(texts: [AdSlot: String], accent: Color, isLight: Bool, font: AdFont) {
+        self.texts = texts
+        self.accent = accent
+        self.isLight = isLight
+        self.font = font
+    }
+
+    init(stored: OverlayTemplate) {
+        texts = Dictionary(uniqueKeysWithValues: stored.texts.compactMap { key, value in AdSlot(rawValue: key).map { ($0, value) } })
+        accent = Color(.sRGB, red: stored.accent.red, green: stored.accent.green, blue: stored.accent.blue, opacity: stored.accent.alpha)
+        isLight = stored.isLight
+        font = AdFont(rawValue: stored.font) ?? .display
+    }
 }
 
 // MARK: - Drawing
@@ -157,300 +304,533 @@ struct AdTemplateArt: View {
     static let width: CGFloat = 360
 
     private var accent: Color { fields.accent }
-    /// Text on the accent: black on light colours, white on dark ones.
+    /// Text on the accent: near-black on light colours, white on dark ones.
     private var onAccent: Color { Self.isLight(fields.accent) ? Color(white: 0.06) : .white }
-    private var brand: String { fields.brand.trimmingCharacters(in: .whitespaces).isEmpty ? "BRAND" : fields.brand }
+    /// The card: white or near-black.
+    private var paper: Color { fields.isLight ? .white : Color(white: 0.07) }
+    private var ink: Color { fields.isLight ? Color(white: 0.06) : .white }
+    private var sub: Color { fields.isLight ? Color(white: 0.42) : Color(white: 0.7) }
+    /// The accent where it is text on the card: kept readable when the accent is close to the card.
+    private var accentInk: Color {
+        let accentIsLight = Self.isLight(fields.accent)
+        if fields.isLight, accentIsLight { return Color(white: 0.06) }
+        if !fields.isLight, !accentIsLight, Self.luminance(fields.accent) < 0.2 { return .white }
+        return accent
+    }
+
+    private func t(_ slot: AdSlot) -> String { fields.text(slot) }
+    private func big(_ size: CGFloat) -> Font { fields.font.font(size) }
+    private func sans(_ weight: DS.FontWeight, _ size: CGFloat) -> Font { DS.fixed(.sans, weight, size) }
+    private func mono(_ size: CGFloat) -> Font { DS.fixed(.mono, .medium, size) }
 
     var body: some View {
         Group {
             switch style {
             case .codeCard: codeCard
-            case .lowerThird: lowerThird
-            case .badge: badge
+            case .coupon: coupon
             case .priceTag: priceTag
+            case .spotlight: spotlight
+            case .badge: badge
+            case .stat: stat
             case .bigTitle: bigTitle
-            case .linkPill: linkPill
-            case .review: review
-            case .countdown: countdown
+            case .lowerThird: lowerThird
             case .newDrop: newDrop
+            case .countdown: countdown
+            case .promoStrip: promoStrip
+            case .review: review
+            case .quote: quote
+            case .checklist: checklist
+            case .beforeAfter: beforeAfter
+            case .poll: poll
+            case .giveaway: giveaway
             case .ticket: ticket
+            case .location: location
+            case .linkPill: linkPill
+            case .ctaButton: ctaButton
             case .collab: collab
             }
         }
         .frame(width: Self.width)
-        .environment(\.colorScheme, .dark)
     }
 
-    private func font(_ family: DS.FontFamily, _ weight: DS.FontWeight, _ size: CGFloat) -> Font {
-        DS.fixed(family, weight, size)
+    private func card(_ radius: CGFloat = 24) -> some View {
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(paper.opacity(fields.isLight ? 1 : 0.94))
+            .shadow(color: .black.opacity(0.28), radius: 14, y: 8)
+    }
+
+    @ViewBuilder
+    private func line(_ slot: AdSlot, _ font: Font, _ color: Color, tracking: CGFloat = 0, lines: Int = 1) -> some View {
+        if !t(slot).isEmpty {
+            Text(verbatim: t(slot))
+                .font(font)
+                .tracking(tracking)
+                .foregroundStyle(color)
+                .lineLimit(lines)
+                .minimumScaleFactor(0.5)
+        }
     }
 
     private var codeCard: some View {
-        VStack(spacing: 10) {
-            Text(fields.headline.uppercased())
-                .font(font(.mono, .medium, 13))
-                .tracking(2)
-                .foregroundStyle(.white.opacity(0.75))
-            Text(fields.detail.isEmpty ? "CODE" : fields.detail)
-                .font(font(.archivo, .extrabold, 48))
+        VStack(spacing: 12) {
+            line(.label, mono(13), sub, tracking: 2.5)
+            Text(verbatim: t(.code).isEmpty ? "CODE" : t(.code))
+                .font(big(46))
                 .foregroundStyle(onAccent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
                 .padding(.horizontal, 22)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(accent))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 5])).foregroundStyle(onAccent.opacity(0.35)).padding(5))
-            Text(brand)
-                .font(font(.sans, .semibold, 15))
-                .foregroundStyle(.white.opacity(0.9))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(onAccent.opacity(0.35), style: StrokeStyle(lineWidth: 2, dash: [7, 5]))
+                        .padding(6)
+                )
+            line(.note, sans(.medium, 14), ink, lines: 2)
+            line(.brand, mono(12), sub, tracking: 2)
         }
-        .padding(.vertical, 20)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color(white: 0.07).opacity(0.92)))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(accent.opacity(0.7), lineWidth: 2))
+        .padding(20)
+        .background(card(26))
     }
 
-    private var lowerThird: some View {
+    private var coupon: some View {
         HStack(spacing: 0) {
-            Text(brand.uppercased())
-                .font(font(.archivo, .extrabold, 20))
-                .foregroundStyle(onAccent)
-                .padding(.horizontal, 16)
-                .frame(maxHeight: .infinity)
-                .background(accent)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(fields.headline)
-                    .font(font(.sans, .semibold, 18))
-                    .foregroundStyle(Color(white: 0.06))
-                if !fields.detail.isEmpty {
-                    Text(fields.detail)
-                        .font(font(.sans, .regular, 13))
-                        .foregroundStyle(Color(white: 0.3))
-                }
-            }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .background(Color.white)
-        }
-        .frame(height: 66)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private var badge: some View {
-        ZStack {
-            StarBurst(points: 16)
-                .fill(accent)
-            VStack(spacing: 0) {
-                Text(fields.headline)
-                    .font(font(.archivo, .extrabold, 78))
-                    .minimumScaleFactor(0.5)
+            VStack(spacing: 2) {
+                Text(verbatim: t(.number))
+                    .font(big(44))
+                    .foregroundStyle(onAccent)
                     .lineLimit(1)
-                Text(fields.detail)
-                    .font(font(.mono, .medium, 18))
-                    .tracking(2)
-                Text(brand)
-                    .font(font(.sans, .semibold, 15))
-                    .opacity(0.8)
-                    .padding(.top, 4)
+                    .minimumScaleFactor(0.4)
+                line(.label, mono(11), onAccent.opacity(0.85), tracking: 1.5, lines: 2)
             }
-            .foregroundStyle(onAccent)
-            .padding(40)
+            .multilineTextAlignment(.center)
+            .padding(12)
+            .frame(width: 130)
+            .frame(maxHeight: .infinity)
+            .background(accent)
+            VStack(alignment: .leading, spacing: 6) {
+                line(.brand, mono(11), sub, tracking: 2)
+                HStack(spacing: 6) {
+                    Image(systemName: "scissors").font(.system(size: 12, weight: .bold)).foregroundStyle(sub)
+                    line(.code, big(26), ink)
+                }
+                line(.date, sans(.medium, 13), sub)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxHeight: .infinity)
+            .background(paper)
         }
-        .frame(width: Self.width, height: Self.width)
-        .rotationEffect(.degrees(-10))
+        .frame(height: 124)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(accent, style: StrokeStyle(lineWidth: 2, dash: [8, 5])))
+        .shadow(color: .black.opacity(0.28), radius: 14, y: 8)
     }
 
     private var priceTag: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(brand.uppercased())
-                    .font(font(.mono, .medium, 12))
-                    .tracking(2)
-                    .foregroundStyle(Color(white: 0.4))
-                Text(fields.headline)
-                    .font(font(.sans, .semibold, 22))
-                    .foregroundStyle(Color(white: 0.06))
-                    .lineLimit(2)
+                line(.brand, mono(11), sub, tracking: 2)
+                line(.title, sans(.semibold, 22), ink, lines: 2)
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(fields.detail)
-                .font(font(.archivo, .extrabold, 30))
-                .foregroundStyle(onAccent)
-                .padding(.horizontal, 18)
-                .frame(maxHeight: .infinity)
-                .background(accent)
+            VStack(spacing: 2) {
+                if !t(.oldPrice).isEmpty {
+                    Text(verbatim: t(.oldPrice))
+                        .font(sans(.medium, 14))
+                        .strikethrough(true, color: onAccent.opacity(0.7))
+                        .foregroundStyle(onAccent.opacity(0.75))
+                }
+                Text(verbatim: t(.price))
+                    .font(big(28))
+                    .foregroundStyle(onAccent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+            }
+            .padding(.horizontal, 16)
+            .frame(minWidth: 120)
+            .frame(maxHeight: .infinity)
+            .background(accent)
         }
-        .frame(height: 96)
-        .background(Color.white)
+        .frame(height: 100)
+        .background(paper)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(alignment: .leading) {
-            Circle().fill(Color(white: 0.85)).frame(width: 12, height: 12).padding(.leading, 6)
+            Circle().fill(sub.opacity(0.4)).frame(width: 12, height: 12).padding(.leading, 7)
         }
+        .shadow(color: .black.opacity(0.28), radius: 14, y: 8)
+    }
+
+    private var spotlight: some View {
+        VStack(spacing: 10) {
+            line(.label, mono(12), onAccent, tracking: 2)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(accent))
+            line(.title, big(34), ink, lines: 2)
+                .multilineTextAlignment(.center)
+            if !t(.price).isEmpty {
+                Text(verbatim: t(.price))
+                    .font(big(28))
+                    .foregroundStyle(accentInk)
+            }
+            line(.brand, mono(12), sub, tracking: 2)
+        }
+        .padding(.vertical, 26)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
+        .background(
+            ZStack {
+                card(30)
+                Circle()
+                    .fill(RadialGradient(colors: [accent.opacity(0.35), .clear], center: .center, startRadius: 4, endRadius: 150))
+                    .frame(width: 300, height: 300)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        )
+    }
+
+    private var badge: some View {
+        ZStack {
+            StarBurst(points: 18)
+                .fill(accent)
+                .shadow(color: .black.opacity(0.3), radius: 12, y: 6)
+            VStack(spacing: 0) {
+                Text(verbatim: t(.number))
+                    .font(big(84))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.4)
+                line(.label, mono(18), onAccent, tracking: 2)
+                line(.brand, sans(.semibold, 15), onAccent.opacity(0.8))
+                    .padding(.top, 4)
+            }
+            .foregroundStyle(onAccent)
+            .padding(44)
+        }
+        .frame(width: Self.width, height: Self.width)
+        .rotationEffect(.degrees(-10))
+    }
+
+    private var stat: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: t(.number))
+                .font(big(78))
+                .foregroundStyle(accentInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+            line(.title, sans(.semibold, 24), ink, lines: 2)
+            Rectangle().fill(accent).frame(width: 56, height: 5).padding(.vertical, 6)
+            line(.detail, sans(.regular, 15), sub, lines: 2)
+            line(.brand, mono(12), sub, tracking: 2)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(card(26))
     }
 
     private var bigTitle: some View {
-        VStack(spacing: 6) {
-            Text(brand.uppercased())
-                .font(font(.mono, .medium, 14))
-                .tracking(4)
-                .foregroundStyle(.white.opacity(0.85))
-            Text(fields.headline)
-                .font(font(.archivo, .extrabold, 54))
+        VStack(spacing: 8) {
+            line(.brand, mono(14), .white.opacity(0.9), tracking: 4)
+            Text(verbatim: t(.title))
+                .font(big(56))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .minimumScaleFactor(0.5)
-                .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
-            Capsule().fill(accent).frame(width: 120, height: 8)
-            if !fields.detail.isEmpty {
-                Text(fields.detail)
-                    .font(font(.sans, .semibold, 18))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.5), radius: 8, y: 3)
-                    .padding(.top, 4)
-            }
+                .minimumScaleFactor(0.4)
+                .shadow(color: .black.opacity(0.55), radius: 12, y: 4)
+            Capsule().fill(accent).frame(width: 110, height: 8)
+            line(.detail, sans(.semibold, 18), .white)
+                .shadow(color: .black.opacity(0.55), radius: 8, y: 3)
         }
         .padding(.vertical, 10)
     }
 
-    private var linkPill: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "arrow.up")
-                .font(.system(size: 20, weight: .heavy))
+    private var lowerThird: some View {
+        HStack(spacing: 0) {
+            Text(verbatim: t(.brand).uppercased())
+                .font(big(20))
                 .foregroundStyle(onAccent)
-                .frame(width: 40, height: 40)
-                .background(Circle().fill(accent))
-            VStack(alignment: .leading, spacing: 1) {
-                Text(fields.headline)
-                    .font(font(.sans, .semibold, 18))
-                    .foregroundStyle(Color(white: 0.06))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.6)
-                Text(brand)
-                    .font(font(.sans, .regular, 13))
-                    .foregroundStyle(Color(white: 0.4))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: 140)
+                .frame(maxHeight: .infinity)
+                .background(accent)
+            VStack(alignment: .leading, spacing: 2) {
+                line(.title, sans(.semibold, 18), ink)
+                line(.detail, sans(.regular, 13), sub)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .background(paper)
         }
-        .padding(8)
-        .padding(.trailing, 12)
-        .background(Capsule().fill(Color.white))
+        .frame(height: 68)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .shadow(color: .black.opacity(0.28), radius: 10, y: 6)
     }
 
-    private var review: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 3) {
-                ForEach(0..<5, id: \.self) { _ in
-                    Image(systemName: "star.fill").font(.system(size: 16)).foregroundStyle(accent)
-                }
-            }
-            Text(verbatim: "“\(fields.headline)”")
-                .font(font(.sans, .semibold, 22))
-                .foregroundStyle(Color(white: 0.06))
-                .lineLimit(3)
-            HStack {
-                Text(fields.detail)
-                    .font(font(.sans, .regular, 14))
-                    .foregroundStyle(Color(white: 0.4))
-                Spacer(minLength: 0)
-                Text(brand)
-                    .font(font(.mono, .medium, 12))
-                    .foregroundStyle(onAccent)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(accent))
-            }
+    private var newDrop: some View {
+        VStack(spacing: 10) {
+            line(.label, big(22), onAccent)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(accent))
+                .rotationEffect(.degrees(-4))
+            line(.title, big(40), ink, lines: 2)
+                .multilineTextAlignment(.center)
+            line(.detail, sans(.semibold, 16), sub)
+            line(.brand, mono(12), sub, tracking: 2)
         }
-        .padding(20)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white))
+        .padding(22)
+        .frame(maxWidth: .infinity)
+        .background(card(26))
     }
 
     private var countdown: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "clock.fill").font(.system(size: 18, weight: .bold))
-                Text(fields.headline.uppercased())
-                    .font(font(.archivo, .extrabold, 26))
+                Text(verbatim: t(.title).uppercased())
+                    .font(big(26))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.5)
             }
             .foregroundStyle(onAccent)
             .padding(.vertical, 12)
+            .padding(.horizontal, 14)
             .frame(maxWidth: .infinity)
             .background(accent)
             HStack {
-                Text(fields.detail)
-                    .font(font(.sans, .semibold, 17))
-                    .foregroundStyle(Color(white: 0.06))
-                Spacer(minLength: 0)
-                Text(brand)
-                    .font(font(.mono, .medium, 12))
-                    .foregroundStyle(Color(white: 0.4))
+                line(.detail, sans(.semibold, 17), ink)
+                Spacer(minLength: 8)
+                line(.brand, mono(12), sub, tracking: 1.5)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.white)
+            .background(paper)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.28), radius: 12, y: 6)
     }
 
-    private var newDrop: some View {
-        VStack(spacing: 8) {
-            Text(String(localized: "editor.template.new", bundle: .module))
-                .font(font(.archivo, .extrabold, 22))
-                .foregroundStyle(onAccent)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(accent))
-                .rotationEffect(.degrees(-4))
-            Text(fields.headline)
-                .font(font(.archivo, .extrabold, 40))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.5)
-            Text(verbatim: fields.detail.isEmpty ? brand : "\(brand) · \(fields.detail)")
-                .font(font(.sans, .semibold, 16))
-                .foregroundStyle(.white.opacity(0.85))
+    private var promoStrip: some View {
+        let unit = [t(.title), t(.detail)].filter { !$0.isEmpty }.joined(separator: "  ✦  ")
+        return Text(verbatim: Array(repeating: unit, count: 4).joined(separator: "  ✦  "))
+            .font(big(26))
+            .foregroundStyle(onAccent)
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.vertical, 12)
+            .frame(width: Self.width * 1.3)
+            .background(accent)
+            .rotationEffect(.degrees(-5))
+            .frame(width: Self.width, height: 110)
+            .clipped()
+    }
+
+    private var review: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 3) {
+                ForEach(0..<5, id: \.self) { _ in
+                    Image(systemName: "star.fill").font(.system(size: 16)).foregroundStyle(Self.isLight(accent) && fields.isLight ? Color(hex: 0xF5A623) : accent)
+                }
+            }
+            if !t(.title).isEmpty {
+                Text(verbatim: "“\(t(.title))”")
+                    .font(sans(.semibold, 21))
+                    .foregroundStyle(ink)
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.6)
+            }
+            HStack {
+                line(.detail, sans(.regular, 14), sub)
+                Spacer(minLength: 8)
+                if !t(.brand).isEmpty {
+                    Text(verbatim: t(.brand))
+                        .font(mono(12))
+                        .foregroundStyle(onAccent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(accent))
+                }
+            }
+        }
+        .padding(20)
+        .background(card(22))
+    }
+
+    private var quote: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(verbatim: "“")
+                .font(big(90))
+                .foregroundStyle(accent)
+                .frame(height: 56, alignment: .top)
+            line(.title, big(32), .white, lines: 4)
+                .shadow(color: .black.opacity(0.55), radius: 10, y: 4)
+            if !t(.detail).isEmpty {
+                Text(verbatim: "— \(t(.detail))")
+                    .font(sans(.semibold, 16))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .shadow(color: .black.opacity(0.55), radius: 8, y: 3)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    }
+
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            line(.title, big(26), ink, lines: 2)
+            ForEach([AdSlot.item1, .item2, .item3], id: \.self) { slot in
+                if !t(slot).isEmpty {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .heavy))
+                            .foregroundStyle(onAccent)
+                            .frame(width: 26, height: 26)
+                            .background(Circle().fill(accent))
+                        Text(verbatim: t(slot))
+                            .font(sans(.semibold, 17))
+                            .foregroundStyle(ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                }
+            }
+            line(.brand, mono(12), sub, tracking: 2)
         }
         .padding(22)
-        .frame(maxWidth: .infinity)
-        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(white: 0.06).opacity(0.85)))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(card(24))
+    }
+
+    private var beforeAfter: some View {
+        HStack(spacing: 0) {
+            VStack(spacing: 6) {
+                line(.optionA, mono(12), sub, tracking: 2)
+                line(.title, sans(.semibold, 18), ink, lines: 2)
+            }
+            .multilineTextAlignment(.center)
+            .padding(14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(paper)
+            Image(systemName: "arrow.right")
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(onAccent)
+                .frame(width: 34, height: 34)
+                .background(Circle().fill(accent))
+                .zIndex(1)
+                .padding(.horizontal, -17)
+            VStack(spacing: 6) {
+                line(.optionB, mono(12), onAccent.opacity(0.85), tracking: 2)
+                line(.detail, sans(.semibold, 18), onAccent, lines: 2)
+            }
+            .multilineTextAlignment(.center)
+            .padding(14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(accent)
+        }
+        .frame(height: 110)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.28), radius: 12, y: 6)
+    }
+
+    private var poll: some View {
+        VStack(spacing: 12) {
+            line(.title, sans(.semibold, 20), ink, lines: 2)
+                .multilineTextAlignment(.center)
+            HStack(spacing: 8) {
+                pollOption(t(.optionA), filled: true)
+                pollOption(t(.optionB), filled: false)
+            }
+        }
+        .padding(18)
+        .background(card(22))
+    }
+
+    private func pollOption(_ text: String, filled: Bool) -> some View {
+        Text(verbatim: text)
+            .font(sans(.semibold, 17))
+            .foregroundStyle(filled ? onAccent : ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(filled ? accent : sub.opacity(0.15)))
+    }
+
+    private var giveaway: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "gift.fill")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(onAccent)
+                    .frame(width: 44, height: 44)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(accent))
+                line(.title, big(28), ink, lines: 2)
+            }
+            ForEach(Array([AdSlot.item1, .item2, .item3].enumerated()), id: \.offset) { index, slot in
+                if !t(slot).isEmpty {
+                    HStack(spacing: 10) {
+                        Text(verbatim: "\(index + 1)")
+                            .font(big(15))
+                            .foregroundStyle(accentInk)
+                            .frame(width: 26, height: 26)
+                            .overlay(Circle().stroke(accentInk, lineWidth: 2))
+                        Text(verbatim: t(slot))
+                            .font(sans(.semibold, 17))
+                            .foregroundStyle(ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                }
+            }
+            line(.brand, mono(12), sub, tracking: 2)
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(card(24))
     }
 
     private var ticket: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(brand.uppercased())
-                    .font(font(.mono, .medium, 12))
-                    .tracking(2)
-                    .foregroundStyle(Color(white: 0.4))
-                Text(fields.headline)
-                    .font(font(.archivo, .extrabold, 26))
-                    .foregroundStyle(Color(white: 0.06))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                Text(fields.detail)
-                    .font(font(.sans, .medium, 14))
-                    .foregroundStyle(Color(white: 0.3))
+                line(.brand, mono(11), sub, tracking: 2)
+                line(.title, big(26), ink, lines: 2)
+                line(.detail, sans(.medium, 14), sub, lines: 2)
             }
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
-            Rectangle()
-                .fill(Color.white)
-                .frame(width: 2)
-                .overlay(Rectangle().stroke(style: StrokeStyle(lineWidth: 2, dash: [5, 4])).foregroundStyle(Color(white: 0.7)))
-            Image(systemName: "ticket.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(onAccent)
-                .frame(width: 74)
-                .frame(maxHeight: .infinity)
-                .background(accent)
+            .frame(maxHeight: .infinity)
+            .background(paper)
+            VStack(spacing: 6) {
+                Image(systemName: "ticket.fill").font(.system(size: 20, weight: .semibold))
+                line(.date, mono(13), onAccent, lines: 2)
+                    .multilineTextAlignment(.center)
+            }
+            .foregroundStyle(onAccent)
+            .padding(8)
+            .frame(width: 92)
+            .frame(maxHeight: .infinity)
+            .background(accent)
         }
-        .frame(height: 118)
+        .frame(height: 124)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            // The notches of a ticket, where it would be torn.
+            // Where the ticket would be torn: a dashed line and two notches.
+            HStack(spacing: 0) {
+                Spacer()
+                Rectangle()
+                    .stroke(style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                    .foregroundStyle(sub.opacity(0.5))
+                    .frame(width: 1)
+                    .padding(.vertical, 14)
+                    .padding(.trailing, 92)
+            }
+        }
+        .overlay {
             HStack {
                 Spacer()
                 VStack {
@@ -459,45 +839,112 @@ struct AdTemplateArt: View {
                     Circle().frame(width: 18, height: 18).offset(y: 9)
                 }
                 .frame(width: 18)
-                .padding(.trailing, 66)
+                .padding(.trailing, 83)
             }
             .blendMode(.destinationOut)
         }
         .compositingGroup()
+        .shadow(color: .black.opacity(0.28), radius: 12, y: 6)
+    }
+
+    private var location: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "mappin.and.ellipse")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(onAccent)
+                .frame(width: 50, height: 50)
+                .background(Circle().fill(accent))
+            VStack(alignment: .leading, spacing: 2) {
+                line(.place, sans(.bold, 19), ink)
+                line(.detail, sans(.regular, 14), sub)
+            }
+            Spacer(minLength: 4)
+            if !t(.cta).isEmpty {
+                Text(verbatim: t(.cta))
+                    .font(sans(.semibold, 13))
+                    .foregroundStyle(accentInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .overlay(Capsule().stroke(accentInk.opacity(0.6), lineWidth: 1.5))
+            }
+        }
+        .padding(12)
+        .background(Capsule().fill(paper).shadow(color: .black.opacity(0.28), radius: 12, y: 6))
+    }
+
+    private var linkPill: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.up")
+                .font(.system(size: 20, weight: .heavy))
+                .foregroundStyle(onAccent)
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(accent))
+            VStack(alignment: .leading, spacing: 1) {
+                line(.title, sans(.semibold, 18), ink)
+                line(.brand, sans(.regular, 13), sub)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .padding(.trailing, 12)
+        .background(Capsule().fill(paper).shadow(color: .black.opacity(0.28), radius: 12, y: 6))
+    }
+
+    private var ctaButton: some View {
+        VStack(spacing: 10) {
+            line(.detail, sans(.semibold, 16), .white, lines: 2)
+                .multilineTextAlignment(.center)
+                .shadow(color: .black.opacity(0.6), radius: 8, y: 3)
+            HStack(spacing: 10) {
+                Text(verbatim: t(.cta))
+                    .font(big(24))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Image(systemName: "arrow.right").font(.system(size: 18, weight: .heavy))
+            }
+            .foregroundStyle(onAccent)
+            .padding(.horizontal, 26)
+            .frame(maxWidth: .infinity, minHeight: 62)
+            .background(Capsule().fill(accent).shadow(color: accent.opacity(0.5), radius: 16, y: 8))
+            line(.brand, mono(12), .white.opacity(0.85), tracking: 2)
+                .shadow(color: .black.opacity(0.6), radius: 6, y: 2)
+        }
     }
 
     private var collab: some View {
         HStack(spacing: 10) {
-            Text(brand.uppercased())
-                .font(font(.archivo, .extrabold, 20))
+            Text(verbatim: t(.brand).uppercased())
+                .font(big(20))
                 .foregroundStyle(onAccent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(Capsule().fill(accent))
             Image(systemName: "xmark")
                 .font(.system(size: 13, weight: .heavy))
-                .foregroundStyle(.white)
-            Text(fields.headline)
-                .font(font(.sans, .semibold, 17))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+                .foregroundStyle(ink)
+            line(.title, sans(.semibold, 17), ink)
         }
         .padding(8)
         .padding(.trailing, 10)
-        .background(Capsule().fill(Color(white: 0.06).opacity(0.8)))
-        .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+        .background(Capsule().fill(paper.opacity(0.9)))
+        .overlay(Capsule().stroke(sub.opacity(0.3), lineWidth: 1))
     }
 
-    static func isLight(_ color: Color) -> Bool {
+    static func luminance(_ color: Color) -> Double {
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         UIColor(color).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-        return 0.299 * red + 0.587 * green + 0.114 * blue > 0.6
+        return Double(0.299 * red + 0.587 * green + 0.114 * blue)
     }
+
+    static func isLight(_ color: Color) -> Bool { luminance(color) > 0.6 }
 
     /// The template as a picture with a clear background, three times its drawn size.
     static func render(_ style: AdStyle, fields: AdTemplateFields) -> Data? {
-        let renderer = ImageRenderer(content: AdTemplateArt(style: style, fields: fields).padding(8))
+        let renderer = ImageRenderer(content: AdTemplateArt(style: style, fields: fields).padding(18))
         renderer.scale = 3
         renderer.isOpaque = false
         return renderer.uiImage?.pngData()
@@ -511,7 +958,7 @@ private struct StarBurst: Shape {
     func path(in rect: CGRect) -> Path {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let outer = min(rect.width, rect.height) / 2
-        let inner = outer * 0.86
+        let inner = outer * 0.87
         var path = Path()
         for index in 0..<(points * 2) {
             let angle = Double(index) * .pi / Double(points) - .pi / 2
@@ -524,23 +971,49 @@ private struct StarBurst: Shape {
     }
 }
 
+/// A template drawn small inside a box of its own: scaled to fit and clipped, so it never spills
+/// over its neighbours.
+private struct TemplateThumbnail: View {
+    let style: AdStyle
+    let fields: AdTemplateFields
+    let height: CGFloat
+
+    var body: some View {
+        GeometryReader { proxy in
+            let scale = min(proxy.size.width / (AdTemplateArt.width + 40), height / (style == .badge ? AdTemplateArt.width + 40 : 260))
+            ZStack {
+                LinearGradient(colors: [Color(hex: 0x3A2A24), Color(hex: 0x141416)], startPoint: .top, endPoint: .bottom)
+                AdTemplateArt(style: style, fields: fields)
+                    .fixedSize()
+                    .scaleEffect(min(1, scale))
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+        }
+        .frame(height: height)
+        .frame(maxWidth: .infinity)
+        .clipped()
+    }
+}
+
 // MARK: - The sheet
 
-/// Pick a template, fill in the brand, put it on the timeline.
+/// Pick a template, fill in every line, put it on the timeline — or change one already there.
 struct AdTemplateSheet: View {
     /// The brand kit's colour, offered first when there is one.
     let brandColor: Color?
-    let onAdd: (Data, AdStyle) -> Void
+    /// A template picture being changed, or nil for a new one.
+    let editing: OverlayTemplate?
+    let onAdd: (Data, AdStyle, OverlayTemplate) -> Void
     let onClose: () -> Void
 
     @State private var category: AdCategory?
     @State private var selected = AdTemplate.all[0]
-    @State private var fields = AdTemplateFields(brand: "", headline: "", detail: "", accent: .red)
+    @State private var fields = AdTemplateFields(texts: [:], accent: .red, isLight: false, font: .display)
     @State private var loaded = false
     @AppStorage("editor.template.brand") private var savedBrand = ""
 
     private var swatches: [Color] {
-        let presets: [UInt32] = [0xFF5A4F, 0xC6F24A, 0xFFB840, 0xF7A8C4, 0x3D8BFF, 0x9B5CFF, 0x1FB5C9, 0x2FBF71, 0x111111, 0xFFFFFF]
+        let presets: [UInt32] = [0xFF5A4F, 0xC6F24A, 0xFFB840, 0xF7A8C4, 0x3D8BFF, 0x9B5CFF, 0x1FB5C9, 0x2FBF71, 0xB08968, 0x111111, 0xFFFFFF]
         return (brandColor.map { [$0] } ?? []) + presets.map { Color(hex: $0) }
     }
 
@@ -553,17 +1026,25 @@ struct AdTemplateSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    preview
+                    TemplateThumbnail(style: selected.style, fields: fields, height: selected.style == .badge ? 300 : 250)
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(DS.Palette.hairline(0.1), lineWidth: 1))
+                        .padding(.top, 8)
+                        .animation(DS.Motion.settle, value: selected)
+                        .accessibilityHidden(true)
                     form
-                    categories
-                    grid
+                    look
+                    if editing == nil {
+                        categories
+                        grid
+                    }
                 }
                 .padding(.horizontal, 18)
                 .padding(.bottom, 110)
             }
             .scrollDismissesKeyboard(.interactively)
             .background(DS.Palette.screen)
-            .navigationTitle(String(localized: "editor.template.title", bundle: .module))
+            .navigationTitle(String(localized: titleKey, bundle: .module))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -573,38 +1054,62 @@ struct AdTemplateSheet: View {
             .safeAreaInset(edge: .bottom) { addButton }
         }
         .tint(DS.Palette.lime)
-        .onAppear {
-            guard !loaded else { return }
-            loaded = true
-            fields.brand = savedBrand
+        .onAppear(perform: load)
+    }
+
+    private var titleKey: String.LocalizationValue {
+        editing == nil ? "editor.template.title" : "editor.template.editTitle"
+    }
+
+    private var actionKey: String.LocalizationValue {
+        editing == nil ? "editor.template.add" : "editor.template.save"
+    }
+
+    private func load() {
+        guard !loaded else { return }
+        loaded = true
+        if let editing, let template = AdTemplate.all.first(where: { $0.id == editing.id }) {
+            selected = template
+            fields = AdTemplateFields(stored: editing)
+        } else {
             choose(selected)
         }
     }
 
-    /// The template as it will look over the video.
-    private var preview: some View {
-        ZStack {
-            LinearGradient(colors: [Color(hex: 0x3A2A24), Color(hex: 0x141416)], startPoint: .top, endPoint: .bottom)
-            AdTemplateArt(style: selected.style, fields: fields)
-                .scaleEffect(0.82)
-                .padding(.vertical, 20)
+    /// One field for every line the chosen template has.
+    private var form: some View {
+        VStack(spacing: 8) {
+            ForEach(selected.style.slots, id: \.self) { slot in
+                field(slot)
+            }
         }
-        .frame(height: selected.style == .badge ? 330 : 240)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(DS.Palette.hairline(0.1), lineWidth: 1))
-        .animation(DS.Motion.settle, value: selected)
-        .padding(.top, 8)
-        .accessibilityHidden(true)
     }
 
-    private var form: some View {
-        VStack(spacing: 10) {
-            field("editor.template.brand", text: $fields.brand)
-                .onChange(of: fields.brand) { _, brand in savedBrand = brand }
-            field("editor.template.headline", text: $fields.headline)
-            if selected.style != .linkPill, selected.style != .collab {
-                field("editor.template.detail", text: $fields.detail)
+    private func field(_ slot: AdSlot) -> some View {
+        let binding = Binding(
+            get: { fields.text(slot) },
+            set: { value in
+                fields.texts[slot] = value
+                if slot == .brand { savedBrand = value }
             }
+        )
+        return HStack(spacing: 12) {
+            Text(verbatim: slot.name.uppercased())
+                .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                .foregroundStyle(DS.Palette.ink(0.56))
+                .frame(width: 84, alignment: .leading)
+            TextField(slot.name, text: binding)
+                .dsFont(.sans, .semibold, 15)
+                .foregroundStyle(DS.Palette.ink)
+                .frame(minHeight: 46)
+        }
+        .padding(.horizontal, 14)
+        .dsCard(radius: 14)
+    }
+
+    /// Colour, dark or light, and the face of the big lines.
+    private var look: some View {
+        VStack(alignment: .leading, spacing: 12) {
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
                     ForEach(Array(swatches.enumerated()), id: \.offset) { _, color in
@@ -613,7 +1118,7 @@ struct AdTemplateSheet: View {
                         } label: {
                             Circle()
                                 .fill(color)
-                                .frame(width: 34, height: 34)
+                                .frame(width: 32, height: 32)
                                 .overlay(Circle().stroke(DS.Palette.hairline(0.25), lineWidth: 1))
                                 .overlay(Circle().stroke(DS.Palette.lime, lineWidth: fields.accent == color ? 3 : 0).padding(-4))
                                 .frame(width: 44, height: 44)
@@ -624,23 +1129,33 @@ struct AdTemplateSheet: View {
                 .padding(.horizontal, 2)
             }
             .scrollIndicators(.hidden)
+            HStack(spacing: 8) {
+                option(String(localized: "editor.template.dark", bundle: .module), isOn: !fields.isLight) { fields.isLight = false }
+                option(String(localized: "editor.template.light", bundle: .module), isOn: fields.isLight) { fields.isLight = true }
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: 8) {
+                ForEach(AdFont.allCases, id: \.self) { face in
+                    option(face.title, isOn: fields.font == face) { fields.font = face }
+                }
+                Spacer(minLength: 0)
+            }
         }
     }
 
-    private func field(_ key: String.LocalizationValue, text: Binding<String>) -> some View {
-        let title = String(localized: key, bundle: .module)
-        return HStack(spacing: 12) {
-            Text(title)
-                .dsFont(.mono, .medium, 11, letterSpacing: 0.12)
-                .foregroundStyle(DS.Palette.ink(0.56))
-                .frame(width: 70, alignment: .leading)
-            TextField(title, text: text)
-                .dsFont(.sans, .semibold, 15)
-                .foregroundStyle(DS.Palette.ink)
-                .frame(minHeight: 48)
+    private func option(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(DS.Motion.snap) { action() }
+        } label: {
+            Text(verbatim: title)
+                .dsFont(.sans, .semibold, 13)
+                .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+                .padding(.horizontal, 14)
+                .frame(minHeight: 38)
+                .background(Capsule().fill(isOn ? DS.Palette.lime : DS.Palette.hairline(0.07)))
         }
-        .padding(.horizontal, 14)
-        .dsCard(radius: 14)
+        .buttonStyle(.dsPress)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     private var categories: some View {
@@ -663,7 +1178,7 @@ struct AdTemplateSheet: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: symbol).font(.system(size: 12, weight: .semibold))
-                Text(title).dsFont(.sans, .semibold, 13)
+                Text(verbatim: title).dsFont(.sans, .semibold, 13)
             }
             .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
             .padding(.horizontal, 14)
@@ -675,24 +1190,19 @@ struct AdTemplateSheet: View {
     }
 
     private var grid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 12) {
             ForEach(shown) { template in
                 Button {
                     withAnimation(DS.Motion.settle) { choose(template) }
                 } label: {
                     VStack(spacing: 6) {
-                        ZStack {
-                            Color(hex: 0x1C1C20)
-                            AdTemplateArt(style: template.style, fields: thumbnailFields(template))
-                                .scaleEffect(template.style == .badge ? 0.34 : 0.42)
-                        }
-                        .frame(height: 118)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(selected == template ? DS.Palette.lime : DS.Palette.hairline(0.08), lineWidth: selected == template ? 2 : 1)
-                        )
-                        Text(template.category.title)
+                        TemplateThumbnail(style: template.style, fields: thumbnailFields(template), height: 130)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(selected == template ? DS.Palette.lime : DS.Palette.hairline(0.08), lineWidth: selected == template ? 2 : 1)
+                            )
+                        Text(verbatim: template.category.title)
                             .dsFont(.sans, .medium, 11)
                             .foregroundStyle(DS.Palette.ink(0.6))
                             .lineLimit(1)
@@ -703,22 +1213,26 @@ struct AdTemplateSheet: View {
         }
     }
 
-    /// The grid shows each template with the brand typed so far and its own suggested words.
+    /// Each template in the grid with its own words and the brand typed so far.
     private func thumbnailFields(_ template: AdTemplate) -> AdTemplateFields {
-        AdTemplateFields(brand: fields.brand, headline: template.headline, detail: template.detail, accent: brandColor ?? Color(hex: template.accent))
+        var texts = template.texts
+        if !savedBrand.isEmpty, template.style.slots.contains(.brand) { texts[.brand] = savedBrand }
+        return AdTemplateFields(texts: texts, accent: brandColor ?? Color(hex: template.accent), isLight: template.isLight, font: fields.font)
     }
 
     private func choose(_ template: AdTemplate) {
         selected = template
-        fields.headline = template.headline
-        fields.detail = template.detail
+        var texts = template.texts
+        if !savedBrand.isEmpty, template.style.slots.contains(.brand) { texts[.brand] = savedBrand }
+        fields.texts = texts
         fields.accent = brandColor ?? Color(hex: template.accent)
+        fields.isLight = template.isLight
     }
 
     private var addButton: some View {
-        DSPrimaryButton(String(localized: "editor.template.add", bundle: .module)) {
+        DSPrimaryButton(String(localized: actionKey, bundle: .module)) {
             guard let data = AdTemplateArt.render(selected.style, fields: fields) else { return }
-            onAdd(data, selected.style)
+            onAdd(data, selected.style, fields.stored(templateID: selected.id))
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
