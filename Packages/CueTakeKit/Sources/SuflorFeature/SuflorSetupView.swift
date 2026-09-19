@@ -630,7 +630,7 @@ private struct SuflorFlowStep: View {
                     addMenu.padding(.top, 12)
                 }
                 .padding(.horizontal, 22)
-                .padding(.bottom, 130)
+                .padding(.bottom, 200)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
@@ -795,7 +795,55 @@ private struct SuflorFlowStep: View {
         }
     }
 
+    /// Two ways to read the cards: on stage, floating over another app, or in our own studio,
+    /// where the take is heard and becomes the report by itself.
     private var stageButton: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                secondaryButton("video.fill", title: "suflor.flow.studio") {
+                    editing = nil
+                    model.record()
+                }
+                .disabled(!model.isReady)
+                .opacity(model.isReady ? 1 : 0.4)
+                if model.hasRecording {
+                    secondaryButton("doc.text.magnifyingglass", title: "suflor.flow.report") {
+                        editing = nil
+                        Task { await model.openTakeReport() }
+                    }
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+                }
+            }
+            stageButtonItself
+        }
+        .padding(.horizontal, 22)
+        .padding(.bottom, 30)
+        .background(
+            LinearGradient(colors: [DS.Palette.screen.opacity(0), DS.Palette.screen], startPoint: .top, endPoint: .center)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        )
+        .animation(DS.Motion.settle, value: model.hasRecording)
+    }
+
+    private func secondaryButton(_ symbol: String, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(title, bundle: .module)
+                    .dsFont(.sans, .semibold, 14)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+            .foregroundStyle(DS.Palette.ink)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .dsGlass(tint: DS.Palette.glass(0.8), in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous), border: DS.Palette.hairline(0.14))
+        }
+        .buttonStyle(.dsPress(radius: DS.Radius.card))
+    }
+
+    private var stageButtonItself: some View {
         Button {
             editing = nil
             model.goOnStage()
@@ -819,12 +867,5 @@ private struct SuflorFlowStep: View {
         .buttonStyle(.dsPress(radius: DS.Radius.cardLarge))
         .disabled(!model.isReady)
         .opacity(model.isReady ? 1 : 0.4)
-        .padding(.horizontal, 22)
-        .padding(.bottom, 30)
-        .background(
-            LinearGradient(colors: [DS.Palette.screen.opacity(0), DS.Palette.screen], startPoint: .top, endPoint: .center)
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-        )
     }
 }

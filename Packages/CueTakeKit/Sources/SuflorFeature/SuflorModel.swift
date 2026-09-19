@@ -83,6 +83,23 @@ public final class SuflorModel {
     public var verifier: Verifier?
     public var localeIdentifier: String
 
+    /// Takes the cards to the studio, to be read on our own teleprompter. Set by the app.
+    public var onRecord: ((SuflorPlan) -> Void)?
+    /// Makes the report from a take recorded in the studio. Set by the app.
+    public var reporter: (() async -> SuflorSession?)?
+    /// The cards have been recorded in the studio, so a report can be made from the take.
+    public var hasRecording = false
+
+    /// Where the report's proof comes from.
+    public enum ReportSource: Sendable {
+        /// A stream or video made in another app, saved and added from Photos.
+        case stream
+        /// A take recorded in our studio, already heard.
+        case take
+    }
+
+    public private(set) var reportSource: ReportSource = .stream
+
     private(set) var engine: SuflorEngine?
     private var pip: SuflorPiP?
     private let defaults: UserDefaults
@@ -358,6 +375,7 @@ public final class SuflorModel {
 
     /// Off the stage and on to the report.
     public func endStage() {
+        reportSource = .stream
         session?.endedAt = .now
         if let engine, var session, session.adStartedAt != nil, session.adEndedAt == nil {
             session.adEndedAt = max(0, engine.frame().clock.elapsed - SuflorClock.countdown)
@@ -384,6 +402,74 @@ public final class SuflorModel {
         set {
             session?.creator = newValue
             defaults.set(newValue, forKey: Keys.creator)
+        }
+    }
+
+    // MARK: - Studio
+
+    /// Off to our studio with the cards as the script.
+    public func record() {
+        guard isReady else { return }
+        onRecord?(plan)
+    }
+
+    /// Marks a segment as a card, so it can be found again in the project.
+    public static let roleKey = "ad.role"
+    /// The brief a project was made from, as JSON, in the project's metadata.
+    public static let briefKey = "ad.brief"
+
+    /// The cards as the project's segments, each keeping its card's identity. A card that is
+    /// already a segment keeps its takes: its words are updated, nothing that was shot is lost.
+    /// A segment whose card is gone goes with it, unless something was shot for it.
+    public static func segments(for plan: SuflorPlan, merging existing: [Segment], localeIdentifier: String) -> [Segment] {
+        let perMinute = SpeakingRate.wordsPerMinute(forLocaleIdentifier: localeIdentifier)
+        var result: [Segment] = plan.ordered.map { cue in
+            let words = ScriptText.words(in: cue.text).count
+            let estimate = MediaTime(seconds: max(1, Double(words) / perMinute * 60))
+            if var segment = existing.first(where: { $0.id == cue.id }) {
+                segment.role = cue.role.segmentRole
+                segment.title = cue.role.title
+                segment.script = cue.text
+                if segment.takes.isEmpty { segment.estimatedDuration = estimate }
+                segment.metadata[roleKey] = cue.role.rawValue
+                return segment
+            }
+            return Segment(
+                id: cue.id,
+                role: cue.role.segmentRole,
+                title: cue.role.title,
+                script: cue.text,
+                estimatedDuration: estimate,
+                metadata: [roleKey: cue.role.rawValue]
+            )
+        }
+        let kept = Set(result.map(\.id))
+        result += existing.filter { !kept.contains($0.id) && !$0.takes.isEmpty }
+        return result
+    }
+
+    /// The report for a take recorded in the studio: opened at once, filled in as the take is read.
+    public func openTakeReport() async {
+        reportSource = .take
+        session = nil
+        stage = .report
+        await readTake()
+    }
+
+    /// Reads the studio take again: where the ad sits and where each item was said.
+    public func readTake() async {
+        guard let reporter, !isVerifying else { return }
+        isVerifying = true
+        verifyError = nil
+        defer { isVerifying = false }
+        guard var made = await reporter() else {
+            verifyError = String(localized: "suflor.verify.failed", bundle: .module)
+            return
+        }
+        made.creator = defaults.string(forKey: Keys.creator) ?? ""
+        session = made
+        if !made.plan.brief.mustSay.isEmpty, made.proofs.isEmpty {
+            verifyError = String(localized: "suflor.verify.none", bundle: .module)
         }
     }
 
@@ -494,6 +580,16 @@ public final class SuflorModel {
 }
 
 extension SuflorCue.Role {
+    /// How the card reads on the studio's teleprompter and in the editor.
+    public var segmentRole: SegmentRole {
+        switch self {
+        case .opening: .hook
+        case .topic: .mainPoint
+        case .cta: .callToAction
+        default: .custom(title)
+        }
+    }
+
     public var title: String {
         switch self {
         case .opening: String(localized: "suflor.role.opening", bundle: .module)

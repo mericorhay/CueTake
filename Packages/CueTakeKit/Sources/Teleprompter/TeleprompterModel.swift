@@ -119,6 +119,12 @@ public final class TeleprompterModel {
     public var remaining: Double?
     /// How far through the whole script the reader is, 0–1.
     public var progress: Double = 0
+    /// What a brand asked to hear — a code, a link, a name — lit on the prompter so it is not
+    /// skipped. Empty for anything that is not an ad.
+    public var highlights: [String] = [] {
+        didSet { highlightTokens = Self.tokens(of: highlights) }
+    }
+    private var highlightTokens: Set<String> = []
 
     private let defaults: UserDefaults?
     static let preferencesKey = "teleprompter.preferences.v1"
@@ -341,7 +347,7 @@ public final class TeleprompterModel {
     /// Per-word appearance for the current segment.
     public func wordStyles(accent: Color, ink: Color, inkInverse: Color, lime: Color) -> [WordStyle] {
         guard let segment = currentSegment else { return [] }
-        return Self.wordStyles(
+        var styles = Self.wordStyles(
             script: segment.script,
             active: activeWordIndex,
             mode: mode,
@@ -351,6 +357,29 @@ public final class TeleprompterModel {
             inkInverse: inkInverse,
             lime: lime
         )
+        guard !highlightTokens.isEmpty else { return styles }
+        for index in styles.indices where !styles[index].isActive && isHighlighted(styles[index].text) {
+            styles[index].color = lime
+            styles[index].isEmphasized = true
+        }
+        return styles
+    }
+
+    /// The words of each highlight, folded the way they are compared: "KOD20", "kod20," and
+    /// "Kod20" are one word to the reader.
+    private static func tokens(of highlights: [String]) -> Set<String> {
+        Set(highlights.flatMap { ScriptText.words(in: $0).map { fold(String($0)) } }.filter { $0.count >= 2 })
+    }
+
+    private static func fold(_ word: String) -> String {
+        word.lowercased().folding(options: [.diacriticInsensitive, .widthInsensitive], locale: nil).filter { $0.isLetter || $0.isNumber }
+    }
+
+    private func isHighlighted(_ word: String) -> Bool {
+        let folded = Self.fold(word)
+        guard folded.count >= 2 else { return false }
+        return highlightTokens.contains(folded)
+            || highlightTokens.contains { $0.count >= 4 && folded.hasPrefix($0) }
     }
 
     /// Per-word appearance for any script, so every screen that prompts paints it the same way.

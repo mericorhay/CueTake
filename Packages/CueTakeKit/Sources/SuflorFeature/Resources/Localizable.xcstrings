@@ -1004,6 +1004,23 @@
         }
       }
     },
+    "suflor.flow.report": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Markaya rapor"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report for the brand"
+          }
+        }
+      }
+    },
     "suflor.flow.stage": {
       "extractionState": "manual",
       "localizations": {
@@ -1017,6 +1034,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sahneye çık"
+          }
+        }
+      }
+    },
+    "suflor.flow.studio": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyoda çek"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record in the studio"
           }
         }
       }
@@ -2147,6 +2181,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$lld/%2$lld TESLİM"
+          }
+        }
+      }
+    },
+    "suflor.report.take.again": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeniden dinle"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listen again"
+          }
+        }
+      }
+    },
+    "suflor.report.take.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyodaki çekimin kendisi dinlendi: her maddenin videoda söylendiği saniye, o anın karesiyle bulunur."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your studio take was listened to: the second each item was said is found, with a frame from that moment."
+          }
+        }
+      }
+    },
+    "suflor.report.take.listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekim dinleniyor…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening to your take…"
+          }
+        }
+      }
+    },
+    "suflor.report.take.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekimden kanıt"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proof from your take"
           }
         }
       }

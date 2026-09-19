@@ -139,6 +139,13 @@ struct RootView: View {
         }
     }
 
+    /// The brand report after the take of an ad, or nil for any other video.
+    private var adReport: (() -> Void)? {
+        guard model.isAdProject else { return nil }
+        let model = model
+        return { model.openAdReport() }
+    }
+
     /// The AI edit tool's line to the model, or nil in a build without the assistant.
     private var aiEdit: ((EditDocument, String) async throws -> EditPlan)? {
         guard model.settingsModel.settings.aiProcessing == .allowCloud,
@@ -218,7 +225,8 @@ struct RootView: View {
                 project: model.project,
                 onRetake: { model.startRetake(of: $0) },
                 onEdit: { model.openEditor() },
-                onDone: { model.go(to: .export) }
+                onDone: { model.go(to: .export) },
+                onReport: adReport
             )
 
         case .editor:
@@ -326,7 +334,7 @@ struct RootView: View {
             }
 
         case .suflor:
-            SuflorScreen(model: model.suflorModel) { model.go(to: .home) }
+            SuflorScreen(model: model.suflorModel) { model.leaveAd() }
 
         case .settings:
             SettingsScreen(

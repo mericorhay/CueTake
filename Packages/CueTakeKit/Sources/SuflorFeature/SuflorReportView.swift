@@ -31,6 +31,9 @@ struct SuflorReportView: View {
 
     var body: some View {
         ScrollView {
+            if model.session == nil {
+                reading
+            }
             if let session = model.session {
                 VStack(alignment: .leading, spacing: 0) {
                     header(session)
@@ -48,10 +51,10 @@ struct SuflorReportView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(DS.Palette.screen)
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.9, dampingFraction: 0.78).delay(0.1)) {
-                shown = true
-            }
+        // The page tilts up into place once there is a page: a studio take is read first.
+        .onAppear { if model.session != nil { reveal() } }
+        .onChange(of: model.session != nil) { _, hasPage in
+            if hasPage { reveal() } else { shown = false }
         }
         .task(id: RenderKey(session: model.session, language: language)) { await renderFiles() }
         .fullScreenCover(isPresented: $zoomed) {
@@ -211,6 +214,52 @@ struct SuflorReportView: View {
         .animation(DS.Motion.snap, value: nameMissing)
     }
 
+    private func reveal() {
+        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.9, dampingFraction: 0.78).delay(0.1)) {
+            shown = true
+        }
+    }
+
+    /// While a studio take is read, or when it could not be.
+    private var reading: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Spacer(minLength: 0)
+                DSCircleButton("✕", size: 44, fontSize: 15) { onClose() }
+                    .accessibilityLabel(Text("suflor.report.close", bundle: .module))
+            }
+            Spacer(minLength: 120)
+            if model.isVerifying {
+                Image(systemName: "waveform.and.magnifyingglass")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
+                    .symbolEffect(.variableColor.iterative, options: .repeating)
+                Text("suflor.report.take.listening", bundle: .module)
+                    .dsFont(.sans, .semibold, 16)
+                    .foregroundStyle(DS.Palette.ink)
+            } else if let error = model.verifyError {
+                Text(error)
+                    .dsFont(.sans, .medium, 15, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.amber)
+                    .multilineTextAlignment(.center)
+                Button {
+                    Task { await model.readTake() }
+                } label: {
+                    Text("suflor.report.take.again", bundle: .module)
+                        .dsFont(.sans, .semibold, 15)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 20)
+                        .frame(minHeight: 48)
+                        .background(Capsule().fill(DS.Palette.lime))
+                }
+                .buttonStyle(.dsPress)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 22)
+        .padding(.top, 64)
+    }
+
     // MARK: - Proof
 
     private func proofCard(_ session: SuflorSession) -> some View {
@@ -223,13 +272,25 @@ struct SuflorReportView: View {
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(DS.Palette.lime(0.12)))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("suflor.report.proof.title", bundle: .module)
-                        .dsFont(.sans, .semibold, 16)
-                        .foregroundStyle(DS.Palette.ink)
-                    Text("suflor.report.proof.detail", bundle: .module)
-                        .dsFont(.sans, .regular, 13, lineHeight: 1.3)
-                        .foregroundStyle(DS.Palette.ink(0.6))
-                        .fixedSize(horizontal: false, vertical: true)
+                    Group {
+                        if model.reportSource == .take {
+                            Text("suflor.report.take.title", bundle: .module)
+                        } else {
+                            Text("suflor.report.proof.title", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .semibold, 16)
+                    .foregroundStyle(DS.Palette.ink)
+                    Group {
+                        if model.reportSource == .take {
+                            Text("suflor.report.take.detail", bundle: .module)
+                        } else {
+                            Text("suflor.report.proof.detail", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .regular, 13, lineHeight: 1.3)
+                    .foregroundStyle(DS.Palette.ink(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
             if let error = model.verifyError {
@@ -247,7 +308,28 @@ struct SuflorReportView: View {
                 }
                 .scrollIndicators(.hidden)
             }
-            if model.verifier != nil {
+            if model.reportSource == .take {
+                // The take is ours and already heard: listening again is one tap, no picking.
+                Button {
+                    Task { await model.readTake() }
+                } label: {
+                    HStack(spacing: 8) {
+                        if model.isVerifying {
+                            ProgressView().tint(DS.Palette.ink)
+                            Text("suflor.report.take.listening", bundle: .module)
+                        } else {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("suflor.report.take.again", bundle: .module)
+                        }
+                    }
+                    .dsFont(.sans, .semibold, 14)
+                    .foregroundStyle(DS.Palette.ink(0.8))
+                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .background(Capsule().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPress)
+                .disabled(model.isVerifying)
+            } else if model.verifier != nil {
                 let isVerifying = model.isVerifying
                 let hasProofs = !session.proofs.isEmpty
                 PhotosPicker(selection: $pickedRecording, matching: .videos) {
