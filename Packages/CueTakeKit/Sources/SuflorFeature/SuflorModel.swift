@@ -111,7 +111,11 @@ public final class SuflorModel {
         self.localeIdentifier = localeIdentifier
         self.defaults = defaults
         let decoder = JSONDecoder()
-        brief = defaults.data(forKey: Keys.brief).flatMap { try? decoder.decode(SuflorBrief.self, from: $0) } ?? SuflorBrief()
+        var saved = defaults.data(forKey: Keys.brief).flatMap { try? decoder.decode(SuflorBrief.self, from: $0) } ?? SuflorBrief()
+        // "When I start it" waited for the floating window's forward button, which the video
+        // call's window does not have: such briefs start the ad on the minute instead.
+        if saved.timing == .manual { saved.timing = .minute(5) }
+        brief = saved
         aiCues = defaults.data(forKey: Keys.cues).flatMap { try? decoder.decode([SuflorCue].self, from: $0) } ?? []
         ownCues = defaults.data(forKey: Keys.ownCues).flatMap { try? decoder.decode([SuflorCue].self, from: $0) } ?? []
         cueSource = defaults.string(forKey: Keys.source).flatMap(CueSource.init(rawValue:)) ?? .ai

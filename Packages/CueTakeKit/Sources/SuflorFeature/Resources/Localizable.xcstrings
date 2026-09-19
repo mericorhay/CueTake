@@ -449,13 +449,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You talk freely; %lld minutes after you press play, the prompter moves to the ad by itself."
+            "value": "You talk freely; %lld minutes after the words start rolling, the prompter moves to the ad by itself."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Serbest konuşursun; ▶'ye bastıktan %lld dakika sonra suflör kendiliğinden reklama geçer."
+            "value": "Serbest konuşursun; yazı akmaya başladıktan %lld dakika sonra suflör kendiliğinden reklama geçer."
           }
         }
       }
@@ -466,13 +466,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "after you press ▶"
+            "value": "after the words start"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "▶'ye bastıktan sonra"
+            "value": "yazı başladıktan sonra"
           }
         }
       }

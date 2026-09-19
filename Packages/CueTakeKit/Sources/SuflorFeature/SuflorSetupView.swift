@@ -398,9 +398,6 @@ private struct SuflorBriefStep: View {
                 SuflorChip(title: String(localized: "suflor.brief.when.minute", bundle: .module), isOn: isMinute) {
                     withAnimation(DS.Motion.snap) { model.brief.timing = .minute(minute) }
                 }
-                SuflorChip(title: String(localized: "suflor.brief.when.manual", bundle: .module), isOn: model.brief.timing == .manual) {
-                    withAnimation(DS.Motion.snap) { model.brief.timing = .manual }
-                }
                 SuflorChip(title: String(localized: "suflor.brief.when.none", bundle: .module), isOn: model.brief.timing == .none) {
                     withAnimation(DS.Motion.snap) { model.brief.timing = .none }
                 }

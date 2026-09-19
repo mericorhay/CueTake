@@ -732,6 +732,13 @@ Ekip (P2)                              CloudKit shared zones veya kendi backend'
 - **Açık:** cihazda PiP testi (mixWithOthers ile açılıyor mu, TikTok canlıyken pencere yaşıyor mu); Canlı Etkinlik/Dynamic Island (widget eklentisi + yeni App ID/profil gerekir); App Review notu (audio modu yalnız PiP için); konumlandırma "reklam teslim aracı", dağıtım PDF altbilgisi + ajanslar.
 - **Rakip:** Beast Floating Teleprompter, Teleprompter™, VoicePrompter, Teleprompter: Floating Notes zaten PiP'te yüzüyor; VoicePrompter yüzerken ses takibi iddia ediyor — doğrulanmadı.
 
+**Durum (2026-09-19, build 129–132) — kamera üstünde kararmama çözüldü:**
+- Instagram/TikTok kamerası açılınca iOS video PiP'leri karartıyor (bizimki ve YouTube'unki). Çözüm: `AVPictureInPictureVideoCallViewController`. Motor her kareyi CGImage olarak çizer, pencere bir UIView gösterir. Cihazda doğrulandı (build 129).
+- Bedeli: pencerede ▶/⏩ yok, dokununca uygulama açılır, pencerede sürükleme yok. Yazı pencere yüzünce başlar. "Ben başlatınca" reklam zamanı kaldırıldı (132).
+- Sahne: yazının kendi alanı var, "Bitir ve raporu gör" butonu, varsayılan 32 pt; AI yazımı ikinci planda (130).
+- Stüdyo: kartlar "Stüdyoda çek" ile projenin bölümleri olur, zorunlu maddeler teleprompter'da yanar; çekimden "Markaya rapor" (131, `ads-in-studio` dalından).
+- **Açık:** sessiz ses + `audio` arka plan modu App Review'da riskli (2.5.4) — sessiz sesi kaldırıp pencere akıyor mu diye denenecek; inceleme notu; stüdyo raporunun teslim sayısı cihazda denenmedi.
+
 ---
 
 ## 6. Ortak teknik altyapı
