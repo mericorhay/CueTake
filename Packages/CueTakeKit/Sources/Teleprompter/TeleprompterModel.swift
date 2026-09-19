@@ -368,7 +368,7 @@ public final class TeleprompterModel {
     /// The words of each highlight, folded the way they are compared: "KOD20", "kod20," and
     /// "Kod20" are one word to the reader.
     private static func tokens(of highlights: [String]) -> Set<String> {
-        Set(highlights.flatMap { ScriptText.words(in: $0) }.map(fold).filter { $0.count >= 2 })
+        Set(highlights.flatMap { ScriptText.words(in: $0).map { fold(String($0)) } }.filter { $0.count >= 2 })
     }
 
     private static func fold(_ word: String) -> String {

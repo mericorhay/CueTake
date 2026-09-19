@@ -46,16 +46,22 @@ struct SuflorReportView: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(DS.Palette.screen)
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.9, dampingFraction: 0.78).delay(0.1)) {
-                shown = true
-            }
+        // The page tilts up into place when there is a page: the take is read first.
+        .onAppear { if model.session != nil { reveal() } }
+        .onChange(of: model.session != nil) { _, hasPage in
+            if hasPage { reveal() } else { shown = false }
         }
         .task(id: RenderKey(session: model.session, language: language)) { await renderFiles() }
         .fullScreenCover(isPresented: $zoomed) {
             if let files {
                 ZoomedPage(image: files.thumbnail) { zoomed = false }
             }
+        }
+    }
+
+    private func reveal() {
+        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .spring(response: 0.9, dampingFraction: 0.78).delay(0.1)) {
+            shown = true
         }
     }
 

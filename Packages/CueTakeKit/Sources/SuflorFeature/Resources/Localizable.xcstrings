@@ -889,22 +889,22 @@
     "suflor.pdf.footer": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Times are counted from the start of the video. VERIFIED lines were found by listening to the take itself on the creator's phone, with the moment's frame. MARKED lines are the creator's own record."
-          }
-        },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Süreler videonun başından itibaren sayılır. DOĞRULANDI satırları, çekimin kendisi yayıncının telefonunda dinlenerek o anın karesiyle bulundu. İŞARETLENDİ satırları yayıncının kendi kaydıdır."
+            "value": "Süreler videonun başından itibaren sayılır. DOĞRULANDI satırları, çekimin kendisi yayıncının telefonunda dinlenerek o anın karesiyle bulundu."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Times are counted from the start of the video. VERIFIED lines were found by listening to the take itself on the creator's phone, with the moment's frame."
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los tiempos se cuentan desde el inicio del vídeo. Las líneas VERIFICADO se encontraron escuchando la propia grabación en el teléfono del creador, con el fotograma del momento. Las líneas MARCADO son el registro del propio creador."
+            "value": "Los tiempos se cuentan desde el inicio del vídeo. Las líneas VERIFICADO se encontraron escuchando la propia grabación en el teléfono del creador, con el fotograma del momento."
           }
         }
       }
