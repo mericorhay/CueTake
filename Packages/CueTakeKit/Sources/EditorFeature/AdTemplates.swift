@@ -1239,3 +1239,86 @@ struct AdTemplateSheet: View {
         .background(DS.Palette.screen.opacity(0.96))
     }
 }
+
+// MARK: - The AI's hand
+
+extension AdTemplate {
+    /// The template a request names: by its id, else the first of its style.
+    static func match(_ request: TemplateRequest) -> AdTemplate? {
+        if let id = request.template, let named = all.first(where: { $0.id == id }) { return named }
+        guard let wanted = request.style?.lowercased() else { return nil }
+        return all.first { $0.style.rawValue.lowercased() == wanted }
+    }
+}
+
+extension EditorModel {
+    /// A template picture the AI asked for: its lines as written, the rest empty, in its style's
+    /// usual place unless it said where.
+    func aiAddTemplate(_ request: TemplateRequest, id: UUID, at playhead: Double) -> [AITarget]? {
+        guard let template = AdTemplate.match(request) else { return nil }
+        var texts: [AdSlot: String] = [:]
+        for slot in template.style.slots {
+            if let value = request.texts[slot.rawValue] { texts[slot] = value }
+        }
+        if texts[.brand] == nil, template.style.slots.contains(.brand),
+           let brand = UserDefaults.standard.string(forKey: "editor.template.brand"), !brand.isEmpty {
+            texts[.brand] = brand
+        }
+        let fields = AdTemplateFields(
+            texts: texts,
+            accent: request.color.flatMap { RGBAColor(hex: $0) }.map(CaptionOverlay.color) ?? Color(hex: template.accent),
+            isLight: request.light ?? template.isLight,
+            font: request.font.flatMap(AdFont.init(rawValue:)) ?? .display
+        )
+        guard let data = AdTemplateArt.render(template.style, fields: fields), let stored = storeOverlayImage(data) else { return nil }
+        let spot = template.style.placement
+        let start = max(0, request.start ?? playhead)
+        let length = request.duration ?? request.end.map { $0 - start } ?? 4
+        var overlay = Overlay(
+            id: id,
+            content: .image(relativePath: stored.path, aspect: stored.aspect),
+            start: MediaTime(seconds: start),
+            duration: MediaTime(seconds: max(Overlay.shortest, length)),
+            transform: OverlayTransform(x: request.x ?? spot.x, y: request.y ?? spot.y, scale: request.scale ?? spot.width / 0.5),
+            animation: .pop
+        )
+        overlay.template = fields.stored(templateID: template.id)
+        project.overlays.append(overlay)
+        overlayImages[id] = stored.image
+        // Through the one door every overlay edit uses, for its limits.
+        updateOverlay(id) { _ in }
+        return [.overlay(id)]
+    }
+
+    /// New lines or a new look for a template picture already on the video. A line written empty
+    /// is cleared; lines not written stay.
+    func aiEditTemplate(_ id: UUID, _ request: TemplateRequest) -> [AITarget]? {
+        guard let overlay = project.overlays.first(where: { $0.id == id }), let stored = overlay.template else { return nil }
+        let current = AdTemplate.all.first { $0.id == stored.id }
+        guard let template = (request.style != nil || request.template != nil ? AdTemplate.match(request) : nil) ?? current else { return nil }
+        var fields = AdTemplateFields(stored: stored)
+        for (name, value) in request.texts {
+            guard let slot = AdSlot(rawValue: name) else { continue }
+            fields.texts[slot] = value
+        }
+        if let color = request.color.flatMap({ RGBAColor(hex: $0) }) { fields.accent = CaptionOverlay.color(color) }
+        if let light = request.light { fields.isLight = light }
+        if let font = request.font.flatMap(AdFont.init(rawValue:)) { fields.font = font }
+        guard let data = AdTemplateArt.render(template.style, fields: fields) else { return nil }
+        replaceTemplateImage(id, with: data, template: fields.stored(templateID: template.id))
+        if request.start != nil || request.duration != nil || request.end != nil || request.x != nil || request.y != nil || request.scale != nil {
+            updateOverlay(id, coalescing: "ai") {
+                if let start = request.start { $0.start = MediaTime(seconds: max(0, start)) }
+                if let length = request.duration {
+                    $0.duration = MediaTime(seconds: max(Overlay.shortest, length))
+                } else if let end = request.end {
+                    $0.duration = MediaTime(seconds: max(Overlay.shortest, end - $0.start.seconds))
+                }
+                if let x = request.x { $0.transform.x = x }
+                if let y = request.y { $0.transform.y = y }
+                if let scale = request.scale { $0.transform.scale = scale }
+            }
+        }
+        return [.overlay(id)]
+    }
+}

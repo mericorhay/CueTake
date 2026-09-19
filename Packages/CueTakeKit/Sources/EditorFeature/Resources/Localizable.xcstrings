@@ -1769,6 +1769,23 @@
         }
       }
     },
+    "editor.ai.op.addTemplate %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Template added: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şablon eklendi: %@"
+          }
+        }
+      }
+    },
     "editor.ai.op.addText %@": {
       "extractionState": "manual",
       "localizations": {
@@ -2003,6 +2020,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Katman kopyalandı: %@"
+          }
+        }
+      }
+    },
+    "editor.ai.op.editTemplate %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Template changed: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şablon düzenlendi: %@"
           }
         }
       }

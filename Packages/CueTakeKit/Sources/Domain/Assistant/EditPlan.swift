@@ -58,6 +58,10 @@ public struct EditPlan: Codable, Sendable, Equatable {
         case addText(OverlayPatch)
         case updateOverlay(overlay: String, patch: OverlayPatch)
         case removeOverlay(overlay: String)
+        /// A brand template picture: a style, its lines, its colour and look (see `TemplateRequest`).
+        case addTemplate(TemplateRequest)
+        /// Changes the lines or look of a template picture already on the video.
+        case editTemplate(overlay: String, request: TemplateRequest)
 
         // Sound
         case setMusicLevel(audio: String, gainDb: Double)
@@ -148,6 +152,8 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .addText: "addText"
             case .updateOverlay: "updateOverlay"
             case .removeOverlay: "removeOverlay"
+            case .addTemplate: "addTemplate"
+            case .editTemplate: "editTemplate"
             case .setMusicLevel: "setMusicLevel"
             case .updateAudio: "updateAudio"
             case .removeAudio: "removeAudio"
@@ -454,6 +460,14 @@ extension EditPlan.Operation: Codable {
         case "removeOverlay":
             guard let overlay = f.string("overlay") else { self = unknown; return }
             self = .removeOverlay(overlay: overlay)
+        case "addTemplate":
+            let request = TemplateRequest.read(f)
+            guard request.style != nil || request.template != nil else { self = unknown; return }
+            self = .addTemplate(request)
+        case "editTemplate", "updateTemplate":
+            let request = TemplateRequest.read(f)
+            guard let overlay = f.string("overlay"), !request.isEmpty else { self = unknown; return }
+            self = .editTemplate(overlay: overlay, request: request)
         case "setMusicLevel":
             guard let audio = f.string("audio"), let gain = f.number("gainDb") else { self = unknown; return }
             self = .setMusicLevel(audio: audio, gainDb: gain)
@@ -662,6 +676,13 @@ extension EditPlan.Operation: Codable {
             try put("flipY", patch.flipY); try put("color", patch.color); try put("background", patch.background)
             try put("font", patch.font); try put("animation", patch.animation); try put("behind", patch.behind)
         }
+        func putTemplate(_ r: TemplateRequest) throws {
+            try put("style", r.style); try put("template", r.template)
+            for name in TemplateRequest.slotNames { try put(name, r.texts[name]) }
+            try put("color", r.color); try put("light", r.light); try put("font", r.font)
+            try put("start", r.start); try put("duration", r.duration); try put("end", r.end)
+            try put("x", r.x); try put("y", r.y); try put("scale", r.scale)
+        }
         switch self {
         case .cut(let clip, let from, let to):
             try put("clip", clip); try put("from", from); try put("to", to)
@@ -702,6 +723,10 @@ extension EditPlan.Operation: Codable {
             try put("overlay", overlay); try put("text", patch.text); try putOverlay(patch)
         case .removeOverlay(let overlay):
             try put("overlay", overlay)
+        case .addTemplate(let r):
+            try putTemplate(r)
+        case .editTemplate(let overlay, let r):
+            try put("overlay", overlay); try putTemplate(r)
         case .setMusicLevel(let audio, let gain):
             try put("audio", audio); try put("gainDb", gain)
         case .updateAudio(let audio, let patch):
@@ -839,6 +864,8 @@ extension EditPlan {
             case .removeVideo(let video): .removeVideo(video: refs.video(video))
             case .splitVideo(let video, let at): .splitVideo(video: refs.video(video), at: at)
             case .splitOverlay(let overlay, let at): .splitOverlay(overlay: refs.overlay(overlay), at: at)
+            case .editTemplate(let overlay, let r): .editTemplate(overlay: refs.overlay(overlay), request: r)
+            case .addTemplate: op
             case .useTranscript(let clip, let source): .useTranscript(clip: clip.map(refs.clip), source: source)
             case .cameraMove(let r):
                 .cameraMove(CameraMoveRequest(

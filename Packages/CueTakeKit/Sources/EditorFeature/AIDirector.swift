@@ -823,6 +823,10 @@ extension EditorModel {
             switch op {
             case .updateOverlay(let id, _), .removeOverlay(let id):
                 if !project.overlays.contains(where: { $0.id.uuidString == id }) { skipped.append(op.type); continue }
+            case .editTemplate(let id, _):
+                if !project.overlays.contains(where: { $0.id.uuidString == id && $0.template != nil }) { skipped.append(op.type); continue }
+            case .addTemplate(let request):
+                if AdTemplate.match(request) == nil { skipped.append(op.type); continue }
             default:
                 break
             }
@@ -877,6 +881,21 @@ extension EditorModel {
                     m.project.overlays.append(copy)
                     if let image = m.overlayImages[uuid] { m.overlayImages[copyID] = image }
                     return [.overlay(copyID)]
+                }
+            case .addTemplate(let request):
+                let id = UUID()
+                let here = playhead
+                add("sparkles.rectangle.stack", describe(op), op, locate: { _ in
+                    let start = max(0, request.start ?? here)
+                    let length = request.duration ?? request.end.map { $0 - start } ?? 4
+                    return (start + min(0.3, max(0, length) / 2), start...(start + max(Overlay.shortest, length)))
+                }) { m in
+                    m.aiAddTemplate(request, id: id, at: here)
+                }
+            case .editTemplate(let id, let request):
+                add("character.cursor.ibeam", describe(op), op, locate: { $0.overlayPlace(id) }) { m in
+                    guard let uuid = UUID(uuidString: id) else { return nil }
+                    return m.aiEditTemplate(uuid, request)
                 }
             case .removeOverlay(let id):
                 add("rectangle.badge.minus", L("editor.ai.op.removeOverlay \(overlayName(id))"), op, locate: { $0.overlayPlace(id) }) { m in
@@ -1632,6 +1651,8 @@ extension EditorModel {
         case .setCaptionText, .captionTiming, .splitCaption, .mergeCaption, .removeCaption: "text.bubble"
         case .captionStyle, .captionLook, .captionWindow: "captions.bubble"
         case .addText, .updateOverlay, .removeOverlay: "textformat"
+        case .addTemplate: "sparkles.rectangle.stack"
+        case .editTemplate: "character.cursor.ibeam"
         case .setMusicLevel, .updateAudio, .removeAudio: "music.note"
         case .voiceCleanup, .voiceEffects: "waveform.and.person.filled"
         case .setTitle: "character.cursor.ibeam"
@@ -1708,6 +1729,10 @@ extension EditorModel {
             L("editor.ai.op.updateOverlay \(overlayName(id))")
         case .removeOverlay(let id):
             L("editor.ai.op.removeOverlay \(overlayName(id))")
+        case .addTemplate(let request):
+            L("editor.ai.op.addTemplate \(request.texts["title"] ?? request.texts["code"] ?? request.style ?? "")")
+        case .editTemplate(let id, _):
+            L("editor.ai.op.editTemplate \(overlayName(id))")
         case .setMusicLevel(_, let gain):
             L("editor.ai.op.music \(String(format: "%.0f", gain))")
         case .updateAudio(let id, _):

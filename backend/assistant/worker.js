@@ -109,7 +109,7 @@ clips[]: id, role, at/length (on the finished video), footage (seconds of record
   words [[text,start,end]] in THAT clip's footage seconds (index = position), captions [[id,text,start,end]] in clip footage seconds, takes,
   tracked (the camera follows the speaker's face), lost [finished-video seconds where the face was lost].
   A moment in clip footage f is at clip.at + f/speed on the finished video.
-audio[], style (caption look), captionWindow, overlays[] (at/length on the finished video, x,y centre 0..1 from left/top, scale 1 = default, behind = drawn behind the people),
+audio[], style (caption look), captionWindow, overlays[] (at/length on the finished video, x,y centre 0..1 from left/top, scale 1 = default, behind = drawn behind the people, template + texts = a brand template picture and its lines),
 effects[] (e..: kind background|filter|sound, style = background style / filter look / sound preset, from/to on the finished video, values = non-default settings, keep/screen = what a background keeps in front, see setBackground),
 videos[] (v..: added videos over the main one: at/length on the finished video, file = where in its own file it starts, x,y,w,h top-left fractions, keys [[t,x,y,w,h]], screen = green-screen colour taken out),
 cameraMoves[] (m..: at/length on the finished video, kind push|pull|punch|hold, amount = how much closer at the peak, feel),
@@ -127,6 +127,14 @@ Captions: setCaptionText{caption,text} captionTiming{caption,start,end} splitCap
 Text: addText{text,start,duration,x,y,scale,rotation,color,background,font,animation none|fade|pop|slideUp,behind true|false}
   (behind: the person stands in front of the text, the magazine-cover look; best big, bold and high in the frame)
   updateOverlay{overlay,...addText fields,end,opacity,flipX,flipY} duplicateOverlay{overlay,start} splitOverlay{overlay,at} removeOverlay{overlay}
+Brand templates (a designed picture for a sponsored video, every line its own field): addTemplate{style,...lines,color "#RRGGBB",light true|false,font display|clean|mono,start,duration (4),x,y,scale}
+  style: lines — codeCard: label,code,note,brand · coupon: number,label,code,date,brand · priceTag: title,price,oldPrice,brand · spotlight: label,title,price,brand
+  badge: number,label,brand · stat: number,title,detail,brand · bigTitle: brand,title,detail · lowerThird: brand,title,detail · newDrop: label,title,detail,brand
+  countdown: title,detail,brand · promoStrip: title,detail · review: title,detail,brand · quote: title,detail · checklist: title,item1,item2,item3,brand
+  beforeAfter: optionA,title,optionB,detail · poll: title,optionA,optionB · giveaway: title,item1,item2,item3,brand · ticket: brand,title,detail,date
+  location: place,detail,cta · linkPill: title,brand · ctaButton: detail,cta,brand · collab: brand,title
+  Lines are short, in the user's language; codes, prices, dates and names only as the user gave them. Leave out x,y,scale for the style's usual place.
+  editTemplate{overlay,...lines,color,light,font,style,start,duration,x,y,scale} changes a template picture; a line set to "" is cleared, lines left out stay.
 Looks: setFilter{effect|null,clip|null,from,to,look natural|vivid|cinematic|warm|cool|vintage|fade|chrome|instant|dramatic|mono|noir,
   intensity 0-1,brightness -1..1,contrast -1..1,saturation -1..1,warmth -1..1,vignette 0-1,sharpness 0-1}
   setBackground{clip|null,from,to,style none|blur|dim|studio|black|white|green|color,strength 0-1,feather 0-1,color "#RRGGBB",keep person|subject|screen,screen "#RRGGBB"}

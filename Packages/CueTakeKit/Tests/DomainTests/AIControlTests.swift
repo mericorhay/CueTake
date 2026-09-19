@@ -39,6 +39,28 @@ struct AIControlTests {
         #expect(again == plan)
     }
 
+    @Test func readsBrandTemplatesWithEveryLine() throws {
+        let text = """
+        {"summary":"s","operations":[
+          {"op":"addTemplate","style":"codeCard","label":"İndirim kodu","code":"KOD20","brand":"Glow","color":"#FF5A4F","light":true,"start":3},
+          {"op":"editTemplate","overlay":"o2","price":"99 ₺","oldPrice":""},
+          {"op":"addTemplate","code":"X"},
+          {"op":"editTemplate","overlay":"o2"}
+        ]}
+        """
+        let plan = try EditPlan.decode(from: text)
+        #expect(plan.operations[0] == .addTemplate(TemplateRequest(
+            style: "codeCard", texts: ["label": "İndirim kodu", "code": "KOD20", "brand": "Glow"], color: "#FF5A4F", light: true, start: 3
+        )))
+        #expect(plan.operations[1] == .editTemplate(overlay: "o2", request: TemplateRequest(texts: ["price": "99 ₺", "oldPrice": ""])))
+        // No style to draw, nothing to change: neither is a step.
+        #expect(plan.operations[2] == .unknown(type: "addTemplate"))
+        #expect(plan.operations[3] == .unknown(type: "editTemplate"))
+
+        let again = try JSONDecoder().decode(EditPlan.self, from: JSONEncoder().encode(plan))
+        #expect(again == plan)
+    }
+
     @Test func hexColoursRoundTrip() {
         let orange = RGBAColor(hex: "#FF8000")
         #expect(orange?.red == 1)

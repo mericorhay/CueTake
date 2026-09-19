@@ -45,7 +45,7 @@ extension EditorModel {
     }
 
     /// Writes a picture upright into the project's media folder.
-    private func storeOverlayImage(_ data: Data) -> (path: String, aspect: Double, image: UIImage)? {
+    func storeOverlayImage(_ data: Data) -> (path: String, aspect: Double, image: UIImage)? {
         guard let mediaDirectory, let source = UIImage(data: data), source.size.width > 0, source.size.height > 0 else {
             return nil
         }

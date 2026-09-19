@@ -187,6 +187,9 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var animation: String
         /// Drawn behind the people in the picture.
         public var behind: Bool? = nil
+        /// For a brand template picture: which template, and its lines by slot.
+        public var template: String? = nil
+        public var texts: [String: String]? = nil
     }
 
     /// A background (or later another tool) from one moment of the finished video to another.
@@ -443,7 +446,9 @@ extension EditDocument {
                     background: background,
                     font: font,
                     animation: overlay.animation.rawValue,
-                    behind: overlay.isBehindPerson ? true : nil
+                    behind: overlay.isBehindPerson ? true : nil,
+                    template: overlay.template?.id,
+                    texts: overlay.template?.texts
                 )
             }
         }
