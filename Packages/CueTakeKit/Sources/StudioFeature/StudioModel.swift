@@ -72,6 +72,13 @@ public final class StudioModel {
         adChecks = checks
     }
 
+    /// The creator's measured pace: what the text scrolls at when no voice is heard, and what the
+    /// pace coach holds them to. Nil goes back to the language's ordinary pace.
+    public func setNaturalPace(_ wordsPerMinute: Double?) {
+        driver.basePace = wordsPerMinute
+        teleprompter.targetPace = wordsPerMinute ?? SpeakingRate.wordsPerMinute(forLocaleIdentifier: project.localeIdentifier)
+    }
+
     /// Seconds of the ad left, or over when negative; nil before it starts or with no length set.
     public var adSecondsLeft: Int? {
         guard let adChecks, adChecks.adSeconds > 0, let adStartedAt else { return nil }

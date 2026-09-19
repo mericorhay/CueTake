@@ -25,6 +25,7 @@ struct RootView: View {
     @State private var pickedBrandLogo: PhotosPickerItem?
     @State private var showsTeam = false
     @State private var showsCertificates = false
+    @State private var showsVoiceProfile = false
 
     var body: some View {
         ZStack {
@@ -346,9 +347,19 @@ struct RootView: View {
                 onTeam: model.isTeamSharingAvailable ? { showsTeam = true } : nil,
                 onPreviewLight: { showsTeam = true },
                 certificates: model.certificationSummary,
-                onCertificates: { showsCertificates = true }
+                onCertificates: { showsCertificates = true },
+                voiceProfile: model.voiceProfile,
+                onVoiceProfile: { showsVoiceProfile = true }
             )
             .task { await model.refreshStorage() }
+            .fullScreenCover(isPresented: $showsVoiceProfile) {
+                VoiceProfileScreen(
+                    profile: $model.voiceProfile,
+                    isMeasuring: model.isMeasuringVoice,
+                    onMeasure: { Task { await model.measureVoiceProfile() } },
+                    onClose: { showsVoiceProfile = false }
+                )
+            }
             .fullScreenCover(isPresented: $showsCertificates) {
                 CertificatesScreen(
                     progress: model.certification,

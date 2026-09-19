@@ -41,6 +41,8 @@ final class PrompterDriver {
     @ObservationIgnored var speedMultiplier: () -> Double = { 1 }
     /// Words to tell the recogniser about beyond the script's own: the brand's name and phrases.
     @ObservationIgnored var extraHints: [String] = []
+    /// The creator's own pace, when they chose to read at it; nil reads at the language's.
+    @ObservationIgnored var basePace: Double?
     /// The last words heard, whatever the place: for an ad's checks while it is recorded.
     @ObservationIgnored var onHeard: (([String]) -> Void)?
 
@@ -205,7 +207,7 @@ final class PrompterDriver {
         }
         guard !isPaused(), !reachedEnd else { return }
 
-        let perMinute = SpeakingRate.wordsPerMinute(forLocaleIdentifier: localeIdentifier) * speedMultiplier()
+        let perMinute = (basePace ?? SpeakingRate.wordsPerMinute(forLocaleIdentifier: localeIdentifier)) * speedMultiplier()
         paceCarry += seconds * perMinute / 60
         guard paceCarry >= 1 else { return }
         paceCarry -= 1

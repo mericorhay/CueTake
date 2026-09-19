@@ -194,6 +194,11 @@ final class AppModel {
     var studioReturn: Screen = .blueprint
     /// Where closing the ad screens goes back to.
     var adReturn: Screen = .home
+    /// How the creator talks, measured and written (see `CreatorVoiceProfile`).
+    var voiceProfile: CreatorVoiceProfile = AppModel.loadVoiceProfile() {
+        didSet { AppModel.saveVoiceProfile(voiceProfile) }
+    }
+    var isMeasuringVoice = false
     var noticeTask: Task<Void, Never>?
 
     // MARK: - Workflow state (behaviour in AppModel+Workflows)
@@ -1152,6 +1157,7 @@ final class AppModel {
         // An ad's must-say items are lit on the prompter; anything else has none.
         studioModel.setHighlights(adHighlights)
         studioModel.setAdChecks(adChecks)
+        studioModel.setNaturalPace(voiceProfile.pace)
         go(to: .studio)
     }
 

@@ -18,6 +18,9 @@ public struct SettingsScreen: View {
     /// Where the creator stands toward the certificates, and the way in. Nil hides the row.
     private let certificates: String?
     private let onCertificates: (() -> Void)?
+    /// One line about the voice profile, and the way into it.
+    private let voiceProfile: CreatorVoiceProfile?
+    private let onVoiceProfile: (() -> Void)?
 
     public init(
         model: SettingsModel,
@@ -26,8 +29,12 @@ public struct SettingsScreen: View {
         onTeam: (() -> Void)? = nil,
         onPreviewLight: (() -> Void)? = nil,
         certificates: String? = nil,
-        onCertificates: (() -> Void)? = nil
+        onCertificates: (() -> Void)? = nil,
+        voiceProfile: CreatorVoiceProfile? = nil,
+        onVoiceProfile: (() -> Void)? = nil
     ) {
+        self.voiceProfile = voiceProfile
+        self.onVoiceProfile = onVoiceProfile
         self.certificates = certificates
         self.onCertificates = onCertificates
         self.model = model
@@ -51,6 +58,11 @@ public struct SettingsScreen: View {
 
                 if let onCertificates {
                     certificateRow(onCertificates)
+                        .padding(.bottom, onVoiceProfile == nil ? 22 : 12)
+                }
+
+                if let onVoiceProfile {
+                    voiceRow(onVoiceProfile)
                         .padding(.bottom, 22)
                 }
 
@@ -198,6 +210,41 @@ public struct SettingsScreen: View {
                             .dsFont(.sans, .regular, 12)
                             .foregroundStyle(DS.Palette.ink(0.62))
                     }
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.ink(0.52))
+                    .accessibilityHidden(true)
+            }
+            .padding(15)
+            .dsCard(radius: DS.Radius.card)
+        }
+        .buttonStyle(.dsPressCard)
+    }
+
+    private var voiceSummary: String {
+        guard let pace = voiceProfile?.wordsPerMinute else { return String(localized: "settings.voice.empty", bundle: .module) }
+        let sentence = Int((voiceProfile?.sentenceWords ?? 0).rounded())
+        return String(localized: "settings.voice.summary \(Int(pace.rounded())) \(sentence)", bundle: .module)
+    }
+
+    private func voiceRow(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 13) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(DS.gradient(140, [DS.Palette.accentWarm, DS.Palette.accent])))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("settings.voice", bundle: .module)
+                        .dsFont(.sans, .semibold, 15)
+                        .foregroundStyle(DS.Palette.ink)
+                    Text(verbatim: voiceSummary)
+                        .dsFont(.sans, .regular, 12)
+                        .foregroundStyle(DS.Palette.ink(0.62))
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")

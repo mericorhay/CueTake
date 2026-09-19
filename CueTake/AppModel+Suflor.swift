@@ -26,7 +26,7 @@ extension AppModel {
                     throw SuflorModel.WriteError.cloudOff
                 }
                 do {
-                    return try await client.writeSuflor(brief, localeIdentifier: locale, voice: voice)
+                    return try await client.writeSuflor(brief, localeIdentifier: locale, voice: voice, profile: self.voiceProfile.promptText)
                 } catch AssistantClient.AssistantError.offline {
                     throw SuflorModel.WriteError.offline
                 } catch AssistantClient.AssistantError.rejected(let status) {
@@ -42,6 +42,10 @@ extension AppModel {
             suflor.writer = nil
         }
         suflor.voiceLoader = { [weak self] in await self?.suflorVoiceSample() }
+        // The suflör starts at the creator's own pace when they chose to use it.
+        if let pace = voiceProfile.pace {
+            suflor.wordsPerMinute = min(SuflorModel.paceRange.upperBound, max(SuflorModel.paceRange.lowerBound, pace.rounded()))
+        }
         let speech = dependencies.speech
         let locale = project.localeIdentifier
         suflor.verifier = { url, session in
@@ -149,7 +153,7 @@ extension AppModel {
         return SuflorVoice.sample(from: transcripts)
     }
 
-    private static func transcripts(of project: Project) -> [Transcript] {
+    static func transcripts(of project: Project) -> [Transcript] {
         project.segments.flatMap(\.takes).compactMap(\.transcript).filter { !$0.words.isEmpty }
     }
 

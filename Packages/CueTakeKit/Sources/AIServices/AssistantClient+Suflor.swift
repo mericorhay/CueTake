@@ -21,13 +21,15 @@ extension AssistantClient {
         var locale: String
         /// The creator's own speech from their videos, when they asked for their voice.
         var voice: String?
+        /// The creator's voice profile, as lines.
+        var profile: String?
     }
 
     private struct SuflorResponse: Decodable {
         var cues: String?
     }
 
-    public func writeSuflor(_ brief: SuflorBrief, localeIdentifier: String, voice: String? = nil) async throws -> [SuflorCue] {
+    public func writeSuflor(_ brief: SuflorBrief, localeIdentifier: String, voice: String? = nil, profile: String? = nil) async throws -> [SuflorCue] {
         guard let endpoint else { throw AssistantError.notConfigured }
         let body = SuflorRequest(
             brief: .init(
@@ -43,7 +45,8 @@ extension AssistantClient {
                 avoid: brief.avoid
             ),
             locale: localeIdentifier,
-            voice: voice
+            voice: voice,
+            profile: profile
         )
         var request = URLRequest(url: endpoint.url.appending(path: "suflor"))
         request.httpMethod = "POST"

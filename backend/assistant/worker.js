@@ -444,7 +444,9 @@ Cringe → natural (never write the left side; Turkish examples, the same holds 
 - The same greeting at the start of every card → vary it, or just start talking.
 - Stacked exclamation marks, rhetorical questions in a row, hashtags, slogans → none.
 
-When <creator_voice> is given, it is THIS creator's own speech, transcribed from their videos. It outranks the sample above: write the cards the way they talk — their words, their rhythm, their fillers, how they greet and address people. Take only their manner, never their content: no facts, names or products from it.`;
+When <creator_voice> is given, it is THIS creator's own speech, transcribed from their videos. It outranks the sample above: write the cards the way they talk — their words, their rhythm, their fillers, how they greet and address people. Take only their manner, never their content: no facts, names or products from it.
+
+When <creator_profile> is given, it describes THIS creator: keep sentences near its sentence length, build openings and calls to action on theirs (reworded to fit, not pasted), use fillers only from their list, and never write a word it says they never use.`;
 }
 
 const SUFLOR_TASK = `You write the cards a creator reads from a teleprompter while filming a sponsored video for TikTok, Instagram or YouTube, or while live-streaming.
@@ -502,6 +504,7 @@ async function handleSuflor(body, env) {
     `<link>${clean(brief.link, 200)}</link>\n` +
     `<avoid>\n${(Array.isArray(brief.avoid) ? brief.avoid : []).slice(0, 12).map((item) => clean(item, 80)).filter(Boolean).map((item) => "- " + item).join("\n")}\n</avoid>\n` +
     (body.voice ? `<creator_voice>\n${clean(body.voice, 4000)}\n</creator_voice>\n` : "") +
+    (body.profile ? `<creator_profile>\n${clean(body.profile, 1500)}\n</creator_profile>\n` : "") +
     `<locale>${clean(body.locale, 20)}</locale>`;
   const system = spokenVoice(body.locale) + "\n\n" + SUFLOR_TASK;
   let answer = await ask(env, system, content, 2500);
