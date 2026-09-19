@@ -9,21 +9,17 @@ public struct CompleteScreen: View {
     @State private var showsRetakePicker = false
     private let onEdit: () -> Void
     private let onDone: () -> Void
-    /// Opens the report for the brand, for a take of an ad. Nil hides it.
-    private let onReport: (() -> Void)?
 
     public init(
         project: Project,
         onRetake: @escaping (Segment.ID) -> Void,
         onEdit: @escaping () -> Void,
-        onDone: @escaping () -> Void,
-        onReport: (() -> Void)? = nil
+        onDone: @escaping () -> Void
     ) {
         self.project = project
         self.onRetake = onRetake
         self.onEdit = onEdit
         self.onDone = onDone
-        self.onReport = onReport
     }
 
     public var body: some View {
@@ -55,36 +51,6 @@ public struct CompleteScreen: View {
                 }
                 .frame(height: 56)
                 .padding(.bottom, 16)
-
-                if let onReport {
-                    Button(action: onReport) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .font(.system(size: 15, weight: .semibold))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("complete.report", bundle: .module)
-                                    .dsFont(.sans, .semibold, 15)
-                                Text("complete.report.detail", bundle: .module)
-                                    .dsFont(.sans, .regular, 12)
-                                    .foregroundStyle(DS.Palette.ink(0.6))
-                            }
-                            Spacer(minLength: 0)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(DS.Palette.ink(0.5))
-                        }
-                        .foregroundStyle(DS.Palette.ink)
-                        .padding(.horizontal, 16)
-                        .frame(maxWidth: .infinity, minHeight: 60)
-                        .dsGlass(
-                            tint: DS.Palette.glass(0.7),
-                            in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous),
-                            border: DS.Palette.lime(0.35)
-                        )
-                    }
-                    .buttonStyle(.dsPress(radius: DS.Radius.card))
-                    .padding(.bottom, 10)
-                }
 
                 DSPrimaryButton(
                     String(localized: "complete.review", bundle: .module),

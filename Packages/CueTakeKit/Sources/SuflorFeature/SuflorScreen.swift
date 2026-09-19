@@ -1,7 +1,7 @@
 import DesignSystem
 import SwiftUI
 
-/// An ad, whole: the brief and the cards, and after the take the report.
+/// The suflör, whole: the brief, the stage, the report.
 public struct SuflorScreen: View {
     @Bindable var model: SuflorModel
     let onClose: () -> Void
@@ -20,6 +20,9 @@ public struct SuflorScreen: View {
             case .setup:
                 SuflorSetupView(model: model, onClose: onClose)
                     .transition(.opacity)
+            case .live:
+                SuflorStageView(model: model)
+                    .transition(reduceMotion ? .opacity : .scale(scale: 1.04).combined(with: .opacity))
             case .report:
                 SuflorReportView(model: model) {
                     model.leaveReport()

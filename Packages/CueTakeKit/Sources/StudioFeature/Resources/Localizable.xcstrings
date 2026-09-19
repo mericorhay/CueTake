@@ -138,40 +138,6 @@
         }
       }
     },
-    "complete.report": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Report for the brand"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Markaya rapor"
-          }
-        }
-      }
-    },
-    "complete.report.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What was said and when, with proof from this take"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Neyin ne zaman söylendiği, bu çekimden kanıtıyla"
-          }
-        }
-      }
-    },
     "complete.retake": {
       "extractionState": "manual",
       "localizations": {

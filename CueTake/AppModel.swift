@@ -191,8 +191,6 @@ final class AppModel {
     /// Where the script screen and the studio go back to: the plan they came from, or Create.
     var scriptReturn: Screen = .blueprint
     var studioReturn: Screen = .blueprint
-    /// Where closing the ad screens goes back to.
-    var adReturn: Screen = .home
     var noticeTask: Task<Void, Never>?
 
     // MARK: - Workflow state (behaviour in AppModel+Workflows)
@@ -1140,8 +1138,6 @@ final class AppModel {
         if studioModel.project.segments != project.segments {
             studioModel = StudioModel(project: project)
         }
-        // An ad's must-say items are lit on the prompter; anything else has none.
-        studioModel.setHighlights(adHighlights)
         go(to: .studio)
     }
 
@@ -1174,11 +1170,9 @@ final class AppModel {
         project = editorModel.project
     }
 
-    /// The brand's own words, for the listeners to expect: an ad's brief first, then the brand
-    /// voice from the script library.
+    /// The brand's own words, for the listeners to expect.
     var brandSpeechHints: [String] {
-        let terms = adSpeechHints + SpeechHints.terms(scripts: [], brand: scriptLibrary.activeBrand, localeIdentifier: project.localeIdentifier)
-        return Array(terms.prefix(SpeechHints.limit))
+        SpeechHints.terms(scripts: [], brand: scriptLibrary.activeBrand, localeIdentifier: project.localeIdentifier)
     }
 
     /// Marks a kept retake whose silence before and after the speech is still to be trimmed.

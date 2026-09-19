@@ -252,10 +252,10 @@ public struct HomeScreen: View {
         .padding(.top, 12)
     }
 
-    // MARK: - Ads
+    // MARK: - Suflör
 
-    /// A sponsored video from the brand's brief: the lines in the creator's voice, read on the
-    /// studio's prompter, and a report for the brand made from the take.
+    /// The prompter for a live stream on another app: it floats in the corner of TikTok or
+    /// Instagram and rolls the brand's lines at the speaker's pace.
     private var suflorCard: some View {
         Button(action: onSuflor) {
             HStack(spacing: 14) {
@@ -446,8 +446,8 @@ struct LibraryCardBackground: View {
     }
 }
 
-/// A tiny prompter with lines rolling up through it, the ad's lines lit, and the record dot
-/// breathing: the ad shoot explained without a word.
+/// A tiny floating window with lines rolling up through it and a live dot breathing: the suflör
+/// explained without a word.
 private struct SuflorMiniWindow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private let widths: [CGFloat] = [24, 30, 18, 28, 22, 32, 16, 26]
@@ -460,7 +460,7 @@ private struct SuflorMiniWindow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(widths.indices, id: \.self) { index in
                         Capsule()
-                            .fill((3...5).contains(index) ? DS.Palette.accent : DS.Palette.ink(0.8))
+                            .fill(index % 3 == 1 ? DS.Palette.lime : DS.Palette.ink(0.8))
                             .frame(width: widths[index], height: 3)
                     }
                 }

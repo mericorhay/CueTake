@@ -52,15 +52,64 @@ struct SuflorTests {
         #expect(cues.map(\.role) == [.bridge, .topic])
     }
 
-    @Test func aLiveStreamBriefOpensAsAnAdWovenIntoAVideo() throws {
-        let old = #"{"kind":"live","platform":"instagram","brand":"Marvel","product":"Spider-Man","mustSay":["KOD20"],"timing":{"minute":{"_0":5}},"tone":"","topic":"figürler"}"#
-        let brief = try JSONDecoder().decode(SuflorBrief.self, from: Data(old.utf8))
-        #expect(brief.kind == .integrated)
-        #expect(brief.platform == .instagram)
-        #expect(brief.mustSay == ["KOD20"])
-        #expect(brief.details == "")
-        let video = try JSONDecoder().decode(SuflorBrief.self, from: JSONEncoder().encode(SuflorBrief(kind: .video, brand: "X")))
-        #expect(video.kind == .video)
+    @Test func theFlowWaitsAtTheAdUntilTheMinute() {
+        var clock = SuflorClock(end: 1000, holdAt: 100, adAt: 60)
+        clock.tick(9, speed: 50)
+        #expect(clock.phase == .countdown)
+        #expect(clock.offset == 0)
+        clock.tick(1, speed: 50)
+        #expect(clock.offset == 50)
+        clock.tick(3, speed: 50)
+        #expect(clock.offset == 100)
+        #expect(clock.phase == .holding)
+        #expect(clock.secondsToAd == 47)
+        for _ in 0..<46 { clock.tick(1, speed: 50) }
+        #expect(clock.offset == 100)
+        clock.tick(1, speed: 50)
+        #expect(clock.released)
+        #expect(clock.offset == 150)
+        #expect(clock.phase == .rolling)
+    }
+
+    @Test func aManualHoldWaitsForTheSpeaker() {
+        var clock = SuflorClock(end: 400, holdAt: 100)
+        for _ in 0..<60 { clock.tick(1, speed: 40) }
+        #expect(clock.phase == .holding)
+        #expect(clock.secondsToAd == nil)
+        clock.jump(to: 100)
+        #expect(clock.released)
+        clock.tick(1, speed: 40)
+        #expect(clock.offset == 140)
+        for _ in 0..<60 { clock.tick(1, speed: 40) }
+        #expect(clock.phase == .finished)
+    }
+
+    @Test func nothingMovesUntilTheFirstPlay() {
+        var clock = SuflorClock(end: 500, holdAt: 100, adAt: 60, started: false)
+        #expect(clock.phase == .ready)
+        #expect(!clock.isPlaying)
+        clock.tick(120, speed: 50)
+        #expect(clock.elapsed == 0)
+        #expect(clock.offset == 0)
+        clock.setPlaying(true)
+        #expect(clock.phase == .countdown)
+        clock.tick(9, speed: 10)
+        #expect(clock.offset == 0)
+        clock.tick(2, speed: 10)
+        #expect(clock.offset == 20)
+        #expect(clock.secondsToAd == 49)
+    }
+
+    @Test func pausingAndDraggingMoveOnlyByHand() {
+        var clock = SuflorClock(end: 500)
+        clock.isPlaying = false
+        clock.tick(8, speed: 10)
+        #expect(clock.offset == 0)
+        clock.move(by: 80)
+        clock.move(by: -30)
+        #expect(clock.offset == 50)
+        clock.move(by: -300)
+        #expect(clock.offset == 0)
     }
 
     @Test func proofFindsSpokenCodesHoweverTheyAreSpaced() {

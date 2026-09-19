@@ -1,30 +1,33 @@
 import Foundation
 
-// Ads: a brand's brief turned into the lines a creator reads on the studio's teleprompter, in
-// their own voice, and after the take a report for the brand of what was said and when.
+// Suflör: the prompter that sits beside another app's camera.
 //
-// Named after the suflör it grew out of — a prompter that floated over another app's camera. iOS
-// darkens every floating window while a camera is open, so it could never work during a stream
-// from the phone; the brief, the cards and the report moved into our own studio instead.
+// Someone going live on TikTok or Instagram cannot use our camera, and the microphone belongs to
+// whichever app is live: iOS gives it to one app at a time. So the suflör does not listen. It is
+// prepared beforehand — the brand's brief turned into cards — and during the stream it floats in
+// Picture in Picture and scrolls at the speed the speaker chose, holding before the ad until the
+// minute comes.
 
-/// What the brand wants said.
+/// What the brand wants said, and when.
 public struct SuflorBrief: Codable, Hashable, Sendable {
     public enum Kind: String, Codable, CaseIterable, Sendable {
-        /// A video of its own about something else, with the ad woven in: the topic, a bridge,
-        /// the ad, back out.
-        case integrated
-        /// A video that is the ad: short, straight to the product.
+        /// A live stream: talk freely, the ad comes at a minute or on a tap.
+        case live
+        /// A video recorded with another app's camera: the cards are the script.
         case video
-
-        /// Briefs from the live-stream prompter said "live": that is the woven-in kind.
-        public init(from decoder: any Decoder) throws {
-            let raw = try decoder.singleValueContainer().decode(String.self)
-            self = Kind(rawValue: raw) ?? .integrated
-        }
     }
 
     public enum Platform: String, Codable, CaseIterable, Sendable {
         case tiktok, instagram, youtube, other
+    }
+
+    public enum AdTiming: Codable, Hashable, Sendable {
+        /// The ad starts this many minutes after the prompter is started.
+        case minute(Int)
+        /// The prompter waits before the ad until the speaker moves it on.
+        case manual
+        /// No waiting: the cards run straight through.
+        case none
     }
 
     public var kind: Kind
@@ -33,8 +36,9 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
     public var product: String
     /// Words that must be said: a discount code, a link, a claim the brand insists on.
     public var mustSay: [String]
+    public var timing: AdTiming
     public var tone: String
-    /// What the video is about, so the bridge into the ad sounds like part of it.
+    /// What the stream or video is about, so the bridge into the ad sounds like part of it.
     public var topic: String
     /// What the product is and what the brand wants said about it, usually pasted from the
     /// brand's own brief. The only source of facts about the product: without it, nothing is
@@ -42,11 +46,12 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
     public var details: String
 
     public init(
-        kind: Kind = .integrated,
+        kind: Kind = .live,
         platform: Platform = .tiktok,
         brand: String = "",
         product: String = "",
         mustSay: [String] = [],
+        timing: AdTiming = .minute(5),
         tone: String = "",
         topic: String = "",
         details: String = ""
@@ -56,16 +61,17 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         self.brand = brand
         self.product = product
         self.mustSay = mustSay
+        self.timing = timing
         self.tone = tone
         self.topic = topic
         self.details = details
     }
 
     private enum CodingKeys: String, CodingKey {
-        case kind, platform, brand, product, mustSay, tone, topic, details
+        case kind, platform, brand, product, mustSay, timing, tone, topic, details
     }
 
-    /// Briefs saved before `details` existed, and with the live stream's ad timing, still open.
+    /// Briefs saved before `details` existed still open.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         kind = try container.decode(Kind.self, forKey: .kind)
@@ -73,6 +79,7 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         brand = try container.decode(String.self, forKey: .brand)
         product = try container.decode(String.self, forKey: .product)
         mustSay = try container.decode([String].self, forKey: .mustSay)
+        timing = try container.decode(AdTiming.self, forKey: .timing)
         tone = try container.decode(String.self, forKey: .tone)
         topic = try container.decode(String.self, forKey: .topic)
         details = try container.decodeIfPresent(String.self, forKey: .details) ?? ""
@@ -118,9 +125,9 @@ public struct SuflorPlan: Codable, Hashable, Sendable {
         self.cues = cues
     }
 
-    /// Cards in the order a video uses them: the talk before the ad, then the ad as one block,
-    /// then the close. Whatever order they were written in, the ad stays together, so the report
-    /// can say where it began and ended.
+    /// Cards in the order a stream uses them: the talk before the ad, then the ad as one block,
+    /// then the close. Whatever order they were written in, the ad stays together, which is what
+    /// the hold before it relies on.
     public var ordered: [SuflorCue] {
         let usable = cues.filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         let before = usable.filter { $0.role == .opening || $0.role == .topic }
@@ -155,6 +162,97 @@ public struct SuflorPlan: Codable, Hashable, Sendable {
             let role = SuflorCue.Role(rawValue: (card.role ?? "").lowercased()) ?? .topic
             return SuflorCue(role: role, text: words)
         }
+    }
+}
+
+/// Where the prompter is and what it is doing, advanced by one clock.
+///
+/// Positions are in the layout's points: 0 is the first line on the reading line. The ad hold is
+/// a position too — the top of the ad section — where the flow waits for the minute or the tap.
+public struct SuflorClock: Hashable, Sendable {
+    public enum Phase: Hashable, Sendable {
+        /// On stage but not started: waiting for the first play, which is when the stream starts.
+        case ready
+        /// The count before anything moves.
+        case countdown
+        case rolling
+        /// Waiting at the top of the ad section.
+        case holding
+        /// The last line has reached the reading line.
+        case finished
+    }
+
+    public var offset: Double = 0
+    public var isPlaying = true
+    /// False until the first play. Going on stage and going live are minutes apart — opening the
+    /// other app, starting the stream — and the words must not roll away in between.
+    public var started = true
+    /// Seconds since the first play: the stream's own clock.
+    public var elapsed: Double = 0
+    /// The ad section's top, or nil when there is nothing to wait for.
+    public var holdAt: Double?
+    /// Seconds after going on stage when the ad may start; nil waits for the speaker.
+    public var adAt: Double?
+    /// Set once the speaker or the minute has let the ad go.
+    public var released = false
+    public var end: Double
+    /// Time to put the phone down and look at the camera after pressing play.
+    public static let countdown: Double = 10
+
+    public init(end: Double, holdAt: Double? = nil, adAt: Double? = nil, started: Bool = true) {
+        self.end = end
+        self.holdAt = holdAt
+        self.adAt = adAt
+        self.started = started
+        if !started { isPlaying = false }
+    }
+
+    public var phase: Phase {
+        if !started { return .ready }
+        if elapsed < Self.countdown { return .countdown }
+        if offset >= end { return .finished }
+        if isHolding { return .holding }
+        return .rolling
+    }
+
+    private var isHolding: Bool {
+        guard let holdAt, !released, offset >= holdAt - 0.5 else { return false }
+        return true
+    }
+
+    /// Seconds until the ad, while there is a minute to wait for.
+    public var secondsToAd: Double? {
+        guard let adAt, !released else { return nil }
+        return max(0, adAt - elapsed)
+    }
+
+    /// Moves time on. Scrolls at `speed` points a second unless paused, counting down, held or done.
+    public mutating func tick(_ seconds: Double, speed: Double) {
+        guard seconds > 0, started else { return }
+        elapsed += seconds
+        if let adAt, !released, elapsed >= adAt { released = true }
+        guard isPlaying, elapsed >= Self.countdown else { return }
+        var next = offset + speed * seconds
+        if let holdAt, !released, offset <= holdAt, next > holdAt { next = holdAt }
+        offset = min(max(0, next), end)
+    }
+
+    /// Play and pause. The first play starts the stream's clock.
+    public mutating func setPlaying(_ playing: Bool) {
+        if playing { started = true }
+        isPlaying = playing
+    }
+
+    /// The speaker's hand: dragging up or down. Moving past the hold lets the ad go.
+    public mutating func move(by delta: Double) {
+        offset = min(max(0, offset + delta), end)
+        if let holdAt, offset > holdAt + 1 { released = true }
+    }
+
+    /// Straight to a position, as the skip buttons do. Jumping into the ad lets it go.
+    public mutating func jump(to position: Double) {
+        offset = min(max(0, position), end)
+        if let holdAt, offset >= holdAt - 0.5 { released = true }
     }
 }
 
@@ -241,15 +339,15 @@ public struct SuflorProof: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-/// What the take holds, for the report to the brand.
+/// What happened on stage, for the report to the brand.
 public struct SuflorSession: Codable, Hashable, Sendable {
     public var plan: SuflorPlan
     public var startedAt: Date
     public var endedAt: Date?
-    /// Seconds into the video where the ad section begins and ends.
+    /// Seconds after going on stage when the ad section reached the reading line.
     public var adStartedAt: Double?
     public var adEndedAt: Double?
-    /// Items the speaker ticked by hand, with the second they did.
+    /// Items the speaker ticked on stage, with the second they did.
     public var ticked: [String: Double]
     public var proofs: [SuflorProof]
     public var creator: String

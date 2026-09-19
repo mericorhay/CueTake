@@ -697,7 +697,7 @@ Ekip (P2)                              CloudKit shared zones veya kendi backend'
 - **Model:** `Domain/Timeline/CameraGroup`; açı değişimi yeni klip kopyalamaz, gruptaki açıyı seçer.
 - **Donanım sınırı:** `AVCaptureMultiCamSession.hardwareCost` ve sistem baskısı izlenir; sınırı aşarsa çözünürlük düşer.
 
-### H16 — Reklam çekimi (eski adı Canlı Suflör): brif → senin ağzından kartlar → teleprompter → markaya rapor (P1, fark yaratan)
+### H16 — Canlı Suflör: başka uygulamada yayındayken yanında (P1, fark yaratan)
 
 **Fikir (kullanıcıdan, 2026-09-18):** Kişi TikTok/Instagram'da canlı yayın yapıyor ya da onların kamerasıyla çekiyor. Kamerasını değiştiremeyiz, ama yanında durabiliriz: yayından önce reklam brifi hazırlanır, yayında CueTake küçük bir PiP penceresinde ve Dynamic Island'da suflörlük yapar, bir butonla "şimdi ne konuşayım" önerisi verir.
 
@@ -731,14 +731,6 @@ Ekip (P2)                              CloudKit shared zones veya kendi backend'
 - **Yapıldı:** `SuflorFeature` modülü (brif 3 adım, AI kartları `/suflor` Worker'da + şablon, canlı önizleme, sahne: 3-2-1, reklam bekleme halkası, reklam anı süpürmesi, tik çizimi; PiP `AVSampleBufferDisplayLayer` ile, sistem düğmeleri durdur/kart atla; rapor: istatistikler, kanıt satırları, Fotoğraflar'dan kayıt ekleyip cihazda dinleyerek doğrulama + kare, PDF ve PNG paylaşımı). Domain: `SuflorBrief/Cue/Plan/Clock/Proof/Session` + `SuflorTests`. `UIBackgroundModes` += `audio`.
 - **Açık:** cihazda PiP testi (mixWithOthers ile açılıyor mu, TikTok canlıyken pencere yaşıyor mu); Canlı Etkinlik/Dynamic Island (widget eklentisi + yeni App ID/profil gerekir); App Review notu (audio modu yalnız PiP için); konumlandırma "reklam teslim aracı", dağıtım PDF altbilgisi + ajanslar.
 - **Rakip:** Beast Floating Teleprompter, Teleprompter™, VoicePrompter, Teleprompter: Floating Notes zaten PiP'te yüzüyor; VoicePrompter yüzerken ses takibi iddia ediyor — doğrulanmadı.
-
-**Durum (2026-09-19, build 126) — PiP kaldırıldı, reklam stüdyoya taşındı:**
-- **Neden:** Cihazda (13 Pro Max) Instagram/TikTok kamerası açılınca yüzen pencere kararıyor, ▶ cevap vermiyor. YouTube'un kendi PiP'i de aynı şekilde kararıyor: iOS kamera açıkken PiP'i karartıyor. Sessiz ses çalarak uygulamayı uyanık tutmak (build 125) işe yaramadı. Telefondan yapılan her canlı yayında kamera açık olduğu için PiP suflör ana senaryoda hiç çalışamaz. Dynamic Island: kullanıcının telefonunda yok, kayan metin de gösteremiyor.
-- **Karar (kullanıcı):** Suflör silindi, bütün özellikleri teleprompter'a geçti. Ana sayfada "Reklam çek" kartı.
-- **Akış:** tür (video içinde / reklam videosu) + nerede paylaşılacak → brif (marka, ürün, ürün hakkında, zorunlu maddeler, ton, konu, "Benim gibi konuşsun") → kartlar (AI akışı / Benim akışım, "Kendim yazacağım" boş şablon kartları, süre, zorunlu maddeler kartlarda var mı) → "Kameraya geç": kartlar projenin bölümleri olur (bölüm id = kart id, `metadata["ad.role"]`, brif `project.metadata["ad.brief"]`), stüdyo teleprompter'ı sesi takip eder, zorunlu maddeler metinde yeşil yanar, konuşma tanıyıcıya marka terimleri ipucu olarak gider → çekim bitince "Markaya rapor": reklamın videodaki yeri bölümlerden, her maddenin söylendiği saniye çekimin kendi dökümünden, kare kayıttan; PDF/PNG, TR/EN/ES, isim zorunlu.
-- **Silinen:** `SuflorEngine/PiP/Painter/Layout/StageView`, `SuflorClock`, reklam dakikası beklemesi, Fotoğraflar'dan kayıt seçme, `UIBackgroundModes` içindeki `audio`.
-- **Worker:** yeni tür `integrated` (video içinde reklam: açılış, konu, köprü, reklam, çağrı, kapanış; izleyiciye konuşur). Eski buildler için `live` duruyor.
-- **Açık:** kodda adlar hâlâ `Suflor*` (yalnız kullanıcıya görünen metinler değişti).
 
 ---
 
