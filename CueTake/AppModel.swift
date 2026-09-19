@@ -1141,7 +1141,7 @@ final class AppModel {
             studioModel = StudioModel(project: project)
         }
         // An ad's must-say items are lit on the prompter; anything else has none.
-        studioModel.teleprompter.highlights = adHighlights
+        studioModel.setHighlights(adHighlights)
         go(to: .studio)
     }
 

@@ -144,6 +144,11 @@ public final class StudioModel {
         updateTiming()
     }
 
+    /// Words lit on the prompter: what a brand asked to hear in an ad. Empty for anything else.
+    public func setHighlights(_ items: [String]) {
+        teleprompter.highlights = items
+    }
+
     /// Terms the recogniser should expect beyond the script's own, such as the brand's name.
     public func setSpeechHints(_ hints: [String]) {
         driver.extraHints = hints
