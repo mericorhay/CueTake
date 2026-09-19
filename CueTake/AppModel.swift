@@ -1151,6 +1151,7 @@ final class AppModel {
         }
         // An ad's must-say items are lit on the prompter; anything else has none.
         studioModel.setHighlights(adHighlights)
+        studioModel.setAdChecks(adChecks)
         go(to: .studio)
     }
 

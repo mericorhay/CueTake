@@ -1,6 +1,91 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "suflor.brief.adLength": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AD LENGTH"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REKLAM SÜRESİ"
+          }
+        }
+      }
+    },
+    "suflor.brief.adLength.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counts down on stage and in the studio once the ad starts."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reklam başlayınca sahnede ve stüdyoda geri sayar."
+          }
+        }
+      }
+    },
+    "suflor.brief.adLength.less": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 seconds less"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 saniye kısalt"
+          }
+        }
+      }
+    },
+    "suflor.brief.adLength.more": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 seconds more"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 saniye uzat"
+          }
+        }
+      }
+    },
+    "suflor.brief.adLength.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yok"
+          }
+        }
+      }
+    },
     "suflor.brief.ai.hint": {
       "extractionState": "manual",
       "localizations": {
@@ -31,6 +116,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "OR LET AI DRAFT IT"
+          }
+        }
+      }
+    },
+    "suflor.brief.avoid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WORDS TO AVOID"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SÖYLENMEYECEKLER"
+          }
+        }
+      }
+    },
+    "suflor.brief.avoid.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The studio warns the moment one is said; the report checks them too."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stüdyoda söylenirse hemen uyarır; raporda ayrıca kontrol edilir."
+          }
+        }
+      }
+    },
+    "suflor.brief.avoid.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Competitor, claim"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rakip marka, iddia"
           }
         }
       }
@@ -116,6 +252,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kartlarıma git"
+          }
+        }
+      }
+    },
+    "suflor.brief.link": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LINK"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LİNK"
+          }
+        }
+      }
+    },
+    "suflor.brief.link.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cuetake.app/code or “link in bio”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cuetake.app/kod ya da “link bio'da”"
           }
         }
       }
@@ -320,6 +490,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sabah rutini, soru-cevap, kutu açılışı…"
+          }
+        }
+      }
+    },
+    "suflor.brief.vocabulary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "RECOGNITION VOCABULARY"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TANIMA SÖZLÜĞÜ"
+          }
+        }
+      }
+    },
+    "suflor.brief.vocabulary.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Given to speech recognition before the take, so it hears these the way the brand writes them."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çekimden önce konuşma tanımaya verilir; bu kelimeleri markanın yazdığı gibi duyar."
+          }
+        }
+      }
+    },
+    "suflor.brief.vocabulary.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model name, campaign"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model adı, kampanya"
           }
         }
       }
@@ -1259,6 +1480,75 @@
         }
       }
     },
+    "suflor.pdf.avoid.clean": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Söylenmemesi gerekenlerin hiçbiri kayıtta geçmedi."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None of the words to avoid was said in the recording."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna palabra a evitar se dijo en la grabación."
+          }
+        }
+      }
+    },
+    "suflor.pdf.avoid.hit": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Söylenmemesi gerekenler geçti: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words to avoid were said: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se dijeron palabras a evitar: %@"
+          }
+        }
+      }
+    },
+    "suflor.pdf.avoid.notChecked": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Söylenmemesi gerekenler kayıt eklenince kontrol edilir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words to avoid are checked once a recording is added."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las palabras a evitar se revisan al añadir la grabación."
+          }
+        }
+      }
+    },
     "suflor.pdf.badge.heard": {
       "extractionState": "manual",
       "localizations": {
@@ -1305,6 +1595,29 @@
         }
       }
     },
+    "suflor.pdf.badge.notChecked": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KAYIT YOK"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NO RECORDING"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SIN GRABACIÓN"
+          }
+        }
+      }
+    },
     "suflor.pdf.badge.ticked": {
       "extractionState": "manual",
       "localizations": {
@@ -1328,25 +1641,71 @@
         }
       }
     },
-    "suflor.pdf.footer": {
+    "suflor.pdf.check.disclosure": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Times are counted from the start of the stream. VERIFIED lines were found by listening to the saved stream on the creator's phone, with the moment's frame. MARKED lines are the creator's own record, ticked while live."
-          }
-        },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Süreler yayının başından itibaren sayılır. DOĞRULANDI satırları, kaydedilen yayın yayıncının telefonunda dinlenerek o anın karesiyle bulundu. İŞARETLENDİ satırları yayıncının canlıdayken tuttuğu kendi kaydıdır."
+            "value": "Reklam açıklaması"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad disclosure"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los tiempos se cuentan desde el inicio del directo. Las líneas VERIFICADO se encontraron escuchando la grabación en el teléfono del creador, con el fotograma del momento. Las líneas MARCADO son el registro del propio creador durante el directo."
+            "value": "Aviso publicitario"
+          }
+        }
+      }
+    },
+    "suflor.pdf.check.link": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link yönlendirmesi"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link call-out"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mención del enlace"
+          }
+        }
+      }
+    },
+    "suflor.pdf.footer": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Süreler yayının ya da videonun başından sayılır. DOĞRULANDI satırları kayıt yayıncının telefonunda dinlenerek, o anın karesiyle bulundu; İŞARETLENDİ satırları yayıncının kendi kaydıdır. Bu belge bir teslim kanıtıdır; hukuki uyumluluk sertifikası değildir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Times are counted from the start of the stream or video. VERIFIED lines were found by listening to the recording on the creator's phone, with the moment's frame; MARKED lines are the creator's own record. This is proof of delivery, not a legal compliance certificate."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los tiempos se cuentan desde el inicio del directo o del vídeo. Las líneas VERIFICADO se encontraron escuchando la grabación en el teléfono del creador, con el fotograma del momento; las líneas MARCADO son el registro del propio creador. Esto es una prueba de entrega, no un certificado de cumplimiento legal."
           }
         }
       }
@@ -1423,22 +1782,22 @@
     "suflor.pdf.kicker": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PROMPTER REPORT"
-          }
-        },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "SUFLÖR RAPORU"
+            "value": "TESLİM KANITI"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PROOF OF DELIVERY"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "INFORME DE TELEPROMPTER"
+            "value": "PRUEBA DE ENTREGA"
           }
         }
       }
@@ -1508,6 +1867,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "No encontrado en la grabación ni marcado"
+          }
+        }
+      }
+    },
+    "suflor.pdf.notChecked": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayıt eklenmedi, dinlenmedi"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recording added, not listened to"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se añadió la grabación"
           }
         }
       }
@@ -2453,6 +2835,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reklam zamanı"
+          }
+        }
+      }
+    },
+    "suflor.stage.avoid %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't say: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Söyleme: %@"
           }
         }
       }

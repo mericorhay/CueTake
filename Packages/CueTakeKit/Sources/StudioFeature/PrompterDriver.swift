@@ -41,6 +41,8 @@ final class PrompterDriver {
     @ObservationIgnored var speedMultiplier: () -> Double = { 1 }
     /// Words to tell the recogniser about beyond the script's own: the brand's name and phrases.
     @ObservationIgnored var extraHints: [String] = []
+    /// The last words heard, whatever the place: for an ad's checks while it is recorded.
+    @ObservationIgnored var onHeard: (([String]) -> Void)?
 
     /// Where the voice was last found, and how many words the text has glided past it since.
     private var heardPosition: ScriptFollower.Position?
@@ -128,6 +130,7 @@ final class PrompterDriver {
         let updates = speech.transcribe(frames, localeIdentifier: localeIdentifier, hints: hints)
         listening = Task { [weak self] in
             var settled: [String] = []
+            var tail: [String] = []
             do {
                 for try await update in updates {
                     guard let self else { return }
@@ -135,6 +138,8 @@ final class PrompterDriver {
                     guard !words.isEmpty else { continue }
                     let recent = Array((settled + words).suffix(8))
                     if update.isFinal { settled = recent }
+                    onHeard?(Array((tail + words).suffix(24)))
+                    if update.isFinal { tail = Array((tail + words).suffix(24)) }
                     hear(recent)
                 }
             } catch {

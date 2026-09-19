@@ -185,9 +185,11 @@ extension SuflorBrief.Platform {
 private struct SuflorBriefStep: View {
     @Bindable var model: SuflorModel
     @State private var newItem = ""
+    @State private var newWord = ""
+    @State private var newAvoid = ""
     @FocusState private var focused: Field?
 
-    private enum Field { case brand, product, details, item, topic }
+    private enum Field { case brand, product, details, item, topic, link, word, avoid }
 
     private let tones: [String.LocalizationValue] = ["suflor.tone.warm", "suflor.tone.energetic", "suflor.tone.calm", "suflor.tone.funny"]
 
@@ -227,6 +229,7 @@ private struct SuflorBriefStep: View {
                 .padding(.top, 14)
 
                 mustSay.padding(.top, 22)
+                checks.padding(.top, 22)
                 if model.brief.kind == .live { timing.padding(.top, 22) }
                 tone.padding(.top, 22)
 
@@ -375,6 +378,145 @@ private struct SuflorBriefStep: View {
             Text("suflor.brief.mustSay.hint", bundle: .module)
                 .dsFont(.sans, .regular, 12)
                 .foregroundStyle(DS.Palette.ink(0.52))
+        }
+    }
+
+    /// What the report checks beyond the items, and what the recogniser is told: the link, the
+    /// brand's own words, the words that must not be said, and how long the ad should be.
+    private var checks: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                DSKicker(String(localized: "suflor.brief.link", bundle: .module))
+                TextField(String(localized: "suflor.brief.link.placeholder", bundle: .module), text: $model.brief.link)
+                    .focused($focused, equals: .link)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .dsFont(.sans, .medium, 15)
+                    .foregroundStyle(DS.Palette.ink)
+                    .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .contentShape(Rectangle())
+                    .onTapGesture { focused = .link }
+                    .dsCard(radius: 16, border: focused == .link ? DS.Palette.lime(0.6) : DS.Palette.hairline(0.07))
+            }
+            chipList(
+                title: "suflor.brief.vocabulary",
+                placeholder: "suflor.brief.vocabulary.placeholder",
+                hint: "suflor.brief.vocabulary.hint",
+                items: $model.brief.vocabulary,
+                text: $newWord,
+                field: .word,
+                tint: DS.Palette.accentWarm
+            )
+            chipList(
+                title: "suflor.brief.avoid",
+                placeholder: "suflor.brief.avoid.placeholder",
+                hint: "suflor.brief.avoid.hint",
+                items: $model.brief.avoid,
+                text: $newAvoid,
+                field: .avoid,
+                tint: DS.Palette.accent
+            )
+            adLength
+        }
+    }
+
+    private func chipList(
+        title: String.LocalizationValue,
+        placeholder: String.LocalizationValue,
+        hint: String.LocalizationValue,
+        items: Binding<[String]>,
+        text: Binding<String>,
+        field: Field,
+        tint: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            DSKicker(String(localized: title, bundle: .module))
+            FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach(items.wrappedValue, id: \.self) { item in
+                    Button {
+                        withAnimation(DS.Motion.snap) { items.wrappedValue.removeAll { $0 == item } }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(verbatim: item).dsFont(.sans, .semibold, 14)
+                            Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                        .background(Capsule().fill(tint))
+                    }
+                    .buttonStyle(.dsPress)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
+                HStack(spacing: 6) {
+                    Image(systemName: "plus").font(.system(size: 12, weight: .bold)).foregroundStyle(DS.Palette.ink(0.6))
+                    TextField(String(localized: placeholder, bundle: .module), text: text)
+                        .focused($focused, equals: field)
+                        .dsFont(.sans, .medium, 14)
+                        .foregroundStyle(DS.Palette.ink)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            let value = text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                            text.wrappedValue = ""
+                            guard !value.isEmpty, !items.wrappedValue.contains(value) else { return }
+                            withAnimation(DS.Motion.bloom) { items.wrappedValue.append(value) }
+                            focused = field
+                        }
+                        .frame(minWidth: 150)
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+                .background(Capsule().stroke(DS.Palette.hairline(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 4])))
+            }
+            Text(String(localized: hint, bundle: .module))
+                .dsFont(.sans, .regular, 12)
+                .foregroundStyle(DS.Palette.ink(0.52))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// How long the brand wants the ad, counted down on stage and in the studio. Off at zero.
+    private var adLength: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            DSKicker(String(localized: "suflor.brief.adLength", bundle: .module))
+            HStack(spacing: 12) {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(DS.Motion.snap) { model.brief.adSeconds = max(0, model.brief.adSeconds - 15) }
+                } label: {
+                    Image(systemName: "minus").font(.system(size: 15, weight: .bold)).foregroundStyle(DS.Palette.ink)
+                        .frame(width: 44, height: 44).background(Circle().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("suflor.brief.adLength.less", bundle: .module))
+                Group {
+                    if model.brief.adSeconds == 0 {
+                        Text("suflor.brief.adLength.off", bundle: .module)
+                    } else {
+                        Text(verbatim: SuflorSession.clock(Double(model.brief.adSeconds)))
+                    }
+                }
+                .dsFont(.archivo, .bold, 22)
+                .foregroundStyle(model.brief.adSeconds == 0 ? DS.Palette.ink(0.5) : DS.Palette.ink)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .frame(minWidth: 90)
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    withAnimation(DS.Motion.snap) { model.brief.adSeconds = min(600, model.brief.adSeconds + 15) }
+                } label: {
+                    Image(systemName: "plus").font(.system(size: 15, weight: .bold)).foregroundStyle(DS.Palette.ink)
+                        .frame(width: 44, height: 44).background(Circle().fill(DS.Palette.hairline(0.08)))
+                }
+                .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("suflor.brief.adLength.more", bundle: .module))
+                Spacer(minLength: 0)
+            }
+            Text("suflor.brief.adLength.hint", bundle: .module)
+                .dsFont(.sans, .regular, 12)
+                .foregroundStyle(DS.Palette.ink(0.52))
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

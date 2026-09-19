@@ -295,6 +295,12 @@ struct SuflorStageView: View {
 
     private var urgent: Bool { (status.secondsToAd ?? 99) <= 5 }
 
+    /// The ad's time left when the brand set a length: counted from the moment it began.
+    private var adSecondsLeft: Int? {
+        guard model.brief.adSeconds > 0, let start = model.session?.adStartedAt else { return nil }
+        return model.brief.adSeconds - (status.elapsed - Int(start))
+    }
+
     /// The ad starts: a band of light sweeps down the screen and the word lands.
     private var adFlash: some View {
         ZStack {
@@ -360,8 +366,16 @@ struct SuflorStageView: View {
     @ViewBuilder
     private var adPill: some View {
         if status.isInAd {
-            Text("suflor.chrome.ad", bundle: .module)
-                .dsFont(.mono, .medium, 12, letterSpacing: 0.16)
+            HStack(spacing: 8) {
+                Text("suflor.chrome.ad", bundle: .module)
+                    .dsFont(.mono, .medium, 12, letterSpacing: 0.16)
+                if let left = adSecondsLeft {
+                    Text(verbatim: left >= 0 ? SuflorSession.clock(Double(left)) : "+\(-left)s")
+                        .dsFont(.mono, .medium, 12)
+                        .monospacedDigit()
+                        .contentTransition(.numericText(countsDown: true))
+                }
+            }
                 .foregroundStyle(DS.Palette.inkInverse)
                 .padding(.horizontal, 14)
                 .frame(minHeight: 36)
@@ -393,7 +407,7 @@ struct SuflorStageView: View {
                 readyGuide
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            if let items = model.session?.plan.brief.mustSay, !items.isEmpty {
+            if let items = model.session?.plan.brief.mustSay, !(items.isEmpty && model.brief.avoid.isEmpty) {
                 ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ForEach(items, id: \.self) { item in
@@ -401,6 +415,18 @@ struct SuflorStageView: View {
                                 UIImpactFeedbackGenerator(style: .soft).impactOccurred()
                                 withAnimation(DS.Motion.bloom) { model.tick(item) }
                             }
+                        }
+                        // Reminders, not buttons: what must not be said.
+                        ForEach(model.brief.avoid, id: \.self) { word in
+                            HStack(spacing: 6) {
+                                Image(systemName: "nosign").font(.system(size: 12, weight: .bold))
+                                Text(verbatim: word).dsFont(.sans, .semibold, 14)
+                            }
+                            .foregroundStyle(DS.Palette.accent)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 44)
+                            .overlay(Capsule().stroke(DS.Palette.accent(0.6), lineWidth: 1.5))
+                            .accessibilityLabel(Text("suflor.stage.avoid \(word)", bundle: .module))
                         }
                     }
                     .padding(.horizontal, 16)

@@ -43,6 +43,73 @@ public final class StudioModel {
 
     public var hasFootage: Bool { project.segments.contains { $0.selectedTake != nil } }
 
+    /// A sponsored take's checks while it is recorded: what must be said, what must not, which
+    /// segments are the ad and how long it should run.
+    public struct AdChecks: Equatable, Sendable {
+        public var items: [String]
+        public var avoid: [String]
+        public var adSegments: Set<Segment.ID>
+        /// 0 when the brand did not say.
+        public var adSeconds: Int
+
+        public init(items: [String], avoid: [String], adSegments: Set<Segment.ID>, adSeconds: Int) {
+            self.items = items
+            self.avoid = avoid
+            self.adSegments = adSegments
+            self.adSeconds = adSeconds
+        }
+    }
+
+    public private(set) var adChecks: AdChecks?
+    /// Items heard so far in this take.
+    public private(set) var heardItems: Set<String> = []
+    /// A word that must not be said, heard just now; cleared after a few seconds.
+    public private(set) var avoidHeard: String?
+    /// Seconds into the take when the ad began, once it has.
+    public private(set) var adStartedAt: Double?
+
+    public func setAdChecks(_ checks: AdChecks?) {
+        adChecks = checks
+    }
+
+    /// Seconds of the ad left, or over when negative; nil before it starts or with no length set.
+    public var adSecondsLeft: Int? {
+        guard let adChecks, adChecks.adSeconds > 0, let adStartedAt else { return nil }
+        return adChecks.adSeconds - Int(elapsed - adStartedAt)
+    }
+
+    public var isInAd: Bool {
+        guard let adChecks, let segment = currentSegment else { return false }
+        return adChecks.adSegments.contains(segment.id)
+    }
+
+    private var avoidClear: Task<Void, Never>?
+
+    /// Ticks an item the moment it is heard, and warns the moment a word that must not be said is.
+    private func checkHeard(_ words: [String]) {
+        guard phase == .recording, let adChecks else { return }
+        let heard = Self.fold(words.joined(separator: " "))
+        for item in adChecks.items where !heardItems.contains(item) {
+            let wanted = Self.fold(item)
+            if !wanted.isEmpty, heard.contains(wanted) { heardItems.insert(item) }
+        }
+        for word in adChecks.avoid {
+            let unwanted = Self.fold(word)
+            guard unwanted.count >= 2, heard.contains(unwanted), avoidHeard != word else { continue }
+            avoidHeard = word
+            avoidClear?.cancel()
+            avoidClear = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(3.5))
+                guard !Task.isCancelled else { return }
+                self?.avoidHeard = nil
+            }
+        }
+    }
+
+    private static func fold(_ text: String) -> String {
+        text.lowercased().folding(options: [.diacriticInsensitive, .widthInsensitive], locale: nil).filter { $0.isLetter || $0.isNumber }
+    }
+
     /// Reserve the shutter before any suspension, and settle permissions before the countdown.
     public func prepareCapture() async -> Bool {
         guard phase == .idle || phase == .complete else { return false }
@@ -132,6 +199,7 @@ public final class StudioModel {
         )
         teleprompter.load(project.segments)
         driver.onMove = { [weak self] position in self?.move(to: position) }
+        driver.onHeard = { [weak self] words in self?.checkHeard(words) }
         driver.isPaused = { [weak self] in self?.teleprompter.isPaused ?? false }
         // The prompter's speed control, 0–100, shown as 0.6×–1.6×, now means what it says; a
         // segment set to read faster or slower in the editor scales it again.
@@ -295,6 +363,9 @@ public final class StudioModel {
         recordingURL = url
         recordingStart = .now
         segmentStarts = [0]
+        heardItems = []
+        avoidHeard = nil
+        adStartedAt = isInAd ? 0 : nil
 
         if hasScript { driver.start(camera: camera) }
 
@@ -393,6 +464,7 @@ public final class StudioModel {
         }
         segmentIndex = position.segment
         wordIndex = position.word
+        if adStartedAt == nil, isInAd { adStartedAt = elapsed }
         publishPosition()
         updateTiming()
     }

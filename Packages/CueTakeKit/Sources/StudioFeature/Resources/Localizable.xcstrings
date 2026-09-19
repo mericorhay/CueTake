@@ -498,6 +498,40 @@
         }
       }
     },
+    "studio.ad.avoid %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Said: “%@”"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Söylendi: “%@”"
+          }
+        }
+      }
+    },
+    "studio.ad.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AD"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "REKLAM"
+          }
+        }
+      }
+    },
     "studio.camera.flip": {
       "extractionState": "manual",
       "localizations": {

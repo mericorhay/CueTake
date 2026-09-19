@@ -107,8 +107,12 @@ struct SuflorReportPage: View {
         brief.mustSay.filter { session.evidence(for: $0) != .missing }.count
     }
 
+    /// Delivered: every item heard, and — once the recording was listened to — the ad disclosed,
+    /// the link given when there is one, and nothing said that must not be.
     private var isComplete: Bool {
-        brief.mustSay.isEmpty ? session.adStartedAt != nil : delivered == brief.mustSay.count
+        let items = brief.mustSay.isEmpty ? session.adStartedAt != nil : delivered == brief.mustSay.count
+        guard session.listened else { return items }
+        return items && session.disclosure != nil && session.avoidHits.isEmpty && (brief.link.isEmpty || session.linkProof != nil)
     }
 
     var body: some View {
@@ -315,16 +319,92 @@ struct SuflorReportPage: View {
         VStack(alignment: .leading, spacing: 0) {
             sectionTitle(t("suflor.pdf.items"))
                 .padding(.bottom, 8)
+            checkRow(t("suflor.pdf.check.disclosure"), proof: session.disclosure)
+            Rectangle().fill(rule).frame(height: 1)
+            if !brief.link.isEmpty {
+                checkRow(t("suflor.pdf.check.link") + " · " + brief.link, proof: session.linkProof)
+                Rectangle().fill(rule).frame(height: 1)
+            }
             if brief.mustSay.isEmpty {
                 Text(verbatim: t("suflor.pdf.items.none"))
                     .font(DS.fixed(.sans, .regular, 10.5))
                     .foregroundStyle(muted)
+                    .padding(.vertical, 6)
             }
-            ForEach(brief.mustSay.prefix(6), id: \.self) { item in
+            ForEach(brief.mustSay.prefix(brief.link.isEmpty ? 5 : 4), id: \.self) { item in
                 row(item)
                 Rectangle().fill(rule).frame(height: 1)
             }
+            if !brief.avoid.isEmpty {
+                avoidLine.padding(.top, 8)
+            }
         }
+    }
+
+    /// A check the app makes on its own: said, with when and a frame; or not heard.
+    private func checkRow(_ title: String, proof: SuflorProof?) -> some View {
+        let evidence: SuflorSession.Evidence = proof.map { .heard($0) } ?? .missing
+        return HStack(alignment: .center, spacing: 12) {
+            if session.listened || proof != nil {
+                badge(evidence)
+            } else {
+                Text(verbatim: t("suflor.pdf.badge.notChecked"))
+                    .font(DS.fixed(.mono, .medium, 7))
+                    .tracking(0.8)
+                    .foregroundStyle(muted)
+                    .frame(width: 74, height: 20)
+                    .background(Capsule().fill(faint))
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: title)
+                    .font(DS.fixed(.sans, .semibold, 12.5))
+                    .foregroundStyle(ink)
+                    .lineLimit(1)
+                if let proof {
+                    Text(verbatim: language.text("suflor.pdf.heard", SuflorSession.clock(proof.seconds)))
+                        .font(DS.fixed(.sans, .medium, 9.5))
+                        .foregroundStyle(verified)
+                    Text(verbatim: "“" + proof.quote + "”")
+                        .font(DS.fixed(.sans, .regular, 9))
+                        .italic()
+                        .foregroundStyle(muted)
+                        .lineLimit(1)
+                } else {
+                    Text(verbatim: session.listened ? t("suflor.pdf.missing") : t("suflor.pdf.notChecked"))
+                        .font(DS.fixed(.sans, .medium, 9.5))
+                        .foregroundStyle(session.listened ? amber : muted)
+                }
+            }
+            Spacer(minLength: 0)
+            if let data = proof?.frame, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 58, height: 42)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            }
+        }
+        .padding(.vertical, 7)
+    }
+
+    /// What must not be said: clean, or each time it was.
+    private var avoidLine: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: session.avoidHits.isEmpty ? "checkmark.shield.fill" : "exclamationmark.triangle.fill")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(session.avoidHits.isEmpty ? verified : accent)
+            Text(verbatim: avoidText)
+                .font(DS.fixed(.sans, .medium, 9.5))
+                .foregroundStyle(session.avoidHits.isEmpty ? ink.opacity(0.75) : accent)
+                .lineLimit(2)
+        }
+    }
+
+    private var avoidText: String {
+        guard session.listened else { return t("suflor.pdf.avoid.notChecked") }
+        guard !session.avoidHits.isEmpty else { return t("suflor.pdf.avoid.clean") }
+        let hits = session.avoidHits.prefix(4).map { "\($0.item) \(SuflorSession.clock($0.seconds))" }.joined(separator: ", ")
+        return language.text("suflor.pdf.avoid.hit", hits)
     }
 
     private func row(_ item: String) -> some View {
@@ -398,7 +478,7 @@ struct SuflorReportPage: View {
                     .font(DS.fixed(.sans, .regular, 9.5))
                     .foregroundStyle(ink.opacity(0.78))
                     .lineSpacing(2)
-                    .lineLimit(6)
+                    .lineLimit(4)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)

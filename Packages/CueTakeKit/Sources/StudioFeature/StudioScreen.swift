@@ -276,6 +276,65 @@ public struct StudioScreen: View {
                 progressPips
                 prompterBadge
             }
+            if let checks = model.adChecks {
+                adStatus(checks)
+            }
+        }
+        .animation(DS.Motion.settle, value: model.heardItems)
+        .animation(DS.Motion.settle, value: model.avoidHeard)
+        .animation(DS.Motion.settle, value: model.isInAd)
+    }
+
+    /// A sponsored take: each item ticked as it is heard, the ad's time left, and a warning the
+    /// moment a word that must not be said is.
+    @ViewBuilder
+    private func adStatus(_ checks: StudioModel.AdChecks) -> some View {
+        VStack(spacing: 6) {
+            if let word = model.avoidHeard {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 11, weight: .bold))
+                    Text("studio.ad.avoid \(word)", bundle: .module)
+                        .dsFont(.sans, .semibold, 12)
+                }
+                .foregroundStyle(DS.Palette.ink)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(DS.Palette.accent))
+                .transition(.scale(scale: 0.8).combined(with: .opacity))
+            }
+            HStack(spacing: 6) {
+                if model.isInAd {
+                    HStack(spacing: 5) {
+                        Circle().fill(DS.Palette.accent).frame(width: 6, height: 6)
+                        Text("studio.ad.label", bundle: .module)
+                            .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
+                        if let left = model.adSecondsLeft {
+                            Text(verbatim: left >= 0 ? String(format: "%d:%02d", left / 60, left % 60) : "+\(-left)s")
+                                .dsFont(.mono, .medium, 10)
+                                .monospacedDigit()
+                                .foregroundStyle(left >= 0 ? DS.Palette.ink : DS.Palette.accent)
+                        }
+                    }
+                    .foregroundStyle(DS.Palette.ink)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .dsGlass(tint: DS.Palette.accent(0.25), in: Capsule())
+                }
+                ForEach(checks.items.prefix(4), id: \.self) { item in
+                    let heard = model.heardItems.contains(item)
+                    HStack(spacing: 4) {
+                        Image(systemName: heard ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(verbatim: item)
+                            .dsFont(.mono, .medium, 10)
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(heard ? DS.Palette.lime : DS.Palette.ink(0.75))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .dsGlass(tint: DS.Palette.glass(0.5), in: Capsule())
+                }
+            }
         }
     }
 

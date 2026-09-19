@@ -23,7 +23,7 @@ extension AppModel {
         let client = dependencies.assistantClient
 
         // The script's names and numbers, and the brand's, told to both listeners before they hear.
-        let hints = SpeechHints.terms(scripts: [script], brand: scriptLibrary.activeBrand, localeIdentifier: localeIdentifier)
+        let hints = Array((adSpeechHints + SpeechHints.terms(scripts: [script], brand: scriptLibrary.activeBrand, localeIdentifier: localeIdentifier)).prefix(SpeechHints.limit))
         let prompt = SpeechHints.whisperPrompt(script: script, terms: hints, localeIdentifier: localeIdentifier)
         async let deviceResult = Self.deviceTranscript(of: url, speech: speech, localeIdentifier: localeIdentifier, hints: hints)
         let allowsCloud = settingsModel.settings.aiProcessing == .allowCloud

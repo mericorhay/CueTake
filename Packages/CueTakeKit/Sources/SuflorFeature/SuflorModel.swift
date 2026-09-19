@@ -33,7 +33,8 @@ public final class SuflorModel {
     /// Writes cards from a brief on the server. Nil in a build without the assistant.
     public typealias Writer = (SuflorBrief, String, String?) async throws -> [SuflorCue]
     /// Listens to a saved recording of the stream and finds where each item was said.
-    public typealias Verifier = (URL, [String]) async throws -> [SuflorProof]
+    /// Listens to a saved recording and fills in the session's checks, with a frame for each.
+    public typealias Verifier = (URL, SuflorSession) async throws -> SuflorSession
 
     public var step: Step = .kind
     public private(set) var stage: Stage = .setup
@@ -485,11 +486,12 @@ public final class SuflorModel {
         isVerifying = true
         verifyError = nil
         defer { isVerifying = false }
-        let items = session.plan.brief.mustSay + [session.plan.brief.brand, session.plan.brief.product].filter { !$0.isEmpty }
         do {
-            session.proofs = try await verifier(url, items)
+            let creator = session.creator
+            session = try await verifier(url, session)
+            session.creator = creator
             self.session = session
-            if session.proofs.isEmpty {
+            if session.allProofs.isEmpty {
                 verifyError = String(localized: "suflor.verify.none", bundle: .module)
             }
         } catch {

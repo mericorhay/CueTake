@@ -137,4 +137,20 @@ struct SuflorTests {
         #expect(SuflorSession.clock(3723) == "1:02:03")
         #expect(SuflorSession.clock(83) == "1:23")
     }
+
+    @Test func theReportFindsTheDisclosureTheLinkAndWordsToAvoid() {
+        let brief = SuflorBrief(brand: "Glow", mustSay: ["KOD20"], link: "https://glow.com.tr/kod", avoid: ["ucuz"])
+        var session = SuflorSession(plan: SuflorPlan(brief: brief, cues: []))
+        #expect(!session.listened)
+        let heard = words("selam bu video glow ile iş birliğiyle hazırlandı kodum kod 20 linki bio da duruyor hiç ucuz değil")
+        session.check(heard, localeIdentifier: "tr-TR")
+        #expect(session.listened)
+        #expect(session.disclosure?.seconds == 2.5)
+        #expect(session.proofs.map(\.item).contains("KOD20"))
+        #expect(session.linkProof?.seconds == 5.5)
+        #expect(session.avoidHits.map(\.item) == ["ucuz"])
+        #expect(SuflorProof.names(inLink: "https://www.glow.com.tr/kod") == ["glow"])
+        // "ad" is too short to count as a disclosure on its own.
+        #expect(SuflorProof.firstPhrase(SuflorProof.disclosurePhrases, in: words("adım ahmet"), label: "d", localeIdentifier: "tr-TR") == nil)
+    }
 }

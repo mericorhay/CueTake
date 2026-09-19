@@ -13,6 +13,8 @@ extension AssistantClient {
             var tone: String
             var topic: String
             var details: String
+            var link: String
+            var avoid: [String]
         }
 
         var brief: Brief
@@ -36,7 +38,9 @@ extension AssistantClient {
                 mustSay: brief.mustSay,
                 tone: brief.tone,
                 topic: brief.topic,
-                details: brief.details
+                details: brief.details,
+                link: brief.link,
+                avoid: brief.avoid
             ),
             locale: localeIdentifier,
             voice: voice

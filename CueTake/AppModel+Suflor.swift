@@ -5,6 +5,7 @@ import Foundation
 import Persistence
 import SettingsFeature
 import SpeechEngine
+import StudioFeature
 import SuflorFeature
 import UIKit
 
@@ -43,8 +44,8 @@ extension AppModel {
         suflor.voiceLoader = { [weak self] in await self?.suflorVoiceSample() }
         let speech = dependencies.speech
         let locale = project.localeIdentifier
-        suflor.verifier = { url, items in
-            try await Self.findSaid(items, in: url, speech: speech, localeIdentifier: locale)
+        suflor.verifier = { url, session in
+            try await Self.check(session, recording: url, speech: speech, localeIdentifier: locale)
         }
         suflor.onRecord = { [weak self] plan in self?.recordAd(plan) }
         suflor.reporter = { [weak self] in await self?.adSession() }
@@ -117,12 +118,19 @@ extension AppModel {
         Self.adBrief(of: project)?.mustSay ?? []
     }
 
+    /// The ad's checks for the studio: items to tick as they are heard, words to warn about, the
+    /// ad's segments and how long it should run. Nil for anything that is not an ad.
+    var adChecks: StudioModel.AdChecks? {
+        guard let brief = Self.adBrief(of: project) else { return nil }
+        let ad = project.segments.filter { segment in
+            segment.metadata[SuflorModel.roleKey].flatMap(SuflorCue.Role.init(rawValue:))?.isAd == true
+        }
+        return StudioModel.AdChecks(items: brief.mustSay, avoid: brief.avoid, adSegments: Set(ad.map(\.id)), adSeconds: brief.adSeconds)
+    }
+
     /// The brand's terms, for the listeners to expect while an ad is recorded.
     var adSpeechHints: [String] {
-        guard let brief = Self.adBrief(of: project) else { return [] }
-        return ([brief.brand, brief.product] + brief.mustSay)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        Self.adBrief(of: project)?.recognitionTerms ?? []
     }
 
     /// The creator's speech from their latest videos: the open project first, then the library,
@@ -145,22 +153,19 @@ extension AppModel {
         project.segments.flatMap(\.takes).compactMap(\.transcript).filter { !$0.words.isEmpty }
     }
 
-    /// Listens to a recording on this phone and returns where each item was first said, with a
-    /// frame from that moment.
-    nonisolated static func findSaid(_ items: [String], in url: URL, speech: any SpeechTranscribing, localeIdentifier: String) async throws -> [SuflorProof] {
-        let transcript = try await speech.transcribeFile(at: url, localeIdentifier: localeIdentifier, hints: items)
-        var proofs = SuflorProof.find(items, in: transcript.words, localeIdentifier: localeIdentifier)
-        let asset = AVURLAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = CGSize(width: 480, height: 480)
-        for index in proofs.indices {
-            let time = CMTime(seconds: proofs[index].seconds + 0.3, preferredTimescale: 600)
-            if let shot = try? await generator.image(at: time) {
-                proofs[index].frame = UIImage(cgImage: shot.image).jpegData(compressionQuality: 0.72)
-            }
+    /// Listens to a saved stream on this phone — told the brand's words first — and fills in every
+    /// check of the report, with a frame from each moment.
+    nonisolated static func check(_ session: SuflorSession, recording url: URL, speech: any SpeechTranscribing, localeIdentifier: String) async throws -> SuflorSession {
+        let hints = session.plan.brief.recognitionTerms
+        let transcript = try await speech.transcribeFile(at: url, localeIdentifier: localeIdentifier, hints: hints)
+        var checked = session
+        checked.check(transcript.words, localeIdentifier: localeIdentifier)
+        var frames: [Double: Data] = [:]
+        for second in checked.proofSeconds {
+            frames[second] = await frame(in: url, at: second + 0.3)
         }
-        return withExtendedLifetime(asset) { proofs }
+        checked.attachFrames(frames)
+        return checked
     }
 
     // MARK: - Report from a studio take
@@ -225,23 +230,22 @@ extension AppModel {
         session.adStartedAt = adStart
         session.adEndedAt = adEnd
 
-        let items = brief.mustSay + [brief.brand, brief.product].filter { !$0.isEmpty }
-        var proofs = SuflorProof.find(items, in: words, localeIdentifier: project.localeIdentifier)
+        session.check(words, localeIdentifier: project.localeIdentifier)
         if let media = try? await dependencies.projectStore.mediaDirectory(for: project.id) {
             let base = media.deletingLastPathComponent()
-            for index in proofs.indices {
-                let second = proofs[index].seconds
+            var frames: [Double: Data] = [:]
+            for second in session.proofSeconds {
                 guard let piece = pieces.last(where: { $0.start <= second + 0.01 }) else { continue }
                 let source = piece.sourceStart + (second - piece.start) * piece.speed + 0.3
-                proofs[index].frame = await Self.frame(in: base.appending(path: piece.recording.relativePath), at: source)
+                frames[second] = await Self.frame(in: base.appending(path: piece.recording.relativePath), at: source)
             }
+            session.attachFrames(frames)
         }
-        session.proofs = proofs
         return session
     }
 
     /// A small still from a file, for the report.
-    nonisolated private static func frame(in url: URL, at seconds: Double) async -> Data? {
+    nonisolated static func frame(in url: URL, at seconds: Double) async -> Data? {
         let asset = AVURLAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true

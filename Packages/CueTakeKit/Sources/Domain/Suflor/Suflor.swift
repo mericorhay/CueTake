@@ -44,6 +44,15 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
     /// brand's own brief. The only source of facts about the product: without it, nothing is
     /// claimed about what the product is or does.
     public var details: String
+    /// Where the link sends people: an address, or "the link in my bio". Checked in the take.
+    public var link: String
+    /// The brand's own words — product models, campaign codes — told to the recogniser before it
+    /// listens, so it writes them the brand's way.
+    public var vocabulary: [String]
+    /// Words that must not be said: a competitor, a claim the brand cannot make.
+    public var avoid: [String]
+    /// How long the ad section should last, in seconds; 0 when the brand did not say.
+    public var adSeconds: Int
 
     public init(
         kind: Kind = .live,
@@ -54,7 +63,11 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         timing: AdTiming = .minute(5),
         tone: String = "",
         topic: String = "",
-        details: String = ""
+        details: String = "",
+        link: String = "",
+        vocabulary: [String] = [],
+        avoid: [String] = [],
+        adSeconds: Int = 0
     ) {
         self.kind = kind
         self.platform = platform
@@ -65,13 +78,26 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         self.tone = tone
         self.topic = topic
         self.details = details
+        self.link = link
+        self.vocabulary = vocabulary
+        self.avoid = avoid
+        self.adSeconds = adSeconds
     }
 
     private enum CodingKeys: String, CodingKey {
-        case kind, platform, brand, product, mustSay, timing, tone, topic, details
+        case kind, platform, brand, product, mustSay, timing, tone, topic, details, link, vocabulary, avoid, adSeconds
     }
 
-    /// Briefs saved before `details` existed still open.
+    /// Every term the recogniser should expect: the names, the items, the brand's vocabulary and
+    /// the words to catch if they slip out.
+    public var recognitionTerms: [String] {
+        var seen = Set<String>()
+        return ([brand, product] + mustSay + vocabulary + avoid + [link])
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+    }
+
+    /// Briefs saved before `details` existed, or the checks after it, still open.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         kind = try container.decode(Kind.self, forKey: .kind)
@@ -83,6 +109,10 @@ public struct SuflorBrief: Codable, Hashable, Sendable {
         tone = try container.decode(String.self, forKey: .tone)
         topic = try container.decode(String.self, forKey: .topic)
         details = try container.decodeIfPresent(String.self, forKey: .details) ?? ""
+        link = try container.decodeIfPresent(String.self, forKey: .link) ?? ""
+        vocabulary = try container.decodeIfPresent([String].self, forKey: .vocabulary) ?? []
+        avoid = try container.decodeIfPresent([String].self, forKey: .avoid) ?? []
+        adSeconds = try container.decodeIfPresent(Int.self, forKey: .adSeconds) ?? 0
     }
 
     /// Enough to prepare anything from.
@@ -332,6 +362,67 @@ public struct SuflorProof: Codable, Hashable, Sendable, Identifiable {
         return proofs
     }
 
+    /// Ways of saying "this is an ad", in the languages the app speaks. A spoken word matches a
+    /// phrase word when it starts with it, so "iş birliğiyle" counts as "iş birliği".
+    public static let disclosurePhrases = [
+        "iş birliği", "işbirliği", "reklam", "reklamdır", "sponsor", "sponsorlu", "ücretli ortaklık",
+        "paid partnership", "sponsored", "advertisement", "partnered with", "in partnership with",
+        "publicidad", "patrocinado", "colaboración pagada", "en colaboración con",
+    ]
+
+    /// Ways of sending people to a link.
+    public static let linkPhrases = [
+        "link", "linki", "linke", "bağlantı", "açıklamada", "açıklama", "bio", "biyografi", "profilde",
+        "description", "in bio", "enlace", "en la descripción",
+    ]
+
+    /// The name inside an address — "cuetake" in "https://cuetake.app/kod" — which is how it is said.
+    public static func names(inLink link: String) -> [String] {
+        let cleaned = link.lowercased()
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: "www.", with: "")
+        guard let host = cleaned.split(separator: "/").first, host.contains(".") else { return [] }
+        let name = host.split(separator: ".").first.map(String.init) ?? ""
+        return name.count >= 3 ? [name] : []
+    }
+
+    /// The first time any of the phrases was said, word for word from the start of each.
+    public static func firstPhrase(_ phrases: [String], in words: [TimedWord], label: String, localeIdentifier: String) -> SuflorProof? {
+        let locale = Locale(identifier: localeIdentifier)
+        let folded = words.map { fold($0.text, locale: locale) }
+        let targets = phrases.map { $0.split(separator: " ").map { fold(String($0), locale: locale) }.filter { !$0.isEmpty } }
+            .filter { !$0.isEmpty && ($0.count > 1 || $0[0].count >= 3) }
+        for start in folded.indices {
+            for target in targets where start + target.count <= folded.count {
+                let matches = target.indices.allSatisfy { folded[start + $0].hasPrefix(target[$0]) }
+                guard matches else { continue }
+                let end = start + target.count - 1
+                let quote = words[max(0, start - 6)...min(words.count - 1, end + 6)].map(\.text).joined(separator: " ")
+                return SuflorProof(item: label, seconds: words[start].range.start.seconds, quote: quote)
+            }
+        }
+        return nil
+    }
+
+    /// Every time each item was said, at most five times each.
+    public static func every(_ items: [String], in words: [TimedWord], localeIdentifier: String) -> [SuflorProof] {
+        var found: [SuflorProof] = []
+        for item in items where !item.trimmingCharacters(in: .whitespaces).isEmpty {
+            var rest = words
+            var offset = 0
+            for _ in 0..<5 {
+                guard let hit = find([item], in: rest, localeIdentifier: localeIdentifier).first,
+                      let index = rest.firstIndex(where: { $0.range.start.seconds >= hit.seconds })
+                else { break }
+                found.append(hit)
+                offset += index + 1
+                rest = Array(words.dropFirst(offset))
+            }
+        }
+        return found.sorted { $0.seconds < $1.seconds }
+    }
+
     static func fold(_ text: String, locale: Locale) -> String {
         text.lowercased(with: locale)
             .folding(options: [.diacriticInsensitive, .widthInsensitive], locale: locale)
@@ -351,6 +442,15 @@ public struct SuflorSession: Codable, Hashable, Sendable {
     public var ticked: [String: Double]
     public var proofs: [SuflorProof]
     public var creator: String
+    /// Where it was said that this is an ad — "iş birliği", "sponsored" — or nil when it was not.
+    public var disclosure: SuflorProof?
+    /// Where people were sent to the link, or nil.
+    public var linkProof: SuflorProof?
+    /// Every time a word that must not be said was said.
+    public var avoidHits: [SuflorProof]
+    /// The recording was listened to: a check that found nothing means it was not said, rather
+    /// than not looked for.
+    public var listened: Bool
 
     public init(plan: SuflorPlan, startedAt: Date = .now) {
         self.plan = plan
@@ -358,6 +458,46 @@ public struct SuflorSession: Codable, Hashable, Sendable {
         ticked = [:]
         proofs = []
         creator = ""
+        disclosure = nil
+        linkProof = nil
+        avoidHits = []
+        listened = false
+    }
+
+    /// Reads the whole video's words for the report: each item the brand asked for, the ad
+    /// disclosure, the link, and any word that must not be said. Times are the words' own.
+    public mutating func check(_ words: [TimedWord], localeIdentifier: String) {
+        let brief = plan.brief
+        let items = brief.mustSay + [brief.brand, brief.product].filter { !$0.isEmpty }
+        proofs = SuflorProof.find(items, in: words, localeIdentifier: localeIdentifier)
+        disclosure = SuflorProof.firstPhrase(SuflorProof.disclosurePhrases, in: words, label: "disclosure", localeIdentifier: localeIdentifier)
+        // The address's own name counts as sending people there — unless it is just the brand's
+        // name, which is said anyway.
+        let linkNames = SuflorProof.names(inLink: brief.link).filter { $0 != brief.brand.lowercased() }
+        linkProof = brief.link.isEmpty ? nil : SuflorProof.firstPhrase(
+            SuflorProof.linkPhrases + linkNames,
+            in: words,
+            label: "link",
+            localeIdentifier: localeIdentifier
+        )
+        avoidHits = SuflorProof.every(brief.avoid, in: words, localeIdentifier: localeIdentifier)
+        listened = true
+    }
+
+    /// Every proof, for putting a frame on each.
+    public var allProofs: [SuflorProof] {
+        proofs + [disclosure, linkProof].compactMap { $0 } + avoidHits
+    }
+
+    /// Every second a frame is wanted for.
+    public var proofSeconds: Set<Double> { Set(allProofs.map(\.seconds)) }
+
+    /// Puts a frame on every proof, by the second it was said.
+    public mutating func attachFrames(_ frames: [Double: Data]) {
+        for index in proofs.indices { proofs[index].frame = frames[proofs[index].seconds] }
+        if let found = disclosure { disclosure?.frame = frames[found.seconds] }
+        if let found = linkProof { linkProof?.frame = frames[found.seconds] }
+        for index in avoidHits.indices { avoidHits[index].frame = frames[avoidHits[index].seconds] }
     }
 
     public var duration: Double { (endedAt ?? .now).timeIntervalSince(startedAt) }
