@@ -49,16 +49,24 @@ struct SuflorStageView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            DS.Palette.screen.ignoresSafeArea()
-            prompter
-            adGlow
+        // The words have their own space between the bar and the dock, so nothing laid over the
+        // screen ever hides the line being read.
+        VStack(spacing: 0) {
+            topBar
+            ZStack {
+                prompter
+                adGlow
+                if status.phase == .holding { holdCard }
+            }
+            .clipped()
+            dock
+        }
+        .ignoresSafeArea(.container, edges: .top)
+        .background(DS.Palette.screen.ignoresSafeArea())
+        .overlay {
             if status.phase == .countdown { countdown }
-            if status.phase == .holding { holdCard }
             if flash { adFlash }
         }
-        .overlay(alignment: .top) { topBar }
-        .overlay(alignment: .bottom) { dock }
         .task { await followEngine() }
         .onChange(of: model.isFloating) { _, floating in
             if floating { hasFloated = true }
@@ -100,9 +108,12 @@ struct SuflorStageView: View {
     // MARK: - The words
 
     private var prompter: some View {
-        TimelineView(.animation) { _ in
+        TimelineView(.animation) { timeline in
             let engine = model.engine
+            let now = timeline.date
             Canvas { graphics, size in
+                // Read every tick, so the words move here as they do in the floating window.
+                _ = now
                 guard let frame = engine?.frame() else { return }
                 let scale = size.width / SuflorLayout.width
                 graphics.withCGContext { cg in
@@ -111,7 +122,6 @@ struct SuflorStageView: View {
                 }
             }
         }
-        .ignoresSafeArea()
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .contentShape(Rectangle())
         .gesture(
@@ -146,33 +156,18 @@ struct SuflorStageView: View {
 
     // MARK: - Moments
 
-    /// On stage, not started: the three things to do, in order, and a start button. The words
-    /// stay visible above it and can be dragged to check them; nothing moves until play.
+    /// On stage, not started: the three things to do, in order, small enough to leave the words in
+    /// view above it.
     private var readyGuide: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             DSKicker(String(localized: "suflor.stage.guide.title", bundle: .module), size: 10, tracking: 0.18, color: DS.Palette.lime)
             guideStep(1, done: hasFloated, text: String(localized: "suflor.stage.guide.step1", bundle: .module))
             guideStep(2, done: false, text: String(localized: "suflor.stage.guide.step2", bundle: .module))
             guideStep(3, done: false, text: String(localized: "suflor.stage.guide.step3", bundle: .module))
-            Button {
-                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-                model.togglePlaying()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "play.fill").font(.system(size: 13, weight: .bold))
-                    Text("suflor.stage.guide.here", bundle: .module).dsFont(.sans, .semibold, 14)
-                }
-                .foregroundStyle(DS.Palette.lime)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 44)
-                .background(Capsule().stroke(DS.Palette.lime(0.5), lineWidth: 1.5))
-            }
-            .buttonStyle(.dsPress)
-            .accessibilityLabel(Text("suflor.stage.start", bundle: .module))
         }
-        .padding(16)
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dsGlass(tint: DS.Palette.glass(0.8), in: RoundedRectangle(cornerRadius: 26, style: .continuous), border: DS.Palette.lime(0.25))
+        .dsGlass(tint: DS.Palette.glass(0.8), in: RoundedRectangle(cornerRadius: 22, style: .continuous), border: DS.Palette.lime(0.25))
         .padding(.horizontal, 12)
     }
 
@@ -192,13 +187,13 @@ struct SuflorStageView: View {
                         .foregroundStyle(DS.Palette.ink)
                 }
             }
-            .frame(width: 26, height: 26)
+            .frame(width: 22, height: 22)
             Text(text)
-                .dsFont(.sans, .medium, 15, lineHeight: 1.3)
+                .dsFont(.sans, .medium, 13, lineHeight: 1.3)
                 .foregroundStyle(done ? DS.Palette.ink(0.5) : DS.Palette.ink)
                 .strikethrough(done, color: DS.Palette.ink(0.4))
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 3)
+                .padding(.top, 2)
         }
         .animation(DS.Motion.bloom, value: done)
         .accessibilityElement(children: .combine)
@@ -359,6 +354,7 @@ struct SuflorStageView: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 54)
+        .padding(.bottom, 8)
     }
 
     @ViewBuilder
@@ -442,6 +438,11 @@ struct SuflorStageView: View {
 
             floatButton
                 .padding(.horizontal, 12)
+            if status.phase != .ready {
+                endButton
+                    .padding(.horizontal, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             Text("suflor.stage.windowHint", bundle: .module)
                 .dsFont(.sans, .regular, 12)
                 .foregroundStyle(DS.Palette.ink(0.56))
@@ -449,6 +450,29 @@ struct SuflorStageView: View {
                 .padding(.horizontal, 24)
         }
         .padding(.bottom, 22)
+    }
+
+    /// Straight to the report: once the words are done it is the next thing, lit; before that
+    /// it asks first.
+    private var endButton: some View {
+        let done = status.phase == .finished
+        return Button {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            if done { model.endStage() } else { confirmingEnd = true }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("suflor.stage.endReport", bundle: .module)
+                    .dsFont(.sans, .semibold, 15)
+            }
+            .foregroundStyle(done ? DS.Palette.inkInverse : DS.Palette.ink)
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .background(Capsule().fill(done ? DS.Palette.lime : DS.Palette.hairline(0.1)))
+            .overlay(Capsule().stroke(done ? .clear : DS.Palette.hairline(0.16), lineWidth: 1))
+        }
+        .buttonStyle(.dsPress(radius: 25))
+        .animation(DS.Motion.settle, value: done)
     }
 
     private var transport: some View {

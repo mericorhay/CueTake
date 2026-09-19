@@ -245,8 +245,7 @@ private struct SuflorBriefStep: View {
                 }
                 .padding(.top, 22)
 
-                if model.writer != nil { voiceCard.padding(.top, 22) }
-                actions.padding(.top, 22)
+                actions.padding(.top, 26)
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 40)
@@ -494,11 +493,39 @@ private struct SuflorBriefStep: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            if model.writer != nil {
-                WriteButton(isWriting: model.isWriting, isEnabled: model.brief.isUsable) {
-                    focused = nil
-                    Task { await model.write() }
+            DSPrimaryButton(templateTitle) {
+                focused = nil
+                model.writeMyself()
+            }
+            if !model.aiCues.isEmpty || !model.ownCues.isEmpty {
+                Button {
+                    model.next()
+                } label: {
+                    Text("suflor.brief.keep", bundle: .module)
+                        .dsFont(.sans, .medium, 14)
+                        .foregroundStyle(DS.Palette.ink(0.66))
+                        .frame(minHeight: 44)
                 }
+                .buttonStyle(.dsPress)
+            }
+            if model.writer != nil {
+                aiDraft.padding(.top, 14)
+            }
+        }
+    }
+
+    /// The AI, set back: a draft to write over, not the way in.
+    private var aiDraft: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DSKicker(String(localized: "suflor.brief.ai.title", bundle: .module), size: 10, color: DS.Palette.ink(0.5))
+            Text("suflor.brief.ai.hint", bundle: .module)
+                .dsFont(.sans, .regular, 13, lineHeight: 1.3)
+                .foregroundStyle(DS.Palette.ink(0.56))
+                .fixedSize(horizontal: false, vertical: true)
+            voiceCard
+            WriteButton(isWriting: model.isWriting, isEnabled: model.brief.isUsable) {
+                focused = nil
+                Task { await model.write() }
             }
             if let error = model.writeError {
                 VStack(alignment: .leading, spacing: 10) {
@@ -525,22 +552,9 @@ private struct SuflorBriefStep: View {
                 .dsCard(fill: DS.Palette.accent(0.08), radius: 16, border: DS.Palette.accent(0.3))
                 .transition(.opacity)
             }
-            DSSecondaryButton(templateTitle) {
-                focused = nil
-                model.writeMyself()
-            }
-            if !model.aiCues.isEmpty || !model.ownCues.isEmpty {
-                Button {
-                    model.next()
-                } label: {
-                    Text("suflor.brief.keep", bundle: .module)
-                        .dsFont(.sans, .medium, 14)
-                        .foregroundStyle(DS.Palette.ink(0.66))
-                        .frame(minHeight: 44)
-                }
-                .buttonStyle(.dsPress)
-            }
         }
+        .padding(16)
+        .dsCard(radius: 22, border: DS.Palette.hairline(0.07))
     }
 }
 
@@ -563,19 +577,19 @@ private struct WriteButton: View {
                         Text("suflor.brief.write", bundle: .module)
                     }
                 }
-                .dsFont(.sans, .semibold, 16)
+                .dsFont(.sans, .semibold, 15)
             }
-            .foregroundStyle(DS.Palette.inkInverse)
+            .foregroundStyle(DS.Palette.lime)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
+            .padding(.vertical, 14)
             .background {
                 ZStack {
-                    DS.gradient(120, [DS.Palette.lime, Color(hex: 0xC6F24A)])
+                    DS.Palette.lime(0.08)
                     if isWriting { SweepShine() }
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
-            .shadow(color: DS.Palette.lime(0.28), radius: 22, y: 12)
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).stroke(DS.Palette.lime(0.4), lineWidth: 1))
         }
         .buttonStyle(.dsPress(radius: DS.Radius.card))
         .disabled(!isEnabled || isWriting)
@@ -627,8 +641,8 @@ private struct SuflorFlowStep: View {
     /// Two pages, the AI's flow and the creator's own; the other one waits untouched.
     private var pages: some View {
         HStack(spacing: 4) {
-            pageTab(.ai, title: String(localized: "suflor.flow.page.ai", bundle: .module), symbol: "sparkles", count: model.aiCues.count)
             pageTab(.own, title: String(localized: "suflor.flow.page.own", bundle: .module), symbol: "pencil", count: model.ownCues.count)
+            pageTab(.ai, title: String(localized: "suflor.flow.page.ai", bundle: .module), symbol: "sparkles", count: model.aiCues.count)
         }
         .padding(4)
         .background(Capsule().fill(DS.Palette.hairline(0.06)))

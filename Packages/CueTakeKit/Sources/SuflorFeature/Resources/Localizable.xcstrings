@@ -1,6 +1,40 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "suflor.brief.ai.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sadece taslak: kendi cümlelerinle düzeltmen gerekir."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only a draft: expect to fix it in your own words."
+          }
+        }
+      }
+    },
+    "suflor.brief.ai.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İSTERSEN AI TASLAK YAZSIN"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OR LET AI DRAFT IT"
+          }
+        }
+      }
+    },
     "suflor.brief.brand": {
       "extractionState": "manual",
       "localizations": {
@@ -483,13 +517,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Write the flow"
+            "value": "Have AI draft it"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Akışı hazırla"
+            "value": "AI ile taslak yazdır"
           }
         }
       }
@@ -2406,6 +2440,23 @@
         }
       }
     },
+    "suflor.stage.endReport": {
+      "extractionState": "manual",
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitir ve raporu gör"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish and see the report"
+          }
+        }
+      }
+    },
     "suflor.stage.float": {
       "extractionState": "manual",
       "localizations": {
@@ -2463,13 +2514,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start your stream there"
+            "value": "Start your stream or recording in your app"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yayını orada başlat"
+            "value": "Uygulamanda yayına ya da kayda başla"
           }
         }
       }
@@ -2684,13 +2735,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The floating window has no buttons: come back to CueTake to pause or move the words."
+            "value": "Tapping the floating window opens CueTake; pause and move the words from here."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yüzen pencerede düğme yok: durdurmak, ileri ya da geri almak için CueTake'e dön."
+            "value": "Yüzen pencereye dokunmak CueTake'i açar; durdurmak ve kaydırmak buradan."
           }
         }
       }

@@ -101,7 +101,7 @@ public final class SuflorModel {
         let pace = defaults.double(forKey: Keys.pace)
         wordsPerMinute = pace > 0 ? pace : 130
         let size = defaults.double(forKey: Keys.size)
-        textSize = size > 0 ? size : 30
+        textSize = size > 0 ? size : 32
         useMyVoice = defaults.bool(forKey: Keys.voice)
     }
 
@@ -111,7 +111,8 @@ public final class SuflorModel {
         static let ownCues = "suflor.cues.own"
         static let source = "suflor.cues.source"
         static let pace = "suflor.pace"
-        static let size = "suflor.size"
+        // "suflor.size" held 30, written back on every save; 32 reads better from arm's length.
+        static let size = "suflor.textSize"
         static let creator = "suflor.creator"
         static let voice = "suflor.voice"
     }
