@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import SettingsFeature
 
 /// Ready-made recipes: a workflow packaged as a result — "a UGC ad", "my reel", "clean this up" —
 /// run on the open project with one tap. Built fresh each time, in the viewer's language, and
