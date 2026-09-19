@@ -14,6 +14,9 @@ public struct WorkflowsScreen: View {
     private let onCreateWithAI: (String) async -> String?
     private let onDuplicate: (WorkflowDefinition) -> Void
     private let onDelete: (WorkflowDefinition) -> Void
+    /// Ready-made recipes, run on the open project with one tap.
+    private let recipes: [WorkflowDefinition]
+    private let onRunRecipe: (WorkflowDefinition) -> Void
 
     @State private var showsAI = false
     @State private var pendingDelete: WorkflowDefinition?
@@ -24,8 +27,12 @@ public struct WorkflowsScreen: View {
         onCreate: @escaping () -> Void,
         onCreateWithAI: @escaping (String) async -> String? = { _ in nil },
         onDuplicate: @escaping (WorkflowDefinition) -> Void = { _ in },
-        onDelete: @escaping (WorkflowDefinition) -> Void = { _ in }
+        onDelete: @escaping (WorkflowDefinition) -> Void = { _ in },
+        recipes: [WorkflowDefinition] = [],
+        onRunRecipe: @escaping (WorkflowDefinition) -> Void = { _ in }
     ) {
+        self.recipes = recipes
+        self.onRunRecipe = onRunRecipe
         self.workflows = workflows
         self.onOpen = onOpen
         self.onCreate = onCreate
@@ -43,6 +50,12 @@ public struct WorkflowsScreen: View {
                     .dsFont(.sans, .regular, 13)
                     .foregroundStyle(DS.Palette.ink(0.56))
                     .padding(.top, 6)
+
+                if !recipes.isEmpty {
+                    recipeRow
+                        .padding(.top, 22)
+                        .dsEnter(.rise(duration: 0.4))
+                }
 
                 createCard
                     .padding(.top, 22)
@@ -123,6 +136,72 @@ public struct WorkflowsScreen: View {
         } label: {
             Label(String(localized: "workflows.delete", bundle: .module), systemImage: "trash")
         }
+    }
+
+    /// Recipes: a result, not an engine. One tap runs it on the open project; the long press
+    /// copies it into the library to change.
+    private var recipeRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            DSKicker(String(localized: "workflows.recipes", bundle: .module))
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    ForEach(recipes) { recipe in
+                        Button {
+                            onRunRecipe(recipe)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: Self.recipeSymbol(recipe))
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundStyle(DS.Palette.lime)
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(DS.Palette.lime)
+                                }
+                                Text(verbatim: recipe.name)
+                                    .dsFont(.archivo, .bold, 15)
+                                    .foregroundStyle(DS.Palette.ink)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(verbatim: recipe.summary ?? "")
+                                    .dsFont(.sans, .regular, 11, lineHeight: 1.3)
+                                    .foregroundStyle(DS.Palette.ink(0.6))
+                                    .lineLimit(3)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                                Text(String(localized: "workflows.recipes.steps \(recipe.steps.count)", bundle: .module))
+                                    .dsFont(.mono, .medium, 9)
+                                    .foregroundStyle(DS.Palette.ink(0.5))
+                            }
+                            .padding(14)
+                            .frame(width: 168, height: 170, alignment: .topLeading)
+                            .dsCard(radius: DS.Radius.card)
+                        }
+                        .buttonStyle(.dsPressCard)
+                        .contextMenu {
+                            Button {
+                                onDuplicate(recipe)
+                            } label: {
+                                Label(String(localized: "workflows.recipes.copy", bundle: .module), systemImage: "plus.square.on.square")
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 1)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+        }
+    }
+
+    private static func recipeSymbol(_ recipe: WorkflowDefinition) -> String {
+        if recipe.steps.contains(where: { if case .assembleSections = $0.kind { true } else { false } }) {
+            return recipe.style.captionPreset == "bold" ? "megaphone.fill" : "film.stack"
+        }
+        if recipe.style.captionPreset == "podcast" { return "mic.fill" }
+        if recipe.steps.contains(where: { if case .export = $0.kind { true } else { false } }) { return "bolt.fill" }
+        return "person.wave.2.fill"
     }
 
     /// Two ways in, side by side: describe it and let AI write it, or build it by hand.

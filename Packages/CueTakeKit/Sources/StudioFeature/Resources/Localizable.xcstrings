@@ -104,6 +104,40 @@
         }
       }
     },
+    "complete.quick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean, caption, export"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Temizle, altyazı ekle, dışa aktar"
+          }
+        }
+      }
+    },
+    "complete.quick.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauses and fillers out, captions on, saved to Photos"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boşluklar ve dolgular çıkar, altyazı eklenir, Fotoğraflar'a kaydedilir"
+          }
+        }
+      }
+    },
     "complete.ready": {
       "extractionState": "manual",
       "localizations": {

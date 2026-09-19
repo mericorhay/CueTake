@@ -57,6 +57,23 @@ struct ScriptFollowerTests {
         #expect(follower.position?.word == 7)
     }
 
+    private let long = ["apple banana cherry dates elder figs grape honey iris jade kiwi lemon mango nectar olive peach quince raisin sage thyme umber vanilla walnut xigua yam zest acorn basil cocoa dill endive fennel"]
+
+    @Test func aSkipFurtherThanTheLookAheadIsFoundAgain() {
+        var follower = ScriptFollower(scripts: long, locale: english)
+        _ = feed(&follower, "apple banana cherry")
+        _ = feed(&follower, "basil cocoa dill endive")
+        #expect(follower.position == .init(segment: 0, word: 30))
+    }
+
+    @Test func goingBackToSayASentenceAgainIsFollowed() {
+        var follower = ScriptFollower(scripts: long, locale: english)
+        _ = feed(&follower, "apple banana cherry dates elder figs grape honey")
+        #expect(follower.position?.word == 7)
+        _ = feed(&follower, "banana cherry dates elder")
+        #expect(follower.position?.word == 4)
+    }
+
     @Test func turkishCaseIsFolded() {
         var follower = ScriptFollower(scripts: ["İstanbul'da çekim yapıyorum"], locale: Locale(identifier: "tr"))
         let position = feed(&follower, "istanbul'da çekim")

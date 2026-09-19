@@ -3265,6 +3265,57 @@
         }
       }
     },
+    "workflows.recipes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "READY RECIPES · ONE TAP"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HAZIR REÇETELER · TEK DOKUNUŞ"
+          }
+        }
+      }
+    },
+    "workflows.recipes.copy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy to my library"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kütüphaneme kopyala"
+          }
+        }
+      }
+    },
+    "workflows.recipes.steps %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld STEPS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ADIM"
+          }
+        }
+      }
+    },
     "workflows.subtitle": {
       "extractionState": "manual",
       "localizations": {

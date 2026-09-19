@@ -11,14 +11,18 @@ public struct CompleteScreen: View {
     private let onDone: () -> Void
     /// Opens the report for the brand, for a take of an ad. Nil hides it.
     private let onReport: (() -> Void)?
+    /// Clean, caption and export in one tap. Nil hides it.
+    private let onQuickFinish: (() -> Void)?
 
     public init(
         project: Project,
         onRetake: @escaping (Segment.ID) -> Void,
         onEdit: @escaping () -> Void,
         onDone: @escaping () -> Void,
-        onReport: (() -> Void)? = nil
+        onReport: (() -> Void)? = nil,
+        onQuickFinish: (() -> Void)? = nil
     ) {
+        self.onQuickFinish = onQuickFinish
         self.project = project
         self.onRetake = onRetake
         self.onEdit = onEdit
@@ -81,6 +85,26 @@ public struct CompleteScreen: View {
                             in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous),
                             border: DS.Palette.lime(0.35)
                         )
+                    }
+                    .buttonStyle(.dsPress(radius: DS.Radius.card))
+                    .padding(.bottom, 10)
+                }
+
+                if let onQuickFinish {
+                    Button(action: onQuickFinish) {
+                        VStack(spacing: 3) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "bolt.fill")
+                                Text("complete.quick", bundle: .module)
+                            }
+                            .dsFont(.sans, .semibold, 16)
+                            Text("complete.quick.detail", bundle: .module)
+                                .dsFont(.sans, .regular, 11)
+                                .opacity(0.75)
+                        }
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .frame(maxWidth: .infinity, minHeight: 62)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(DS.Palette.lime))
                     }
                     .buttonStyle(.dsPress(radius: DS.Radius.card))
                     .padding(.bottom, 10)

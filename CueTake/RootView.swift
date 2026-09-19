@@ -228,7 +228,8 @@ struct RootView: View {
                 onRetake: { model.startRetake(of: $0) },
                 onEdit: { model.openEditor() },
                 onDone: { model.go(to: .export) },
-                onReport: adReport
+                onReport: adReport,
+                onQuickFinish: { model.quickFinish() }
             )
 
         case .editor:
@@ -315,7 +316,9 @@ struct RootView: View {
                 onCreate: { model.createWorkflow() },
                 onCreateWithAI: { await model.createWorkflowWithAI($0) },
                 onDuplicate: { workflow in Task { await model.duplicateWorkflow(workflow) } },
-                onDelete: { workflow in Task { await model.deleteWorkflow(id: workflow.id) } }
+                onDelete: { workflow in Task { await model.deleteWorkflow(id: workflow.id) } },
+                recipes: model.recipes,
+                onRunRecipe: { model.runRecipe($0) }
             )
             .task { await model.loadWorkflows() }
 

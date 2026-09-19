@@ -41,6 +41,11 @@ public struct ScriptFollower: Sendable {
     public var lookAhead = 24
     /// How many of the most recent heard words are compared.
     public var tail = 4
+    /// Updates that found nothing near the place, since the last move.
+    private var misses = 0
+    /// After this many updates without a match near the place, the whole script is searched: the
+    /// reader skipped further than the look-ahead, or went back to say a sentence again.
+    public var patienceBeforeSearch = 3
 
     public init(scripts: [String], locale: Locale) {
         self.locale = locale
@@ -141,9 +146,43 @@ public struct ScriptFollower: Sendable {
             }
         }
 
-        guard let best, best.index != cursor else { return nil }
-        cursor = best.index
+        if let best {
+            misses = 0
+            guard best.index != cursor else { return nil }
+            cursor = best.index
+            return position
+        }
+        misses += 1
+        guard misses >= patienceBeforeSearch, let found = recover(recent, outside: first...last) else { return nil }
+        misses = 0
+        cursor = found
         return position
+    }
+
+    /// The place found again anywhere in the script, from words said in a row: three to move
+    /// ahead, four to move back. A single common word, or a recogniser revising its guess, never
+    /// carries that much agreement.
+    private func recover(_ recent: [String], outside nearby: ClosedRange<Int>) -> Int? {
+        guard recent.count >= 3 else { return nil }
+        var best: (index: Int, score: Int, distance: Int)?
+        for candidate in entries.indices where !nearby.contains(candidate) {
+            guard Self.matches(recent[recent.count - 1], entries[candidate].key) else { continue }
+            var score = 1
+            var letters = entries[candidate].key.count
+            while score < recent.count, candidate - score >= 0,
+                  Self.matches(recent[recent.count - 1 - score], entries[candidate - score].key) {
+                letters += entries[candidate - score].key.count
+                score += 1
+            }
+            let backwards = candidate <= cursor
+            let required = backwards ? min(4, max(recent.count, 4)) : 3
+            guard score >= required, letters >= 8 else { continue }
+            let distance = abs(candidate - cursor)
+            if best == nil || score > best!.score || (score == best!.score && distance < best!.distance) {
+                best = (candidate, score, distance)
+            }
+        }
+        return best?.index
     }
 
     /// Equal, or near enough that a recogniser's spelling does not lose the place: one letter off

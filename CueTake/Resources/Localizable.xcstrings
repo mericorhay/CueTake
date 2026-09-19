@@ -1430,6 +1430,278 @@
         }
       }
     },
+    "recipe.podcast.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcast clip"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Podcast kesiti"
+          }
+        }
+      }
+    },
+    "recipe.podcast.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long silences shortened, voice clarified, podcast captions."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uzun sessizlikler kısalır, ses netleşir, podcast altyazısı."
+          }
+        }
+      }
+    },
+    "recipe.quick.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick finish"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hızlı bitir"
+          }
+        }
+      }
+    },
+    "recipe.quick.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauses and fillers out, captions on, exported."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boşluklar ve dolgular çıkar, altyazı eklenir, video dışa aktarılır."
+          }
+        }
+      }
+    },
+    "recipe.reel.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My reel recipe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reel reçetem"
+          }
+        }
+      }
+    },
+    "recipe.reel.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A fast hook, three points, a call to action. Karaoke captions, music, 60 fps."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hızlı kanca, üç nokta, çağrı. Karaoke altyazı, müzik, 60 fps."
+          }
+        }
+      }
+    },
+    "recipe.section.cta": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Call to action"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çağrı"
+          }
+        }
+      }
+    },
+    "recipe.section.hook": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hook"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanca"
+          }
+        }
+      }
+    },
+    "recipe.section.point %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Point %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld. nokta"
+          }
+        }
+      }
+    },
+    "recipe.section.problem": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problem"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorun"
+          }
+        }
+      }
+    },
+    "recipe.section.product": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ürün"
+          }
+        }
+      }
+    },
+    "recipe.section.proof": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proof"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanıt"
+          }
+        }
+      }
+    },
+    "recipe.talking.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Talking head clean-up"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konuşan kafa temizliği"
+          }
+        }
+      }
+    },
+    "recipe.talking.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pauses and fillers out, voice cleaned, clean captions."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boşluklar ve dolgular çıkar, ses temizlenir, sade altyazı."
+          }
+        }
+      }
+    },
+    "recipe.ugc.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UGC ad recipe"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UGC reklam reçetesi"
+          }
+        }
+      }
+    },
+    "recipe.ugc.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hook, problem, product, proof, call to action. Clean sound, light music, bold captions."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kanca, sorun, ürün, kanıt, çağrı. Temiz ses, hafif müzik, kalın altyazı."
+          }
+        }
+      }
+    },
     "save.failed": {
       "extractionState": "manual",
       "localizations": {
