@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import Persistence
 
 /// The creator's voice profile: kept on the phone, measured from their own videos.
 extension AppModel {
