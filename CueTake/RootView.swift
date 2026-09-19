@@ -70,7 +70,8 @@ struct RootView: View {
             isPresented: $model.isPickingFootage,
             selection: $pickedFootage,
             maxSelectionCount: 30,
-            matching: .videos
+            // Photos too: each becomes a clip of its own, held for a few seconds.
+            matching: .any(of: [.videos, .images])
         )
         .photosPicker(isPresented: $model.isPickingVideoLayer, selection: $pickedVideoLayer, matching: .videos)
         .photosPicker(isPresented: $model.isPickingBrandLogo, selection: $pickedBrandLogo, matching: .images)

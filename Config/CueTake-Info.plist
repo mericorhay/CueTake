@@ -13,7 +13,6 @@
 	<string>CueTake measures how close another phone is, so joining a team happens when the two phones touch.</string>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>audio</string>
 		<string>remote-notification</string>
 	</array>
 </dict>

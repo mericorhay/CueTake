@@ -196,13 +196,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clips you already shot, in your order"
+            "value": "Clips and photos you already have, in your order"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Çektiğin klipler, senin sıranla"
+            "value": "Çektiğin klipler ve fotoğraflar, senin sıranla"
           }
         }
       }
@@ -213,13 +213,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Import footage"
+            "value": "Import videos and photos"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Videolarını at"
+            "value": "Video ve fotoğraf at"
           }
         }
       }

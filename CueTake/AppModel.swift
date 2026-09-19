@@ -17,6 +17,7 @@ import StudioFeature
 import SuflorFeature
 import SwiftUI
 import TeamSync
+import UniformTypeIdentifiers
 import WorkflowsFeature
 
 /// Which screen is on top. Mirrors the design's screen graph one to one.
@@ -254,7 +255,7 @@ final class AppModel {
         scheduleSave()
     }
 
-    /// Turns picked clips into segments, in the order they were chosen.
+    /// Turns picked clips and photos into segments, in the order they were chosen.
     ///
     /// One segment per clip, because that is what the user is telling us: these are the beats, in
     /// this order. Everything downstream — trimming, reordering, retaking one of them — then works
@@ -290,7 +291,15 @@ final class AppModel {
                 let index = next
                 let item = items[index]
                 next += 1
+                let isPhoto = !item.supportedContentTypes.contains { $0.conforms(to: .movie) }
+                    && item.supportedContentTypes.contains { $0.conforms(to: .image) }
+                let photoTitle = String(localized: "import.photo.title \(index + 1)")
                 group.addTask {
+                    // A photo becomes a clip of its own: the picture held for a few seconds.
+                    if isPhoto {
+                        guard let data = try? await item.loadTransferable(type: Data.self) else { return (index, nil) }
+                        return (index, try? await MediaImporter().importStill(data, into: mediaDirectory, title: photoTitle))
+                    }
                     guard let movie = try? await item.loadTransferable(type: ImportedMovie.self) else { return (index, nil) }
                     let clip = try? await MediaImporter().importClip(from: movie.url, into: mediaDirectory)
                     try? FileManager.default.removeItem(at: movie.url)

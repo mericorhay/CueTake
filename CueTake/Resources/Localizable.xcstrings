@@ -919,6 +919,23 @@
         }
       }
     },
+    "import.photo.title %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo %lld"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fotoğraf %lld"
+          }
+        }
+      }
+    },
     "journey.ask.placeholder": {
       "extractionState": "manual",
       "localizations": {

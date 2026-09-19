@@ -69,6 +69,7 @@ public struct EditorScreen: View {
     @State private var showsTools = false
     @State private var dockPanel: ToolDock.Item?
     @State private var pickingImage = false
+    @State private var showsTemplates = false
     @State private var pickedImage: PhotosPickerItem?
     /// Set while the phone is on its side: the picture takes the height of the screen.
     @State private var landscapePreviewHeight: CGFloat?
@@ -385,6 +386,18 @@ public struct EditorScreen: View {
                     .presentationDragIndicator(.visible)
             }
         }
+        .sheet(isPresented: $showsTemplates) {
+            AdTemplateSheet(
+                brandColor: brandTools.map { CaptionOverlay.color($0.kit.primary) },
+                onAdd: { data, style in
+                    showsTemplates = false
+                    withAnimation(DS.Motion.bloom) { addTemplate(data, style: style) }
+                },
+                onClose: { showsTemplates = false }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showsShorts) {
             ShortsSheet(model: model) { showsShorts = false }
                 .presentationDetents([.medium, .large])
@@ -581,6 +594,20 @@ public struct EditorScreen: View {
         .padding(.horizontal, 18)
         .padding(.bottom, 8)
         .animation(DS.Motion.bloom, value: model.aiChanges.isEmpty)
+    }
+
+    /// A filled-in template on the timeline at the playhead: where its kind of picture usually
+    /// sits, four seconds long, popping in. From there it is an ordinary picture to move and time.
+    private func addTemplate(_ data: Data, style: AdStyle) {
+        guard model.addImageOverlay(from: data), let id = model.selectedOverlay else { return }
+        let spot = style.placement
+        model.updateOverlay(id, coalescing: "template") {
+            $0.transform.x = spot.x
+            $0.transform.y = spot.y
+            $0.transform.scale = spot.width / 0.5
+            $0.duration = MediaTime(seconds: 4)
+            $0.animation = .pop
+        }
     }
 
     private func historyButton(
@@ -992,6 +1019,10 @@ public struct EditorScreen: View {
                     },
                     onAllowCloudAI: onAllowCloudAI,
                     onAddImage: { pickingImage = true },
+                    onTemplates: {
+                        model.pause()
+                        showsTemplates = true
+                    },
                     onShowAIChanges: { showsAIChanges = true },
                     onTrack: {
                         model.pause()

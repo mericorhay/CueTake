@@ -23,6 +23,8 @@ struct ToolDock: View {
     /// Turns cloud AI on from the AI panel. Nil in a build without the assistant.
     var onAllowCloudAI: (() -> Void)? = nil
     var onAddImage: () -> Void = {}
+    /// Opens the brand picture templates.
+    var onTemplates: () -> Void = {}
     var onShowAIChanges: () -> Void = {}
     /// Opens the direct-on-picture subject picker owned by the editor screen.
     var onTrack: () -> Void = {}
@@ -36,7 +38,7 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, video, captions, audio, delete, more
+        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, template, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -133,7 +135,7 @@ struct ToolDock: View {
         case .delete: index.map { model.canDeleteSegment(at: $0) } ?? false
         case .transition: model.project.segments.count > 1
         case .shorts: model.project.segments.contains { $0.selectedTake != nil }
-        case .captions, .audio, .video, .more, .ai, .generate, .text, .image: true
+        case .captions, .audio, .video, .more, .ai, .generate, .text, .image, .template: true
         }
     }
 
@@ -217,7 +219,7 @@ struct ToolDock: View {
                 .symbolEffect(.bounce, value: count)
                 .symbolEffect(.variableColor.iterative, options: .repeating, isActive: !model.generationJobs.filter { $0.phase == .working }.isEmpty)
         case .background, .reframe, .zoom: glyph.symbolEffect(.bounce, value: count)
-        case .text, .image, .video: glyph.symbolEffect(.bounce.up, value: count)
+        case .text, .image, .template, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .filter: glyph.symbolEffect(.bounce, value: count)
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
@@ -233,6 +235,7 @@ struct ToolDock: View {
         case .zoom: "plus.magnifyingglass"
         case .text: "textformat"
         case .image: "photo.badge.plus"
+        case .template: "sparkles.rectangle.stack"
         case .video: "rectangle.split.2x1"
         case .filter: "camera.filters"
         case .sound: "waveform.badge.plus"
@@ -257,6 +260,7 @@ struct ToolDock: View {
         case .zoom: String(localized: "editor.zoom.title", bundle: .module)
         case .text: String(localized: "editor.dock.text", bundle: .module)
         case .image: String(localized: "editor.dock.image", bundle: .module)
+        case .template: String(localized: "editor.dock.template", bundle: .module)
         case .video: String(localized: "editor.dock.video", bundle: .module)
         case .filter: String(localized: "editor.dock.filter", bundle: .module)
         case .sound: String(localized: "editor.dock.sound", bundle: .module)
@@ -324,6 +328,7 @@ struct ToolDock: View {
             withAnimation(settle) { model.select(transition: cut) }
         case .text: withAnimation(settle) { model.addTextOverlay() }
         case .image: onAddImage()
+        case .template: onTemplates()
         case .video: onAddVideo()
         case .captions: onCaptions()
         case .audio:
