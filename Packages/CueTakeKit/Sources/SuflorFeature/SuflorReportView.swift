@@ -1,22 +1,17 @@
-import CoreTransferable
 import DesignSystem
 import Domain
-import PhotosUI
 import SwiftUI
 import UIKit
-import UniformTypeIdentifiers
 
-/// After the stage: the page the brand will get, shown as the hero, and what is needed to send it.
+/// After the take: the page the brand will get, shown as the hero, and what is needed to send it.
 ///
-/// Without listening during the stream there are two kinds of evidence. What the speaker ticked
-/// on stage, with the second they did; and — stronger — the saved recording of the stream,
-/// listened to on this phone, with the second and the sentence each item was said in and a frame
-/// from that moment. The page says which kind each line is.
+/// The evidence is the take itself. It was listened to when it was recorded, so each item the
+/// brand asked for is found in what was said — the second, the sentence around it and a frame from
+/// that moment — and the ad's place in the video comes from where its cards were read.
 struct SuflorReportView: View {
     @Bindable var model: SuflorModel
     let onClose: () -> Void
 
-    @State private var pickedRecording: PhotosPickerItem?
     @State private var files: SuflorReportFiles?
     @State private var language = SuflorReportLanguage.preferred
     @State private var shown = false
@@ -31,6 +26,9 @@ struct SuflorReportView: View {
 
     var body: some View {
         ScrollView {
+            if model.session == nil {
+                reading
+            }
             if let session = model.session {
                 VStack(alignment: .leading, spacing: 0) {
                     header(session)
@@ -59,18 +57,46 @@ struct SuflorReportView: View {
                 ZoomedPage(image: files.thumbnail) { zoomed = false }
             }
         }
-        .onChange(of: pickedRecording) { _, item in
-            guard let item else { return }
-            pickedRecording = nil
-            Task {
-                guard let movie = try? await item.loadTransferable(type: SuflorMovie.self) else {
-                    model.verifyError = String(localized: "suflor.verify.failed", bundle: .module)
-                    return
+    }
+
+    /// While the take is read, or when it could not be.
+    private var reading: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Spacer(minLength: 0)
+                DSCircleButton("✕", size: 44, fontSize: 15) { onClose() }
+                    .accessibilityLabel(Text("suflor.report.close", bundle: .module))
+            }
+            Spacer(minLength: 120)
+            if model.isVerifying {
+                Image(systemName: "waveform.and.magnifyingglass")
+                    .font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
+                    .symbolEffect(.variableColor.iterative, options: .repeating)
+                Text("suflor.report.proof.listening", bundle: .module)
+                    .dsFont(.sans, .semibold, 16)
+                    .foregroundStyle(DS.Palette.ink)
+            } else if let error = model.verifyError {
+                Text(error)
+                    .dsFont(.sans, .medium, 15, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.amber)
+                    .multilineTextAlignment(.center)
+                Button {
+                    Task { await model.verify() }
+                } label: {
+                    Text("suflor.report.proof.again", bundle: .module)
+                        .dsFont(.sans, .semibold, 15)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 20)
+                        .frame(minHeight: 48)
+                        .background(Capsule().fill(DS.Palette.lime))
                 }
-                await model.verify(recording: movie.url)
-                try? FileManager.default.removeItem(at: movie.url)
+                .buttonStyle(.dsPress)
             }
         }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 22)
+        .padding(.top, 64)
     }
 
     // MARK: - Header
@@ -247,14 +273,25 @@ struct SuflorReportView: View {
                 }
                 .scrollIndicators(.hidden)
             }
-            if model.verifier != nil {
-                let isVerifying = model.isVerifying
-                let hasProofs = !session.proofs.isEmpty
-                PhotosPicker(selection: $pickedRecording, matching: .videos) {
-                    RecordingPickerLabel(isVerifying: isVerifying, hasProofs: hasProofs)
+            Button {
+                Task { await model.verify() }
+            } label: {
+                HStack(spacing: 8) {
+                    if model.isVerifying {
+                        ProgressView().tint(DS.Palette.ink)
+                        Text("suflor.report.proof.listening", bundle: .module)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                        Text("suflor.report.proof.again", bundle: .module)
+                    }
                 }
-                .disabled(model.isVerifying)
+                .dsFont(.sans, .semibold, 14)
+                .foregroundStyle(DS.Palette.ink(0.8))
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .background(Capsule().fill(DS.Palette.hairline(0.08)))
             }
+            .buttonStyle(.dsPress)
+            .disabled(model.isVerifying)
         }
         .padding(16)
         .dsCard(radius: 22)
@@ -376,47 +413,5 @@ private struct ProofTile: View {
                 .frame(width: 120, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// The picker's label. Nonisolated because PhotosPicker builds its label off the main actor;
-/// the body is still drawn on it.
-private nonisolated struct RecordingPickerLabel: View {
-    let isVerifying: Bool
-    let hasProofs: Bool
-
-    var body: some View {
-        HStack(spacing: 8) {
-            if isVerifying {
-                ProgressView().tint(DS.Palette.inkInverse)
-                Text("suflor.report.proof.listening", bundle: .module)
-            } else if !hasProofs {
-                Image(systemName: "plus")
-                Text("suflor.report.proof.add", bundle: .module)
-            } else {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                Text("suflor.report.proof.again", bundle: .module)
-            }
-        }
-        .dsFont(.sans, .semibold, 15)
-        .foregroundStyle(DS.Palette.inkInverse)
-        .frame(maxWidth: .infinity, minHeight: 50)
-        .background(Capsule().fill(DS.Palette.lime))
-    }
-}
-
-/// A video picked from Photos, copied where it can be read.
-nonisolated struct SuflorMovie: Transferable, Sendable {
-    let url: URL
-
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .movie) { movie in
-            SentTransferredFile(movie.url)
-        } importing: { received in
-            let copy = FileManager.default.temporaryDirectory
-                .appending(path: "suflor-\(UUID().uuidString).\(received.file.pathExtension.isEmpty ? "mov" : received.file.pathExtension)")
-            try FileManager.default.copyItem(at: received.file, to: copy)
-            return SuflorMovie(url: copy)
-        }
     }
 }

@@ -406,14 +406,14 @@ async function ask(env, system, content, maxTokens) {
   return provider === "groq" ? askGroq(env, messages, options) : askAnthropic(env, messages, options);
 }
 
-// The suflör: cards a creator reads from a small floating window while live on TikTok or
-// Instagram, or while filming a sponsored video with their camera.
+// Ads: the cards a creator reads from the studio's teleprompter while filming a sponsored video.
+// Builds up to 125 read them from a floating window during a live stream and still send "live".
 // How creators actually talk, for the suflör: a long live-stream sample in the request's
 // language (voices.js), then what makes it sound real. Fixed per language, so the provider can
 // cache it; the Turkish one is about 1,800 tokens, a fraction of a cent a request.
 function spokenVoice(locale) {
   return `HOW REAL CREATORS TALK — read this before writing anything.
-The cards are read aloud on a live stream. If a line would sound like a TV advert or a press release, it is wrong.
+The cards are read aloud to the camera, in a video or on a live stream. If a line would sound like a TV advert or a press release, it is wrong.
 
 Below is a made-up live stream with an ad in the middle, in sections: going live, talking to chat, the topic, the bridge into the ad, the code and link, getting stuck, out of the ad, closing. For each card you write, pick the section that fits it and match how it talks there; ignore the rest. It shows HOW to talk only: take nothing from it — not its topics (coffee, headphones, motivation), not its jokes or details, and never a code, link, date or name. Things in ‹angle quotes› are gaps that the brief fills or that stay out.
 """
@@ -422,7 +422,7 @@ ${voiceFor(locale).trim()}
 
 What makes it sound real:
 - Short sentences, mostly 4 to 12 words. One thought per sentence.
-- Talks to the chat and reacts to it.
+- Talks to the viewers directly, as one person to another (on a live stream, to the chat).
 - One small honest doubt or a plain detail makes praise believable.
 - Plain words. A filler now and then — at most one per card.
 - Facts said once, calmly: the code, where the link is, until when — and only facts the brief gives.
@@ -439,10 +439,17 @@ Cringe → natural (never write the left side; Turkish examples, the same holds 
 When <creator_voice> is given, it is THIS creator's own speech, transcribed from their videos. It outranks the sample above: write the cards the way they talk — their words, their rhythm, their fillers, how they greet and address people. Take only their manner, never their content: no facts, names or products from it.`;
 }
 
-const SUFLOR_TASK = `You write the cards a creator reads from a small floating prompter while live-streaming on TikTok, Instagram or YouTube, or while filming a sponsored video with that app's own camera.
+const SUFLOR_TASK = `You write the cards a creator reads from a teleprompter while filming a sponsored video for TikTok, Instagram or YouTube, or while live-streaming.
 Answer with ONE JSON object and nothing else:
 {"cues":[{"role":"<opening|topic|bridge|ad|cta|rescue|closing>","text":"<what they say>"}]}
 Write in the language of <locale> (tr means Turkish), exactly as described above: the creator talking to their own chat, first person. No stage directions, quotes, emoji or hashtags.
+For kind "integrated" (a video about <topic> with the ad woven in; talk to the viewers, there is no live chat):
+- 1 opening that stops a scrolling viewer in the first two seconds and says what the video is about.
+- 2 or 3 topic cards: talking points about <topic>. One or two sentences each.
+- 1 bridge: a natural segue from the topic into the product, so the ad sounds like part of the video.
+- 2 or 3 ad cards: first-person experience with the product in plain words, one concrete point per card, named once, not in every card.
+- 1 cta: every item in <must_say>, each written exactly as given (codes, links and names unchanged), with what to do with it.
+- 1 closing that goes back to the topic or signs off.
 For kind "live":
 - 1 opening: welcome people, tease what is coming, invite them to say hello in the chat.
 - 2 or 3 topic cards: talking points about <topic> that invite comments. One or two sentences each.
@@ -474,7 +481,7 @@ async function handleSuflor(body, env) {
     .map((item) => clean(item, 120))
     .filter(Boolean);
   const content =
-    `<kind>${brief.kind === "video" ? "video" : "live"}</kind>\n` +
+    `<kind>${brief.kind === "video" ? "video" : brief.kind === "integrated" ? "integrated" : "live"}</kind>\n` +
     `<platform>${clean(brief.platform, 20)}</platform>\n` +
     `<brand>${brand}</brand>\n` +
     `<product>${product}</product>\n` +

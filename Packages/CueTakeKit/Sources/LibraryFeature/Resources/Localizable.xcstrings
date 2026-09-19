@@ -196,13 +196,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prepares the sponsor's lines and floats them beside your live stream."
+            "value": "Writes the ad in your voice, has you read it in the studio and makes a report with proof for the brand."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reklamın cümlelerini hazırlar ve canlı yayınının yanında yüzdürür."
+            "value": "Reklamı senin gibi yazar, stüdyoda okutur, markaya kanıtlı rapor çıkarır."
           }
         }
       }
@@ -213,13 +213,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A prompter floating over TikTok or Instagram while you're live."
+            "value": "The brand's brief in your own words, read on the prompter, reported back to the brand."
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Canlı yayında TikTok'un, Instagram'ın üstünde süzülen suflör."
+            "value": "Markanın brifi senin ağzından, teleprompter'dan oku, markaya raporla."
           }
         }
       }
@@ -230,13 +230,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suflör"
+            "value": "Shoot an ad"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suflör"
+            "value": "Reklam çek"
           }
         }
       }

@@ -85,7 +85,7 @@ struct SuflorReportFiles {
 }
 
 /// One page for the brand: a dark masthead with the verdict stamped on it, the numbers, the
-/// stream as a line with the ad and each proof on it, then every item with its evidence.
+/// video as a line with the ad and each proof on it, then every item with its evidence.
 struct SuflorReportPage: View {
     let session: SuflorSession
     let language: SuflorReportLanguage
@@ -190,7 +190,7 @@ struct SuflorReportPage: View {
     }
 
     private var metaLine: String {
-        let kind = brief.kind == .live ? t("suflor.pdf.live") : t("suflor.pdf.video")
+        let kind = brief.kind == .integrated ? t("suflor.pdf.integrated") : t("suflor.pdf.video")
         let platform = brief.platform == .other ? t("suflor.pdf.other") : brief.platform.title
         let date = session.startedAt.formatted(Date.FormatStyle(date: .long, time: .shortened).locale(language.locale))
         var parts = [kind, platform, date]

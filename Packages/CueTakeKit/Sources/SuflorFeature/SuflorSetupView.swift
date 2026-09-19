@@ -3,7 +3,7 @@ import Domain
 import SwiftUI
 import UIKit
 
-/// The three steps before the stage.
+/// The three steps before the studio.
 struct SuflorSetupView: View {
     @Bindable var model: SuflorModel
     let onClose: () -> Void
@@ -68,7 +68,7 @@ private struct SuflorKindStep: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                FloatingWindowDemo()
+                AdShootDemo()
                     .frame(height: 250)
                     .padding(.top, 22)
                     .dsEnter(.rise())
@@ -81,8 +81,8 @@ private struct SuflorKindStep: View {
                     .padding(.top, 10)
 
                 HStack(spacing: 12) {
-                    kindCard(.live, symbol: "dot.radiowaves.left.and.right", title: "suflor.kind.live", detail: "suflor.kind.live.detail")
-                    kindCard(.video, symbol: "video.fill", title: "suflor.kind.video", detail: "suflor.kind.video.detail")
+                    kindCard(.integrated, symbol: "rectangle.stack.fill", title: "suflor.kind.integrated", detail: "suflor.kind.integrated.detail")
+                    kindCard(.video, symbol: "megaphone.fill", title: "suflor.kind.video", detail: "suflor.kind.video.detail")
                 }
                 .padding(.top, 22)
                 .dsEnter(.rise(delay: 0.08))
@@ -112,11 +112,7 @@ private struct SuflorKindStep: View {
         let title = String(localized: titleKey, bundle: .module)
         let detail = String(localized: detailKey, bundle: .module)
         return Button {
-            withAnimation(DS.Motion.bloom) {
-                model.brief.kind = kind
-                if kind == .video { model.brief.timing = .none }
-                if kind == .live, model.brief.timing == .none { model.brief.timing = .minute(5) }
-            }
+            withAnimation(DS.Motion.bloom) { model.brief.kind = kind }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 ZStack {
@@ -227,7 +223,6 @@ private struct SuflorBriefStep: View {
                 .padding(.top, 14)
 
                 mustSay.padding(.top, 22)
-                if model.brief.kind == .live { timing.padding(.top, 22) }
                 tone.padding(.top, 22)
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -387,92 +382,6 @@ private struct SuflorBriefStep: View {
         focused = .item
     }
 
-    private var minute: Int {
-        if case .minute(let value) = model.brief.timing { return value }
-        return 10
-    }
-
-    private var timing: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.brief.when", bundle: .module))
-            HStack(spacing: 8) {
-                SuflorChip(title: String(localized: "suflor.brief.when.minute", bundle: .module), isOn: isMinute) {
-                    withAnimation(DS.Motion.snap) { model.brief.timing = .minute(minute) }
-                }
-                SuflorChip(title: String(localized: "suflor.brief.when.manual", bundle: .module), isOn: model.brief.timing == .manual) {
-                    withAnimation(DS.Motion.snap) { model.brief.timing = .manual }
-                }
-                SuflorChip(title: String(localized: "suflor.brief.when.none", bundle: .module), isOn: model.brief.timing == .none) {
-                    withAnimation(DS.Motion.snap) { model.brief.timing = .none }
-                }
-            }
-            Text(timingExplanation)
-                .dsFont(.sans, .regular, 13, lineHeight: 1.35)
-                .foregroundStyle(DS.Palette.ink(0.62))
-                .fixedSize(horizontal: false, vertical: true)
-                .contentTransition(.opacity)
-            if isMinute {
-                // One value, centred, with its buttons either side: the number and its unit share a
-                // baseline, the note sits under them, nothing else competes for the row.
-                HStack(spacing: 0) {
-                    minuteButton("minus", label: "suflor.brief.when.earlier") { max(1, minute - 1) }
-                    Spacer(minLength: 8)
-                    VStack(spacing: 2) {
-                        HStack(alignment: .firstTextBaseline, spacing: 5) {
-                            Text(verbatim: "\(minute)")
-                                .dsFont(.archivo, .extrabold, 40)
-                                .foregroundStyle(DS.Palette.amber)
-                                .contentTransition(.numericText(value: Double(minute)))
-                                .monospacedDigit()
-                            Text("suflor.brief.when.min", bundle: .module)
-                                .dsFont(.sans, .semibold, 16)
-                                .foregroundStyle(DS.Palette.amber)
-                        }
-                        Text("suflor.brief.when.minuteUnit", bundle: .module)
-                            .dsFont(.sans, .regular, 12)
-                            .foregroundStyle(DS.Palette.ink(0.6))
-                            .multilineTextAlignment(.center)
-                    }
-                    .accessibilityElement(children: .combine)
-                    Spacer(minLength: 8)
-                    minuteButton("plus", label: "suflor.brief.when.later") { min(180, minute + 1) }
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 10)
-                .dsCard(radius: 18)
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
-        }
-    }
-
-    private func minuteButton(_ symbol: String, label: LocalizedStringKey, next: @escaping () -> Int) -> some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            withAnimation(DS.Motion.snap) { model.brief.timing = .minute(next()) }
-        } label: {
-            Image(systemName: symbol)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(DS.Palette.ink)
-                .frame(width: 48, height: 48)
-                .background(Circle().fill(DS.Palette.hairline(0.08)))
-        }
-        .buttonStyle(.dsPressIcon)
-        .accessibilityLabel(Text(label, bundle: .module))
-    }
-
-    private var timingExplanation: String {
-        switch model.brief.timing {
-        case .minute(let value): String(localized: "suflor.brief.when.minute.explain \(value)", bundle: .module)
-        case .manual: String(localized: "suflor.brief.when.manual.explain", bundle: .module)
-        case .none: String(localized: "suflor.brief.when.none.explain", bundle: .module)
-        }
-    }
-
-    private var isMinute: Bool {
-        if case .minute = model.brief.timing { return true }
-        return false
-    }
-
     private var tone: some View {
         VStack(alignment: .leading, spacing: 10) {
             DSKicker(String(localized: "suflor.brief.tone", bundle: .module))
@@ -598,8 +507,7 @@ private struct SuflorFlowStep: View {
                         .padding(.top, 26)
                     pages.padding(.top, 14)
 
-                    preview.padding(.top, 18)
-                    controls.padding(.top, 12)
+                    summary.padding(.top, 18)
 
                     VStack(spacing: 10) {
                         ForEach(model.cues) { cue in
@@ -616,12 +524,12 @@ private struct SuflorFlowStep: View {
                     addMenu.padding(.top, 12)
                 }
                 .padding(.horizontal, 22)
-                .padding(.bottom, 130)
+                .padding(.bottom, model.hasRecording ? 200 : 130)
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
         }
-        .overlay(alignment: .bottom) { stageButton }
+        .overlay(alignment: .bottom) { bottomBar }
     }
 
     /// Two pages, the AI's flow and the creator's own; the other one waits untouched.
@@ -666,58 +574,57 @@ private struct SuflorFlowStep: View {
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
-    private var preview: some View {
-        let (layout, fonts) = model.previewLayout()
-        return ZStack(alignment: .topLeading) {
-            SuflorLivePreview(layout: layout, wordsPerMinute: model.wordsPerMinute, fonts: fonts)
-            HStack(spacing: 6) {
-                Image(systemName: "pip").font(.system(size: 11, weight: .semibold))
-                Text("suflor.flow.preview", bundle: .module).dsFont(.mono, .medium, 10, letterSpacing: 0.12)
-            }
-            .foregroundStyle(DS.Palette.ink(0.66))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(DS.Palette.hairline(0.08)))
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-        }
-        .frame(height: 230)
-        .background(DS.Palette.camera)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(DS.Palette.hairline(0.1), lineWidth: 1))
-        .animation(DS.Motion.settle, value: model.textSize)
-    }
-
-    private var controls: some View {
-        HStack(spacing: 10) {
-            SuflorStepper(
-                value: "\(Int(model.wordsPerMinute))",
-                caption: String(localized: "suflor.pace.unit", bundle: .module),
-                minusLabel: String(localized: "suflor.pace.slower", bundle: .module),
-                plusLabel: String(localized: "suflor.pace.faster", bundle: .module),
-                onMinus: { withAnimation(DS.Motion.snap) { model.nudgePace(-10) } },
-                onPlus: { withAnimation(DS.Motion.snap) { model.nudgePace(10) } }
-            )
-            SuflorStepper(
-                value: "\(Int(model.textSize))",
-                caption: String(localized: "suflor.size.unit", bundle: .module),
-                minusLabel: String(localized: "suflor.size.smaller", bundle: .module),
-                plusLabel: String(localized: "suflor.size.larger", bundle: .module),
-                onMinus: { withAnimation(DS.Motion.snap) { model.nudgeSize(-2) } },
-                onPlus: { withAnimation(DS.Motion.snap) { model.nudgeSize(2) } }
-            )
-            Spacer(minLength: 0)
-            VStack(alignment: .trailing, spacing: 1) {
+    /// How long the cards take to read, and what the brand wants heard: what the studio and the
+    /// report will hold the take to.
+    private var summary: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "timer")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
                 Text(SuflorSession.clock(model.flowSeconds))
-                    .dsFont(.archivo, .bold, 17)
+                    .dsFont(.archivo, .bold, 20)
                     .foregroundStyle(DS.Palette.ink)
                     .contentTransition(.numericText())
+                    .monospacedDigit()
                 Text("suflor.flow.duration", bundle: .module)
-                    .dsFont(.mono, .medium, 10, letterSpacing: 0.1)
-                    .foregroundStyle(DS.Palette.ink(0.56))
+                    .dsFont(.sans, .regular, 13)
+                    .foregroundStyle(DS.Palette.ink(0.6))
+                Spacer(minLength: 0)
             }
             .accessibilityElement(children: .combine)
+            if !model.brief.mustSay.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    DSKicker(String(localized: "suflor.flow.mustSay", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                    FlowLayout(horizontalSpacing: 6, verticalSpacing: 6) {
+                        ForEach(model.brief.mustSay, id: \.self) { item in
+                            Text(verbatim: item)
+                                .dsFont(.sans, .semibold, 13)
+                                .foregroundStyle(said(item) ? DS.Palette.lime : DS.Palette.amber)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill((said(item) ? DS.Palette.lime : DS.Palette.amber).opacity(0.12)))
+                        }
+                    }
+                    if model.brief.mustSay.contains(where: { !said($0) }) {
+                        Text("suflor.flow.mustSay.missing", bundle: .module)
+                            .dsFont(.sans, .regular, 12, lineHeight: 1.3)
+                            .foregroundStyle(DS.Palette.amber)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsCard(radius: 20)
+        .animation(DS.Motion.settle, value: model.cues)
+    }
+
+    /// The item is somewhere in the cards, as written: what the brand asked for is on the prompter.
+    private func said(_ item: String) -> Bool {
+        let wanted = item.lowercased()
+        return model.plan.ordered.contains { $0.text.lowercased().contains(wanted) }
     }
 
     private func card(_ cue: SuflorCue) -> some View {
@@ -764,7 +671,7 @@ private struct SuflorFlowStep: View {
 
     private var addMenu: some View {
         Menu {
-            ForEach(SuflorCue.Role.allCases, id: \.self) { role in
+            ForEach(SuflorCue.Role.allCases.filter { $0 != .rescue }, id: \.self) { role in
                 Button(role.title) { withAnimation(DS.Motion.bloom) { model.add(role) } }
             }
         } label: {
@@ -781,30 +688,51 @@ private struct SuflorFlowStep: View {
         }
     }
 
-    private var stageButton: some View {
-        Button {
-            editing = nil
-            model.goOnStage()
-        } label: {
-            HStack(spacing: 10) {
-                LiveDot(size: 7, color: DS.Palette.inkInverse)
-                Text("suflor.flow.stage", bundle: .module).dsFont(.archivo, .bold, 18)
-            }
-            .foregroundStyle(DS.Palette.inkInverse)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 19)
-            .background {
-                ZStack {
-                    DS.gradient(150, [DS.Palette.accent, DS.Palette.accentWarm])
-                    SweepShine()
+    private var bottomBar: some View {
+        VStack(spacing: 10) {
+            if model.hasRecording {
+                Button {
+                    editing = nil
+                    Task { await model.openReport() }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("suflor.flow.report", bundle: .module)
+                            .dsFont(.sans, .semibold, 15)
+                    }
+                    .foregroundStyle(DS.Palette.ink)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .dsGlass(tint: DS.Palette.glass(0.8), in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous), border: DS.Palette.hairline(0.14))
                 }
+                .buttonStyle(.dsPress(radius: DS.Radius.card))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
-            .shadow(color: DS.Palette.accent(0.4), radius: 26, y: 16)
+            Button {
+                editing = nil
+                model.record()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("suflor.flow.record", bundle: .module).dsFont(.archivo, .bold, 18)
+                }
+                .foregroundStyle(DS.Palette.inkInverse)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 19)
+                .background {
+                    ZStack {
+                        DS.gradient(150, [DS.Palette.accent, DS.Palette.accentWarm])
+                        SweepShine()
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.cardLarge, style: .continuous))
+                .shadow(color: DS.Palette.accent(0.4), radius: 26, y: 16)
+            }
+            .buttonStyle(.dsPress(radius: DS.Radius.cardLarge))
+            .disabled(!model.isReady)
+            .opacity(model.isReady ? 1 : 0.4)
         }
-        .buttonStyle(.dsPress(radius: DS.Radius.cardLarge))
-        .disabled(!model.isReady)
-        .opacity(model.isReady ? 1 : 0.4)
         .padding(.horizontal, 22)
         .padding(.bottom, 30)
         .background(
@@ -812,5 +740,6 @@ private struct SuflorFlowStep: View {
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
         )
+        .animation(DS.Motion.settle, value: model.hasRecording)
     }
 }

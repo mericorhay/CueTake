@@ -218,7 +218,8 @@ struct RootView: View {
                 project: model.project,
                 onRetake: { model.startRetake(of: $0) },
                 onEdit: { model.openEditor() },
-                onDone: { model.go(to: .export) }
+                onDone: { model.go(to: .export) },
+                onReport: model.isAdProject ? { model.openAdReport() } : nil
             )
 
         case .editor:
@@ -326,7 +327,7 @@ struct RootView: View {
             }
 
         case .suflor:
-            SuflorScreen(model: model.suflorModel) { model.go(to: .home) }
+            SuflorScreen(model: model.suflorModel) { model.leaveAd() }
 
         case .settings:
             SettingsScreen(
