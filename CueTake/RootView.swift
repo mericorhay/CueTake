@@ -1,4 +1,7 @@
 import AIServices
+import AuthenticationServices
+import Combine
+import Foundation
 import AssistantFeature
 import DesignSystem
 import Domain
@@ -19,6 +22,7 @@ import WorkflowsFeature
 /// they report what happened and this is the only place that decides where to go.
 struct RootView: View {
     @Bindable var model: AppModel
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var pickedFootage: [PhotosPickerItem] = []
     @State private var pickedVideoLayer: PhotosPickerItem?
@@ -129,6 +133,13 @@ struct RootView: View {
             await model.cleanStorageAfterLaunch()
         }
         .onChange(of: model.project) { model.scheduleSave() }
+        .task { await model.accountModel.refresh() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.accountModel.refresh() } }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: ASAuthorizationAppleIDProvider.credentialRevokedNotification)) { _ in
+            Task { await model.accountModel.revokeLocalSession() }
+        }
     }
 
     /// The script screen's rewrites on the server, or nil in a build without the assistant.
@@ -344,6 +355,7 @@ struct RootView: View {
         case .settings:
             SettingsScreen(
                 model: model.settingsModel,
+                account: model.accountModel,
                 storage: model.storageLabel,
                 onCleanStorage: { Task { await model.cleanStorageNow() } },
                 // Teams are locked until tried on two phones; only the light can be previewed.

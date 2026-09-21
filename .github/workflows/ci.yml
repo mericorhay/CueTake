@@ -12,6 +12,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  accounts:
+    name: Account security tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node --test backend/assistant/auth.test.mjs
   build:
     name: Build and test
     runs-on: macos-26
@@ -43,11 +53,36 @@ jobs:
           xcodebuild build \
             -project CueTake.xcodeproj \
             -scheme CueTake \
+            -derivedDataPath "$RUNNER_TEMP/CueTakeDerived" \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -skipMacroValidation \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM=""
+
+      - name: Capture settings layouts
+        run: |
+          set -euo pipefail
+          DEVICE="${{ steps.sim.outputs.udid }}"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$RUNNER_TEMP/CueTakeDerived/Build/Products/Debug-iphonesimulator/CueTake.app"
+          mkdir -p "$RUNNER_TEMP/settings-layouts"
+          for SCREEN in settings account privacy; do
+            xcrun simctl terminate "$DEVICE" com.orhay.cuetake || true
+            xcrun simctl launch "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages '(tr)' -AppleLocale tr_TR
+            sleep 4
+            xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/settings-layouts/$SCREEN.png"
+          done
+          xcrun simctl terminate "$DEVICE" com.orhay.cuetake || true
+
+      - name: Settings layout artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: settings-layouts
+          path: ${{ runner.temp }}/settings-layouts/*.png
+          if-no-files-found: ignore
 
       - name: Run the package tests
         working-directory: Packages/CueTakeKit

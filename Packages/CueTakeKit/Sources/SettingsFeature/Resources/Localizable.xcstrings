@@ -2465,6 +2465,958 @@
           }
         }
       }
+    },
+    "settings.studio.kicker": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR CREATIVE SPACE"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SENİN YARATICI ALANIN"
+          }
+        }
+      }
+    },
+    "settings.studio.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small details. Your way of creating."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Küçük detaylar. Sana özgü bir deneyim."
+          }
+        }
+      }
+    },
+    "settings.section.workspace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAKE IT YOURS"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SANA GÖRE"
+          }
+        }
+      }
+    },
+    "settings.section.creator": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CREATOR IDENTITY"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ÜRETİCİ KİMLİĞİN"
+          }
+        }
+      }
+    },
+    "settings.section.capture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera & capture"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera ve çekim"
+          }
+        }
+      }
+    },
+    "settings.section.editing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editing & export"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kurgu ve dışa aktarma"
+          }
+        }
+      }
+    },
+    "settings.section.intelligence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI & connections"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI ve bağlantılar"
+          }
+        }
+      }
+    },
+    "settings.section.device": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device & privacy"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cihaz ve gizlilik"
+          }
+        }
+      }
+    },
+    "settings.device.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language, storage and your data"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dil, depolama ve verilerin"
+          }
+        }
+      }
+    },
+    "settings.capture.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set the starting point for your next take."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir sonraki çekimin başlangıç ayarlarını belirle."
+          }
+        }
+      }
+    },
+    "settings.editing.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your preferred finish, ready for the next project."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir sonraki projende kullanacağın tercihlerini belirle."
+          }
+        }
+      }
+    },
+    "settings.intelligence.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose where AI works and which providers you connect."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI’ın nerede çalışacağını ve bağlayacağın sağlayıcıları seç."
+          }
+        }
+      }
+    },
+    "settings.device.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little housekeeping. Everything in its place."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her şey yerli yerinde. Cihazının kontrolü sende."
+          }
+        }
+      }
+    },
+    "settings.footer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Made for your next great take."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir sonraki harika çekimin için."
+          }
+        }
+      }
+    },
+    "settings.voice.pace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "words/min"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kelime/dk"
+          }
+        }
+      }
+    },
+    "settings.close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapat"
+          }
+        }
+      }
+    },
+    "settings.autosave": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preferences are saved automatically."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tercihlerin otomatik kaydedilir."
+          }
+        }
+      }
+    },
+    "settings.rememberStyle.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep your last caption style for the next project."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Son altyazı stilini sonraki projede de kullan."
+          }
+        }
+      }
+    },
+    "settings.ai.local.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use available on-device AI. Cloud assistance stays off."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kullanılabilir cihaz içi AI’ı kullan. Bulut asistanı kapalı kalır."
+          }
+        }
+      }
+    },
+    "settings.ai.cloud.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow cloud assistance. Requests may include your text, edit context or audio when using cloud transcription."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bulut asistanına izin ver. İstekler metnini, kurgu bağlamını veya bulut konuşma tanımada sesini içerebilir."
+          }
+        }
+      }
+    },
+    "settings.storage.confirm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean temporary files?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçici dosyalar temizlensin mi?"
+          }
+        }
+      }
+    },
+    "settings.storage.clean": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean temporary files"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geçici dosyaları temizle"
+          }
+        }
+      }
+    },
+    "settings.storage.safe": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeps your saved projects and their media. Removes unused temporary files."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kayıtlı projelerin ve onlara ait medya korunur. Kullanılmayan geçici dosyalar kaldırılır."
+          }
+        }
+      }
+    },
+    "settings.privacy.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your data, clearly"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verilerin hakkında"
+          }
+        }
+      }
+    },
+    "settings.privacy.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects and media are stored on this iPhone. An Apple sign-in does not turn on cloud backup. Cloud AI processes the content needed for the request when enabled. Provider keys are kept in this device’s Keychain. Account deletion removes the CueTake account and its sessions; local projects stay on your phone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projelerin ve medyan bu iPhone’da saklanır. Apple ile giriş yapmak bulut yedeklemeyi açmaz. Bulut AI etkinse isteğin için gerekli içerik işlenir. Sağlayıcı anahtarları bu cihazın Anahtar Zinciri’nde tutulur. Hesabı silmek CueTake hesabını ve oturumlarını kaldırır; yerel projelerin telefonunda kalır."
+          }
+        }
+      }
+    },
+    "account.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesabın"
+          }
+        }
+      }
+    },
+    "account.invite": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make it yours."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Burası senin."
+          }
+        }
+      }
+    },
+    "account.invite.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue with Apple. No password to remember."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple ile devam et. Şifre hatırlaman gerekmez."
+          }
+        }
+      }
+    },
+    "account.connected.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account and sign-in preferences"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesap ve giriş tercihlerin"
+          }
+        }
+      }
+    },
+    "account.hero": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your next chapter.\nSigned by you."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yeni bir sayfa.\nSenin imzanla."
+          }
+        }
+      }
+    },
+    "account.hero.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A private sign-in, a space of your own. Continue with your Apple Account."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sana ait bir alan, gizliliğini koruyan bir giriş. Apple Hesabınla devam et."
+          }
+        }
+      }
+    },
+    "account.welcome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right where\nyou belong."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tam da\nyerin burası."
+          }
+        }
+      }
+    },
+    "account.localProjects": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your projects stay on this iPhone. Signing in does not enable cloud sync."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projelerin bu iPhone’da kalır. Giriş yapmak bulut eşzamanlamayı açmaz."
+          }
+        }
+      }
+    },
+    "account.preparing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing secure sign-in…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Güvenli giriş hazırlanıyor…"
+          }
+        }
+      }
+    },
+    "account.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try sign-in again"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Girişi yeniden dene"
+          }
+        }
+      }
+    },
+    "account.verifying": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verifying your account…"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesabın doğrulanıyor…"
+          }
+        }
+      }
+    },
+    "account.guest": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep creating without an account"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesapsız üretmeye devam et"
+          }
+        }
+      }
+    },
+    "account.verified": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verified with Apple"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple ile doğrulandı"
+          }
+        }
+      }
+    },
+    "account.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account saved on this device"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesap bu cihazda kayıtlı"
+          }
+        }
+      }
+    },
+    "account.benefit.passwordless": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No passwords. No forms."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Şifre yok. Form yok."
+          }
+        }
+      }
+    },
+    "account.benefit.private": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your email is not requested."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-posta adresin istenmez."
+          }
+        }
+      }
+    },
+    "account.benefit.local": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your projects remain yours."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projelerin sende kalır."
+          }
+        }
+      }
+    },
+    "account.privacy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple verifies your identity. CueTake stores your account identifier, name if shared, and secure sign-in credentials. You can delete your account here at any time."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kimliğini Apple doğrular. CueTake hesap kimliğini, paylaşırsan adını ve güvenli giriş bilgilerini saklar. Hesabını istediğin zaman buradan silebilirsin."
+          }
+        }
+      }
+    },
+    "account.logout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çıkış yap"
+          }
+        }
+      }
+    },
+    "account.logout.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out of CueTake?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CueTake’ten çıkış yapılsın mı?"
+          }
+        }
+      }
+    },
+    "account.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vazgeç"
+          }
+        }
+      }
+    },
+    "account.delete.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete your CueTake account?"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CueTake hesabın silinsin mi?"
+          }
+        }
+      }
+    },
+    "account.delete.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesabı sil"
+          }
+        }
+      }
+    },
+    "account.delete.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This permanently removes your CueTake account, name and all account sessions, and revokes its Apple sign-in. Projects saved on this iPhone are kept. This cannot be undone."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CueTake hesabın, adın ve tüm hesap oturumların kalıcı olarak silinir; Apple giriş izni kaldırılır. Bu iPhone’daki kayıtlı projeler korunur. Bu işlem geri alınamaz."
+          }
+        }
+      }
+    },
+    "account.delete.pending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account deletion is pending. Tap Delete account to finish securely."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesap silme işlemi bekliyor. Güvenle tamamlamak için Hesabı sil’e dokun."
+          }
+        }
+      }
+    },
+    "account.delete.reauth": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session expired. Sign in again to complete account deletion."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturumun sona erdi. Hesap silmeyi tamamlamak için tekrar giriş yap."
+          }
+        }
+      }
+    },
+    "account.expired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This sign-in expired. Please try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu girişin süresi doldu. Lütfen yeniden dene."
+          }
+        }
+      }
+    },
+    "account.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple sign-in is not available in this build yet. You can keep creating without an account."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple ile giriş bu sürümde henüz kullanıma açık değil. Hesapsız üretmeye devam edebilirsin."
+          }
+        }
+      }
+    },
+    "account.rateLimited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many attempts. Wait a minute, then try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Çok fazla deneme yapıldı. Bir dakika bekleyip yeniden dene."
+          }
+        }
+      }
+    },
+    "account.storageError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your sign-in could not be stored securely. Please try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giriş bilgilerin güvenle kaydedilemedi. Lütfen yeniden dene."
+          }
+        }
+      }
+    },
+    "account.networkError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn’t finish securely. Check your connection and try again."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "İşlemi güvenle tamamlayamadık. Bağlantını kontrol edip yeniden dene."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

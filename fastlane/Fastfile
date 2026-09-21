@@ -1,3 +1,4 @@
+require "shellwords"
 default_platform(:ios)
 
 # Authenticate with App Store Connect via the API key, never an Apple ID.
@@ -93,7 +94,11 @@ platform :ios do
       output_directory: "build",
       output_name: "CueTake.ipa",
       export_method: "app-store",
-      xcargs: "CURRENT_PROJECT_VERSION=#{build_number}",
+      xcargs: [
+        "CURRENT_PROJECT_VERSION=#{build_number}",
+        "CODE_SIGN_ENTITLEMENTS=#{Shellwords.escape(ENV.fetch('CUETAKE_SIGNING_ENTITLEMENTS', 'CueTake/CueTake.entitlements'))}",
+        "INFOPLIST_KEY_CueTakeAppleSignInEnabled=#{ENV.fetch('CUETAKE_APPLE_SIGN_IN_ENABLED', 'NO')}",
+      ].join(" "),
       export_options: {
         method: "app-store",
         signingStyle: "manual",

@@ -12,7 +12,7 @@ let ui: [SwiftSetting] = concurrency + [.defaultIsolation(MainActor.self)]
 
 let modules: [String] = [
     "Domain",
-    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync",
+    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "AccountEngine", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync",
     "DesignSystem", "Teleprompter", "BumpKit",
     "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature", "SuflorFeature",
 ]
@@ -41,6 +41,7 @@ let package = Package(
         engine("SpeechEngine"),
         engine("MediaEngine"),
         engine("AIServices"),
+        engine("AccountEngine", []),
         engine("Persistence"),
         engine("WorkflowEngine"),
         // Video models on the user's own keys: fal, Veo, Sora, Replicate.
@@ -71,7 +72,7 @@ let package = Package(
         uiModule("TeamFeature", ["Domain", "DesignSystem", "BumpKit", "TeamSync"]),
         // The prompter that floats beside another app's camera during a live stream.
         uiModule("SuflorFeature", ["Domain", "DesignSystem"]),
-        uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine"]),
+        uiModule("SettingsFeature", ["Domain", "DesignSystem", "Persistence", "MediaEngine", "GenerationEngine", "AccountEngine"]),
 
         .testTarget(name: "DomainTests", dependencies: ["Domain"], swiftSettings: concurrency),
         .testTarget(name: "WorkflowEngineTests", dependencies: ["Domain", "WorkflowEngine"], swiftSettings: concurrency),

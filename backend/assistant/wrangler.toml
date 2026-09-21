@@ -2,6 +2,23 @@ name = "cuetake-assistant"
 main = "worker.js"
 compatibility_date = "2026-09-01"
 
+[vars]
+APPLE_AUTH_CLIENT_ID = "com.orhay.cuetake"
+APPLE_AUTH_TEAM_ID = "XYB3NLV654"
+
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "cuetake-accounts"
+database_id = "f88ae43a-6469-491b-80a3-bccb6527fb37"
+migrations_dir = "migrations"
+
+[[ratelimits]]
+name = "AUTH_LIMITER"
+namespace_id = "1002"
+  [ratelimits.simple]
+  limit = 12
+  period = 60
+
 # Secrets are not configured here. Set them once with:
 #   wrangler secret put GROQ_API_KEY        (or ANTHROPIC_API_KEY)
 #   wrangler secret put APP_TOKEN

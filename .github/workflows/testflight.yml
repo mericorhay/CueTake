@@ -90,6 +90,28 @@ jobs:
             || { echo "::error::IOS_PROVISIONING_PROFILE is not a valid .mobileprovision."; exit 1; }
           echo "Provisioning profile verified."
 
+          # Apple sign-in must be supported by the actual installed signing profile.
+          # Build the entitlement into the archive only when Apple has granted it.
+          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+          python3 - <<'PY'
+          import os, plistlib
+          temp = os.environ['RUNNER_TEMP']
+          with open(temp + '/profile.plist', 'rb') as f:
+              profile = plistlib.load(f)
+          with open('CueTake/CueTake.entitlements', 'rb') as f:
+              entitlements = plistlib.load(f)
+          enabled = 'Default' in profile.get('Entitlements', {}).get('com.apple.developer.applesignin', [])
+          if enabled:
+              entitlements['com.apple.developer.applesignin'] = ['Default']
+          path = temp + '/CueTake.entitlements'
+          with open(path, 'wb') as f:
+              plistlib.dump(entitlements, f)
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('CUETAKE_SIGNING_ENTITLEMENTS=' + path + '\n')
+              f.write('CUETAKE_APPLE_SIGN_IN_ENABLED=' + ('YES' if enabled else 'NO') + '\n')
+          print('Sign in with Apple profile support: ' + str(enabled))
+          PY
+
           echo "IOS_CERT_PATH=$RUNNER_TEMP/dist_legacy.p12" >> "$GITHUB_ENV"
           echo "IOS_PROFILE_PATH=$RUNNER_TEMP/profile.mobileprovision" >> "$GITHUB_ENV"
 

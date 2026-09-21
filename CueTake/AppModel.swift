@@ -70,6 +70,7 @@ final class AppModel {
     /// The suflör keeps its brief and cards between visits, like the prompter keeps its layout.
     let suflorModel = SuflorModel()
     let settingsModel: SettingsModel
+    let accountModel = AccountModel()
 
     private(set) var studioModel: StudioModel
     private(set) var editorModel: EditorModel
@@ -91,6 +92,10 @@ final class AppModel {
         // Skipping the intro for someone who has already seen it is the whole point of recording
         // that they did.
         self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
+        #if DEBUG
+        // Deterministic simulator capture without altering the user's onboarding preference.
+        if ProcessInfo.processInfo.arguments.contains("-settings-preview") { self.screen = .settings }
+        #endif
     }
 
     // MARK: - Library

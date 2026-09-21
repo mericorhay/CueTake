@@ -1,3 +1,5 @@
+import { handleAuth } from "./auth.mjs";
+
 // CueTake assistant proxy — a Cloudflare Worker.
 //
 // The app never holds the model provider's key. It posts the conversation here; this worker
@@ -778,6 +780,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, "");
+    if (path.startsWith("/auth/")) return handleAuth(request, env, path);
     if (request.method === "GET" && path === "/health") return handleHealth(env, url);
     // Public: anyone holding a certificate link can check it, with no app and no token.
     if (request.method === "GET" && path === "/verify") return handleVerify(url, env);
