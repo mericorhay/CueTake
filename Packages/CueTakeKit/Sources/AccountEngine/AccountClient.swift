@@ -10,6 +10,7 @@ public struct AccountSession: Codable, Sendable {
     public var expiresAt: Double
     public var user: CreatorAccount
     public var appleUserID: String?
+    public var deletionPending: Bool?
 }
 
 public struct AccountChallenge: Decodable, Sendable {
@@ -59,7 +60,7 @@ public struct AccountClient: Sendable {
     }
 
     public func end(token: String, deleting: Bool) async throws {
-        struct Result: Decodable { var ok: Bool }
+        struct Result: Decodable, Sendable { var ok: Bool }
         let result: Result = try await send(deleting ? "account" : "logout", method: deleting ? "DELETE" : "POST", token: token)
         guard result.ok else { throw AccountError.invalidResponse }
     }

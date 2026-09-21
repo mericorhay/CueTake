@@ -123,7 +123,7 @@ test("account deletion revokes Apple and removes all sessions, including other d
   } finally { f.close(); }
 });
 
-test("Apple outage never reports deletion success; retry completes and new sign-ins are blocked", async () => {
+test("Apple outage never reports deletion success; reauthentication can resume deletion", async () => {
   const f = fixture();
   try {
     const session = await f.login();
@@ -131,9 +131,10 @@ test("Apple outage never reports deletion success; retry completes and new sign-
     assert.equal((await f.call("account", "DELETE", null, session.token)).status, 503);
     const status = await (await f.call("session", "GET", null, session.token)).json();
     assert.equal(status.deletionPending, true);
-    assert.equal((await f.call("apple", "POST", await f.credentials())).status, 409);
+    const reauthenticated = await f.login();
+    assert.equal(reauthenticated.deletionPending, true);
     f.setRevoke(200);
-    assert.equal((await f.call("account", "DELETE", null, session.token)).status, 200);
+    assert.equal((await f.call("account", "DELETE", null, reauthenticated.token)).status, 200);
   } finally { f.close(); }
 });
 

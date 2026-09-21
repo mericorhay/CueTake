@@ -1,3 +1,4 @@
+import AccountEngine
 import AuthenticationServices
 import DesignSystem
 import SwiftUI
@@ -140,7 +141,7 @@ struct AccountSheet: View {
     }
 
     private func benefit(_ icon: String, _ key: String.LocalizationValue) -> some View {
-        Label { Text(key, bundle: .module).font(DS.sans(.medium, 14)) } icon: {
+        Label { Text(settingsText(key)).font(DS.sans(.medium, 14)) } icon: {
             Image(systemName: icon).frame(width: 28).foregroundStyle(DS.Palette.accent)
         }.foregroundStyle(DS.Palette.ink(0.8))
     }

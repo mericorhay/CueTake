@@ -1,4 +1,6 @@
+import AccountEngine
 import DesignSystem
+import Foundation
 import Domain
 import SwiftUI
 import UIKit
@@ -161,7 +163,7 @@ public struct SettingsScreen: View {
     }
 
     private func sectionTitle(_ key: String.LocalizationValue) -> some View {
-        Text(key, bundle: .module).font(DS.sans(.semibold, 13))
+        Text(settingsText(key)).font(DS.sans(.semibold, 13))
             .foregroundStyle(DS.Palette.ink(0.55)).padding(.leading, 4).accessibilityAddTraits(.isHeader)
     }
 

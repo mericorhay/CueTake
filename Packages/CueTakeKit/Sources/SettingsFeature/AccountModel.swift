@@ -21,6 +21,7 @@ public final class AccountModel {
     private var challenge: AccountChallenge?
     private var challengeDate = Date.distantPast
     private var requestedChallenge: AccountChallenge?
+    private var generation = 0
 
     public init(client: AccountClient = .bundled(), appleSignInEnabled: Bool? = nil) {
         self.client = client
@@ -31,6 +32,7 @@ public final class AccountModel {
            saved.expiresAt > Date().timeIntervalSince1970 {
             session = saved
             account = saved.user
+            deletionPending = saved.deletionPending ?? false
         } else { keychain.delete() }
     }
 
@@ -66,6 +68,7 @@ public final class AccountModel {
     }
 
     public func complete(_ result: Result<ASAuthorization, Error>) async {
+        let attemptGeneration = generation
         defer { isBusy = false; requestedChallenge = nil; challenge = nil; ready = false }
         do {
             let authorization = try result.get()
@@ -77,6 +80,10 @@ public final class AccountModel {
             else { throw AccountError.unauthorized }
             let name = credential.fullName.map { PersonNameComponentsFormatter().string(from: $0) }
             var value = try await client.signIn(challenge: challenge.id, code: code, identityToken: token, name: name)
+            guard attemptGeneration == generation else {
+                try? await client.end(token: value.token, deleting: false)
+                return
+            }
             value.appleUserID = credential.user
             do { try persist(value) }
             catch {
@@ -86,7 +93,7 @@ public final class AccountModel {
             session = value
             account = value.user
             verified = true
-            deletionPending = false
+            deletionPending = value.deletionPending ?? false
             message = nil
         } catch let error as ASAuthorizationError where error.code == .canceled {
             message = nil
@@ -106,6 +113,7 @@ public final class AccountModel {
             var updated = saved
             updated.user = status.user
             updated.expiresAt = status.expiresAt
+            updated.deletionPending = status.deletionPending
             try persist(updated)
             session = updated
             account = updated.user
@@ -147,6 +155,7 @@ public final class AccountModel {
     }
 
     private func clear() {
+        generation += 1
         keychain.delete()
         session = nil
         account = nil

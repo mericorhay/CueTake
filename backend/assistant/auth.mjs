@@ -155,13 +155,13 @@ export async function handleAuth(request, env, path) {
         env.AUTH_DB.prepare(`INSERT INTO auth_users (id, name, refresh_token, created_at) VALUES (?, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET refresh_token = excluded.refresh_token,
           name = CASE WHEN auth_users.name = '' THEN excluded.name ELSE auth_users.name END
-          WHERE auth_users.deleting = 0`).bind(id, name, refresh, now()),
+          WHERE auth_users.deleting <= ?`).bind(id, name, refresh, now(), now()),
         env.AUTH_DB.prepare(`INSERT INTO auth_sessions (token_hash, user_id, expires_at)
-          SELECT ?, id, ? FROM auth_users WHERE id = ? AND deleting = 0`).bind(await digest(token), expiresAt, id),
+          SELECT ?, id, ? FROM auth_users WHERE id = ? AND deleting <= ?`).bind(await digest(token), expiresAt, id, now()),
       ]);
       const user = await env.AUTH_DB.prepare("SELECT id, name, deleting FROM auth_users WHERE id = ?").bind(id).first();
-      if (!user || user.deleting) throw fail("deletion_pending", 409);
-      return reply({ token, expiresAt, user: publicUser(user) });
+      if (!user || user.deleting > now()) throw fail("deletion_pending", 409);
+      return reply({ token, expiresAt, user: publicUser(user), deletionPending: !!user.deleting });
     }
     if (path === "/auth/session" && request.method === "GET") {
       const user = await session(request, env);
@@ -174,9 +174,19 @@ export async function handleAuth(request, env, path) {
     }
     if (path === "/auth/account" && request.method === "DELETE") {
       const user = await session(request, env);
-      await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = 1 WHERE id = ?").bind(user.id).run();
+      // A bounded lease excludes sign-in while revocation is in flight. On failure the
+      // pending account can reauthenticate, even if its previous session has expired.
+      const lease = now() + 60;
+      const locked = await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = ? WHERE id = ? AND deleting <= ? RETURNING refresh_token")
+        .bind(lease, user.id, now()).first();
+      if (!locked) throw fail("deletion_pending", 409);
       // Keep the row and session on an Apple outage so the user can retry. No false success.
-      await appleRequest("revoke", { token: await unseal(user.refresh_token, env.AUTH_ENCRYPTION_KEY, user.id), token_type_hint: "refresh_token" }, env);
+      try {
+        await appleRequest("revoke", { token: await unseal(locked.refresh_token, env.AUTH_ENCRYPTION_KEY, user.id), token_type_hint: "refresh_token" }, env);
+      } catch {
+        await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = -1 WHERE id = ? AND deleting = ?").bind(user.id, lease).run();
+        throw fail("revocation_unavailable", 503);
+      }
       await env.AUTH_DB.batch([
         env.AUTH_DB.prepare("DELETE FROM auth_sessions WHERE user_id = ?").bind(user.id),
         env.AUTH_DB.prepare("DELETE FROM auth_users WHERE id = ?").bind(user.id),
