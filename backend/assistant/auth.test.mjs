@@ -19,7 +19,7 @@ async function token(nonce, overrides = {}, signingKey = rsa.privateKey) {
   return `${header}.${payload}.${encode(await crypto.subtle.sign("RSASSA-PKCS1-v1_5", signingKey, encoder.encode(`${header}.${payload}`)))}`;
 }
 
-function fixture() {
+function fixture({ tokenLifecycle = true } = {}) {
   const db = new DatabaseSync(":memory:");
   db.exec(readFileSync(new URL("./migrations/0001_accounts.sql", import.meta.url), "utf8"));
   const prepare = sql => ({
@@ -35,6 +35,11 @@ function fixture() {
   } }, AUTH_LIMITER: { async limit() { return { success: true }; } },
   APPLE_AUTH_CLIENT_ID: "com.orhay.cuetake", APPLE_AUTH_TEAM_ID: "TEAM", APPLE_AUTH_KEY_ID: "KEY",
   APPLE_AUTH_PRIVATE_KEY: privateKey, AUTH_ENCRYPTION_KEY: encryptionKey };
+  if (!tokenLifecycle) {
+    delete env.APPLE_AUTH_TEAM_ID;
+    delete env.APPLE_AUTH_KEY_ID;
+    delete env.APPLE_AUTH_PRIVATE_KEY;
+  }
   let exchangeToken, revokeStatus = 200, exchanges = 0;
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options) => {
@@ -99,6 +104,20 @@ test("login → restore → logout uses hashed, immediately revocable sessions",
     assert.equal((await f.call("session", "GET", null, session.token)).status, 200);
     assert.equal((await f.call("logout", "POST", null, session.token)).status, 200);
     assert.equal((await f.call("session", "GET", null, session.token)).status, 401);
+  } finally { f.close(); }
+});
+
+test("native Apple sign-in works without a private service key", async () => {
+  const f = fixture({ tokenLifecycle: false });
+  try {
+    assert.deepEqual(await (await f.call("status")).json(), { available: true });
+    const session = await f.login();
+    assert.equal(session.user.name, "Creator");
+    assert.equal(f.exchanges(), 0);
+    assert.equal(f.db.prepare("SELECT refresh_token FROM auth_users").get().refresh_token, "");
+    assert.equal((await f.call("session", "GET", null, session.token)).status, 200);
+    assert.equal((await f.call("account", "DELETE", null, session.token)).status, 200);
+    assert.equal(f.db.prepare("SELECT count(*) AS n FROM auth_users").get().n, 0);
   } finally { f.close(); }
 });
 

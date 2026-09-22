@@ -109,8 +109,13 @@ async function session(request, env) {
   return { ...row, hash };
 }
 const publicUser = user => ({ id: user.id, name: user.name });
-const configured = env => [env.AUTH_DB, env.AUTH_LIMITER, env.APPLE_AUTH_CLIENT_ID, env.APPLE_AUTH_TEAM_ID,
-  env.APPLE_AUTH_KEY_ID, env.APPLE_AUTH_PRIVATE_KEY, env.AUTH_ENCRYPTION_KEY].every(Boolean);
+// Native Sign in with Apple gives the app a signed identity token. Verifying
+// that token uses Apple's public JWKS and does not require a private Apple key.
+// A service key is optional: when present we also exchange the one-time code,
+// retain an encrypted refresh token, and revoke it during account deletion.
+const configured = env => [env.AUTH_DB, env.AUTH_LIMITER, env.APPLE_AUTH_CLIENT_ID].every(Boolean);
+const tokenLifecycleConfigured = env => [env.APPLE_AUTH_TEAM_ID, env.APPLE_AUTH_KEY_ID,
+  env.APPLE_AUTH_PRIVATE_KEY, env.AUTH_ENCRYPTION_KEY].every(Boolean);
 
 export async function handleAuth(request, env, path) {
   try {
@@ -143,17 +148,21 @@ export async function handleAuth(request, env, path) {
       const consumed = await env.AUTH_DB.prepare("DELETE FROM auth_challenges WHERE id = ? AND expires_at > ? RETURNING id")
         .bind(challenge.id, now()).first();
       if (!consumed) throw fail("expired_challenge", 401);
-      const tokens = await appleRequest("token", { code: body.code, grant_type: "authorization_code" }, env);
-      const exchanged = await verifyAppleToken(tokens.id_token, env.APPLE_AUTH_CLIENT_ID, challenge.nonce, keys);
-      if (exchanged.sub !== claims.sub || typeof tokens.refresh_token !== "string") throw fail("invalid_identity", 401);
       const id = await digest(`${env.APPLE_AUTH_CLIENT_ID}:${claims.sub}`);
       const name = typeof body.name === "string" ? body.name.replace(/[\p{Cc}\p{Cf}]/gu, "").trim().slice(0, 80) : "";
-      const refresh = await seal(tokens.refresh_token, env.AUTH_ENCRYPTION_KEY, id);
+      let refresh = "";
+      if (tokenLifecycleConfigured(env)) {
+        const tokens = await appleRequest("token", { code: body.code, grant_type: "authorization_code" }, env);
+        const exchanged = await verifyAppleToken(tokens.id_token, env.APPLE_AUTH_CLIENT_ID, challenge.nonce, keys);
+        if (exchanged.sub !== claims.sub || typeof tokens.refresh_token !== "string") throw fail("invalid_identity", 401);
+        refresh = await seal(tokens.refresh_token, env.AUTH_ENCRYPTION_KEY, id);
+      }
       const token = random(), expiresAt = now() + SESSION_SECONDS;
       // Only Apple's stable subject identifies an account; never merge by email or client name.
       await env.AUTH_DB.batch([
         env.AUTH_DB.prepare(`INSERT INTO auth_users (id, name, refresh_token, created_at) VALUES (?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET refresh_token = excluded.refresh_token,
+          ON CONFLICT(id) DO UPDATE SET refresh_token = CASE
+            WHEN excluded.refresh_token <> '' THEN excluded.refresh_token ELSE auth_users.refresh_token END,
           name = CASE WHEN auth_users.name = '' THEN excluded.name ELSE auth_users.name END
           WHERE auth_users.deleting <= ?`).bind(id, name, refresh, now(), now()),
         env.AUTH_DB.prepare(`INSERT INTO auth_sessions (token_hash, user_id, expires_at)
@@ -180,12 +189,16 @@ export async function handleAuth(request, env, path) {
       const locked = await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = ? WHERE id = ? AND deleting <= ? RETURNING refresh_token")
         .bind(lease, user.id, now()).first();
       if (!locked) throw fail("deletion_pending", 409);
-      // Keep the row and session on an Apple outage so the user can retry. No false success.
-      try {
-        await appleRequest("revoke", { token: await unseal(locked.refresh_token, env.AUTH_ENCRYPTION_KEY, user.id), token_type_hint: "refresh_token" }, env);
-      } catch {
-        await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = -1 WHERE id = ? AND deleting = ?").bind(user.id, lease).run();
-        throw fail("revocation_unavailable", 503);
+      // Native-only accounts have no Apple refresh token to revoke. If a token
+      // exists, keep the retryable row until Apple confirms revocation.
+      if (locked.refresh_token) {
+        try {
+          if (!tokenLifecycleConfigured(env)) throw new Error();
+          await appleRequest("revoke", { token: await unseal(locked.refresh_token, env.AUTH_ENCRYPTION_KEY, user.id), token_type_hint: "refresh_token" }, env);
+        } catch {
+          await env.AUTH_DB.prepare("UPDATE auth_users SET deleting = -1 WHERE id = ? AND deleting = ?").bind(user.id, lease).run();
+          throw fail("revocation_unavailable", 503);
+        }
       }
       await env.AUTH_DB.batch([
         env.AUTH_DB.prepare("DELETE FROM auth_sessions WHERE user_id = ?").bind(user.id),
