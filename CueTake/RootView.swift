@@ -130,11 +130,13 @@ struct RootView: View {
         .task {
             await model.restore()
             model.wireAssistant()
-            await model.cleanStorageAfterLaunch()
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-voice-preview") { showsVoiceProfile = true }
             if ProcessInfo.processInfo.arguments.contains("-certificates-preview") { showsCertificates = true }
             #endif
+            // Maintenance deliberately follows visible launch work. It already waits for the app
+            // to settle, and must never delay a screen or an accessibility snapshot.
+            await model.cleanStorageAfterLaunch()
         }
         .onChange(of: model.project) { model.scheduleSave() }
         .task { await model.accountModel.refresh() }
