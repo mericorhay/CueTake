@@ -90,8 +90,7 @@ struct AccountSheet: View {
     }
 
     @ViewBuilder private var signIn: some View {
-        if model.ready || model.isBusy {
-            SignInWithAppleButton(.continue) { request in model.configure(request) } onCompletion: { result in
+        SignInWithAppleButton(.continue) { request in model.configure(request) } onCompletion: { result in
                 Task {
                     await model.complete(result)
                     if model.account == nil && model.message == nil { await model.prepare() }
@@ -99,16 +98,18 @@ struct AccountSheet: View {
             }
             .signInWithAppleButtonStyle(.white)
             .frame(height: 56).clipShape(RoundedRectangle(cornerRadius: 16))
-            .disabled(model.isBusy)
-        } else {
+            .disabled(!model.ready || model.isBusy)
+            .opacity(model.ready ? 1 : 0.45)
+        if model.isPreparing {
+            HStack(spacing: 10) {
+                ProgressView().tint(DS.Palette.accent)
+                Text("account.preparing", bundle: .module).font(DS.sans(.regular, 13))
+            }.foregroundStyle(DS.Palette.ink(0.6))
+        } else if !model.ready && !model.isBusy && !model.isUnavailable {
             Button { Task { await model.prepare() } } label: {
-                HStack(spacing: 10) {
-                    if model.isPreparing { ProgressView().tint(DS.Palette.inkInverse) }
-                    Text(model.isPreparing ? "account.preparing" : "account.retry", bundle: .module)
-                        .font(DS.sans(.semibold, 16))
-                }.foregroundStyle(DS.Palette.inkInverse).frame(maxWidth: .infinity).frame(minHeight: 56)
-                    .background(DS.Palette.ink, in: RoundedRectangle(cornerRadius: 16))
-            }.buttonStyle(SettingsPressStyle()).disabled(model.isPreparing)
+                Text("account.retry", bundle: .module).font(DS.sans(.medium, 14))
+                    .foregroundStyle(DS.Palette.accent).frame(minHeight: 44)
+            }.buttonStyle(SettingsPressStyle())
         }
         if model.isBusy {
             Label { Text("account.verifying", bundle: .module) } icon: { ProgressView() }
@@ -168,7 +169,7 @@ struct AccountEmblem: View {
             Image(systemName: connected ? "checkmark" : "person.crop.square")
                 .font(.system(size: compact ? 22 : 42, weight: .light))
                 .foregroundStyle(DS.Palette.ink)
-                .contentTransition(.symbolEffect(.replace))
+                .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
         }
         .accessibilityHidden(true)
         .onAppear {

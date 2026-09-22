@@ -19,13 +19,15 @@ struct ConverterSheet: View {
     @State private var isWorking = false
     @State private var failure: String?
     @State private var isPicking = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var targets: [FileConverter.Target] {
         source.map { FileConverter.targets(for: $0) } ?? []
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        ScrollView {
+          VStack(alignment: .leading, spacing: 0) {
             header
 
             picker
@@ -52,6 +54,8 @@ struct ConverterSheet: View {
         .padding(.top, 22)
         .padding(.bottom, 30)
         .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .scrollIndicators(.hidden)
         .background(DS.Palette.screen)
         .fileImporter(isPresented: $isPicking, allowedContentTypes: [.item]) { outcome in
             guard case .success(let url) = outcome else { return }
@@ -60,31 +64,13 @@ struct ConverterSheet: View {
             failure = nil
             target = FileConverter.targets(for: url).first ?? .jpg
         }
-        .animation(DS.Motion.settle, value: source)
-        .animation(DS.Motion.settle, value: result)
+        .animation(reduceMotion ? nil : DS.Motion.settle, value: source)
+        .animation(reduceMotion ? nil : DS.Motion.settle, value: result)
     }
 
     private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                DSKicker(String(localized: "converter.title", bundle: .module))
-                Text("converter.note", bundle: .module)
-                    .dsFont(.sans, .regular, 12, lineHeight: 1.4)
-                    .foregroundStyle(DS.Palette.ink(0.56))
-            }
-
-            Spacer(minLength: 0)
-
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .dsActionName("xmark")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(DS.Palette.ink(0.6))
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(DS.Palette.hairline(0.08)))
-            }
-            .buttonStyle(.dsPressIcon)
-        }
+        SettingsSheetHeader(icon: "arrow.triangle.2.circlepath", title: settingsText("converter.title"),
+                            detail: settingsText("converter.note"), close: onClose)
         .padding(.bottom, 18)
     }
 

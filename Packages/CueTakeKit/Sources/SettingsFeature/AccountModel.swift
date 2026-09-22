@@ -13,6 +13,7 @@ public final class AccountModel {
     public private(set) var deletionPending = false
     public private(set) var message: String?
     public private(set) var verified = false
+    public private(set) var isUnavailable = false
 
     private let client: AccountClient
     private let appleSignInEnabled: Bool
@@ -22,6 +23,7 @@ public final class AccountModel {
     private var challengeDate = Date.distantPast
     private var requestedChallenge: AccountChallenge?
     private var generation = 0
+    private var isRefreshing = false
 
     public init(client: AccountClient = .bundled(), appleSignInEnabled: Bool? = nil) {
         self.client = client
@@ -40,6 +42,7 @@ public final class AccountModel {
         guard session == nil, !isBusy, !isPreparing else { return }
         guard appleSignInEnabled else { show(AccountError.notConfigured); return }
         isPreparing = true
+        isUnavailable = false
         ready = false
         message = nil
         defer { isPreparing = false }
@@ -101,10 +104,13 @@ public final class AccountModel {
     }
 
     public func refresh() async {
-        guard let saved = session, !isBusy else { return }
+        guard let saved = session, !isBusy, !isRefreshing else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
         do {
             if let appleID = saved.appleUserID {
                 let state = try await ASAuthorizationAppleIDProvider().credentialState(forUserID: appleID)
+                guard session?.token == saved.token else { return }
                 guard state == .authorized else { await revokeLocalSession(); return }
             }
             let status = try await client.status(token: saved.token)
@@ -123,6 +129,7 @@ public final class AccountModel {
         } catch AccountError.unauthorized {
             if session?.token == saved.token { clear() }
         } catch {
+            guard session?.token == saved.token else { return }
             verified = false
             // Offline is not logout. Cached identity grants no server authority.
             show(error)
@@ -133,6 +140,7 @@ public final class AccountModel {
         guard let saved = session, !isBusy else { return }
         isBusy = true
         message = nil
+        isUnavailable = false
         defer { isBusy = false }
         do {
             try await client.end(token: saved.token, deleting: deleting)
@@ -168,6 +176,7 @@ public final class AccountModel {
     }
 
     private func show(_ error: Error) {
+        if case AccountError.notConfigured = error { isUnavailable = true }
         let key: String.LocalizationValue
         switch error {
         case AccountError.notConfigured: key = "account.unavailable"

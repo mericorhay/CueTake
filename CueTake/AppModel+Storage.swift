@@ -75,15 +75,14 @@ extension AppModel {
     }
 
     /// The Settings button.
-    func cleanStorageNow() async {
+    func cleanStorageNow() async -> String {
         guard let freed = await cleanStorage(temporaryAge: 60) else {
-            show(notice: String(localized: "storage.wait"))
-            return
+            return String(localized: "storage.wait")
         }
         await refreshStorage()
-        show(notice: freed > 1_000_000
+        return freed > 1_000_000
             ? String(localized: "storage.cleaned \(ByteCountFormatter.string(fromByteCount: freed, countStyle: .file))")
-            : String(localized: "storage.nothing"))
+            : String(localized: "storage.nothing")
     }
 
     /// A quiet sweep a little after launch, once the app has settled.

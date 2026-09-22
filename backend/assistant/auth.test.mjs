@@ -152,3 +152,27 @@ test("missing setup, invalid credentials, rate limits, expired challenges and ov
     assert.equal((await f.call("challenge", "POST")).status, 429);
   } finally { f.close(); }
 });
+
+test("an active deletion lease excludes new sessions and a second deletion", async () => {
+  const f = fixture();
+  try {
+    const session = await f.login();
+    f.db.prepare("UPDATE auth_users SET deleting = ?").run(timestamp() + 60);
+    assert.equal((await f.call("account", "DELETE", null, session.token)).status, 409);
+    assert.equal((await f.call("apple", "POST", await f.credentials())).status, 409);
+    assert.equal(f.db.prepare("SELECT count(*) AS n FROM auth_sessions").get().n, 1);
+  } finally { f.close(); }
+});
+
+test("expired or fabricated sessions cannot read or delete an account", async () => {
+  const f = fixture();
+  try {
+    const session = await f.login();
+    const fabricated = encode(crypto.getRandomValues(new Uint8Array(32)));
+    assert.equal((await f.call("account", "DELETE", null, fabricated)).status, 401);
+    f.db.exec("UPDATE auth_sessions SET expires_at = 0");
+    assert.equal((await f.call("session", "GET", null, session.token)).status, 401);
+    assert.equal((await f.call("account", "DELETE", null, session.token)).status, 401);
+    assert.equal(f.db.prepare("SELECT count(*) AS n FROM auth_users").get().n, 1);
+  } finally { f.close(); }
+});

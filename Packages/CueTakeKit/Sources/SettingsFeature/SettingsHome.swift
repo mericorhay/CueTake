@@ -9,7 +9,7 @@ public struct SettingsScreen: View {
     private let model: SettingsModel
     private let account: AccountModel
     private let storage: String?
-    private let onCleanStorage: (() -> Void)?
+    private let onCleanStorage: (() async -> String)?
     private let onTeam: (() -> Void)?
     private let onPreviewLight: (() -> Void)?
     private let certificates: String?
@@ -21,7 +21,7 @@ public struct SettingsScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: SettingsModel, account: AccountModel, storage: String? = nil,
-                onCleanStorage: (() -> Void)? = nil, onTeam: (() -> Void)? = nil,
+                onCleanStorage: (() async -> String)? = nil, onTeam: (() -> Void)? = nil,
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
                 onVoiceProfile: (() -> Void)? = nil) {
@@ -52,7 +52,7 @@ public struct SettingsScreen: View {
                             AccountEmblem(compact: true, connected: account.account != nil)
                                 .frame(width: 64, height: 72)
                             VStack(alignment: .leading, spacing: 6) {
-                                Text(account.account?.name.isEmpty == false ? account.account!.name : settingsText(account.account == nil ? "account.invite" : "account.title"))
+                                Text(accountName)
                                     .font(DS.archivo(.semibold, 23)).tracking(-0.6)
                                     .foregroundStyle(DS.Palette.ink)
                                 Text(account.account == nil ? "account.invite.detail" : "account.connected.detail", bundle: .module)
@@ -155,6 +155,11 @@ public struct SettingsScreen: View {
         }
     }
 
+    private var accountName: String {
+        if let name = account.account?.name, !name.isEmpty { return name }
+        return settingsText(account.account == nil ? "account.invite" : "account.title")
+    }
+
     private func category(_ value: SettingsDestination, subtitle: String) -> some View {
         Button { destination = value } label: {
             SettingsRow(icon: value.icon, title: settingsText(value.title), detail: subtitle)
@@ -209,12 +214,15 @@ struct SettingsPanel: View {
     let destination: SettingsDestination
     let model: SettingsModel
     let storage: String?
-    let onCleanStorage: (() -> Void)?
+    let onCleanStorage: (() async -> String)?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsKeys = false
     @State private var showsConverter = false
     @State private var confirmsCleaning = false
     @State private var keyCount = APIKeySheet.connectedCount
+    @State private var isCleaning = false
+    @State private var cleaningResult: String?
 
     var body: some View {
         ScrollView {
@@ -236,7 +244,14 @@ struct SettingsPanel: View {
             ConverterSheet { showsConverter = false }.presentationDetents([.large]).presentationDragIndicator(.visible).presentationCornerRadius(32)
         }
         .confirmationDialog(settingsText("settings.storage.confirm"), isPresented: $confirmsCleaning, titleVisibility: .visible) {
-            Button(settingsText("settings.storage.clean")) { onCleanStorage?() }
+            Button(settingsText("settings.storage.clean")) {
+                Task {
+                    isCleaning = true
+                    cleaningResult = nil
+                    cleaningResult = await onCleanStorage?()
+                    isCleaning = false
+                }
+            }
             Button(settingsText("account.cancel"), role: .cancel) { }
         } message: { Text("settings.storage.safe", bundle: .module) }
     }
@@ -265,7 +280,7 @@ struct SettingsPanel: View {
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: model.settings.aiProcessing == choice ? "checkmark.circle.fill" : "circle")
                                 .foregroundStyle(model.settings.aiProcessing == choice ? DS.Palette.accent : DS.Palette.ink(0.3))
-                                .font(.system(size: 22)).contentTransition(.symbolEffect(.replace))
+                                .font(.system(size: 22)).contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(choice.label).font(DS.sans(.semibold, 16)).foregroundStyle(DS.Palette.ink)
                                 Text(choice == .onDeviceOnly ? "settings.ai.local.detail" : "settings.ai.cloud.detail", bundle: .module)
@@ -278,7 +293,7 @@ struct SettingsPanel: View {
                             .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(model.settings.aiProcessing == choice ? DS.Palette.accent(0.3) : DS.Palette.hairline(0.06)))
                     }.buttonStyle(SettingsPressStyle()).accessibilityAddTraits(model.settings.aiProcessing == choice ? .isSelected : [])
                 }
-            }.padding(12)
+            }.padding(12).sensoryFeedback(.selection, trigger: model.settings.aiProcessing)
             Button { showsKeys = true } label: {
                 SettingsRow(icon: "key.horizontal", title: settingsText("settings.apiKey"),
                             detail: keyCount == 0 ? settingsText("settings.apiKey.none") : String(localized: "settings.apiKey.connected \(keyCount)", bundle: .module))
@@ -294,7 +309,15 @@ struct SettingsPanel: View {
                 Button { confirmsCleaning = true } label: {
                     SettingsRow(icon: "internaldrive", title: settingsText("settings.storage"),
                                 detail: storage ?? settingsText("settings.storage.measuring"))
-                }.buttonStyle(SettingsPressStyle())
+                }.buttonStyle(SettingsPressStyle()).disabled(isCleaning)
+                if isCleaning {
+                    ProgressView().tint(DS.Palette.accent).frame(maxWidth: .infinity).padding(16)
+                }
+                if let cleaningResult {
+                    Text(cleaningResult).font(DS.sans(.regular, 14)).foregroundStyle(DS.Palette.ink(0.65))
+                        .padding(.horizontal, 20).padding(.bottom, 16)
+                        .accessibilityAddTraits(.updatesFrequently)
+                }
             }
             VStack(alignment: .leading, spacing: 12) {
                 Label(settingsText("settings.privacy.title"), systemImage: "hand.raised")
@@ -318,6 +341,7 @@ struct SettingsPanel: View {
             }
         } label: { SettingsRow(icon: icon, title: settingsText(title), detail: selected[keyPath: label], chevron: "chevron.up.chevron.down") }
         .buttonStyle(SettingsPressStyle())
+        .sensoryFeedback(.selection, trigger: selected)
     }
 }
 

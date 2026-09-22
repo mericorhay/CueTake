@@ -15,6 +15,7 @@ public struct VoiceProfileScreen: View {
     @State private var newCall = ""
     @State private var newAvoid = ""
     @FocusState private var focused: Field?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum Field { case opening, call, avoid, notes }
 
@@ -54,7 +55,7 @@ public struct VoiceProfileScreen: View {
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(DS.Palette.screen)
-        .animation(DS.Motion.settle, value: profile)
+        .animation(reduceMotion ? nil : DS.Motion.settle, value: profile)
     }
 
     // MARK: - Measured

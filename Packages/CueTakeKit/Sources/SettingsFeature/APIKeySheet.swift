@@ -20,31 +20,13 @@ struct APIKeySheet: View {
     }
 
     @State private var expanded: GenerationProviderID?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("settings.apiKey", bundle: .module)
-                        .dsFont(.archivo, .bold, 22)
-                        .foregroundStyle(DS.Palette.ink)
-                    Spacer(minLength: 0)
-                    Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(DS.Palette.ink)
-                            .frame(width: 30, height: 30)
-                            .background(Circle().fill(DS.Palette.hairline(0.1)))
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.dsPressIcon)
-                    .accessibilityLabel(Text("settings.apiKey.close", bundle: .module))
-                }
-
-                Text("settings.apiKey.note", bundle: .module)
-                    .dsFont(.sans, .regular, 13, lineHeight: 1.45)
-                    .foregroundStyle(DS.Palette.ink(0.55))
+                SettingsSheetHeader(icon: "key.horizontal", title: settingsText("settings.apiKey"),
+                                    detail: settingsText("settings.apiKey.note"), close: onClose)
 
                 VStack(spacing: 10) {
                     ForEach(GenerationProviderID.allCases) { provider in
@@ -52,7 +34,7 @@ struct APIKeySheet: View {
                             provider: provider,
                             isExpanded: expanded == provider,
                             onToggle: {
-                                withAnimation(DS.Motion.settle) {
+                                withAnimation(reduceMotion ? nil : DS.Motion.settle) {
                                     expanded = expanded == provider ? nil : provider
                                 }
                             }
