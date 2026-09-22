@@ -131,6 +131,10 @@ struct RootView: View {
             await model.restore()
             model.wireAssistant()
             await model.cleanStorageAfterLaunch()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-voice-preview") { showsVoiceProfile = true }
+            if ProcessInfo.processInfo.arguments.contains("-certificates-preview") { showsCertificates = true }
+            #endif
         }
         .onChange(of: model.project) { model.scheduleSave() }
         .task { await model.accountModel.refresh() }

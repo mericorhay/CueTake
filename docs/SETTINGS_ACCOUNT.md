@@ -83,7 +83,8 @@ Keep remote vars when deploying: the Worker already serves AI and certificates. 
 must remain optional when Apple secrets are absent. The initial D1 migration is additive.
 
 CI includes cryptographic and D1-backed account tests on Node 24, the simulator app build, package
-tests and actual Turkish settings/account/privacy screenshots as `settings-layouts`. DEBUG launch
+tests and actual Turkish settings/account/capture/editing/AI/privacy/voice/certificates screenshots
+as `settings-layouts`. DEBUG launch
 arguments only select the UI for these captures; they do not bypass authentication. Screenshots
 verify layout, not successful Apple authorization or physical-device animation performance.
 

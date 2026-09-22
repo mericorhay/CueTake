@@ -137,6 +137,9 @@ public struct SettingsScreen: View {
             appeared = true
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("-account-preview") { destination = .account }
+            if ProcessInfo.processInfo.arguments.contains("-capture-preview") { destination = .capture }
+            if ProcessInfo.processInfo.arguments.contains("-editing-preview") { destination = .editing }
+            if ProcessInfo.processInfo.arguments.contains("-intelligence-preview") { destination = .intelligence }
             if ProcessInfo.processInfo.arguments.contains("-privacy-preview") { destination = .device }
             #endif
         }

@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
       - run: node --test backend/assistant/auth.test.mjs
@@ -61,6 +61,8 @@ jobs:
             DEVELOPMENT_TEAM=""
 
       - name: Capture settings layouts
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
           set -euo pipefail
           DEVICE="${{ steps.sim.outputs.udid }}"
@@ -68,9 +70,8 @@ jobs:
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" "$RUNNER_TEMP/CueTakeDerived/Build/Products/Debug-iphonesimulator/CueTake.app"
           mkdir -p "$RUNNER_TEMP/settings-layouts"
-          for SCREEN in settings account privacy; do
-            xcrun simctl terminate "$DEVICE" com.orhay.cuetake || true
-            xcrun simctl launch "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages '(tr)' -AppleLocale tr_TR
+          for SCREEN in settings account capture editing intelligence privacy voice certificates; do
+            xcrun simctl launch --terminate-running-process "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages '(tr)' -AppleLocale tr_TR
             sleep 4
             xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/settings-layouts/$SCREEN.png"
           done
