@@ -1,4 +1,6 @@
 import DesignSystem
+import Domain
+import SettingsFeature
 import SwiftUI
 
 @main
