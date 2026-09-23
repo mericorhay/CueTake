@@ -313,7 +313,8 @@ struct RootView: View {
                         model.editorModel.project.format = format
                     }
                 ),
-                onRender: { Task { await model.exportProject() } },
+                warnings: { platform in platform.warnings(for: model.project, duration: model.editorModel.duration) },
+                onRender: { Task { await model.exportForPlatforms() } },
                 onBack: { model.openEditor() },
                 onDone: { model.finishExport() }
             )

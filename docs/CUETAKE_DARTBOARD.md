@@ -51,6 +51,16 @@
 - [x] Editörde "Tarz" düğmesi, tek dokunuşla ve geri alınabilir. Workflow'da `applyStyle` adımı. Reçeteler tarzlarla yeniden yazılır.
 - [x] Anahtar kelime vurgusu: kelime renklenir, emoji çıkar, pop sesi çalar. Üçü aynı anda.
 
+### Ek: platforma göre otomatik boyutlandırma (23 Eylül 2026)
+- [x] Dışa aktarmada platform seçimi: Instagram Reels, Hikâye, Gönderi (4:5), TikTok, YouTube Shorts, YouTube (16:9), Kare. Birden fazla seçilirse her biri ayrı dosya olur.
+- [x] Her dosya projenin uyarlanmış bir kopyasından çıkar, proje değişmez:
+  - Doğru en-boy oranı.
+  - Dikey görüntü 4:5 ve 1:1'de kırpılarak kareyi doldurur.
+  - Altyazı ve yazılar platform butonlarının altından güvenli alana çekilir.
+  - Süre sınırı aşılırsa uyarı verir.
+- [x] Editör şablonları dikey/yatay sekmeli. Yatayda kartlar konuşanın yanına ve daha küçük yerleşir.
+- [ ] Sonraki adım: workflow export adımında platform seçimi; yatay kaynaktan dikeye çevirirken yüz takibiyle kırpma.
+
 ### Tur 3: B-roll ve ritim
 - [x] Hazır görüntüden otomatik B-roll (Pexels; Worker'da `PEXELS_API_KEY` gerekir, en çok 3 çekim — editör 3 ek video tutar): konuşmadaki somut kelimeye göre aranır, 3-5 sn, konuşanın üstüne yerleşir. Anahtar Worker'da durur.
 - [x] Beat motoru (vuruşa zoom; kesme ve altyazı yapıştırma henüz yok): kullanıcının müziğinde vuruş bulunur. Kesmeler, zoom'lar ve altyazı girişleri vuruşa yapışır.

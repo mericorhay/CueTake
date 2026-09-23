@@ -564,7 +564,25 @@ final class AppModel {
     /// The screen does not know how to build a video and should not learn; it asks, and this
     /// answers. Stages are advanced from the work rather than a timer, so a long write shows as a
     /// long stage instead of a progress bar that finishes before the file does.
-    func exportProject(burnCaptions: Bool = true) async {
+    /// Renders for every platform picked on the export screen, one file each, or the project as it
+    /// is when none is picked.
+    func exportForPlatforms() async {
+        let platforms = exportModel.platforms
+        guard !platforms.isEmpty else {
+            await exportProject()
+            return
+        }
+        exportModel.startBatch()
+        defer { exportModel.endBatch() }
+        for (index, platform) in platforms.enumerated() {
+            exportModel.setBatch(index, of: platforms.count, platform: platform)
+            await exportProject(platform: platform, keepingEarlier: index > 0)
+            guard !exportModel.hasFailed else { return }
+            exportModel.finishBatchItem(platform)
+        }
+    }
+
+    func exportProject(burnCaptions: Bool = true, platform: SocialPlatform? = nil, keepingEarlier: Bool = false) async {
         guard !exportModel.isRunning else { return }
         exportModel.begin()
 
@@ -576,15 +594,18 @@ final class AppModel {
 
         let composer = VideoComposer()
         var project = project
+        // A platform gets a fitted copy; the project itself keeps the shape it was edited in.
+        if let platform { project = project.adapted(for: platform) }
         project.format = project.format.deliveryCompatible
         if !burnCaptions {
             for index in project.segments.indices { project.segments[index].captions = [] }
         }
         // Named after the project, so a shared file says what it is.
-        let name = Self.exportFileName(for: project)
+        let name = Self.exportFileName(for: project) + (platform.map { " " + $0.rawValue } ?? "")
         let folder = FileManager.default.temporaryDirectory.appending(path: "exports", directoryHint: .isDirectory)
-        // Earlier renders already went to Photos or were shared; the phone keeps only this one.
-        try? FileManager.default.removeItem(at: folder)
+        // Earlier renders already went to Photos or were shared; the phone keeps only this one —
+        // or, in a batch for several platforms, this batch's.
+        if !keepingEarlier { try? FileManager.default.removeItem(at: folder) }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let destination = folder.appending(path: "\(name).mov", directoryHint: .notDirectory)
 

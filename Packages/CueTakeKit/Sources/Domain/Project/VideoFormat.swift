@@ -5,6 +5,8 @@ public struct VideoFormat: Hashable, Sendable, Codable {
         case portrait9x16
         case landscape16x9
         case square1x1
+        /// Instagram's feed post: the tallest a photo or video shows in the feed.
+        case portrait4x5
     }
 
     public enum Resolution: String, Hashable, Sendable, Codable, CaseIterable {
@@ -77,6 +79,7 @@ public struct VideoFormat: Hashable, Sendable, Codable {
         case .portrait9x16: return PixelSize(width: short, height: long)
         case .landscape16x9: return PixelSize(width: long, height: short)
         case .square1x1: return PixelSize(width: short, height: short)
+        case .portrait4x5: return PixelSize(width: short, height: short * 5 / 4)
         }
     }
 }

@@ -133,6 +133,25 @@ enum AdStyle: String, CaseIterable {
     /// Where it lands on the frame — its centre, from the left and the top — and how wide it is
     /// as a share of the frame's width. Wide on purpose: a card is read on a phone in a second,
     /// and its small lines (a label, a brand) must still be legible after Instagram compresses it.
+    /// Where it lands on a frame of either shape. On a wide frame the speaker sits in the middle,
+    /// so cards move to the side and shrink to a third of the width; bands stay centred.
+    func placement(landscape: Bool) -> (x: Double, y: Double, width: Double) {
+        guard landscape else { return placement }
+        switch self {
+        case .bigTitle, .quote, .beforeAfter: return (0.5, placement.y, placement.width * 0.62)
+        case .lowerThird: return (0.5, 0.84, 0.6)
+        case .promoStrip: return (0.5, 0.5, 1.1)
+        case .badge: return (0.88, 0.2, 0.18)
+        case .collab: return (0.5, 0.12, 0.38)
+        case .countdown: return (0.5, 0.14, 0.4)
+        case .linkPill: return (0.5, 0.86, 0.36)
+        case .ctaButton: return (0.5, 0.84, 0.38)
+        case .location: return (0.22, 0.8, 0.34)
+        case .codeCard, .coupon, .priceTag, .spotlight, .stat, .newDrop, .review, .checklist, .poll, .giveaway, .ticket:
+            return (0.76, 0.56, 0.38)
+        }
+    }
+
     var placement: (x: Double, y: Double, width: Double) {
         switch self {
         case .codeCard: (0.5, 0.72, 0.86)
@@ -996,6 +1015,37 @@ private struct TemplateThumbnail: View {
     }
 }
 
+/// A template where it lands on a frame of the chosen shape, over a speaker's silhouette, so the
+/// grid shows what the video will look like rather than the card alone.
+private struct FramedTemplatePreview: View {
+    let style: AdStyle
+    let fields: AdTemplateFields
+    let landscape: Bool
+
+    var body: some View {
+        let spot = style.placement(landscape: landscape)
+        GeometryReader { proxy in
+            let frame = proxy.size
+            let scale = frame.width * CGFloat(spot.width) / AdTemplateArt.width
+            ZStack {
+                LinearGradient(colors: [Color(hex: 0x3A2A24), Color(hex: 0x141416)], startPoint: .top, endPoint: .bottom)
+                Image(systemName: "person.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .foregroundStyle(.white.opacity(0.1))
+                    .frame(height: frame.height * (landscape ? 0.78 : 0.5))
+                    .position(x: frame.width / 2, y: frame.height * (landscape ? 0.6 : 0.62))
+                AdTemplateArt(style: style, fields: fields)
+                    .fixedSize()
+                    .scaleEffect(scale)
+                    .position(x: frame.width * CGFloat(spot.x), y: frame.height * CGFloat(spot.y))
+            }
+        }
+        .aspectRatio(landscape ? 16.0 / 9.0 : 9.0 / 16.0, contentMode: .fit)
+        .clipped()
+    }
+}
+
 // MARK: - The sheet
 
 /// Pick a template, fill in every line, put it on the timeline — or change one already there.
@@ -1004,9 +1054,13 @@ struct AdTemplateSheet: View {
     let brandColor: Color?
     /// A template picture being changed, or nil for a new one.
     let editing: OverlayTemplate?
-    let onAdd: (Data, AdStyle, OverlayTemplate) -> Void
+    /// The video's own shape, which the frame choice starts on.
+    var landscapeVideo = false
+    /// The picture, its style, its lines, and whether it was placed for a wide frame.
+    let onAdd: (Data, AdStyle, OverlayTemplate, Bool) -> Void
     let onClose: () -> Void
 
+    @State private var landscape = false
     @State private var category: AdCategory?
     @State private var selected = AdTemplate.all[0]
     @State private var fields = AdTemplateFields(texts: [:], accent: .red, isLight: false, font: .display)
@@ -1036,6 +1090,7 @@ struct AdTemplateSheet: View {
                     form
                     look
                     if editing == nil {
+                        frameChoice
                         categories
                         grid
                     }
@@ -1069,6 +1124,7 @@ struct AdTemplateSheet: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
+        landscape = landscapeVideo
         if let editing, let template = AdTemplate.all.first(where: { $0.id == editing.id }) {
             selected = template
             fields = AdTemplateFields(stored: editing)
@@ -1159,6 +1215,37 @@ struct AdTemplateSheet: View {
         .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
+    /// Vertical or wide: the templates shown where each lands on a frame of that shape.
+    private var frameChoice: some View {
+        HStack(spacing: 8) {
+            frameChip(landscape: false, title: AppLocalization.string("editor.template.vertical", bundle: .module), symbol: "rectangle.portrait")
+            frameChip(landscape: true, title: AppLocalization.string("editor.template.horizontal", bundle: .module), symbol: "rectangle")
+        }
+    }
+
+    private func frameChip(landscape value: Bool, title: String, symbol: String) -> some View {
+        let isOn = landscape == value
+        return Button {
+            withAnimation(DS.Motion.settle) { landscape = value }
+        } label: {
+            HStack(spacing: 7) {
+                Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
+                Text(verbatim: title).dsFont(.sans, .semibold, 13)
+                if value == landscapeVideo {
+                    Text("editor.template.thisVideo", bundle: .module)
+                        .dsFont(.mono, .medium, 9)
+                        .opacity(0.7)
+                }
+            }
+            .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07)))
+        }
+        .buttonStyle(.dsPress(radius: 14))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
     private var categories: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
@@ -1191,13 +1278,14 @@ struct AdTemplateSheet: View {
     }
 
     private var grid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 12) {
+        let columns = landscape ? 2 : 3
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: columns), spacing: 12) {
             ForEach(shown) { template in
                 Button {
                     withAnimation(DS.Motion.settle) { choose(template) }
                 } label: {
                     VStack(spacing: 6) {
-                        TemplateThumbnail(style: template.style, fields: thumbnailFields(template), height: 130)
+                        FramedTemplatePreview(style: template.style, fields: thumbnailFields(template), landscape: landscape)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -1233,7 +1321,7 @@ struct AdTemplateSheet: View {
     private var addButton: some View {
         DSPrimaryButton(AppLocalization.string(actionKey, bundle: .module)) {
             guard let data = AdTemplateArt.render(selected.style, fields: fields) else { return }
-            onAdd(data, selected.style, fields.stored(templateID: selected.id))
+            onAdd(data, selected.style, fields.stored(templateID: selected.id), landscape)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 12)
@@ -1272,7 +1360,7 @@ extension EditorModel {
             font: request.font.flatMap(AdFont.init(rawValue:)) ?? .display
         )
         guard let data = AdTemplateArt.render(template.style, fields: fields), let stored = storeOverlayImage(data) else { return nil }
-        let spot = template.style.placement
+        let spot = template.style.placement(landscape: project.format.aspectRatio == .landscape16x9)
         let start = max(0, request.start ?? playhead)
         let length = request.duration ?? request.end.map { $0 - start } ?? 4
         var overlay = Overlay(

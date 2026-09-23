@@ -394,12 +394,13 @@ public struct EditorScreen: View {
             AdTemplateSheet(
                 brandColor: brandTools.map { CaptionOverlay.color($0.kit.primary) },
                 editing: templateTarget.flatMap { id in model.project.overlays.first { $0.id == id }?.template },
-                onAdd: { data, style, template in
+                landscapeVideo: model.project.format.aspectRatio == .landscape16x9,
+                onAdd: { data, style, template, landscape in
                     showsTemplates = false
                     if let id = templateTarget {
                         model.replaceTemplateImage(id, with: data, template: template)
                     } else {
-                        withAnimation(DS.Motion.bloom) { addTemplate(data, style: style, template: template) }
+                        withAnimation(DS.Motion.bloom) { addTemplate(data, style: style, template: template, landscape: landscape) }
                     }
                     templateTarget = nil
                 },
@@ -629,9 +630,9 @@ public struct EditorScreen: View {
 
     /// A filled-in template on the timeline at the playhead: where its kind of picture usually
     /// sits, four seconds long, popping in. From there it is an ordinary picture to move and time.
-    private func addTemplate(_ data: Data, style: AdStyle, template: OverlayTemplate) {
+    private func addTemplate(_ data: Data, style: AdStyle, template: OverlayTemplate, landscape: Bool) {
         guard model.addImageOverlay(from: data, template: template), let id = model.selectedOverlay else { return }
-        let spot = style.placement
+        let spot = style.placement(landscape: landscape)
         model.updateOverlay(id, coalescing: "template") {
             $0.transform.x = spot.x
             $0.transform.y = spot.y

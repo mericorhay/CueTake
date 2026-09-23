@@ -32,8 +32,42 @@ public final class ExportModel {
     public private(set) var fileBytes: Int64?
     /// What the finished file is, in one line: size, frame rate, codec.
     public private(set) var summary: String?
+    /// Where the video is going. Empty renders the project as it is; otherwise one file per
+    /// platform, each fitted to it.
+    public var platforms: [SocialPlatform] = []
+    /// The platform being rendered, and which of how many, while a batch runs.
+    public private(set) var batch: (index: Int, total: Int, platform: SocialPlatform)?
+    /// The platforms rendered so far in this batch, and their files.
+    public private(set) var finishedPlatforms: [SocialPlatform] = []
+    public private(set) var batchFiles: [URL] = []
 
     public init() {}
+
+    public func togglePlatform(_ platform: SocialPlatform) {
+        if let index = platforms.firstIndex(of: platform) {
+            platforms.remove(at: index)
+        } else {
+            platforms.append(platform)
+        }
+    }
+
+    public func startBatch() {
+        finishedPlatforms = []
+        batchFiles = []
+    }
+
+    public func setBatch(_ index: Int, of total: Int, platform: SocialPlatform) {
+        batch = (index, total, platform)
+    }
+
+    public func finishBatchItem(_ platform: SocialPlatform) {
+        finishedPlatforms.append(platform)
+        if let outputURL { batchFiles.append(outputURL) }
+    }
+
+    public func endBatch() {
+        batch = nil
+    }
 
     /// Nothing under way: the format can be changed and a render started, including after a
     /// failure — the button used to disappear with the error, leaving nothing to try again with.
@@ -119,6 +153,8 @@ public struct ExportScreen: View {
     /// is the oldest lie in video software.
     @Binding private var format: VideoFormat
     private let captionStyleName: String
+    /// What is worth saying before rendering for a platform: too long, footage of another shape.
+    private let warnings: (SocialPlatform) -> [SocialPlatform.Warning]
     private let onRender: () -> Void
     private let onBack: () -> Void
     private let onDone: () -> Void
@@ -127,6 +163,7 @@ public struct ExportScreen: View {
         model: ExportModel,
         format: Binding<VideoFormat>,
         captionStyleName: String = "pop",
+        warnings: @escaping (SocialPlatform) -> [SocialPlatform.Warning] = { _ in [] },
         onRender: @escaping () -> Void,
         onBack: @escaping () -> Void,
         onDone: @escaping () -> Void
@@ -134,6 +171,7 @@ public struct ExportScreen: View {
         self.model = model
         self._format = format
         self.captionStyleName = captionStyleName
+        self.warnings = warnings
         self.onRender = onRender
         self.onBack = onBack
         self.onDone = onDone
@@ -158,8 +196,16 @@ public struct ExportScreen: View {
             header
 
             if model.isIdle {
+                platformPicker
+                    .padding(.top, 14)
                 formatPicker
-                    .padding(.top, 16)
+                    .padding(.top, 14)
+            } else if let batch = model.batch {
+                Text("export.platform.batch \(batch.index + 1) \(batch.total) \(Self.platformName(batch.platform))", bundle: .module)
+                    .dsFont(.mono, .medium, 11)
+                    .foregroundStyle(DS.Palette.lime)
+                    .padding(.top, 12)
+                    .contentTransition(.numericText())
             }
 
             VStack(spacing: 0) {
@@ -173,7 +219,9 @@ public struct ExportScreen: View {
                 finished
             } else if model.isIdle {
                 DSPrimaryButton(
-                    AppLocalization.string(model.hasFailed ? "export.retry" : "export.render", bundle: .module),
+                    model.platforms.count > 1 && !model.hasFailed
+                        ? AppLocalization.string("export.render.platforms \(model.platforms.count)", bundle: .module)
+                        : AppLocalization.string(model.hasFailed ? "export.retry" : "export.render", bundle: .module),
                     radius: DS.Radius.cardLarge,
                     verticalPadding: 19,
                     fontSize: 16
@@ -248,6 +296,130 @@ public struct ExportScreen: View {
             DSKicker(AppLocalization.string("export.kicker", bundle: .module))
             Spacer(minLength: 0)
             Color.clear.frame(width: 34, height: 34)
+        }
+    }
+
+    // MARK: - Platforms
+
+    /// Where it is going, as the shape it will be: tap one or several. Each gets its own file,
+    /// cut to its shape, with captions and titles moved out from under its buttons.
+    private var platformPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                DSKicker(AppLocalization.string("export.platform", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+                Spacer(minLength: 0)
+                if !model.platforms.isEmpty {
+                    Button {
+                        withAnimation(DS.Motion.snap) { model.platforms = [] }
+                    } label: {
+                        Text("export.platform.asIs", bundle: .module)
+                            .dsFont(.sans, .medium, 11)
+                            .foregroundStyle(DS.Palette.ink(0.6))
+                    }
+                    .buttonStyle(.dsPress(radius: 8))
+                }
+            }
+
+            ScrollView(.horizontal) {
+                HStack(alignment: .bottom, spacing: 8) {
+                    ForEach(SocialPlatform.allCases) { platform in
+                        platformCard(platform)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+
+            let notes = model.platforms.flatMap { platform in warnings(platform).map { (platform, $0) } }
+            if model.platforms.isEmpty {
+                Text("export.platform.hint", bundle: .module)
+                    .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.ink(0.5))
+            } else {
+                Text("export.platform.fitted", bundle: .module)
+                    .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                    .foregroundStyle(DS.Palette.ink(0.56))
+                ForEach(Array(notes.enumerated()), id: \.offset) { _, note in
+                    Label(Self.warningText(note.1, platform: note.0), systemImage: "exclamationmark.triangle.fill")
+                        .dsFont(.sans, .medium, 11)
+                        .foregroundStyle(DS.Palette.accentWarm)
+                }
+            }
+        }
+        .animation(DS.Motion.snap, value: model.platforms)
+    }
+
+    private func platformCard(_ platform: SocialPlatform) -> some View {
+        let isOn = model.platforms.contains(platform)
+        let size = platform.aspectRatio == .landscape16x9 ? CGSize(width: 64, height: 36)
+            : platform.aspectRatio == .square1x1 ? CGSize(width: 44, height: 44)
+            : platform.aspectRatio == .portrait4x5 ? CGSize(width: 40, height: 50)
+            : CGSize(width: 32, height: 57)
+        let zone = platform.safeArea
+        return Button {
+            withAnimation(DS.Motion.snap) { model.togglePlatform(platform) }
+        } label: {
+            VStack(spacing: 7) {
+                // The frame's shape, with the platform's own buttons shaded where they cover it.
+                ZStack {
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(isOn ? DS.Palette.lime.opacity(0.22) : DS.Palette.hairline(0.07))
+                    VStack(spacing: 0) {
+                        Rectangle().fill(DS.Palette.ink(0.12)).frame(height: size.height * zone.top)
+                        Spacer(minLength: 0)
+                        Rectangle().fill(DS.Palette.ink(0.12)).frame(height: size.height * zone.bottom)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .stroke(isOn ? DS.Palette.lime : DS.Palette.hairline(0.2), lineWidth: isOn ? 2 : 1)
+                }
+                .frame(width: size.width, height: size.height)
+                .frame(height: 60, alignment: .bottom)
+
+                VStack(spacing: 1) {
+                    Text(verbatim: Self.platformName(platform))
+                        .dsFont(.sans, .semibold, 11)
+                        .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.7))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: Self.ratio(platform.aspectRatio))
+                        .dsFont(.mono, .medium, 9)
+                        .foregroundStyle(DS.Palette.ink(0.45))
+                }
+            }
+            .frame(width: 78)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(isOn ? DS.Palette.hairline(0.1) : Color.clear)
+            )
+        }
+        .buttonStyle(.dsPress(radius: 14))
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    static func platformName(_ platform: SocialPlatform) -> String {
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "export.platform." + platform.rawValue), bundle: .module)
+    }
+
+    static func ratio(_ aspect: VideoFormat.AspectRatio) -> String {
+        switch aspect {
+        case .portrait9x16: "9:16"
+        case .landscape16x9: "16:9"
+        case .square1x1: "1:1"
+        case .portrait4x5: "4:5"
+        }
+    }
+
+    static func warningText(_ warning: SocialPlatform.Warning, platform: SocialPlatform) -> String {
+        let name = platformName(platform)
+        switch warning {
+        case .tooLong(let maximum, let over):
+            return AppLocalization.string("export.platform.tooLong \(name) \(Int(maximum)) \(Int(over.rounded(.up)))", bundle: .module)
+        case .letterboxed:
+            return AppLocalization.string("export.platform.letterboxed \(name)", bundle: .module)
         }
     }
 
@@ -409,9 +581,29 @@ public struct ExportScreen: View {
             // Where it went, in a sentence. The screen used to say "ready" and show four tiles that
             // did nothing, so a video saved to Photos and a video saved nowhere looked the same.
             destinationLine
-                .padding(.bottom, 14)
+                .padding(.bottom, model.finishedPlatforms.isEmpty ? 14 : 6)
 
-            if let url = model.outputURL {
+            if !model.finishedPlatforms.isEmpty {
+                Text(verbatim: model.finishedPlatforms.map { Self.platformName($0) }.joined(separator: " · "))
+                    .dsFont(.sans, .semibold, 12)
+                    .foregroundStyle(DS.Palette.lime)
+                    .padding(.bottom, 14)
+            }
+
+            if model.batchFiles.count > 1 {
+                ShareLink(items: model.batchFiles) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.up.on.square")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("export.share.all \(model.batchFiles.count)", bundle: .module)
+                            .dsFont(.sans, .semibold, 16)
+                    }
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(DS.Palette.accent))
+                }
+            } else if let url = model.outputURL {
                 // The system share sheet: Instagram, TikTok, YouTube, Files, AirDrop, Save Video —
                 // whatever this phone has, without the app pretending to know.
                 ShareLink(item: url) {

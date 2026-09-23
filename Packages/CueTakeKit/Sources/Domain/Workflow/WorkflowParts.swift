@@ -300,7 +300,7 @@ extension WorkflowDefinition {
       "summary": "one sentence",
       "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5, "clip": 1 } ],
       "style": { "captions": true, "captionPreset": "pop|clean|karaoke|bold|boxed|minimal|neon|story", "captionPosition": "top|middle|bottom",
-                 "aspect": "portrait9x16|landscape16x9|square1x1", "resolution": "hd1080|uhd4K", "frameRate": 24|30|60|120 },
+                 "aspect": "portrait9x16|landscape16x9|square1x1|portrait4x5", "resolution": "hd1080|uhd4K", "frameRate": 24|30|60|120 },
       "steps": [ { "kind": { "type": "<type>", "parameters": { } } } ]
     }
     "clip" is which of the user's clips fills the section, counting from 1; leave it out if unknown.

@@ -189,6 +189,7 @@ struct StudioStyleCard: View {
         case .portrait9x16: "9:16"
         case .landscape16x9: "16:9"
         case .square1x1: "1:1"
+        case .portrait4x5: "4:5"
         }
     }
 }
