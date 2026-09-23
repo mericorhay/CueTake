@@ -499,6 +499,8 @@ final class AppModel {
         connectSoundDesign()
         connectStyles()
         connectCaptionTranslation()
+        connectStockBroll()
+        connectBeats()
         connectEditorShorts()
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
 

@@ -44,6 +44,8 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
     /// Points drawn on the volume curve (see `VolumeKey`). Nil in every project written before
     /// there were any, and for every clip nobody drew on.
     public var volumeKeys: [VolumeKey]?
+    /// The music's beats, once found (`BeatGrid`). Nil for other sounds and music not analysed yet.
+    public var beats: BeatGrid?
 
     public init(
         id: UUID = UUID(),
@@ -108,13 +110,19 @@ public struct AudioClip: Identifiable, Hashable, Sendable, Codable {
             isMuted: isMuted,
             ducksUnderVoice: ducksUnderVoice,
             effects: effects
-        ).withLane(lane).withVolumeKeys(volumeKeys)
+        ).withLane(lane).withVolumeKeys(volumeKeys).withBeats(beats)
     }
 
     func withVolumeKeys(_ keys: [VolumeKey]?) -> AudioClip {
         var copy = self
         // New identities for the keys too: two clips sharing key ids would edit each other.
         copy.volumeKeys = keys?.map { VolumeKey(time: $0.time, level: $0.level) }
+        return copy
+    }
+
+    func withBeats(_ beats: BeatGrid?) -> AudioClip {
+        var copy = self
+        copy.beats = beats
         return copy
     }
 

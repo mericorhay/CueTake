@@ -198,6 +198,10 @@ public enum WorkflowStepKind: Hashable, Sendable {
     case soundDesign(SoundDesignOptions)
     /// A whole style: the steps of `VideoStyle`, run in order.
     case applyStyle(ApplyStyleOptions)
+    /// Cut-away shots from a stock library, over the speaker where the words name something.
+    case stockBroll(StockBrollOptions)
+    /// Punch-ins on the music's beat.
+    case beatSync(BeatSyncOptions)
     case unsupported(type: String)
 
     /// Steps the runner cannot finish alone; it pauses and hands control to the UI.
@@ -237,6 +241,8 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .aiEdit: StepType.aiEdit.rawValue
         case .soundDesign: StepType.soundDesign.rawValue
         case .applyStyle: StepType.applyStyle.rawValue
+        case .stockBroll: StepType.stockBroll.rawValue
+        case .beatSync: StepType.beatSync.rawValue
         case .unsupported(let type): type
         }
     }
@@ -245,7 +251,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case generateScript, generateVideo, segmentScript, record, assembleSections, analyzeSpeech, cleanup, bestTakes,
              trimSilences, cutWords, setSpeed, cleanAudio, musicBed, voiceEffect, soundDesign, generateCaptions, applyCaptionStyle,
              addTitle, brandTemplate, brandKit, filter, background, trackFace, autoZoom, transitions, videoLayout,
-             applyStyle, aiEdit, export
+             applyStyle, stockBroll, beatSync, aiEdit, export
     }
 
     /// Every type name the app understands, in palette order.
@@ -284,6 +290,8 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .aiEdit: .aiEdit(AIEditOptions())
         case .soundDesign: .soundDesign(SoundDesignOptions())
         case .applyStyle: .applyStyle(ApplyStyleOptions())
+        case .stockBroll: .stockBroll(StockBrollOptions())
+        case .beatSync: .beatSync(BeatSyncOptions())
         case nil: .unsupported(type: type)
         }
     }
@@ -370,6 +378,10 @@ extension WorkflowStepKind: Codable {
             self = .soundDesign(lenient(SoundDesignOptions.self) ?? SoundDesignOptions())
         case .applyStyle:
             self = .applyStyle(lenient(ApplyStyleOptions.self) ?? ApplyStyleOptions())
+        case .stockBroll:
+            self = .stockBroll(lenient(StockBrollOptions.self) ?? StockBrollOptions())
+        case .beatSync:
+            self = .beatSync(lenient(BeatSyncOptions.self) ?? BeatSyncOptions())
         case nil:
             self = .unsupported(type: type)
         }
@@ -426,6 +438,10 @@ extension WorkflowStepKind: Codable {
         case .soundDesign(let options):
             try container.encode(options, forKey: .parameters)
         case .applyStyle(let options):
+            try container.encode(options, forKey: .parameters)
+        case .stockBroll(let options):
+            try container.encode(options, forKey: .parameters)
+        case .beatSync(let options):
             try container.encode(options, forKey: .parameters)
         case .segmentScript, .assembleSections, .analyzeSpeech, .generateCaptions, .bestTakes, .unsupported:
             break

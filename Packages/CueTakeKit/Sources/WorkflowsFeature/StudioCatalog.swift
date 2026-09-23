@@ -19,6 +19,7 @@ enum StudioCatalog {
         Tool(type: "generateVideo", symbol: "wand.and.stars", title: "tool.generateVideo", note: "tool.generateVideo.note", category: .generate),
         Tool(type: "assembleSections", symbol: "square.stack.3d.up", title: "tool.assembleSections", note: "tool.assembleSections.note", category: .structure),
         Tool(type: "analyzeSpeech", symbol: "waveform.and.person.filled", title: "tool.analyzeSpeech", note: "tool.analyzeSpeech.note", category: .words),
+        Tool(type: "stockBroll", symbol: "photo.stack", title: "tool.stockBroll", note: "tool.stockBroll.note", category: .generate),
         Tool(type: "aiEdit", symbol: "sparkles", title: "tool.aiEdit", note: "tool.aiEdit.note", category: .generate),
         Tool(type: "cleanup", symbol: "wand.and.stars", title: "tool.cleanup", note: "tool.cleanup.note", category: .cut),
         Tool(type: "bestTakes", symbol: "film.stack", title: "tool.bestTakes", note: "tool.bestTakes.note", category: .cut),
@@ -35,6 +36,7 @@ enum StudioCatalog {
         Tool(type: "background", symbol: "person.crop.rectangle", title: "tool.background", note: "tool.background.note", category: .look),
         Tool(type: "trackFace", symbol: "viewfinder", title: "tool.trackFace", note: "tool.trackFace.note", category: .look),
         Tool(type: "autoZoom", symbol: "plus.magnifyingglass", title: "tool.autoZoom", note: "tool.autoZoom.note", category: .look),
+        Tool(type: "beatSync", symbol: "metronome", title: "tool.beatSync", note: "tool.beatSync.note", category: .look),
         Tool(type: "transitions", symbol: "square.on.square.intersection.dashed", title: "tool.transitions", note: "tool.transitions.note", category: .look),
         Tool(type: "videoLayout", symbol: "rectangle.split.2x1", title: "tool.videoLayout", note: "tool.videoLayout.note", category: .look),
         Tool(type: "applyStyle", symbol: "wand.and.rays", title: "tool.applyStyle", note: "tool.applyStyle.note", category: .brand),
@@ -118,6 +120,10 @@ enum StudioCatalog {
             return "\(o.preset) · \(Int(o.amount * 100))% · \(targetLabel(o.target))"
         case .videoLayout(let o):
             return o.layout
+        case .stockBroll(let o):
+            return "\(o.count)×"
+        case .beatSync(let o):
+            return "\(o.pulse.rawValue) · \(Int(o.amount * 100))%"
         case .applyStyle(let o):
             return AppLocalization.string(String.LocalizationValue(stringLiteral: "style." + o.style.rawValue), bundle: .module)
         case .soundDesign(let o):

@@ -121,7 +121,7 @@ struct StudioStepEditor: View {
                 StudioGenerateVideoEditor(model: model, step: step, options: options)
 
             case .cleanup, .bestTakes, .brandKit, .addTitle, .brandTemplate, .filter, .background, .autoZoom,
-                 .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit, .soundDesign, .applyStyle:
+                 .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit, .soundDesign, .applyStyle, .stockBroll, .beatSync:
                 StudioToolEditor(model: model, step: step)
 
             default:

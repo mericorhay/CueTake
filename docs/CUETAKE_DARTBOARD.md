@@ -52,8 +52,8 @@
 - [x] Anahtar kelime vurgusu: kelime renklenir, emoji çıkar, pop sesi çalar. Üçü aynı anda.
 
 ### Tur 3: B-roll ve ritim
-- [ ] Hazır görüntüden otomatik B-roll: konuşmadaki somut kelimeye göre aranır, 3-5 sn, konuşanın üstüne yerleşir. Anahtar Worker'da durur.
-- [ ] Beat motoru: kullanıcının müziğinde vuruş bulunur. Kesmeler, zoom'lar ve altyazı girişleri vuruşa yapışır.
+- [x] Hazır görüntüden otomatik B-roll (Pexels; Worker'da `PEXELS_API_KEY` gerekir, en çok 3 çekim — editör 3 ek video tutar): konuşmadaki somut kelimeye göre aranır, 3-5 sn, konuşanın üstüne yerleşir. Anahtar Worker'da durur.
+- [x] Beat motoru (vuruşa zoom; kesme ve altyazı yapıştırma henüz yok): kullanıcının müziğinde vuruş bulunur. Kesmeler, zoom'lar ve altyazı girişleri vuruşa yapışır.
 - [ ] Kıyas testi: kullanıcının seçtiği 3 reels aynı tarzla yeniden yapılır, yan yana karşılaştırılır.
 
 ## 0. Durum panosu

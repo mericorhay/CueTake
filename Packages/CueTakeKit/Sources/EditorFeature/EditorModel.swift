@@ -181,6 +181,14 @@ public final class EditorModel {
     public var translationProgress: Double?
     /// Why the last translation did not finish, in words for people.
     public var translationFailure: String?
+    /// Finds, fetches and imports stock B-roll for the video, `count` shots at most. Set by the
+    /// app, which talks to the server; nil hides stock B-roll.
+    @ObservationIgnored public var stockBrollFinder: ((Int) async throws -> [StockBroll])?
+    public var brollSearching = false
+    public var brollFailure: String?
+    /// Finds a music clip's beats from its file. Set by the app, which knows where files are.
+    @ObservationIgnored public var beatFinder: ((AudioClip) async -> BeatGrid?)?
+    public var beatSyncing = false
     /// The style being applied and how far it has got, 0…1, for the style sheet.
     public var applyingStyle: VideoStyle?
     public var styleProgress: Double = 0

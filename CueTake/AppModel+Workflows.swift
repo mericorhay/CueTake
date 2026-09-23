@@ -560,6 +560,21 @@ extension AppModel {
             }
             return anyDone ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
 
+        case .stockBroll(let options):
+            connectStockBroll()
+            editorModel.project = project
+            let laid = await editorModel.addStockBroll(count: options.count)
+            project = editorModel.project
+            return laid > 0 ? .done : .skipped(editorModel.brollFailure ?? AppLocalization.string("workflow.skip.nothingToDo"))
+
+        case .beatSync(let options):
+            guard project.hasMusic else { return .skipped(AppLocalization.string("workflow.skip.noMusic")) }
+            connectBeats()
+            editorModel.project = project
+            let moved = await editorModel.syncToBeat(options)
+            project = editorModel.project
+            return moved > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+
         case .soundDesign(let options):
             connectSoundDesign()
             editorModel.project = project

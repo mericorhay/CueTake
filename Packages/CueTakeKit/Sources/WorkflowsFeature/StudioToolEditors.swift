@@ -134,6 +134,19 @@ struct StudioToolEditor: View {
                 }
                 note(String.LocalizationValue(stringLiteral: "style." + options.style.rawValue + ".note"))
 
+            case .stockBroll(let options):
+                chips("studio.param.shots", options: ["1", "2", "3"], selected: String(options.count), prefix: "studio.count.") {
+                    set(.stockBroll(StockBrollOptions(count: Int($0) ?? 3)))
+                }
+                note("studio.param.brollNote")
+
+            case .beatSync(let options):
+                chips("studio.param.pulse", options: BeatSyncOptions.Pulse.allCases.map(\.rawValue), selected: options.pulse.rawValue, prefix: "studio.pulse.") {
+                    var o = options; o.pulse = BeatSyncOptions.Pulse(rawValue: $0) ?? .bar; set(.beatSync(o))
+                }
+                slider("studio.param.zoomAmount", value: options.amount, range: 0.04...0.35, step: 0.01, format: "%.2f") { var o = options; o.amount = $0; set(.beatSync(o)) }
+                note("tool.beatSync.note")
+
             case .bestTakes:
                 note("tool.bestTakes.note")
 

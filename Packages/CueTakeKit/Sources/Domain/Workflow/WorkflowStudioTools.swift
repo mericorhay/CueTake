@@ -366,6 +366,22 @@ public struct VideoLayoutOptions: Hashable, Sendable, Codable {
     }
 }
 
+public struct StockBrollOptions: Hashable, Sendable, Codable {
+    /// Shots at most; the editor holds three added videos.
+    public var count: Int
+
+    public init(count: Int = 3) {
+        self.count = count
+    }
+
+    private enum CodingKeys: String, CodingKey { case count }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        count = min(max(c.value(.count, or: 3), 1), 3)
+    }
+}
+
 public struct AIEditOptions: Hashable, Sendable, Codable {
     /// What the studio's AI should do, in the creator's words.
     public var instruction: String

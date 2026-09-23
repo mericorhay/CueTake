@@ -42,11 +42,11 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, style, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, lyrics, audio, delete, more
+        case ai, style, generate, broll, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, lyrics, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound, .sfx].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .generate, .broll, .zoom, .background, .filter, .sound, .sfx].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -60,6 +60,7 @@ struct ToolDock: View {
     /// How much sound design the one-tap button lays in.
     @State private var sfxIntensity: SoundDesignOptions.Intensity = .normal
     @State private var designingSound = false
+    @State private var brollCount = 3
 
     enum BackgroundReach: Hashable {
         case clip, fromHere, whole
@@ -106,7 +107,7 @@ struct ToolDock: View {
         // A tool that acts on a clip closes when there is no clip to act on.
         .onChange(of: index == nil) { _, lost in
             // The AI works on the whole video, not the clip under the playhead.
-            if lost, open != .ai, open != .audio, open != .generate, open != .sfx { open = nil }
+            if lost, open != .ai, open != .audio, open != .generate, open != .sfx, open != .broll { open = nil }
         }
     }
 
@@ -128,7 +129,10 @@ struct ToolDock: View {
 
     /// Generating needs the app's help; a build without it shows no such tool.
     private var visibleItems: [Item] {
-        Item.allCases.filter { ($0 != .generate || model.canGenerate) && ($0 != .style || model.styleApplier != nil) }
+        Item.allCases.filter {
+            ($0 != .generate || model.canGenerate) && ($0 != .style || model.styleApplier != nil)
+                && ($0 != .broll || model.stockBrollFinder != nil)
+        }
     }
 
     private func isEnabled(_ item: Item) -> Bool {
@@ -142,6 +146,7 @@ struct ToolDock: View {
             index.map { model.project.segments[$0].selectedTake != nil } ?? false
         case .filter, .sound: !model.project.segments.isEmpty
         case .sfx: model.canDesignSound
+        case .broll: model.canFindStockBroll
         case .delete: index.map { model.canDeleteSegment(at: $0) } ?? false
         case .transition: model.project.segments.count > 1
         case .shorts: model.project.segments.contains { $0.selectedTake != nil }
@@ -236,6 +241,7 @@ struct ToolDock: View {
         case .filter: glyph.symbolEffect(.bounce, value: count)
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .sfx: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: designingSound)
+        case .broll: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.brollSearching)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         case .lyrics: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.translationProgress != nil)
         }
@@ -256,6 +262,7 @@ struct ToolDock: View {
         case .filter: "camera.filters"
         case .sound: "waveform.badge.plus"
         case .sfx: "speaker.wave.3.fill"
+        case .broll: "photo.stack"
         case .split: "scissors"
         case .transition: "square.on.square.intersection.dashed"
         case .shorts: "film.stack"
@@ -284,6 +291,7 @@ struct ToolDock: View {
         case .filter: AppLocalization.string("editor.dock.filter", bundle: .module)
         case .sound: AppLocalization.string("editor.dock.sound", bundle: .module)
         case .sfx: AppLocalization.string("editor.dock.sfx", bundle: .module)
+        case .broll: AppLocalization.string("editor.dock.broll", bundle: .module)
         case .split: AppLocalization.string("editor.tool.split", bundle: .module)
         case .transition: AppLocalization.string("editor.dock.transition", bundle: .module)
         case .shorts: AppLocalization.string("editor.dock.shorts", bundle: .module)
@@ -373,7 +381,7 @@ struct ToolDock: View {
         case .shorts:
             open = nil
             onShorts()
-        case .trim, .speed, .generate, .zoom, .background, .filter, .sound, .sfx: break
+        case .trim, .speed, .generate, .broll, .zoom, .background, .filter, .sound, .sfx: break
         }
     }
 
@@ -388,7 +396,7 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if ![.ai, .generate, .shorts, .audio, .transition, .sfx].contains(item), let index {
+                if ![.ai, .generate, .shorts, .audio, .transition, .sfx, .broll].contains(item), let index {
                     Text(AppLocalization.string("editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.56))
@@ -418,6 +426,8 @@ struct ToolDock: View {
                     zoomPanel
                 } else if item == .sfx {
                     sfxPanel
+                } else if item == .broll {
+                    brollPanel
                 } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)
@@ -511,6 +521,75 @@ struct ToolDock: View {
         }
     }
 
+    /// Stock shots over the speaker, where the words name something to see. Found by the server
+    /// model, taken from a library free for commercial use, laid in muted.
+    private var brollPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("editor.broll.hint", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.58))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 6) {
+                Text("editor.broll.count", bundle: .module)
+                    .dsFont(.sans, .medium, 11)
+                    .foregroundStyle(DS.Palette.ink(0.56))
+                Spacer(minLength: 4)
+                ForEach([1, 2, 3], id: \.self) { count in
+                    let active = brollCount == count
+                    Button {
+                        withAnimation(DS.Motion.snap) { brollCount = count }
+                    } label: {
+                        Text(verbatim: "\(count)")
+                            .dsFont(.mono, .semibold, 13)
+                            .foregroundStyle(active ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                            .frame(width: 44, height: 36)
+                            .background(Capsule().fill(active ? DS.Palette.lime : DS.Palette.hairline(0.07)))
+                    }
+                    .buttonStyle(.dsPress(radius: 18))
+                    .accessibilityAddTraits(active ? .isSelected : [])
+                }
+            }
+
+            Button {
+                let count = brollCount
+                Task { await model.addStockBroll(count: count) }
+            } label: {
+                HStack(spacing: 7) {
+                    if model.brollSearching {
+                        ProgressView().controlSize(.small).tint(DS.Palette.inkInverse)
+                        Text("editor.broll.searching", bundle: .module)
+                    } else {
+                        Image(systemName: "photo.stack")
+                        Text("editor.broll.add", bundle: .module)
+                    }
+                }
+                .dsFont(.sans, .semibold, 13)
+                .foregroundStyle(DS.Palette.inkInverse)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .background(Capsule().fill(DS.Palette.accent))
+            }
+            .buttonStyle(.dsPress(radius: 22))
+            .disabled(model.brollSearching || model.project.videoLayers.count >= VideoLayer.maximumAdditionalLayers)
+
+            if let failure = model.brollFailure {
+                Text(failure)
+                    .dsFont(.sans, .regular, 11)
+                    .foregroundStyle(DS.Palette.accent)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if model.project.videoLayers.count >= VideoLayer.maximumAdditionalLayers {
+                Text("editor.broll.full", bundle: .module)
+                    .dsFont(.sans, .regular, 11)
+                    .foregroundStyle(DS.Palette.ink(0.56))
+            }
+
+            Text("editor.broll.credit", bundle: .module)
+                .dsFont(.mono, .medium, 9)
+                .foregroundStyle(DS.Palette.ink(0.4))
+        }
+    }
+
     private var zoomPanel: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("editor.zoom.hint", bundle: .module)
@@ -521,6 +600,28 @@ struct ToolDock: View {
                 zoomRecipeButton(.pushIn, title: "editor.zoom.push", symbol: "arrow.down.right")
                 zoomRecipeButton(.punch, title: "editor.zoom.punch", symbol: "bolt.fill")
                 zoomRecipeButton(.pullOut, title: "editor.zoom.pull", symbol: "arrow.up.left")
+            }
+
+            if model.canSyncToBeat {
+                Button {
+                    Task { await model.syncToBeat(BeatSyncOptions()) }
+                } label: {
+                    HStack(spacing: 7) {
+                        if model.beatSyncing {
+                            ProgressView().controlSize(.small).tint(DS.Palette.inkInverse)
+                        } else {
+                            Image(systemName: "metronome.fill")
+                        }
+                        Text("editor.zoom.onBeat", bundle: .module)
+                    }
+                    .dsFont(.sans, .semibold, 12)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 40)
+                    .background(Capsule().fill(DS.Palette.lime))
+                }
+                .buttonStyle(.dsPress(radius: 20))
+                .disabled(model.beatSyncing)
             }
 
             if let recipe = model.cameraMotionAtPlayhead {

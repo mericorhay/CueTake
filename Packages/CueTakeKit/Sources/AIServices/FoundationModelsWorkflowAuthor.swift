@@ -30,7 +30,7 @@ struct GeneratedStep {
         .anyOf([
             "assembleSections", "analyzeSpeech", "cleanup", "bestTakes", "trimSilences", "cutWords", "setSpeed",
             "cleanAudio", "musicBed", "generateCaptions", "applyCaptionStyle", "addTitle", "filter",
-            "trackFace", "autoZoom", "transitions", "soundDesign", "applyStyle", "brandKit", "export",
+            "trackFace", "autoZoom", "transitions", "soundDesign", "applyStyle", "stockBroll", "beatSync", "brandKit", "export",
         ])
     )
     var type: String

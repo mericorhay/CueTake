@@ -239,11 +239,11 @@ extension WorkflowStepKind {
     public var category: WorkflowToolCategory {
         switch self {
         case .generateScript, .segmentScript, .record, .assembleSections: .structure
-        case .generateVideo, .aiEdit: .generate
+        case .generateVideo, .aiEdit, .stockBroll: .generate
         case .trimSilences, .cutWords, .setSpeed, .cleanup, .bestTakes: .cut
         case .cleanAudio, .musicBed, .voiceEffect, .soundDesign: .sound
         case .analyzeSpeech, .generateCaptions, .applyCaptionStyle: .words
-        case .filter, .background, .autoZoom, .trackFace, .transitions, .videoLayout: .look
+        case .filter, .background, .autoZoom, .trackFace, .transitions, .videoLayout, .beatSync: .look
         case .addTitle, .brandTemplate, .brandKit, .applyStyle: .brand
         case .export, .unsupported: .deliver
         }

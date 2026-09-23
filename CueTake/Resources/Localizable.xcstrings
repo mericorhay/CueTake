@@ -4072,6 +4072,52 @@
           }
         }
       }
+    },
+    "broll.needsSpeech" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "B-roll needs the video's speech first. Make captions or run Analyse speech."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "B-roll için önce videonun konuşması gerekiyor. Altyazı oluştur ya da konuşmayı analiz et."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El B-roll necesita primero la voz del video. Crea subtítulos o analiza la voz."
+          }
+        }
+      }
+    },
+    "broll.notConfigured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stock B-roll isn't switched on for this app yet."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazır B-roll bu uygulamada henüz açılmadı."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El B-roll de archivo aún no está activado en esta app."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

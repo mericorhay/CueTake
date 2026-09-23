@@ -293,7 +293,7 @@ public final class WorkflowStudioModel {
         let before = definition.steps[..<index].filter(\.isEnabled).map(\.kind.typeName)
 
         switch step.kind {
-        case .trimSilences, .cutWords, .generateCaptions, .cleanup:
+        case .trimSilences, .cutWords, .generateCaptions, .cleanup, .stockBroll:
             return before.contains("analyzeSpeech") ? nil : "studio.warning.needsSpeech"
         case .aiEdit(let options):
             return options.instruction.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "studio.warning.needsInstruction" : nil
