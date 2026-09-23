@@ -5,6 +5,7 @@ import EditorFeature
 import Foundation
 import MediaEngine
 import Persistence
+import SettingsFeature
 
 /// Stock B-roll: the server picks the moments and searches a library free for commercial use; the
 /// app downloads the shots and brings them into the project like any imported clip.
