@@ -140,7 +140,7 @@ public enum SoundDesignSynth {
 
         mutating func next() -> Double {
             state = state &* 6364136223846793005 &+ 1442695040888963407
-            return Double(Int64(bitPattern: state >> 11 << 11)) / Double(Int64.max)
+            return Double(Int64(bitPattern: (state >> 11) << 11)) / Double(Int64.max)
         }
     }
 
