@@ -142,6 +142,7 @@ public struct FoundationModelsWorkflowAuthor: Sendable {
             origin: .ai,
             sections: sections,
             style: style,
+            variables: current?.variables ?? [:],
             steps: steps,
             createdAt: current?.createdAt ?? .now
         )

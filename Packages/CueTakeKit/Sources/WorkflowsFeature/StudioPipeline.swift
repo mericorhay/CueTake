@@ -159,6 +159,21 @@ struct StudioPipeline: View {
                         }
                     }
 
+                    if step.when != nil || step.forEach != nil {
+                        FlowLayout(horizontalSpacing: 5, verticalSpacing: 5) {
+                            if let condition = step.when {
+                                automationBadge(
+                                    "arrow.triangle.branch",
+                                    text: "\(condition.variable) · \(condition.operation.rawValue)"
+                                )
+                            }
+                            if let loop = step.forEach {
+                                automationBadge("repeat", text: "\(loop.source) → \(loop.itemVariable)")
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+
                     if let warning, step.isEnabled {
                         Label(AppLocalization.string(warning, bundle: .module), systemImage: "exclamationmark.triangle.fill")
                             .dsFont(.sans, .regular, 11)
@@ -228,6 +243,15 @@ struct StudioPipeline: View {
         } isTargeted: { targeted in
             dropTarget = targeted ? step.id.uuidString : (dropTarget == step.id.uuidString ? nil : dropTarget)
         }
+    }
+
+    private func automationBadge(_ symbol: String, text: String) -> some View {
+        Label(text, systemImage: symbol)
+            .dsFont(.mono, .medium, 9, letterSpacing: 0.04)
+            .foregroundStyle(DS.Palette.ink(0.58))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(DS.Palette.hairline(0.08)))
     }
 
     private func moveButton(_ symbol: String, step: WorkflowStep, by offset: Int) -> some View {

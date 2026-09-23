@@ -2370,6 +2370,52 @@
         }
       }
     },
+    "studio.run.resume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reanudar"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam Et"
+          }
+        }
+      }
+    },
+    "studio.run.resumeProgress %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% complete · continues from the last safe step"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% completo · continúa desde el último paso seguro"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%% tamamlandı · son güvenli adımdan devam ediyor"
+          }
+        }
+      }
+    },
     "studio.run.progress %lld %lld" : {
       "extractionState" : "manual",
       "localizations" : {

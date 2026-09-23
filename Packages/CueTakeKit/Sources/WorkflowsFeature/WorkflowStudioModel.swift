@@ -74,6 +74,9 @@ public final class WorkflowStudioModel {
     public private(set) var stepStates: [WorkflowStep.ID: StudioStepState] = [:]
     public private(set) var isRunning = false
     public private(set) var lastRunSummary: StudioRunSummary?
+    /// A durable run found for this workflow/project. The run button becomes an explicit resume
+    /// action instead of silently starting halfway through.
+    public private(set) var resumableProgress: Double?
     /// The videos a "Generate video" step is making, or made on the last run.
     public var generation: GenerationBoard?
     /// True between asking a run to stop and the run noticing.
@@ -326,6 +329,7 @@ public final class WorkflowStudioModel {
             origin: decoded.origin,
             sections: decoded.sections,
             style: decoded.style,
+            variables: decoded.variables,
             steps: decoded.steps,
             createdAt: definition.createdAt
         )
@@ -363,14 +367,21 @@ public final class WorkflowStudioModel {
 
     // MARK: - Run
 
-    public func beginRun() {
+    public func beginRun(resumingAt stepIndex: Int = 0) {
         isRunning = true
         isStopping = false
         generation = nil
         lastRunSummary = nil
+        resumableProgress = nil
         stepNotes = [:]
         syncFinalExport()
-        stepStates = Dictionary(uniqueKeysWithValues: definition.steps.map { ($0.id, .waiting) })
+        stepStates = Dictionary(uniqueKeysWithValues: definition.steps.enumerated().map { index, step in
+            (step.id, index < stepIndex ? .done : .waiting)
+        })
+    }
+
+    public func setResumableProgress(_ progress: Double?) {
+        resumableProgress = progress
     }
 
     public func mark(_ id: WorkflowStep.ID, _ state: StudioStepState) {

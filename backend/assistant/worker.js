@@ -64,8 +64,16 @@ Workflow object:
   "summary": "one sentence",
   "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5 } ],
   "style": { "captions": true, "captionPreset": "pop|clean|karaoke|bold|boxed|minimal|neon|story|punch|beast|spotlight|typewriter|bounce|podcast|subtle|news|comic|emoji|glow|focus", "captionPosition": "top|middle|bottom", "frameRate": 30 },
-  "steps": [ { "type": "<type>", "parameters": { } } ]
+  "variables": { "name": "a JSON string, number, boolean or array" },
+  "steps": [ { "type": "<type>", "parameters": { },
+    "when": { "variable": "project.hasSpeech", "operation": "exists|truthy|equals|notEquals|greaterThan|lessThan|contains", "value": true },
+    "forEach": { "source": "nameOfAnArrayVariable", "itemVariable": "item" } } ]
 }
+
+Omit variables, when and forEach unless the user's request needs a decision or repetition. Runtime
+variables available to conditions are project.segmentCount, project.recordingCount, project.hasSpeech,
+project.hasMusic and project.hasVideoLayers. A forEach source must name an array in variables. Never
+loop export or delivery: one workflow run delivers once.
 
 Step types, in the order they usually run:
 - generateVideo { "preset": "seedance-2.5|veo-3.1|veo-3.1-fast|veo-3.1-lite|sora-2|sora-2-pro|fal-custom|replicate-custom",

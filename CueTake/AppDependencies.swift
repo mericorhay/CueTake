@@ -1,6 +1,7 @@
 import AIServices
 import Persistence
 import SpeechEngine
+import WorkflowEngine
 
 /// Composition root: the only place that knows concrete implementations.
 /// Features receive the protocols they need through their initializers; there is no global container.
@@ -12,6 +13,8 @@ struct AppDependencies {
     /// Nil only when Application Support cannot be opened, in which case workflows live for the
     /// session and the studio still works.
     var workflowStore: WorkflowStore?
+    /// Durable execution state. Nil only when Application Support cannot be opened.
+    var workflowJobQueue: WorkflowJobQueue?
     var workflowAuthor: FoundationModelsWorkflowAuthor
     var assistantStore: AssistantStore?
     var assistantClient: AssistantClient
@@ -34,6 +37,7 @@ struct AppDependencies {
         speech: SystemSpeechTranscriber(),
         ai: AICapabilityRouter(providers: [FoundationModelsScriptWriter(), RemoteAIProvider()]),
         workflowStore: try? WorkflowStore.inApplicationSupport(),
+        workflowJobQueue: try? WorkflowJobQueue.inApplicationSupport(),
         workflowAuthor: FoundationModelsWorkflowAuthor(),
         assistantStore: try? AssistantStore.inApplicationSupport(),
         assistantClient: AssistantClient.bundled()

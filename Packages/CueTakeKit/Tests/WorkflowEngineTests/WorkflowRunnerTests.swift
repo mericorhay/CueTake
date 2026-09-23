@@ -19,7 +19,31 @@ private struct ExportHandler: WorkflowStepHandler {
     func run(_ step: WorkflowStep, project: Project) async throws -> Project { project }
 }
 
+private actor ContextRecorder {
+    private(set) var values: [WorkflowValue] = []
+    func append(_ value: WorkflowValue) { values.append(value) }
+}
+
+private struct ContextHandler: ContextualWorkflowStepHandler {
+    let recorder: ContextRecorder
+    func canHandle(_ kind: WorkflowStepKind) -> Bool { kind == .segmentScript }
+    func run(_ step: WorkflowStep, project: Project, context: WorkflowExecutionContext) async throws -> Project {
+        if let value = context.variables["clip"] { await recorder.append(value) }
+        return project
+    }
+}
+
 struct WorkflowRunnerTests {
+    @Test func schemaTwoDocumentsMigrateWithoutLosingTheirLinearSteps() throws {
+        let json = """
+        {"schemaVersion":2,"name":"Old","steps":[{"type":"segmentScript"}]}
+        """
+        let workflow = try WorkflowDefinition.decode(json: json)
+        #expect(workflow.schemaVersion == WorkflowDefinition.currentSchemaVersion)
+        #expect(workflow.variables.isEmpty)
+        #expect(workflow.steps.first?.kind == .segmentScript)
+    }
+
     @Test func pausesForTheUserThenResumesAndSkipsUnsupportedSteps() async throws {
         let definition = WorkflowDefinition(name: "Test", steps: [
             WorkflowStep(kind: .segmentScript),
@@ -60,6 +84,96 @@ struct WorkflowRunnerTests {
         await #expect(throws: WorkflowError.noHandler(stepType: "generateCaptions")) {
             for try await _ in runner.run(WorkflowRunState(definition: definition), project: Project(title: "t", localeIdentifier: "en-US")) {}
         }
+    }
+
+    @Test func conditionsAndForEachAreDeterministicAndResumable() async throws {
+        let recorder = ContextRecorder()
+        let repeated = WorkflowStep(
+            kind: .segmentScript,
+            when: WorkflowCondition(variable: "enabled"),
+            forEach: WorkflowForEach(source: "clips", itemVariable: "clip")
+        )
+        let skipped = WorkflowStep(
+            kind: .segmentScript,
+            when: WorkflowCondition(variable: "missing")
+        )
+        let definition = WorkflowDefinition(
+            name: "Graph",
+            variables: [
+                "enabled": .bool(true),
+                "clips": .array([.string("a"), .string("b"), .string("c")]),
+            ],
+            steps: [repeated, skipped]
+        )
+        let registry = try WorkflowStepRegistry(registrations: [
+            .init(type: "segmentScript", handler: ContextHandler(recorder: recorder)),
+            .init(type: "export", handler: ExportHandler()),
+        ])
+        let runner = WorkflowRunner(registry: registry)
+        var completed = 0
+        var conditionSkips = 0
+
+        for try await event in runner.run(
+            WorkflowRunState(definition: definition, iterationIndex: 1),
+            project: Project(title: "t", localeIdentifier: "en-US")
+        ) {
+            switch event {
+            case .stepCompleted: completed += 1
+            case .stepSkipped(_, .conditionFalse): conditionSkips += 1
+            default: break
+            }
+        }
+
+        #expect(completed == 3) // loop elements b/c, then the mandatory export
+        #expect(conditionSkips == 1)
+        let recorded = await recorder.values
+        #expect(recorded == [.string("b"), .string("c")])
+    }
+
+    @Test func registryRejectsDuplicateToolTypes() {
+        #expect(throws: WorkflowStepRegistry.RegistryError.duplicate("export")) {
+            _ = try WorkflowStepRegistry(registrations: [
+                .init(type: "export", handler: ExportHandler()),
+                .init(type: "export", handler: ExportHandler()),
+            ])
+        }
+    }
+}
+
+struct WorkflowJobQueueTests {
+    @Test func persistsCheckpointAndRecoversAnInterruptedRun() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "workflow-jobs-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let definition = WorkflowDefinition(name: "Durable", steps: [WorkflowStep(kind: .segmentScript)])
+        let projectID = UUID()
+        let queue = try WorkflowJobQueue(root: folder)
+        let enqueued = try await queue.enqueue(workflow: definition, projectID: projectID)
+        _ = try await queue.start(enqueued.id)
+        let checkpoint = WorkflowRunState(definition: definition, nextStepIndex: 1)
+        _ = try await queue.checkpoint(enqueued.id, state: checkpoint, kind: .stepCompleted, step: definition.steps[0])
+
+        // A fresh actor simulates a new app process reading the same directory.
+        let relaunched = try WorkflowJobQueue(root: folder)
+        let recovered = try await relaunched.recoverInterrupted()
+        let job = try #require(recovered.first)
+        #expect(job.status == .queued)
+        #expect(job.state.nextStepIndex == 1)
+        #expect(job.journal.contains { $0.kind == .recovered })
+    }
+
+    @Test func failuresRetryOnlyUpToTheConfiguredLimit() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "workflow-retry-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let definition = WorkflowDefinition(name: "Retry", steps: [])
+        let queue = try WorkflowJobQueue(root: folder)
+        let job = try await queue.enqueue(workflow: definition, projectID: UUID(), maxAttempts: 2)
+        let first = try await queue.start(job.id)
+        let scheduled = try await queue.fail(job.id, state: first.state, error: "offline")
+        #expect(scheduled.status == .queued)
+        let second = try await queue.start(job.id)
+        let failed = try await queue.fail(job.id, state: second.state, error: "offline")
+        #expect(failed.status == .failed)
+        #expect(failed.attempt == 2)
     }
 }
 

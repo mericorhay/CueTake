@@ -696,7 +696,7 @@ public struct WorkflowStudioScreen: View {
 
             Button(action: onRun) {
                 HStack(spacing: 7) {
-                    Image(systemName: model.isRunning ? "hourglass" : "play.fill")
+                    Image(systemName: model.isRunning ? "hourglass" : (model.resumableProgress == nil ? "play.fill" : "arrow.clockwise"))
                         .font(.system(size: 13, weight: .bold))
                         .contentTransition(.symbolEffect(.replace))
                         .symbolEffect(.rotate, options: .repeating, isActive: model.isRunning && !reduceMotion)
@@ -704,7 +704,7 @@ public struct WorkflowStudioScreen: View {
                     Text(
                         model.isRunning
                             ? AppLocalization.string("studio.run.running", bundle: .module)
-                            : AppLocalization.string("studio.run", bundle: .module)
+                            : AppLocalization.string(model.resumableProgress == nil ? "studio.run" : "studio.run.resume", bundle: .module)
                     )
                     .dsFont(.sans, .semibold, 15)
                 }
@@ -754,6 +754,9 @@ public struct WorkflowStudioScreen: View {
     }
 
     private var runDetail: String {
+        if let progress = model.resumableProgress {
+            return AppLocalization.string("studio.run.resumeProgress \(Int((progress * 100).rounded()))", bundle: .module)
+        }
         guard let summary = model.lastRunSummary else {
             return AppLocalization.string("studio.run.saved", bundle: .module)
         }

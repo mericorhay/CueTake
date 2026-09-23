@@ -3199,6 +3199,52 @@
         }
       }
     },
+    "workflow.skip.condition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Condition was not met"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koşul sağlanmadı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La condición no se cumplió"
+          }
+        }
+      }
+    },
+    "workflow.skip.emptyLoop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There was nothing to process"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İşlenecek bir şey yoktu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No había nada que procesar"
+          }
+        }
+      }
+    },
     "workflow.skip.exportFailed" : {
       "extractionState" : "manual",
       "localizations" : {

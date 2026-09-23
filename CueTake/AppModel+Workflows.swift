@@ -20,6 +20,9 @@ extension AppModel {
     // MARK: - Library
 
     func loadWorkflows() async {
+        // Any `.running` record belongs to a process that no longer exists. Recovery only moves
+        // its durable cursor back to the queue; no media work starts behind the user's back.
+        _ = try? await dependencies.workflowJobQueue?.recoverInterrupted()
         guard let store = dependencies.workflowStore else {
             if workflows.isEmpty { workflows = WorkflowDefinition.builtIns }
             return
@@ -28,8 +31,17 @@ extension AppModel {
     }
 
     func openWorkflow(_ workflow: WorkflowDefinition) {
-        workflowStudio = WorkflowStudioModel(definition: workflow, clips: currentClips())
+        let studio = WorkflowStudioModel(definition: workflow, clips: currentClips())
+        workflowStudio = studio
         go(to: .workflowDetail)
+        let projectID = project.id
+        Task { [weak self, weak studio] in
+            guard let queue = self?.dependencies.workflowJobQueue,
+                  let pending = await queue.resumable(workflowID: workflow.id, projectID: projectID),
+                  pending.state.definition.updatedAt == workflow.updatedAt
+            else { return }
+            studio?.setResumableProgress(pending.progress)
+        }
     }
 
     /// A new workflow with a sensible starting shape, rather than an empty page. Three sections
@@ -102,6 +114,7 @@ extension AppModel {
             origin: .user,
             sections: copy.sections,
             style: copy.style,
+            variables: copy.variables,
             steps: copy.steps
         )
         try? await dependencies.workflowStore?.save(copy)
@@ -254,8 +267,36 @@ extension AppModel {
 
     func runWorkflow() async {
         guard let studio = workflowStudio, !studio.isRunning else { return }
-        let definition = studio.definition
-        studio.beginRun()
+        var definition = studio.definition
+        let queue = dependencies.workflowJobQueue
+        var job: WorkflowJob?
+
+        if let queue {
+            if let pending = await queue.resumable(workflowID: definition.id, projectID: project.id),
+               pending.state.definition.updatedAt == definition.updatedAt {
+                job = try? await queue.start(pending.id)
+                definition = pending.state.definition
+            } else {
+                if let stale = await queue.resumable(workflowID: definition.id, projectID: project.id) {
+                    try? await queue.cancel(stale.id)
+                }
+                let queued = try? await queue.enqueue(
+                    workflow: definition,
+                    projectID: project.id,
+                    variables: workflowRuntimeVariables()
+                )
+                if let queued { job = try? await queue.start(queued.id) }
+            }
+        }
+
+        var state = job?.state ?? WorkflowRunState(
+            definition: definition,
+            variables: definition.variables.merging(workflowRuntimeVariables()) { _, runtime in runtime }
+        )
+        // Runtime facts may have changed while a recovered job was waiting. User-authored values
+        // stay intact; facts owned by the open project are refreshed.
+        state.variables.merge(workflowRuntimeVariables()) { _, runtime in runtime }
+        studio.beginRun(resumingAt: state.nextStepIndex)
 
         // The whole run is one edit the editor can undo: assembling sections replaces the clips,
         // and a workflow run on a project someone had already edited used to lose that work.
@@ -270,21 +311,94 @@ extension AppModel {
         project.format = definition.style.format
         project.updatedAt = .now
 
-        for step in definition.steps {
+        var wasPaused = false
+        while let step = state.nextStep {
             if Task.isCancelled {
                 studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.stopped")))
-                continue
+                if let queue, let job { try? await queue.pause(job.id, state: state) }
+                wasPaused = true
+                break
             }
             guard step.isEnabled else {
                 studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.disabled")))
+                state = state.advanced()
+                if let queue, let job {
+                    _ = try? await queue.checkpoint(job.id, state: state, kind: .stepSkipped, step: step, message: "disabled")
+                }
                 continue
             }
 
+            if let condition = step.when, !condition.evaluate(in: state.variables) {
+                studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.condition")))
+                state = state.advanced()
+                if let queue, let job {
+                    _ = try? await queue.checkpoint(job.id, state: state, kind: .stepSkipped, step: step, message: "conditionFalse")
+                }
+                continue
+            }
+
+            let items: [WorkflowValue?]
+            if let loop = step.forEach {
+                items = (state.variables[loop.source]?.arrayValue ?? []).map(Optional.some)
+                if items.isEmpty {
+                    studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.emptyLoop")))
+                    state = state.advanced()
+                    if let queue, let job {
+                        _ = try? await queue.checkpoint(job.id, state: state, kind: .stepSkipped, step: step, message: "emptyLoop")
+                    }
+                    continue
+                }
+            } else {
+                items = [nil]
+            }
+
             studio.mark(step.id, .running)
-            try? await Task.sleep(for: .milliseconds(220))
-            let outcome = await perform(step.kind, step: step.id, in: definition)
-            studio.mark(step.id, outcome)
-            try? await Task.sleep(for: .milliseconds(160))
+            if let queue, let job {
+                _ = try? await queue.checkpoint(job.id, state: state, kind: .stepStarted, step: step)
+            }
+
+            var finalOutcome: StudioStepState = .done
+            let resumeIndex = min(state.iterationIndex, items.count)
+            for index in resumeIndex..<items.count {
+                if Task.isCancelled {
+                    if let queue, let job { try? await queue.pause(job.id, state: state) }
+                    wasPaused = true
+                    break
+                }
+                if let loop = step.forEach, let item = items[index] {
+                    state.variables[loop.itemVariable] = item
+                }
+                try? await Task.sleep(for: .milliseconds(220))
+                let outcome = await perform(step.kind, step: step.id, in: definition)
+                finalOutcome = outcome
+
+                if let loop = step.forEach {
+                    state.variables.removeValue(forKey: loop.itemVariable)
+                }
+
+                // Media and cursor are both durable at every element boundary. Built-in editing
+                // tools are setters or deterministic transforms, so replaying the current element
+                // after a crash is safe; completed elements are never repeated.
+                try? await dependencies.projectStore.save(project)
+                state = state.advancedIteration()
+                if let queue, let job {
+                    let kind: WorkflowRunJournalEntry.Kind
+                    if case .skipped = outcome { kind = .stepSkipped } else { kind = .stepCompleted }
+                    _ = try? await queue.checkpoint(job.id, state: state, kind: kind, step: step)
+                }
+                try? await Task.sleep(for: .milliseconds(160))
+            }
+            if wasPaused { break }
+
+            studio.mark(step.id, finalOutcome)
+            let completed: Bool
+            if case .done = finalOutcome { completed = true } else { completed = false }
+            state.variables["\(step.kind.typeName).completed"] = .bool(completed)
+            state.variables["step.\(step.id.uuidString).completed"] = .bool(completed)
+            state = state.advanced()
+            if let queue, let job {
+                _ = try? await queue.checkpoint(job.id, state: state, step: step)
+            }
         }
 
         editorModel.project = project
@@ -292,10 +406,26 @@ extension AppModel {
         scheduleSave()
         await refreshLibrary()
         studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
-        if !Task.isCancelled { noteCertifiedWorkflowRun() }
+        if !wasPaused {
+            if let queue, let job { try? await queue.complete(job.id, state: state) }
+            noteCertifiedWorkflowRun()
+        }
         if before.segments != project.segments {
             show(notice: AppLocalization.string("workflow.undoable"))
         }
+    }
+
+    /// Stable facts that conditions can use without an AI or a tool having to rediscover them.
+    private func workflowRuntimeVariables() -> [String: WorkflowValue] {
+        [
+            "project.id": .string(project.id.uuidString),
+            "project.locale": .string(project.localeIdentifier),
+            "project.segmentCount": .number(Double(project.segments.count)),
+            "project.recordingCount": .number(Double(project.recordings.count)),
+            "project.hasSpeech": .bool(hasTranscripts),
+            "project.hasMusic": .bool(project.audio.contains { $0.role == .music }),
+            "project.hasVideoLayers": .bool(!project.videoLayers.isEmpty),
+        ]
     }
 
     private func perform(_ kind: WorkflowStepKind, step: WorkflowStep.ID, in definition: WorkflowDefinition) async -> StudioStepState {

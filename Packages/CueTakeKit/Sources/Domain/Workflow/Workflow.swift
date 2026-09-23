@@ -16,9 +16,9 @@ import Foundation
 ///   looks far more often than the other way round.
 /// - `steps` is the pipeline of automatic tools.
 public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
-    /// 2 added sections, style and the editing tools. Version 1 documents still decode: every
-    /// field added since has a default.
-    public static let currentSchemaVersion = 2
+    /// 2 added sections, style and editing tools; 3 adds variables, conditions and loops. Older
+    /// documents still decode because every added field has a default.
+    public static let currentSchemaVersion = 3
 
     public var schemaVersion: Int
     public let id: UUID
@@ -27,6 +27,9 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
     public var origin: WorkflowOrigin
     public var sections: [WorkflowSection]
     public var style: WorkflowStyle
+    /// Values a condition or loop can read. Runtime values supplied by the app are merged over
+    /// these defaults when a run starts.
+    public var variables: [String: WorkflowValue]
     public var steps: [WorkflowStep]
     public var createdAt: Date
     public var updatedAt: Date
@@ -38,6 +41,7 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
         origin: WorkflowOrigin = .user,
         sections: [WorkflowSection] = [],
         style: WorkflowStyle = WorkflowStyle(),
+        variables: [String: WorkflowValue] = [:],
         steps: [WorkflowStep],
         createdAt: Date = .now
     ) {
@@ -48,6 +52,7 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
         self.origin = origin
         self.sections = sections
         self.style = style
+        self.variables = variables
         self.steps = steps
         self.createdAt = createdAt
         self.updatedAt = createdAt
@@ -59,7 +64,10 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
     /// "an AI can write workflows" true only in theory.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? Self.currentSchemaVersion
+        let storedSchema = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? Self.currentSchemaVersion
+        // Reading an older document performs the migration. A document from a newer app keeps its
+        // number so saving it never falsely claims the current app fully understood it.
+        schemaVersion = max(storedSchema, Self.currentSchemaVersion)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Workflow"
         summary = try container.decodeIfPresent(String.self, forKey: .summary)
@@ -70,6 +78,7 @@ public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
         sections = (try? container.decodeIfPresent([Lossy<WorkflowSection>].self, forKey: .sections))?
             .compactMap(\.value) ?? []
         style = (try? container.decodeIfPresent(WorkflowStyle.self, forKey: .style)) ?? WorkflowStyle()
+        variables = (try? container.decodeIfPresent([String: WorkflowValue].self, forKey: .variables)) ?? [:]
         steps = (try? container.decodeIfPresent([Lossy<WorkflowStep>].self, forKey: .steps))?
             .compactMap(\.value) ?? []
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
@@ -92,15 +101,27 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
     public let id: UUID
     public var kind: WorkflowStepKind
     public var isEnabled: Bool
+    /// Optional guard and fan-out. Both default to nil, so schema 1 and 2 documents keep their
+    /// exact linear behaviour.
+    public var when: WorkflowCondition?
+    public var forEach: WorkflowForEach?
 
-    public init(id: UUID = UUID(), kind: WorkflowStepKind, isEnabled: Bool = true) {
+    public init(
+        id: UUID = UUID(),
+        kind: WorkflowStepKind,
+        isEnabled: Bool = true,
+        when: WorkflowCondition? = nil,
+        forEach: WorkflowForEach? = nil
+    ) {
         self.id = id
         self.kind = kind
         self.isEnabled = isEnabled
+        self.when = when
+        self.forEach = forEach
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, isEnabled
+        case id, kind, isEnabled, when, forEach
     }
 
     public init(from decoder: any Decoder) throws {
@@ -113,6 +134,8 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
             kind = try WorkflowStepKind(from: decoder)
         }
         isEnabled = (try? container.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
+        when = try? container.decodeIfPresent(WorkflowCondition.self, forKey: .when)
+        forEach = try? container.decodeIfPresent(WorkflowForEach.self, forKey: .forEach)
     }
 }
 
