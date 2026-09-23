@@ -174,6 +174,13 @@ public final class EditorModel {
     @ObservationIgnored public var soundDesigner: ((SoundDesignOptions, EditDocument) async -> [AudioClip])?
     /// Runs a whole style on the video. Set by the app, which runs the style's steps; nil hides styles.
     @ObservationIgnored public var styleApplier: ((VideoStyle) async -> Void)?
+    /// Translates caption lines into a language, reporting how far it has got. Set by the app,
+    /// which talks to the assistant; nil hides translation.
+    @ObservationIgnored public var captionTranslator: CaptionTranslator?
+    /// How far a caption translation has got, 0…1, while one runs.
+    public var translationProgress: Double?
+    /// Why the last translation did not finish, in words for people.
+    public var translationFailure: String?
     /// The style being applied and how far it has got, 0…1, for the style sheet.
     public var applyingStyle: VideoStyle?
     public var styleProgress: Double = 0

@@ -71,6 +71,7 @@ public struct EditorScreen: View {
     @State private var pickingImage = false
     @State private var showsTemplates = false
     @State private var showsStyles = false
+    @State private var showsLyrics = false
     /// The template picture whose words are being changed, or nil when adding a new one.
     @State private var templateTarget: Overlay.ID?
     @State private var pickedImage: PhotosPickerItem?
@@ -409,6 +410,9 @@ public struct EditorScreen: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showsLyrics) {
+            CaptionLyricsView(model: model) { showsLyrics = false }
         }
         .sheet(isPresented: $showsStyles) {
             StyleSheet(model: model) { showsStyles = false }
@@ -1051,6 +1055,10 @@ public struct EditorScreen: View {
                         model.pause()
                         templateTarget = nil
                         showsTemplates = true
+                    },
+                    onLyrics: {
+                        dockPanel = nil
+                        showsLyrics = true
                     },
                     onStyles: {
                         model.pause()

@@ -27,6 +27,8 @@ struct ToolDock: View {
     var onTemplates: () -> Void = {}
     /// Opens the one-tap styles.
     var onStyles: () -> Void = {}
+    /// Opens the caption list: every line, its translations, following the voice.
+    var onLyrics: () -> Void = {}
     var onShowAIChanges: () -> Void = {}
     /// Opens the direct-on-picture subject picker owned by the editor screen.
     var onTrack: () -> Void = {}
@@ -40,7 +42,7 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, style, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, audio, delete, more
+        case ai, style, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, lyrics, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -145,6 +147,7 @@ struct ToolDock: View {
         case .shorts: model.project.segments.contains { $0.selectedTake != nil }
         case .captions, .audio, .video, .more, .ai, .generate, .text, .image, .template: true
         case .style: !model.project.segments.isEmpty && model.applyingStyle == nil
+        case .lyrics: model.project.segments.contains { !$0.captions.isEmpty }
         }
     }
 
@@ -234,6 +237,7 @@ struct ToolDock: View {
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
         case .sfx: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: designingSound)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
+        case .lyrics: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.translationProgress != nil)
         }
     }
 
@@ -258,6 +262,7 @@ struct ToolDock: View {
         case .trim: "arrow.left.and.right.square"
         case .speed: "gauge.with.dots.needle.67percent"
         case .captions: "captions.bubble"
+        case .lyrics: "text.quote"
         case .audio: "music.note"
         case .delete: "trash"
         case .more: "square.grid.2x2"
@@ -285,6 +290,7 @@ struct ToolDock: View {
         case .trim: AppLocalization.string("editor.dock.trim", bundle: .module)
         case .speed: AppLocalization.string("editor.dock.speed", bundle: .module)
         case .captions: AppLocalization.string("editor.captions", bundle: .module)
+        case .lyrics: AppLocalization.string("editor.dock.lyrics", bundle: .module)
         case .audio: AppLocalization.string("editor.dock.audio", bundle: .module)
         case .delete: AppLocalization.string("editor.tool.delete", bundle: .module)
         case .more: AppLocalization.string("editor.dock.more", bundle: .module)
@@ -349,6 +355,9 @@ struct ToolDock: View {
             onStyles()
         case .video: onAddVideo()
         case .captions: onCaptions()
+        case .lyrics:
+            open = nil
+            onLyrics()
         case .audio:
             // The first sound goes straight to the picker; after that, the list of them.
             if model.project.audio.isEmpty {

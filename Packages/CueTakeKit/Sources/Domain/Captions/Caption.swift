@@ -11,6 +11,10 @@ public struct CaptionCue: Identifiable, Hashable, Sendable, Codable {
     public var position: CaptionPosition?
     /// Set when the user edits the cue by hand.
     public var isUserEdited: Bool
+    /// The line in other languages, by language code ("en", "es"…). Nil until translated.
+    public var translations: [String: String]?
+    /// Languages whose line the user corrected by hand, so a new translation does not undo it.
+    public var editedTranslations: [String]?
 
     public init(
         id: UUID = UUID(),
@@ -18,7 +22,8 @@ public struct CaptionCue: Identifiable, Hashable, Sendable, Codable {
         range: MediaTimeRange,
         styleOverride: CaptionStyle? = nil,
         position: CaptionPosition? = nil,
-        isUserEdited: Bool = false
+        isUserEdited: Bool = false,
+        translations: [String: String]? = nil
     ) {
         self.id = id
         self.text = text
@@ -26,6 +31,16 @@ public struct CaptionCue: Identifiable, Hashable, Sendable, Codable {
         self.styleOverride = styleOverride
         self.position = position
         self.isUserEdited = isUserEdited
+        self.translations = translations
+    }
+
+    public func translation(_ language: String) -> String? {
+        guard let text = translations?[language]?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+        return text
+    }
+
+    public func isTranslationEdited(_ language: String) -> Bool {
+        editedTranslations?.contains(language) == true
     }
 }
 
@@ -159,13 +174,20 @@ public struct PlacedCue: Identifiable, Hashable, Sendable {
     public var words: [PlacedWord]
     /// The cue's own position, when the user moved it. Nil follows the style.
     public var position: CaptionPosition?
+    /// The language the text is in, when it is not the project's: a translation. Upper-casing
+    /// follows it, so an English line under a Turkish project does not get a dotted İ.
+    public var localeIdentifier: String?
 
-    public init(id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = [], position: CaptionPosition? = nil) {
+    public init(
+        id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = [], position: CaptionPosition? = nil,
+        localeIdentifier: String? = nil
+    ) {
         self.id = id
         self.text = text
         self.range = range
         self.words = words
         self.position = position
+        self.localeIdentifier = localeIdentifier
     }
 
     /// The index of the word being said at `seconds`, or of the last word already said. Nil
@@ -455,16 +477,30 @@ extension Project {
                         )
                     }
 
+                let range = MediaTimeRange(
+                    start: MediaTime(seconds: start),
+                    // Never past the end of its own clip: a cue outstaying its footage is
+                    // how a caption ends up over the next person's face.
+                    duration: MediaTime(seconds: min(duration, cursor + length - start))
+                )
+                // A translated video shows the translated line, its words spread over the time
+                // the original was said, so word-by-word looks still move with the voice.
+                if let language = captionLanguage, let translated = cue.translation(language) {
+                    cues.append(PlacedCue(
+                        id: cue.id,
+                        text: translated,
+                        range: range,
+                        words: CaptionTranslation.spread(translated, over: range),
+                        position: cue.position,
+                        localeIdentifier: language
+                    ))
+                    continue
+                }
                 cues.append(
                     PlacedCue(
                         id: cue.id,
                         text: cue.text,
-                        range: MediaTimeRange(
-                            start: MediaTime(seconds: start),
-                            // Never past the end of its own clip: a cue outstaying its footage is
-                            // how a caption ends up over the next person's face.
-                            duration: MediaTime(seconds: min(duration, cursor + length - start))
-                        ),
+                        range: range,
                         words: words,
                         position: cue.position
                     )

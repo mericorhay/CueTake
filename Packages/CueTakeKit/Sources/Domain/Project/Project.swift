@@ -39,6 +39,9 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     public var aiConversations: [AIConversation] = []
     /// How clips hand over to each other (see `ClipTransition`).
     public var transitions: [ClipTransition] = []
+    /// The language the captions are shown in on the video: a translation's code, or nil for
+    /// the language that was spoken.
+    public var captionLanguage: String? = nil
 
     public init(
         id: UUID = UUID(),
@@ -102,6 +105,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata) ?? [:]
         aiConversations = (try? container.decodeIfPresent([AIConversation].self, forKey: .aiConversations)) ?? []
         transitions = (try? container.decodeIfPresent([ClipTransition].self, forKey: .transitions)) ?? []
+        captionLanguage = try? container.decodeIfPresent(String.self, forKey: .captionLanguage)
         // Backgrounds used to be a setting of the whole clip.
         adoptClipBackgrounds()
         // Freeze is gone from the app: held frames it made are removed, frozen clips play.

@@ -178,7 +178,8 @@ public struct CaptionWords: Hashable, Sendable {
     public var words: [String]
     public var keywords: Set<Int>
 
-    public init(cue: PlacedCue, style: CaptionStyle, locale: Locale) {
+    public init(cue: PlacedCue, style: CaptionStyle, locale projectLocale: Locale) {
+        let locale = cue.localeIdentifier.map(Locale.init(identifier:)) ?? projectLocale
         let raw = cue.words.isEmpty
             ? cue.text.split(whereSeparator: \.isWhitespace).map(String.init)
             : cue.words.map(\.text)

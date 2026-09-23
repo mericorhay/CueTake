@@ -624,6 +624,26 @@ extension AppModel {
         }
     }
 
+    /// Gives the editor its caption translator: the assistant, in pieces, with its progress.
+    func connectCaptionTranslation() {
+        guard dependencies.assistantClient.isConfigured else {
+            editorModel.captionTranslator = nil
+            return
+        }
+        let client = dependencies.assistantClient
+        editorModel.captionTranslator = { [weak self] lines, target, progress in
+            guard let self else { return [:] }
+            guard self.settingsModel.settings.aiProcessing == .allowCloud else {
+                throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+            }
+            do {
+                return try await client.translateCaptions(lines, from: self.project.localeIdentifier, to: target, progress: progress)
+            } catch {
+                throw DescribedError(message: Self.assistantFailureMessage(error))
+            }
+        }
+    }
+
     /// Gives the editor its styles: each one runs the same steps a workflow would.
     func connectStyles() {
         editorModel.styleApplier = { [weak self] style in await self?.applyVideoStyle(style) }
