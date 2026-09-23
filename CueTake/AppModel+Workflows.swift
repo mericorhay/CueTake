@@ -296,6 +296,8 @@ extension AppModel {
         // Runtime facts may have changed while a recovered job was waiting. User-authored values
         // stay intact; facts owned by the open project are refreshed.
         state.variables.merge(workflowRuntimeVariables()) { _, runtime in runtime }
+        workflowRunID = job?.id
+        defer { workflowRunID = nil }
         studio.beginRun(resumingAt: state.nextStepIndex)
 
         // The whole run is one edit the editor can undo: assembling sections replaces the clips,
@@ -561,7 +563,13 @@ extension AppModel {
         )
         let secret = WorkflowSecretStore().secret(for: definition.id)
         do {
-            let outcome = try await WorkflowDeliveryClient().deliver(delivery, video: video, report: report, secret: secret)
+            let outcome = try await WorkflowDeliveryClient().deliver(
+                delivery,
+                video: video,
+                report: report,
+                secret: secret,
+                idempotencyKey: workflowRunID?.uuidString
+            )
             return .sent(status: outcome.status)
         } catch {
             return .failed(StudioDeliveryText.describe(error))

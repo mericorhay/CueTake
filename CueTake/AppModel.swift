@@ -186,6 +186,8 @@ final class AppModel {
     /// What the last workflow run wrote and what its API answered.
     var workflowVideo: URL?
     var workflowDeliveryResult: StudioDeliveryResult?
+    /// Durable job identity, also sent as the delivery idempotency key.
+    var workflowRunID: UUID?
     /// Work going on in the background that does not stop anyone — listening to new clips.
     var activity: String?
     /// A short message that fades by itself: how listening went, what was restored.

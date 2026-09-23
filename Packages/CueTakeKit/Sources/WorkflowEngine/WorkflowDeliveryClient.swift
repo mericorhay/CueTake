@@ -31,12 +31,16 @@ public struct WorkflowDeliveryClient: Sendable {
         _ delivery: WorkflowDelivery,
         video: URL?,
         report: WorkflowDeliveryReport,
-        secret: String?
+        secret: String?,
+        idempotencyKey: String? = nil
     ) async throws -> Outcome {
         guard let url = delivery.url else { throw DeliveryError.invalidEndpoint }
         var request = URLRequest(url: url, timeoutInterval: 600)
         request.httpMethod = delivery.method.rawValue
         request.setValue("CueTake", forHTTPHeaderField: "User-Agent")
+        if let idempotencyKey, !idempotencyKey.isEmpty {
+            request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
+        }
         if let auth = delivery.authorization(secret: secret) {
             request.setValue(auth.value, forHTTPHeaderField: auth.name)
         }
