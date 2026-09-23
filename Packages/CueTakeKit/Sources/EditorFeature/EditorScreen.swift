@@ -1056,14 +1056,14 @@ public struct EditorScreen: View {
                         templateTarget = nil
                         showsTemplates = true
                     },
-                    onLyrics: {
-                        dockPanel = nil
-                        showsLyrics = true
-                    },
                     onStyles: {
                         model.pause()
                         dockPanel = nil
                         showsStyles = true
+                    },
+                    onLyrics: {
+                        dockPanel = nil
+                        showsLyrics = true
                     },
                     onShowAIChanges: { showsAIChanges = true },
                     onTrack: {
