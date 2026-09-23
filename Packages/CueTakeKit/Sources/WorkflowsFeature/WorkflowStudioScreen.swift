@@ -330,7 +330,7 @@ public struct WorkflowStudioScreen: View {
                     get: { section.title },
                     set: { value in model.updateSection(section.id) { $0.title = value } }
                 ),
-                prompt: Text(StudioCatalog.roleLabel(section.role).capitalized)
+                prompt: Text(StudioCatalog.roleLabel(section.role))
             )
             .dsFont(.sans, .medium, 12)
             .foregroundStyle(DS.Palette.ink(0.8))

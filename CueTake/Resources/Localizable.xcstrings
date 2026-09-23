@@ -65,7 +65,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No puedo ayudar con eso. Intenta preguntar de otra manera."
+            "value" : "No puedo ayudarte con eso. Prueba a pedirlo de otra forma."
           }
         }
       }
@@ -88,7 +88,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Algo salió mal. Intenta de nuevo en un momento."
+            "value" : "Algo salió mal. Inténtalo de nuevo en un momento."
           }
         }
       }
@@ -134,7 +134,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin conexión. Revisa tu internet y vuelve a intentarlo."
+            "value" : "Sin conexión. Revisa tu internet e inténtalo de nuevo."
           }
         }
       }
@@ -157,7 +157,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El proveedor de IA no respondió (error %lld). Intenta de nuevo en un momento."
+            "value" : "El proveedor de IA no respondió (error %lld). Inténtalo en un momento."
           }
         }
       }
@@ -226,7 +226,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplicado %@"
+            "value" : "Se aplicó %@"
           }
         }
       }
@@ -318,7 +318,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trayendo tus clips…"
+            "value" : "Importando tus clips…"
           }
         }
       }
@@ -341,7 +341,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trayendo el sonido…"
+            "value" : "Importando el audio…"
           }
         }
       }
@@ -594,7 +594,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Incorporando los subtítulos…"
+            "value" : "Integrando los subtítulos…"
           }
         }
       }
@@ -617,7 +617,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verificando la puerta…"
+            "value" : "Revisando la toma…"
           }
         }
       }
@@ -640,7 +640,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Casi listo, honestamente…"
+            "value" : "Casi listo, en serio…"
           }
         }
       }
@@ -732,7 +732,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Barrido de silencios…"
+            "value" : "Limpiando los silencios…"
           }
         }
       }
@@ -755,7 +755,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alineando el horizonte…"
+            "value" : "Nivelando el horizonte…"
           }
         }
       }
@@ -801,7 +801,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tejiendo la línea de tiempo…"
+            "value" : "Organizando la línea de tiempo…"
           }
         }
       }
@@ -824,7 +824,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Numerando tomas…"
+            "value" : "Numerando las tomas…"
           }
         }
       }
@@ -870,7 +870,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eliminando el fondo… La primera vez lleva un momento."
+            "value" : "Eliminando el fondo… La primera vez tarda un momento."
           }
         }
       }
@@ -893,7 +893,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reverso…"
+            "value" : "Reproduciéndolo al revés…"
           }
         }
       }
@@ -985,7 +985,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Este certificado aún no se ha ganado."
+            "value" : "Este certificado aún no se ha obtenido."
           }
         }
       }
@@ -1077,7 +1077,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo terminar la revisión. Inténtalo de nuevo en un minuto."
+            "value" : "No se pudo completar la revisión. Inténtalo de nuevo en un minuto."
           }
         }
       }
@@ -1215,7 +1215,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exportación fallida. Verifica que todos los clips sigan existiendo."
+            "value" : "Error al exportar. Comprueba que todos los clips sigan existiendo."
           }
         }
       }
@@ -1353,7 +1353,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "DONDE ESTÁS"
+            "value" : "DÓNDE ESTÁS"
           }
         }
       }
@@ -1376,7 +1376,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PRÓXIMO PASO"
+            "value" : "SIGUIENTE PASO"
           }
         }
       }
@@ -1445,7 +1445,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tu material está aquí. Corta las partes que no quieras y limpia las pausas."
+            "value" : "Tu material está listo. Recorta lo que no quieras y ajusta las pausas."
           }
         }
       }
@@ -1468,7 +1468,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abrir editor"
+            "value" : "Abrir el editor"
           }
         }
       }
@@ -1537,7 +1537,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Añade los clips que ya tienes. Todo lo demás parte de ahí."
+            "value" : "Importa los clips que ya tienes. Todo lo demás parte de ahí."
           }
         }
       }
@@ -1721,7 +1721,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Formato y exportar"
+            "value" : "Elegir formato y exportar"
           }
         }
       }
@@ -1790,7 +1790,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flujos de trabajo"
+            "value" : "Workflows"
           }
         }
       }
@@ -1837,7 +1837,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Import · %@"
+            "value" : "Importación · %@"
           }
         }
       }
@@ -1929,7 +1929,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escribir un guion necesita Apple Intelligence o el asistente CueTake, y ninguno está disponible en esta versión."
+            "value" : "Escribir un guion requiere Apple Intelligence o el asistente de CueTake, y ninguno está disponible en esta versión."
           }
         }
       }
@@ -2021,7 +2021,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausas y rellenos eliminados, subtítulos activados, exportado."
+            "value" : "Pausas y muletillas eliminadas, subtítulos activados, exportado."
           }
         }
       }
@@ -2067,7 +2067,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gancho rápido, tres puntos, llamada a la acción. Subtítulos karaoke, música, 60 fps."
+            "value" : "Un gancho rápido, tres puntos y una llamada a la acción. Subtítulos karaoke, música, 60 fps."
           }
         }
       }
@@ -2228,7 +2228,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Limpieza de rostro hablado"
+            "value" : "Mejora de video a cámara"
           }
         }
       }
@@ -2251,7 +2251,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausas y rellenos eliminados, voz limpiada, subtítulos limpios."
+            "value" : "Sin pausas ni muletillas, voz limpia y subtítulos claros."
           }
         }
       }
@@ -2297,7 +2297,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gancho, problema, producto, prueba, llamado a la acción. Sonido limpio, música ligera, subtítulos llamativos."
+            "value" : "Gancho, problema, producto, prueba y llamada a la acción. Sonido limpio, música suave y subtítulos destacados."
           }
         }
       }
@@ -2320,7 +2320,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Guardado fallido — toque para reintentar"
+            "value" : "Error al guardar — toca para reintentar"
           }
         }
       }
@@ -2343,7 +2343,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No guardado aún"
+            "value" : "Aún sin guardar"
           }
         }
       }
@@ -2366,7 +2366,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Guardado a %@"
+            "value" : "Guardado a las %@"
           }
         }
       }
@@ -2412,7 +2412,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld subtítulos escritos desde tus clips."
+            "value" : "%lld subtítulos generados a partir de tus clips."
           }
         }
       }
@@ -2435,7 +2435,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo escuchar los clips: %@"
+            "value" : "No se pudieron escuchar los clips: %@"
           }
         }
       }
@@ -2504,7 +2504,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se escuchó discurso en estos clips."
+            "value" : "No se detectó voz en estos clips."
           }
         }
       }
@@ -2550,7 +2550,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Todos los clips ya han sido escuchados."
+            "value" : "Todos los clips ya se han procesado."
           }
         }
       }
@@ -2573,7 +2573,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Subtítulos restaurados de lo dicho."
+            "value" : "Subtítulos restaurados a partir del audio."
           }
         }
       }
@@ -2596,7 +2596,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Liberado %@"
+            "value" : "Se liberó %@"
           }
         }
       }
@@ -2619,7 +2619,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nada que limpiar"
+            "value" : "No queda nada por limpiar"
           }
         }
       }
@@ -2642,7 +2642,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Intenta de nuevo cuando termine el trabajo actual"
+            "value" : "Inténtalo de nuevo cuando termine el trabajo actual"
           }
         }
       }
@@ -2734,7 +2734,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flujos de trabajo"
+            "value" : "Workflows"
           }
         }
       }
@@ -2964,7 +2964,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se pudo crear el flujo de trabajo. Intenta describirlo de otra forma."
+            "value" : "No se pudo crear el Workflow. Prueba a describirlo de otra forma."
           }
         }
       }
@@ -3102,7 +3102,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld de %2$lld videos creados. %3$@"
+            "value" : "Se crearon %1$lld de %2$lld videos. %3$@"
           }
         }
       }
@@ -3148,7 +3148,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mi flujo de trabajo"
+            "value" : "Mi Workflow"
           }
         }
       }
@@ -3631,7 +3631,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flujo aplicado. Una sola deshacer en el editor revierte todo."
+            "value" : "Workflow aplicado. Una sola acción de deshacer en el editor revierte todos sus cambios."
           }
         }
       }

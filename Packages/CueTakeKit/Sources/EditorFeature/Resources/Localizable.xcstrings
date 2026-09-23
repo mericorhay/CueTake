@@ -1330,7 +1330,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Punch"
+            "value" : "Impacto"
           }
         }
       }
@@ -1353,7 +1353,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spotlight"
+            "value" : "Foco"
           }
         }
       }
@@ -4619,7 +4619,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rumble"
+            "value" : "Retumbo"
           }
         }
       }
@@ -5412,19 +5412,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Look's own"
+            "value" : "Look's font"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Görünümün kendi"
+            "value" : "Stilin yazı tipi"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Look's own"
+            "value" : "Fuente del estilo"
           }
         }
       }
@@ -7402,7 +7402,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ejecución de flujo de trabajo"
+            "value" : "Ejecución de Workflow"
           }
         }
       }
@@ -12027,7 +12027,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hall"
+            "value" : "Sala"
           }
         }
       }
@@ -18531,7 +18531,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "FORMAT"
+            "value" : "BİÇİM"
           }
         },
         "es" : {
@@ -18785,7 +18785,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Final"
+            "value" : "SON ÇIKTI"
           }
         },
         "es" : {
@@ -18831,7 +18831,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Render"
+            "value" : "İŞLEME"
           }
         },
         "es" : {

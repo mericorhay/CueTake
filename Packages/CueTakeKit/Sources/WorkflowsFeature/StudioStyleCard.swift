@@ -92,17 +92,18 @@ struct StudioStyleCard: View {
                         .fill(DS.Palette.camera)
                     switch preset {
                     case "karaoke":
-                        (Text("SAY ").foregroundStyle(DS.Palette.lime) + Text("IT").foregroundStyle(.white))
+                        (Text("studio.style.preview.karaokeLead", bundle: .module).foregroundStyle(DS.Palette.lime)
+                            + Text("studio.style.preview.karaokeTail", bundle: .module).foregroundStyle(.white))
                             .font(.system(size: 13, weight: .black))
                     case "clean":
-                        Text("Say it")
+                        Text("studio.style.preview.clean", bundle: .module)
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(RoundedRectangle(cornerRadius: 4).fill(.black.opacity(0.55)))
                     default:
-                        Text("SAY IT")
+                        Text("studio.style.preview.bold", bundle: .module)
                             .font(.system(size: 13, weight: .heavy))
                             .foregroundStyle(.white)
                             .shadow(color: .black, radius: 0, x: 1, y: 1)
@@ -111,7 +112,7 @@ struct StudioStyleCard: View {
                 }
                 .frame(height: 52)
 
-                Text(preset.capitalized)
+                Text(Self.presetLabel(preset))
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(isOn ? DS.Palette.ink : DS.Palette.ink(0.5))
             }
@@ -177,6 +178,10 @@ struct StudioStyleCard: View {
         case "middle": AppLocalization.string("studio.style.middle", bundle: .module)
         default: AppLocalization.string("studio.style.bottom", bundle: .module)
         }
+    }
+
+    static func presetLabel(_ preset: String) -> String {
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "studio.style.preset." + preset), bundle: .module)
     }
 
     static func aspectLabel(_ value: VideoFormat.AspectRatio) -> String {

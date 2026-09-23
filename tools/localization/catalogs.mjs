@@ -97,7 +97,7 @@ export function placeholderSignature(value) {
 }
 
 export function protectedTermsIn(value, terms) {
-  return terms.filter(term => value.includes(term));
+  return terms.filter(term => term === "Workflow" ? /workflow/i.test(value) : value.includes(term));
 }
 
 export function validatePair(source, target, protectedTerms) {
@@ -106,7 +106,8 @@ export function validatePair(source, target, protectedTerms) {
   if (placeholderSignature(source) !== placeholderSignature(target ?? "")) errors.push("placeholder mismatch");
   if ((source.match(/\n/g) ?? []).length !== ((target ?? "").match(/\n/g) ?? []).length) errors.push("newline mismatch");
   for (const term of protectedTermsIn(source, protectedTerms)) {
-    if (!target.includes(term)) errors.push(`protected term changed: ${term}`);
+    const present = term === "Workflow" ? /workflow/i.test(target) : target.includes(term);
+    if (!present) errors.push(`protected term changed: ${term}`);
   }
   return errors;
 }

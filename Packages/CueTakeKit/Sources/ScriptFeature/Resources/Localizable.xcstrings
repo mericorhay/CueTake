@@ -482,7 +482,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Usar flujo de trabajo"
+            "value" : "Usar Workflow"
           }
         }
       }
@@ -777,7 +777,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "FORMAT"
+            "value" : "BİÇİM"
           }
         },
         "es" : {
@@ -1036,7 +1036,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "0:30 total"
+            "value" : "0:30 en total"
           }
         }
       }
@@ -2154,7 +2154,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cidden,"
+            "value" : "Seriously,"
           }
         },
         "tr" : {
@@ -2166,7 +2166,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cidden,"
+            "value" : "En serio,"
           }
         }
       }

@@ -1,17 +1,26 @@
 {
   "sourceLocale": "en",
-  "requiredLocales": ["en", "es", "tr"],
-  "generatedLocales": ["es", "tr"],
-  "promptVersion": 1,
+  "requiredLocales": [
+    "en",
+    "es",
+    "tr"
+  ],
+  "generatedLocales": [
+    "es",
+    "tr"
+  ],
+  "promptVersion": 2,
   "localeNames": {
     "en": "English",
     "es": "Spanish",
     "tr": "Turkish"
   },
-  "modelPreferences": ["gpt-oss:20b"],
-  "maximumModelBytes": 21474836480,
+  "modelPreferences": [
+    "qwen3.8:27b-q4_K_M"
+  ],
+  "maximumModelBytes": 27917287424,
   "ollamaURL": "http://127.0.0.1:11434",
-  "batchSize": 12,
+  "batchSize": 4,
   "requestTimeoutMinutes": 30,
   "options": {
     "num_ctx": 8192,
@@ -27,6 +36,7 @@
     "Instagram",
     "JSON",
     "HDR",
-    "PDF"
+    "PDF",
+    "Workflow"
   ]
 }

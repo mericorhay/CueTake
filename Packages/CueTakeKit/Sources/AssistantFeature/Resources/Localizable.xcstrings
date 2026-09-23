@@ -295,7 +295,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flujos de trabajo"
+            "value" : "Workflows"
           }
         }
       }
@@ -818,13 +818,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reels için bir workflow öner"
+            "value" : "Reels için bir Workflow öner"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sugiere un flujo de trabajo para Reels"
+            "value" : "Sugiere un Workflow para Reels"
           }
         }
       }

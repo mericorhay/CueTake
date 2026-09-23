@@ -109,7 +109,7 @@ struct StudioStepEditor: View {
                     "studio.param.preset",
                     options: CaptionStyle.presetIDs,
                     selected: preset,
-                    label: { $0.capitalized }
+                    label: { StudioStyleCard.presetLabel($0) }
                 ) { value in
                     model.updateStep(step.id, kind: .applyCaptionStyle(presetID: value))
                 }

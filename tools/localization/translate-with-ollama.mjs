@@ -45,6 +45,43 @@ async function ollama(pathname, body) {
   return response.json();
 }
 
+async function ollamaChat(body) {
+  const response = await fetch(`${endpoint}/api/chat`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ ...body, stream: true }),
+    signal: AbortSignal.timeout(timeout),
+  });
+  if (!response.ok) throw new Error(`Ollama /api/chat returned ${response.status}: ${await response.text()}`);
+
+  // Streaming keeps long CPU-only generations alive. Ollama emits newline-delimited JSON;
+  // the constrained final JSON content is assembled from its message chunks below.
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let content = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const event = JSON.parse(line);
+      if (event.error) throw new Error(`Ollama /api/chat failed: ${event.error}`);
+      content += event.message?.content ?? "";
+    }
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) {
+    const event = JSON.parse(buffer);
+    if (event.error) throw new Error(`Ollama /api/chat failed: ${event.error}`);
+    content += event.message?.content ?? "";
+  }
+  return { message: { content } };
+}
+
 const tags = await ollama("/api/tags");
 const installed = new Map((tags.models ?? []).map(model => [model.name, model]));
 const modelName = config.modelPreferences.find(name => installed.has(name) && installed.get(name).size <= config.maximumModelBytes);
@@ -106,13 +143,24 @@ const schema = {
 };
 
 const systemPrompt = [
-  `You are the professional localization engine for CueTake, a premium mobile video editor. Translate English interface copy into neutral, natural ${targetLanguage}.`,
+  `You are the professional localization engine for CueTake, a premium mobile video editor. Translate English interface copy into polished, concise, natural ${targetLanguage}.`,
   "Return only the requested JSON. Translate every item exactly once and retain its id.",
-  "Use concise, contemporary language that fits small iPhone controls. Preserve meaning, tone, capitalization intent, punctuation intent, and every newline.",
+  "Write native-sounding UI copy, not a literal translation. Keep labels short enough for iPhone controls. Preserve meaning, tone, capitalization intent, punctuation intent, and every newline.",
   "Preserve printf placeholders exactly, including their index, type, percent signs, and multiplicity. Do not translate brand names or protected technical terms.",
+  "Copy any __CT_WORKFLOW_N__ marker exactly. It represents the protected product term Workflow and will be restored after translation.",
   "Use the key, catalog path, and developer comment as context. Never expose the key in the visible translation.",
   "Do not add explanations, alternatives, quotation marks, or translator notes.",
 ].join("\n");
+
+function maskWorkflow(source) {
+  const markers = [];
+  const text = source.replace(/workflow/gi, () => {
+    const marker = `__CT_WORKFLOW_${markers.length}__`;
+    markers.push(marker);
+    return marker;
+  });
+  return { text, markers };
+}
 
 const queue = [];
 for (let offset = 0; offset < pending.length; offset += config.batchSize) {
@@ -121,26 +169,29 @@ for (let offset = 0; offset < pending.length; offset += config.batchSize) {
 let processed = 0;
 while (queue.length) {
   const batch = queue.shift();
-  const input = batch.map(({ id, key, comment, source, file, path: unitPath }) => ({
-    id,
-    key,
-    catalog: relative(file),
-    variant: unitPath.length ? unitPath.join(".") : "default",
-    comment,
-    source,
-  }));
+  const workflowMarkers = new Map();
+  const input = batch.map(({ id, key, comment, source, file, path: unitPath }) => {
+    const masked = maskWorkflow(source);
+    workflowMarkers.set(id, masked.markers);
+    return {
+      id,
+      key,
+      catalog: relative(file),
+      variant: unitPath.length ? unitPath.join(".") : "default",
+      comment,
+      source: masked.text,
+    };
+  });
 
   let translated;
   let lastError;
   const attemptLimit = batch.length === 1 ? 4 : 2;
   for (let attempt = 1; attempt <= attemptLimit; attempt += 1) {
     try {
-      const response = await ollama("/api/chat", {
+      const response = await ollamaChat({
         model: modelName,
-        stream: false,
-        // gpt-oss returns an empty content field when reasoning is disabled in
-        // current Ollama builds. Low reasoning keeps structured output reliable.
-        think: "low",
+        // Translation is a bounded task; disabling chain-of-thought reduces CPU time.
+        think: false,
         keep_alive: "10m",
         format: schema,
         options: config.options,
@@ -158,7 +209,11 @@ while (queue.length) {
       if (returned.size !== batch.length) throw new Error(`expected ${batch.length} results, received ${returned.size}`);
       translated = batch.map(unit => {
         if (!returned.has(unit.id)) throw new Error(`missing id ${unit.id}`);
-        const text = returned.get(unit.id);
+        let text = returned.get(unit.id);
+        for (const marker of workflowMarkers.get(unit.id) ?? []) {
+          if (!text.includes(marker)) throw new Error(`${unit.key}: protected Workflow marker missing`);
+          text = text.replaceAll(marker, "Workflow");
+        }
         const issues = validatePair(unit.source, text, config.protectedTerms);
         if (issues.length) throw new Error(`${unit.key}: ${issues.join(", ")}`);
         return [unit.id, text];

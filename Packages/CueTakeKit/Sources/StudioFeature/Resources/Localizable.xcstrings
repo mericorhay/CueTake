@@ -449,7 +449,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RETAKE · %@"
+            "value" : "NUEVA TOMA · %@"
           }
         }
       }
@@ -1248,7 +1248,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prompter"
+            "value" : "Suflör"
           }
         },
         "es" : {

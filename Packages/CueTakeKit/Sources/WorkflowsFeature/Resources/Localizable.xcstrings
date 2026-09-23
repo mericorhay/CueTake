@@ -289,13 +289,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu workflow silinsin mi?"
+            "value" : "Bu Workflow silinsin mi?"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "¿Eliminar este flujo de trabajo?"
+            "value" : "¿Eliminar este Workflow?"
           }
         }
       }
@@ -381,13 +381,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Video dosyası bulunamadı; workflow'u yeniden çalıştır."
+            "value" : "Video dosyası bulunamadı; Workflow'u yeniden çalıştır."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El archivo de video se perdió; ejecuta el flujo de trabajo de nuevo."
+            "value" : "El archivo de video ya no está; ejecuta el Workflow otra vez."
           }
         }
       }
@@ -634,13 +634,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Video yazıldığında bu workflow onu kendi adresine gönderir."
+            "value" : "Video yazıldığında bu Workflow onu kendi adresine gönderir."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cuando el video se escribe, este flujo de trabajo lo envía a tu propio punto final."
+            "value" : "Cuando se genera el video, este Workflow lo envía a la URL que configuraste."
           }
         }
       }
@@ -795,13 +795,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yalnızca bu workflow için bu telefonun Anahtar Zinciri'nde tutulur. Workflow dosyasına asla yazılmaz."
+            "value" : "Yalnızca bu Workflow için bu telefonun Anahtar Zinciri'nde tutulur. Workflow dosyasına asla yazılmaz."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Guardado en el llavero de este teléfono solo para este flujo de trabajo. Nunca en el archivo del flujo."
+            "value" : "Se guarda en el llavero de este teléfono solo para este Workflow. Nunca se incluye en el archivo del Workflow."
           }
         }
       }
@@ -1025,13 +1025,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Her workflow videoyu yazarak biter. Bu adım hep sonda kalır ve silinemez."
+            "value" : "Her Workflow videoyu yazarak biter. Bu adım hep sonda kalır ve silinemez."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cada flujo termina escribiendo el video. Este paso queda último y no se puede quitar."
+            "value" : "Todo Workflow termina generando el video. Este paso queda al final y no se puede quitar."
           }
         }
       }
@@ -1255,13 +1255,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu bir workflow olarak okunamadı. Hiçbir şey değişmedi."
+            "value" : "Bu bir Workflow olarak okunamadı. Hiçbir şey değişmedi."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se reconoce como un flujo de trabajo. No se cambió nada."
+            "value" : "No se reconoce como un Workflow. No se cambió nada."
           }
         }
       }
@@ -1284,7 +1284,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El flujo de trabajo tal como se guardó. Pega uno de cualquier IA, o copia este para solicitar cambios."
+            "value" : "El Workflow tal como está guardado. Pega uno de cualquier IA o copia este para pedir cambios."
           }
         }
       }
@@ -3768,7 +3768,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ejecutar flujo de trabajo"
+            "value" : "Ejecutar Workflow"
           }
         }
       }
@@ -4090,7 +4090,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Crear flujo de trabajo"
+            "value" : "Crear Workflow"
           }
         }
       }
@@ -4274,7 +4274,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escribiendo tu flujo de trabajo…"
+            "value" : "Creando tu Workflow…"
           }
         }
       }
@@ -4314,13 +4314,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu workflow silinsin mi?"
+            "value" : "Bu Workflow silinsin mi?"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "¿Eliminar este flujo de trabajo?"
+            "value" : "¿Eliminar este Workflow?"
           }
         }
       }
@@ -4337,13 +4337,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yeni workflow"
+            "value" : "Yeni Workflow"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nuevo flujo de trabajo"
+            "value" : "Nuevo Workflow"
           }
         }
       }
@@ -4573,7 +4573,559 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Flujos de trabajo"
+            "value" : "Workflows"
+          }
+        }
+      }
+    },
+    "studio.style.preset.pop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pop"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pop"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pop"
+          }
+        }
+      }
+    },
+    "studio.style.preset.clean" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clean"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sade"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limpio"
+          }
+        }
+      }
+    },
+    "studio.style.preset.karaoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
+          }
+        }
+      }
+    },
+    "studio.style.preset.bold" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bold"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kalın"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Negrita"
+          }
+        }
+      }
+    },
+    "studio.style.preset.boxed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Boxed"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kutulu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enmarcado"
+          }
+        }
+      }
+    },
+    "studio.style.preset.minimal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sade"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal"
+          }
+        }
+      }
+    },
+    "studio.style.preset.neon" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neon"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neon"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neón"
+          }
+        }
+      }
+    },
+    "studio.style.preset.story" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Story"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hikâye"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia"
+          }
+        }
+      }
+    },
+    "studio.style.preset.punch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punch"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vurucu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impacto"
+          }
+        }
+      }
+    },
+    "studio.style.preset.beast" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beast"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dev"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestia"
+          }
+        }
+      }
+    },
+    "studio.style.preset.spotlight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spotlight"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spot"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco"
+          }
+        }
+      }
+    },
+    "studio.style.preset.typewriter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typewriter"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daktilo"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máquina de escribir"
+          }
+        }
+      }
+    },
+    "studio.style.preset.bounce" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bounce"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zıpla"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rebote"
+          }
+        }
+      }
+    },
+    "studio.style.preset.podcast" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podcast"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podcast"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Podcast"
+          }
+        }
+      }
+    },
+    "studio.style.preset.subtle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subtle"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sade"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sutil"
+          }
+        }
+      }
+    },
+    "studio.style.preset.news" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haber"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noticias"
+          }
+        }
+      }
+    },
+    "studio.style.preset.comic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comic"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çizgi"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómic"
+          }
+        }
+      }
+    },
+    "studio.style.preset.emoji" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji"
+          }
+        }
+      }
+    },
+    "studio.style.preset.glow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glow"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Işıltı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brillo"
+          }
+        }
+      }
+    },
+    "studio.style.preset.focus" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfoque"
+          }
+        }
+      }
+    },
+    "studio.style.preview.karaokeLead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SAY "
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DI"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SÖY"
+          }
+        }
+      }
+    },
+    "studio.style.preview.karaokeTail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LO"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LE"
+          }
+        }
+      }
+    },
+    "studio.style.preview.clean" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say it"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dilo"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Söyle"
+          }
+        }
+      }
+    },
+    "studio.style.preview.bold" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SAY IT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DILO"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SÖYLE"
           }
         }
       }

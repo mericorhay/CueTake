@@ -36,13 +36,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fikir, metin, workflow ya da doğrudan kamera"
+            "value" : "Fikir, metin, Workflow ya da doğrudan kamera"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Idea, guion, flujo de trabajo o directo a cámara"
+            "value" : "Idea, guion, Workflow o directo a cámara"
           }
         }
       }
@@ -180,7 +180,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "FLUJOS DE TRABAJO"
+            "value" : "WORKFLOWS"
           }
         }
       }

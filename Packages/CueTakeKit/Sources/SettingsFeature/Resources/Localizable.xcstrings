@@ -243,13 +243,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yalnızca düzenleme, çekim ve workflow çalıştırma süresi sayılır; uygulamanın boşta açık kalması sayılmaz. Bir proje ilk dışa aktarıldığında bir kez sayılır."
+            "value" : "Yalnızca düzenleme, çekim ve Workflow çalıştırma süresi sayılır; uygulamanın boşta açık kalması sayılmaz. Bir proje ilk dışa aktarıldığında bir kez sayılır."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Solo el tiempo dedicado a editar, grabar o ejecutar flujos de trabajo cuenta; la app abierta no. Un proyecto cuenta una sola vez, cuando se exporta por primera vez."
+            "value" : "Solo cuenta el tiempo dedicado a editar, grabar o ejecutar Workflows; tener la app abierta sin usarla no cuenta. Cada proyecto se cuenta una vez, al exportarlo por primera vez."
           }
         }
       }
@@ -427,13 +427,13 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld / %2$lld workflow çalıştırma"
+            "value" : "%1$lld / %2$lld Workflow çalıştırma"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld / %2$lld ejecuciones de flujo de trabajo"
+            "value" : "%1$lld / %2$lld ejecuciones de Workflow"
           }
         }
       }
@@ -847,7 +847,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ejecuciones de flujo"
+            "value" : "Ejecuciones de Workflow"
           }
         }
       }
@@ -1169,7 +1169,7 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ejecutar flujo de trabajo"
+            "value" : "Ejecutar Workflow"
           }
         }
       }
@@ -2934,7 +2934,7 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "CREATOR VOICE"
+            "value" : "ÜRETİCİ SESİ"
           }
         },
         "es" : {

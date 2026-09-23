@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generator": "Ollama",
+  "generator": "Ollama with reviewed corrections",
   "model": "gpt-oss:20b",
   "modelDigest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
   "modelBytes": 13793441244,
@@ -21,11 +21,11 @@
       "translatedUnits": 5
     },
     "CueTake/Resources/Localizable.xcstrings": {
-      "sha256": "91cb26914e5124f49d016129d17569a12de9279093d8df3f3c8b53451076cc5c",
+      "sha256": "feeab44d54051313e7326182b02d4bcd4464ee32ccbe895c97e8171156308239",
       "translatedUnits": 158
     },
     "Packages/CueTakeKit/Sources/AssistantFeature/Resources/Localizable.xcstrings": {
-      "sha256": "097855cdfb0356903ad21615edb3b7e56f9ef2882eeab15e56fe6b61f1b4a29b",
+      "sha256": "bfd10943859ecbe8d77d9b3b9764f6780df51c4a59ae5202cb86d2f6c3e017ff",
       "translatedUnits": 42
     },
     "Packages/CueTakeKit/Sources/DesignSystem/Resources/Localizable.xcstrings": {
@@ -33,31 +33,31 @@
       "translatedUnits": 19
     },
     "Packages/CueTakeKit/Sources/EditorFeature/Resources/Localizable.xcstrings": {
-      "sha256": "7427b26e8c177dc7ad3184941bf0e428aec261954dcd02c740d245ee562b8c5a",
+      "sha256": "a6048cd5edb21aabfd7578113a7075b29df1fc2a62d83785988549ff03d28e01",
       "translatedUnits": 823
     },
     "Packages/CueTakeKit/Sources/LibraryFeature/Resources/Localizable.xcstrings": {
-      "sha256": "26849a3a0d22b1a2b0f41eed225da02029f6d2ef9c7ce056bd9dbb88aab18781",
+      "sha256": "2d2d98115f621b1623e80deeaee0e44935eee378a699ea96c22852b83d267702",
       "translatedUnits": 31
     },
     "Packages/CueTakeKit/Sources/OnboardingFeature/Resources/Localizable.xcstrings": {
-      "sha256": "871778f1879fca97f5cf61f2ff047f8cc804776e81addfcdcc32dab97cab4b5f",
+      "sha256": "ad66c813a0127be195d01c0c8f3db60fcfb9fe4f62084aefb5c19075b8c1ecd7",
       "translatedUnits": 15
     },
     "Packages/CueTakeKit/Sources/ScriptFeature/Resources/Localizable.xcstrings": {
-      "sha256": "d05c3f709a107e8a075b32dfe77493014fe96f46e2f6ab36d8e280c97b8554f0",
+      "sha256": "c019433bd782800e76e6e24f07c1e23202ea4a0b4417fb4439177fc846b3ff0b",
       "translatedUnits": 108
     },
     "Packages/CueTakeKit/Sources/SettingsFeature/Resources/Localizable.xcstrings": {
-      "sha256": "931a8881a364e5660177ffe8508fed7aed6e4c9a15ee8ef276cfe150ad59c889",
+      "sha256": "925304c4cd43e4eae6530f5b862b6125c324c1f057de5f3b9798b13e73eb12fe",
       "translatedUnits": 203
     },
     "Packages/CueTakeKit/Sources/StudioFeature/Resources/Localizable.xcstrings": {
-      "sha256": "c4aab243d581b9070ed39b37dd4fd92b45a8676a474ecd1da8f0f8e487ec8e70",
+      "sha256": "8bca0246b378f75b53a683fa4c777ebe93f5bab2de453a50b8bede66105b2428",
       "translatedUnits": 58
     },
     "Packages/CueTakeKit/Sources/SuflorFeature/Resources/Localizable.xcstrings": {
-      "sha256": "d1dc1b9b4b35752f3cfa424f774a7fd06e4a767a0becd69a5480a85edf98c095",
+      "sha256": "c6b8005f4d19c9a64edbb599ecd6a10183ea09be7811d1b4060524830b24342a",
       "translatedUnits": 201
     },
     "Packages/CueTakeKit/Sources/TeamFeature/Resources/Localizable.xcstrings": {
@@ -69,8 +69,14 @@
       "translatedUnits": 43
     },
     "Packages/CueTakeKit/Sources/WorkflowsFeature/Resources/Localizable.xcstrings": {
-      "sha256": "0bc9a3165617800195906a1bcd2b5b2096e475e8c53a47a38891ba85d8188897",
-      "translatedUnits": 199
+      "sha256": "042570de62ea5da30308b8ffc72359faf9afebdcb5495255f26d1398031ba409",
+      "translatedUnits": 223
     }
+  },
+  "review": {
+    "acceptedQwenModel": "qwen3.8:27b-q4_K_M",
+    "acceptedQwenKeys": 39,
+    "changedValues": 110,
+    "manualNewKeys": 24
   }
 }

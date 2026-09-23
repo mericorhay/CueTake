@@ -24,6 +24,11 @@ test("protected product terms and authored line breaks are immutable", () => {
   assert.deepEqual(validatePair("First\nSecond", "First Second", []), ["newline mismatch"]);
 });
 
+test("Workflow remains a protected term across source capitalization", () => {
+  assert.deepEqual(validatePair("Run a workflow", "Ejecutar un Workflow", ["Workflow"]), []);
+  assert.deepEqual(validatePair("Run a workflow", "Ejecutar un flujo de trabajo", ["Workflow"]), ["protected term changed: Workflow"]);
+});
+
 test("plural translations retain the source variation topology", () => {
   const catalog = {
     strings: {
