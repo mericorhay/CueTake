@@ -37,6 +37,7 @@ enum StudioCatalog {
         Tool(type: "autoZoom", symbol: "plus.magnifyingglass", title: "tool.autoZoom", note: "tool.autoZoom.note", category: .look),
         Tool(type: "transitions", symbol: "square.on.square.intersection.dashed", title: "tool.transitions", note: "tool.transitions.note", category: .look),
         Tool(type: "videoLayout", symbol: "rectangle.split.2x1", title: "tool.videoLayout", note: "tool.videoLayout.note", category: .look),
+        Tool(type: "applyStyle", symbol: "wand.and.rays", title: "tool.applyStyle", note: "tool.applyStyle.note", category: .brand),
         Tool(type: "addTitle", symbol: "textformat", title: "tool.addTitle", note: "tool.addTitle.note", category: .brand),
         Tool(type: "brandTemplate", symbol: "sparkles.rectangle.stack", title: "tool.brandTemplate", note: "tool.brandTemplate.note", category: .brand),
         Tool(type: "brandKit", symbol: "paintpalette", title: "tool.brandKit", note: "tool.brandKit.note", category: .brand),
@@ -117,6 +118,8 @@ enum StudioCatalog {
             return "\(o.preset) · \(Int(o.amount * 100))% · \(targetLabel(o.target))"
         case .videoLayout(let o):
             return o.layout
+        case .applyStyle(let o):
+            return AppLocalization.string(String.LocalizationValue(stringLiteral: "style." + o.style.rawValue), bundle: .module)
         case .soundDesign(let o):
             return [o.intensity.rawValue, o.whooshes ? "whoosh" : nil, o.pops ? "pop" : nil, o.impacts ? "hit" : nil, o.dings ? "ding" : nil]
                 .compactMap { $0 }.joined(separator: " · ")

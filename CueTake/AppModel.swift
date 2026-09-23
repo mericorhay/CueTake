@@ -497,6 +497,7 @@ final class AppModel {
     func prepareEditorPlayback() async {
         connectEditorGeneration()
         connectSoundDesign()
+        connectStyles()
         connectEditorShorts()
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
 

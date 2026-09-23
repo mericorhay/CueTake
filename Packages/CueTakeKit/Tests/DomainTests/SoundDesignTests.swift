@@ -50,6 +50,24 @@ struct SoundDesignTests {
         #expect(bold.allSatisfy { $0.start >= 0 })
     }
 
+    @Test func keywordsGetATickButNotTooMany() {
+        var doc = document(roles: ["hook"])
+        doc.language = "en"
+        doc.clips[0].speed = 1
+        doc.clips[0].words = [
+            EditDocument.Word(text: "This", start: 0.1, end: 0.3),
+            EditDocument.Word(text: "is", start: 0.35, end: 0.5),
+            EditDocument.Word(text: "free", start: 0.6, end: 0.9),
+            EditDocument.Word(text: "money", start: 1.0, end: 1.3),
+            EditDocument.Word(text: "now", start: 3.2, end: 3.5),
+        ]
+        let quiet = SoundDesign.plan(SoundDesignOptions(dings: false), for: doc)
+        #expect(quiet.isEmpty)
+        let ticks = SoundDesign.plan(SoundDesignOptions(dings: false, keywords: true), for: doc)
+        #expect(ticks.map(\.kind) == [.click, .click])
+        #expect(abs(ticks[0].start - 0.6) < 0.001)
+    }
+
     @Test func onlyItsOwnSoundsAreReplaced() {
         let mine = AudioClip(name: "Theme", relativePath: "media/theme.m4a", sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 3)))
         let auto = AudioClip(name: "Pop", relativePath: "media/\(SoundCueKind.pop.fileName)", role: .effect, sourceRange: MediaTimeRange(start: .zero, duration: MediaTime(seconds: 0.2)))

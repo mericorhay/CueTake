@@ -196,6 +196,8 @@ public enum WorkflowStepKind: Hashable, Sendable {
     case videoLayout(VideoLayoutOptions)
     case aiEdit(AIEditOptions)
     case soundDesign(SoundDesignOptions)
+    /// A whole style: the steps of `VideoStyle`, run in order.
+    case applyStyle(ApplyStyleOptions)
     case unsupported(type: String)
 
     /// Steps the runner cannot finish alone; it pauses and hands control to the UI.
@@ -234,6 +236,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .videoLayout: StepType.videoLayout.rawValue
         case .aiEdit: StepType.aiEdit.rawValue
         case .soundDesign: StepType.soundDesign.rawValue
+        case .applyStyle: StepType.applyStyle.rawValue
         case .unsupported(let type): type
         }
     }
@@ -242,7 +245,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case generateScript, generateVideo, segmentScript, record, assembleSections, analyzeSpeech, cleanup, bestTakes,
              trimSilences, cutWords, setSpeed, cleanAudio, musicBed, voiceEffect, soundDesign, generateCaptions, applyCaptionStyle,
              addTitle, brandTemplate, brandKit, filter, background, trackFace, autoZoom, transitions, videoLayout,
-             aiEdit, export
+             applyStyle, aiEdit, export
     }
 
     /// Every type name the app understands, in palette order.
@@ -280,6 +283,7 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .videoLayout: .videoLayout(VideoLayoutOptions())
         case .aiEdit: .aiEdit(AIEditOptions())
         case .soundDesign: .soundDesign(SoundDesignOptions())
+        case .applyStyle: .applyStyle(ApplyStyleOptions())
         case nil: .unsupported(type: type)
         }
     }
@@ -364,6 +368,8 @@ extension WorkflowStepKind: Codable {
             self = .aiEdit(lenient(AIEditOptions.self) ?? AIEditOptions())
         case .soundDesign:
             self = .soundDesign(lenient(SoundDesignOptions.self) ?? SoundDesignOptions())
+        case .applyStyle:
+            self = .applyStyle(lenient(ApplyStyleOptions.self) ?? ApplyStyleOptions())
         case nil:
             self = .unsupported(type: type)
         }
@@ -418,6 +424,8 @@ extension WorkflowStepKind: Codable {
         case .aiEdit(let options):
             try container.encode(options, forKey: .parameters)
         case .soundDesign(let options):
+            try container.encode(options, forKey: .parameters)
+        case .applyStyle(let options):
             try container.encode(options, forKey: .parameters)
         case .segmentScript, .assembleSections, .analyzeSpeech, .generateCaptions, .bestTakes, .unsupported:
             break

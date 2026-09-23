@@ -77,16 +77,23 @@ public struct SoundDesignOptions: Hashable, Sendable, Codable {
     public var pops: Bool
     public var impacts: Bool
     public var dings: Bool
+    /// A light tick on the words captions colour — numbers, money, "free", "never" — so the eye
+    /// and the ear land on the same word.
+    public var keywords: Bool
 
-    public init(intensity: Intensity = .normal, whooshes: Bool = true, pops: Bool = true, impacts: Bool = true, dings: Bool = true) {
+    public init(
+        intensity: Intensity = .normal, whooshes: Bool = true, pops: Bool = true, impacts: Bool = true,
+        dings: Bool = true, keywords: Bool = false
+    ) {
         self.intensity = intensity
         self.whooshes = whooshes
         self.pops = pops
         self.impacts = impacts
         self.dings = dings
+        self.keywords = keywords
     }
 
-    private enum CodingKeys: String, CodingKey { case intensity, whooshes, pops, impacts, dings }
+    private enum CodingKeys: String, CodingKey { case intensity, whooshes, pops, impacts, dings, keywords }
 
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -95,6 +102,7 @@ public struct SoundDesignOptions: Hashable, Sendable, Codable {
         pops = c.value(.pops, or: true)
         impacts = c.value(.impacts, or: true)
         dings = c.value(.dings, or: true)
+        keywords = c.value(.keywords, or: false)
     }
 }
 
@@ -153,6 +161,21 @@ public enum SoundDesign {
                 // The hook's last moment: a riser into the first cut.
                 let cut = hook.at + hook.length
                 if cut > SoundCueKind.riser.peak + 0.2 { wanted.append((.riser, cut, 1)) }
+            }
+        }
+
+        if options.keywords {
+            let locale = Locale(identifier: document.language)
+            var last = -Double.infinity
+            for clip in document.clips {
+                let speed = max(clip.speed ?? 1, 0.05)
+                for word in clip.words where CaptionKeywords.isKeyword(word.text, locale: locale) {
+                    let moment = clip.at + word.start / speed
+                    // Never more than one every two seconds: a tick on every word is noise.
+                    guard moment - last >= 2, moment < clip.at + clip.length else { continue }
+                    wanted.append((options.intensity == .bold ? .pop : .click, moment, 0))
+                    last = moment
+                }
             }
         }
 

@@ -46,10 +46,10 @@
 - [ ] **Parlatma adımı** (`polish`): hafif renk ve kontrast düzeltmesi, netlik, ses eşitleme.
 
 ### Tur 2: Tarz paketleri
-- [ ] 6 hazır tarz: Cesur İş, Vlog, Podcast Kesiti, UGC Reklam, Minimal Estetik, Enerjik.
+- [x] 6 hazır tarz: Cesur İş, Vlog, Podcast Kesiti, UGC Reklam, Minimal Estetik, Enerjik.
   - Her tarz şunları birlikte ayarlar: altyazı görünümü, vurgu rengi, zoom sıklığı, SFX yoğunluğu, filtre, tempo (duraklama eşiği), açılış başlığı.
-- [ ] Editörde "Tarz" düğmesi, tek dokunuşla ve geri alınabilir. Workflow'da `applyStyle` adımı. Reçeteler tarzlarla yeniden yazılır.
-- [ ] Anahtar kelime vurgusu: kelime renklenir, emoji çıkar, pop sesi çalar. Üçü aynı anda.
+- [x] Editörde "Tarz" düğmesi, tek dokunuşla ve geri alınabilir. Workflow'da `applyStyle` adımı. Reçeteler tarzlarla yeniden yazılır.
+- [x] Anahtar kelime vurgusu: kelime renklenir, emoji çıkar, pop sesi çalar. Üçü aynı anda.
 
 ### Tur 3: B-roll ve ritim
 - [ ] Hazır görüntüden otomatik B-roll: konuşmadaki somut kelimeye göre aranır, 3-5 sn, konuşanın üstüne yerleşir. Anahtar Worker'da durur.

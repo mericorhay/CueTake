@@ -172,6 +172,11 @@ public final class EditorModel {
     /// Makes the sound design's sounds for a document and returns them as clips to lay in. Set by
     /// the app, which owns the project's media folder; nil hides sound design.
     @ObservationIgnored public var soundDesigner: ((SoundDesignOptions, EditDocument) async -> [AudioClip])?
+    /// Runs a whole style on the video. Set by the app, which runs the style's steps; nil hides styles.
+    @ObservationIgnored public var styleApplier: ((VideoStyle) async -> Void)?
+    /// The style being applied and how far it has got, 0…1, for the style sheet.
+    public var applyingStyle: VideoStyle?
+    public var styleProgress: Double = 0
     /// Batches begun inside another batch, so ending the inner one does not end the outer.
     @ObservationIgnored var batchDepth = 0
 

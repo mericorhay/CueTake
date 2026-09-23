@@ -125,7 +125,14 @@ struct StudioToolEditor: View {
                 toggle("studio.param.sfxPop", isOn: options.pops) { var o = options; o.pops.toggle(); set(.soundDesign(o)) }
                 toggle("studio.param.sfxImpact", isOn: options.impacts) { var o = options; o.impacts.toggle(); set(.soundDesign(o)) }
                 toggle("studio.param.sfxDing", isOn: options.dings) { var o = options; o.dings.toggle(); set(.soundDesign(o)) }
+                toggle("studio.param.sfxKeywords", isOn: options.keywords) { var o = options; o.keywords.toggle(); set(.soundDesign(o)) }
                 note("studio.param.sfxNote")
+
+            case .applyStyle(let options):
+                chips("studio.param.style", options: VideoStyle.allCases.map(\.rawValue), selected: options.style.rawValue, prefix: "style.") {
+                    set(.applyStyle(ApplyStyleOptions(style: VideoStyle(rawValue: $0) ?? .boldBusiness)))
+                }
+                note(String.LocalizationValue(stringLiteral: "style." + options.style.rawValue + ".note"))
 
             case .bestTakes:
                 note("tool.bestTakes.note")

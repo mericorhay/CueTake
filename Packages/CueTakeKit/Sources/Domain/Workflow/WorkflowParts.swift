@@ -244,7 +244,7 @@ extension WorkflowStepKind {
         case .cleanAudio, .musicBed, .voiceEffect, .soundDesign: .sound
         case .analyzeSpeech, .generateCaptions, .applyCaptionStyle: .words
         case .filter, .background, .autoZoom, .trackFace, .transitions, .videoLayout: .look
-        case .addTitle, .brandTemplate, .brandKit: .brand
+        case .addTitle, .brandTemplate, .brandKit, .applyStyle: .brand
         case .export, .unsupported: .deliver
         }
     }

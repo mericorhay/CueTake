@@ -93,11 +93,17 @@ Step types, in the order they usually run:
 - cleanAudio { "denoise": true, "enhanceVoice": true, "removeRumble": true }
 - musicBed { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } — only if the project already has music.
 - voiceEffect { "preset": "clean|echo|hall|room|telephone|radio|megaphone|robot|underwater|deep|chipmunk", "amount": 0.4, "target": "all|hook|intro|point|example|cta" }
-- soundDesign { "intensity": "subtle|normal|bold", "whooshes": true, "pops": true, "impacts": true, "dings": true } — sound
+- soundDesign { "intensity": "subtle|normal|bold", "whooshes": true, "pops": true, "impacts": true, "dings": true, "keywords": false } — sound
   effects made by the app (no music): whooshes on transitions and section changes, pops on titles and templates, a hit on
-  punch-ins, a ding on the call to action. Put it after the look and brand steps so it hears them.
+  punch-ins, a ding on the call to action; keywords adds a light tick on numbers and power words. Put it after the look and brand steps so it hears them.
 - generateCaptions
 - applyCaptionStyle { "presetID": one of the caption presets above }
+- applyStyle { "style": "boldBusiness|vlog|podcast|ugcAd|minimal|energetic" } — a finished look in one step: it
+  transcribes, cleans, captions, grades, zooms, adds a title, transitions and sound design, all tuned together.
+  boldBusiness: yellow keyword captions, punch-ins, loud sound · vlog: warm, soft, calm · podcast: centred face,
+  subtitles, cinematic · ugcAd: brand kit, title, energy · minimal: muted, dissolves · energetic: fast, zoom cuts.
+  When the user names a feel or a creator type, prefer ONE applyStyle over many single tools; add single tools
+  after it only for what the style does not cover (a brandTemplate, an aiEdit). Then export.
 Studio tools (the same tools as the editor; each works on the video as it is when the step runs):
 - addTitle { "text": "" (empty = the opening words), "moment": "start|cta|end|at", "seconds": 0 (for at), "duration": 2.5,
   "y": 0.22 (0 top … 1 bottom), "scale": 1.3, "animation": "pop|fade|slideUp|none", "behind": false (true = person in front of the text) }

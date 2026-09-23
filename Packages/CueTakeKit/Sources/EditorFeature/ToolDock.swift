@@ -25,6 +25,8 @@ struct ToolDock: View {
     var onAddImage: () -> Void = {}
     /// Opens the brand picture templates.
     var onTemplates: () -> Void = {}
+    /// Opens the one-tap styles.
+    var onStyles: () -> Void = {}
     var onShowAIChanges: () -> Void = {}
     /// Opens the direct-on-picture subject picker owned by the editor screen.
     var onTrack: () -> Void = {}
@@ -38,7 +40,7 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, audio, delete, more
+        case ai, style, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
@@ -123,7 +125,9 @@ struct ToolDock: View {
     }
 
     /// Generating needs the app's help; a build without it shows no such tool.
-    private var visibleItems: [Item] { Item.allCases.filter { $0 != .generate || model.canGenerate } }
+    private var visibleItems: [Item] {
+        Item.allCases.filter { ($0 != .generate || model.canGenerate) && ($0 != .style || model.styleApplier != nil) }
+    }
 
     private func isEnabled(_ item: Item) -> Bool {
         switch item {
@@ -140,6 +144,7 @@ struct ToolDock: View {
         case .transition: model.project.segments.count > 1
         case .shorts: model.project.segments.contains { $0.selectedTake != nil }
         case .captions, .audio, .video, .more, .ai, .generate, .text, .image, .template: true
+        case .style: !model.project.segments.isEmpty && model.applyingStyle == nil
         }
     }
 
@@ -218,6 +223,7 @@ struct ToolDock: View {
         case .transition: glyph.symbolEffect(.bounce.byLayer, value: count)
         case .shorts: glyph.symbolEffect(.bounce, value: count)
         case .ai: glyph.symbolEffect(.breathe, options: .repeating)
+        case .style: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.applyingStyle != nil)
         case .generate:
             glyph
                 .symbolEffect(.bounce, value: count)
@@ -234,6 +240,7 @@ struct ToolDock: View {
     private func symbol(_ item: Item) -> String {
         switch item {
         case .ai: "sparkles"
+        case .style: "wand.and.rays"
         case .generate: "wand.and.stars"
         case .background: "person.crop.rectangle"
         case .reframe: "viewfinder"
@@ -260,6 +267,7 @@ struct ToolDock: View {
     private func title(_ item: Item) -> String {
         switch item {
         case .ai: AppLocalization.string("editor.dock.ai", bundle: .module)
+        case .style: AppLocalization.string("editor.dock.style", bundle: .module)
         case .generate: AppLocalization.string("editor.dock.generate", bundle: .module)
         case .background: AppLocalization.string("editor.dock.background", bundle: .module)
         case .reframe: AppLocalization.string("editor.track.title", bundle: .module)
@@ -336,6 +344,9 @@ struct ToolDock: View {
         case .text: withAnimation(settle) { model.addTextOverlay() }
         case .image: onAddImage()
         case .template: onTemplates()
+        case .style:
+            open = nil
+            onStyles()
         case .video: onAddVideo()
         case .captions: onCaptions()
         case .audio:

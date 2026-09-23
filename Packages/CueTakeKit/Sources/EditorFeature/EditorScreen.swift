@@ -70,6 +70,7 @@ public struct EditorScreen: View {
     @State private var dockPanel: ToolDock.Item?
     @State private var pickingImage = false
     @State private var showsTemplates = false
+    @State private var showsStyles = false
     /// The template picture whose words are being changed, or nil when adding a new one.
     @State private var templateTarget: Overlay.ID?
     @State private var pickedImage: PhotosPickerItem?
@@ -408,6 +409,11 @@ public struct EditorScreen: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showsStyles) {
+            StyleSheet(model: model) { showsStyles = false }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showsShorts) {
             ShortsSheet(model: model) { showsShorts = false }
@@ -1045,6 +1051,11 @@ public struct EditorScreen: View {
                         model.pause()
                         templateTarget = nil
                         showsTemplates = true
+                    },
+                    onStyles: {
+                        model.pause()
+                        dockPanel = nil
+                        showsStyles = true
                     },
                     onShowAIChanges: { showsAIChanges = true },
                     onTrack: {

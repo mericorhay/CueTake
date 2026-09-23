@@ -208,6 +208,9 @@ public enum CaptionKeywords {
         // Turkish
         "ücretsiz", "bedava", "sır", "asla", "hemen", "şimdi", "para", "en", "hata", "dur",
         "yeni", "hızlı", "kolay", "kazan", "aşk", "neden", "nasıl", "gerçek", "sadece", "dikkat",
+        // Spanish
+        "gratis", "secreto", "nunca", "siempre", "ahora", "dinero", "mejor", "peor", "error",
+        "nuevo", "rápido", "fácil", "gana", "amor", "odio", "cómo", "verdad", "solo", "cuidado",
     ]
 
     static let emojis: [String: String] = [
@@ -216,6 +219,8 @@ public enum CaptionKeywords {
         "mistake": "⚠️", "hata": "⚠️", "dikkat": "⚠️", "stop": "✋", "dur": "✋",
         "win": "🏆", "kazan": "🏆", "why": "🤔", "neden": "🤔", "new": "✨", "yeni": "✨",
         "truth": "💯", "gerçek": "💯", "time": "⏰", "zaman": "⏰", "idea": "💡", "fikir": "💡",
+        "dinero": "💰", "gratis": "🎁", "secreto": "🤫", "amor": "❤️", "rápido": "⚡️", "error": "⚠️",
+        "cuidado": "⚠️", "gana": "🏆", "nuevo": "✨", "verdad": "💯", "tiempo": "⏰",
     ]
 
     static func normalized(_ word: String, locale: Locale) -> String {

@@ -551,6 +551,15 @@ extension AppModel {
         case .brandKit(let options):
             return await applyWorkflowBrand(options)
 
+        case .applyStyle(let options):
+            let styled = options.style.workflow(name: AppLocalization.string(String.LocalizationValue(stringLiteral: "style." + options.style.rawValue)))
+            var anyDone = false
+            for inner in styled.steps where !inner.kind.isFinalExport {
+                if Task.isCancelled { break }
+                if case .done = await perform(inner.kind, step: step, in: styled) { anyDone = true }
+            }
+            return anyDone ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+
         case .soundDesign(let options):
             connectSoundDesign()
             editorModel.project = project
@@ -613,6 +622,43 @@ extension AppModel {
         case .unsupported:
             return .skipped(AppLocalization.string("workflow.skip.unsupported"))
         }
+    }
+
+    /// Gives the editor its styles: each one runs the same steps a workflow would.
+    func connectStyles() {
+        editorModel.styleApplier = { [weak self] style in await self?.applyVideoStyle(style) }
+    }
+
+    /// Runs a whole style on the open video as one undoable edit, reporting how far it has got.
+    func applyVideoStyle(_ style: VideoStyle) async {
+        guard editorModel.applyingStyle == nil, !project.segments.isEmpty else { return }
+        editorModel.applyingStyle = style
+        editorModel.styleProgress = 0
+        defer {
+            editorModel.applyingStyle = nil
+            editorModel.styleProgress = 0
+        }
+
+        if screen == .editor { adoptEditorEdits() }
+        connectSoundDesign()
+        let before = project
+        editorModel.project = project
+        editorModel.beginBatch()
+
+        let name = AppLocalization.string(String.LocalizationValue(stringLiteral: "style." + style.rawValue))
+        let definition = style.workflow(name: name)
+        let steps = definition.steps.filter { !$0.kind.isFinalExport }
+        for (index, step) in steps.enumerated() {
+            _ = await perform(step.kind, step: step.id, in: definition)
+            editorModel.project = project
+            editorModel.styleProgress = Double(index + 1) / Double(max(steps.count, 1))
+        }
+
+        editorModel.project = project
+        editorModel.endBatch(startingFrom: before)
+        scheduleSave()
+        await prepareEditorPlayback()
+        show(notice: AppLocalization.string("style.applied \(name)"))
     }
 
     /// Runs a studio tool the way the studio's AI does: the step's operations, worked out for the
