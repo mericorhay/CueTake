@@ -39,7 +39,8 @@ extension AppModel {
             guard let media = try? await store.mediaDirectory(for: project.id) else { return [] }
             var found: [StockBroll] = []
             for shot in shots {
-                guard let clip = await Self.fetchStockShot(shot, into: media) else { continue }
+                guard let imported = await Self.fetchStockShot(shot, into: media) else { continue }
+                let clip = GeneratedClip(recording: imported.recording, take: imported.take, thumbnail: nil)
                 found.append(StockBroll(clip: clip, title: shot.query, at: shot.at, seconds: shot.seconds))
             }
             return found
@@ -57,7 +58,7 @@ extension AppModel {
     }
 
     /// Downloads one shot and imports it beside the footage.
-    nonisolated static func fetchStockShot(_ shot: StockShot, into media: URL) async -> GeneratedClip? {
+    nonisolated static func fetchStockShot(_ shot: StockShot, into media: URL) async -> MediaImporter.ImportedClip? {
         guard let (downloaded, response) = try? await URLSession.shared.download(from: shot.video.url),
               ((response as? HTTPURLResponse)?.statusCode ?? 200) < 300
         else { return nil }
@@ -66,6 +67,6 @@ extension AppModel {
         guard (try? FileManager.default.moveItem(at: downloaded, to: file)) != nil,
               let clip = try? await MediaImporter().importClip(from: file, into: media)
         else { return nil }
-        return GeneratedClip(recording: clip.recording, take: clip.take, thumbnail: nil)
+        return clip
     }
 }
