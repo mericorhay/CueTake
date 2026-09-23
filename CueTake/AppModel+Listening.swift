@@ -1,5 +1,6 @@
 import AIServices
 import Domain
+import EditorFeature
 import Foundation
 import MediaEngine
 import ScriptFeature
