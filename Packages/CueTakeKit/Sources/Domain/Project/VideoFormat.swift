@@ -10,10 +10,6 @@ public struct VideoFormat: Hashable, Sendable, Codable {
     public enum Resolution: String, Hashable, Sendable, Codable, CaseIterable {
         case hd1080
         case uhd4K
-        /// 8K. Shot on the phones that can, and on every cinema camera footage arrives from.
-        /// Downscaling it on import would be deciding for the user that their best material is
-        /// too good for us.
-        case uhd8K
 
         /// The short edge. Every frame size in the app is built from this and the aspect ratio,
         /// so a new resolution is one line rather than a table of nine.
@@ -21,7 +17,6 @@ public struct VideoFormat: Hashable, Sendable, Codable {
             switch self {
             case .hd1080: 1080
             case .uhd4K: 2160
-            case .uhd8K: 4320
             }
         }
 
@@ -29,13 +24,32 @@ public struct VideoFormat: Hashable, Sendable, Codable {
             switch self {
             case .hd1080: "1080p"
             case .uhd4K: "4K"
-            case .uhd8K: "8K"
             }
         }
 
-        /// H.264 has no level that carries 4K well and none at all that carries 8K. Above 1080p
-        /// the only honest answer is HEVC, which is also roughly half the file for the same eye.
+        /// Above 1080p HEVC keeps the file practical while preserving detail.
         public var prefersHEVC: Bool { self != .hd1080 }
+
+        /// Older projects could persist the retired ultra-high-resolution option.
+        /// Open those projects safely at the highest format CueTake now supports.
+        public init(from decoder: Decoder) throws {
+            let value = try decoder.singleValueContainer().decode(String.self)
+            switch value {
+            case Self.hd1080.rawValue:
+                self = .hd1080
+            case Self.uhd4K.rawValue, "uhd8K":
+                self = .uhd4K
+            default:
+                throw DecodingError.dataCorrupted(
+                    .init(codingPath: decoder.codingPath, debugDescription: "Unsupported video resolution: \(value)")
+                )
+            }
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            try container.encode(rawValue)
+        }
     }
 
     /// What the frame-rate control offers. 24 for the film look, 30 as the default everything
@@ -70,9 +84,7 @@ public struct VideoFormat: Hashable, Sendable, Codable {
 extension VideoFormat {
     /// Roughly how many bits a second this frame costs at a quality nobody complains about.
     ///
-    /// Scaled from pixels and frames rather than looked up in a table, so an 8K 120fps project
-    /// gets a bitrate that follows from what it is instead of from what somebody remembered to
-    /// add to a switch statement.
+    /// Scaled from pixels and frames rather than looked up in a table.
     public var suggestedBitRate: Int {
         let pixels = Double(renderSize.width * renderSize.height)
         let rate = Double(max(24, frameRate))
@@ -85,15 +97,23 @@ extension VideoFormat {
         "\(resolution.label) · \(frameRate)fps"
     }
 
-    /// True when the project asks for more than a slow-motion capture can hold: 120fps only
-    /// exists at 1080p and 4K on hardware, and claiming 8K120 would be promising a file no phone
-    /// on earth writes.
+    /// CueTake keeps 4K at a broadly reliable delivery ceiling. High-frame-rate
+    /// slow motion remains available at 1080p.
     public var isPhysicallyPlausible: Bool {
         switch (resolution, frameRate) {
-        case (.uhd8K, let fps) where fps > 30: false
-        case (.uhd4K, let fps) where fps > 120: false
+        case (.uhd4K, let fps) where fps > 60: false
         default: true
         }
+    }
+
+    /// A format that the shared capture/render pipeline can promise on every supported device.
+    /// Model-authored workflows and older documents can contain arbitrary frame rates, so the
+    /// boundary normalizes them before AVFoundation sees them.
+    public var deliveryCompatible: VideoFormat {
+        let ceiling = resolution == .uhd4K ? 60 : 120
+        let allowed = Self.frameRateChoices.filter { $0 <= ceiling }
+        let nearest = allowed.min { abs($0 - frameRate) < abs($1 - frameRate) } ?? 30
+        return VideoFormat(aspectRatio: aspectRatio, resolution: resolution, frameRate: nearest)
     }
 }
 

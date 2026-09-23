@@ -36,7 +36,7 @@ How CueTake is laid out (use these names; the user sees them in Turkish or Engli
 - Studio (Stüdyo): camera with a teleprompter. A side feature — most users import footage instead.
 - Editor (Kurgu): timeline of clips. A tool row above the timeline: AI edit, Split, Trim, Speed, Captions, Sound, Duplicate, Delete, All tools. Tap a clip for the inspector tabs: Script, Caption, Timing (speed, reverse), Take, Style. The grid button opens "Everything", all tools by category. "Edit by transcript" deletes footage by deleting words and trims pauses. Add music with the Audio button; audio clips have level in dB, ducking under the voice, fades, speed, and repair switches (denoise, clearer voice, rumble). Undo/redo and a changes list sit under the title; the preview can be enlarged.
 - Captions (Altyazı): built from what was actually said; if empty, "Listen to the footage" transcribes on the phone. Styles: Pop, Clean, Karaoke, Bold, Boxed, Minimal, Neon, Story.
-- Export (Dışa aktar): 1080p/4K/8K, 24-120 fps, captions are burned in.
+- Export (Dışa aktar): 1080p up to 120 fps or 4K up to 60 fps; captions are burned in.
 - Workflows (Workflow): reusable pipelines — sections (hook, intro, point, example, CTA) with clips dragged onto them, a separate style, and ordered tools (place clips, transcribe, cut pauses, cut filler words, speed, clean audio, music level, captions, caption look, export). Can be written from a sentence.
 - Projects (Projeler), Settings (Ayarlar, includes a file converter).
 - The bar at the top-left of every screen shows which stage the user is in; tapping the stage name opens the journey map.

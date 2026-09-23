@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Times are on the finished video, like music: an overlay belongs to a moment of the edit, not to
 /// a clip, and a title that should appear at 29 seconds is at 29 seconds whichever clip is there.
-/// Geometry is relative to the frame, so one overlay looks the same at 1080p and 8K and in the
+/// Geometry is relative to the frame, so one overlay looks the same at 1080p and 4K and in the
 /// preview.
 public struct Overlay: Identifiable, Hashable, Sendable, Codable {
     public enum Content: Hashable, Sendable, Codable {

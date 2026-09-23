@@ -84,7 +84,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         id = try container.decode(UUID.self, forKey: .id)
         title = try container.decode(String.self, forKey: .title)
-        format = try container.decode(VideoFormat.self, forKey: .format)
+        format = try container.decode(VideoFormat.self, forKey: .format).deliveryCompatible
         localeIdentifier = try container.decode(String.self, forKey: .localeIdentifier)
         segments = try container.decodeIfPresent([Segment].self, forKey: .segments) ?? []
         recordings = try container.decodeIfPresent([Recording].self, forKey: .recordings) ?? []

@@ -86,7 +86,7 @@ extension Project {
     ///
     /// - Parameter brand: applied after the template when the template asks for it.
     public mutating func apply(_ template: VideoTemplate, brand: BrandKit? = nil) {
-        format = template.format
+        format = template.format.deliveryCompatible
         let position = template.captionPosition
         captionStyle = CaptionStyle.preset(template.captionPreset, position: position)
         captionStyle.maxWordsPerCue = template.captionMaxWords

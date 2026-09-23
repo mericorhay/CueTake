@@ -9,7 +9,7 @@ public struct SettingsScreen: View {
     private let model: SettingsModel
     private let account: AccountModel
     private let storage: String?
-    private let onCleanStorage: (() async -> String)?
+    private let onCleanStorage: (() async -> (message: String, storage: String?))?
     private let onTeam: (() -> Void)?
     private let onPreviewLight: (() -> Void)?
     private let certificates: String?
@@ -21,7 +21,7 @@ public struct SettingsScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(model: SettingsModel, account: AccountModel, storage: String? = nil,
-                onCleanStorage: (() async -> String)? = nil, onTeam: (() -> Void)? = nil,
+                onCleanStorage: (() async -> (message: String, storage: String?))? = nil, onTeam: (() -> Void)? = nil,
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
                 onVoiceProfile: (() -> Void)? = nil) {
@@ -217,7 +217,7 @@ struct SettingsPanel: View {
     let destination: SettingsDestination
     let model: SettingsModel
     let storage: String?
-    let onCleanStorage: (() async -> String)?
+    let onCleanStorage: (() async -> (message: String, storage: String?))?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsKeys = false
@@ -226,6 +226,7 @@ struct SettingsPanel: View {
     @State private var keyCount = APIKeySheet.connectedCount
     @State private var isCleaning = false
     @State private var cleaningResult: String?
+    @State private var displayedStorage: String?
 
     var body: some View {
         ScrollView {
@@ -240,6 +241,8 @@ struct SettingsPanel: View {
         }
         .scrollIndicators(.hidden)
         .background(DS.Palette.screen)
+        .onAppear { displayedStorage = storage }
+        .onChange(of: storage) { _, value in displayedStorage = value }
         .sheet(isPresented: $showsKeys, onDismiss: { keyCount = APIKeySheet.connectedCount }) {
             APIKeySheet { showsKeys = false }.presentationDragIndicator(.visible).presentationCornerRadius(32)
         }
@@ -251,7 +254,12 @@ struct SettingsPanel: View {
                 Task {
                     isCleaning = true
                     cleaningResult = nil
-                    cleaningResult = await onCleanStorage?()
+                    if let result = await onCleanStorage?() {
+                        withAnimation(reduceMotion ? nil : DS.Motion.snap) {
+                            cleaningResult = result.message
+                            displayedStorage = result.storage
+                        }
+                    }
                     isCleaning = false
                 }
             }
@@ -311,7 +319,7 @@ struct SettingsPanel: View {
             if onCleanStorage != nil {
                 Button { confirmsCleaning = true } label: {
                     SettingsRow(icon: "internaldrive", title: settingsText("settings.storage"),
-                                detail: storage ?? settingsText("settings.storage.measuring"))
+                                detail: displayedStorage ?? settingsText("settings.storage.measuring"))
                 }.buttonStyle(SettingsPressStyle()).disabled(isCleaning)
                 if isCleaning {
                     ProgressView().tint(DS.Palette.accent).frame(maxWidth: .infinity).padding(16)

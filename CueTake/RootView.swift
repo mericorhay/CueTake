@@ -363,7 +363,10 @@ struct RootView: View {
                 model: model.settingsModel,
                 account: model.accountModel,
                 storage: model.storageLabel,
-                onCleanStorage: { await model.cleanStorageNow() },
+                onCleanStorage: {
+                    let message = await model.cleanStorageNow()
+                    return (message: message, storage: model.storageLabel)
+                },
                 // Teams are locked until tried on two phones; only the light can be previewed.
                 onTeam: model.isTeamSharingAvailable ? { showsTeam = true } : nil,
                 onPreviewLight: { showsTeam = true },

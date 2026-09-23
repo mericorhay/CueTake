@@ -13,6 +13,21 @@ struct MediaTimeTests {
     }
 }
 
+struct VideoFormatTests {
+    @Test func retiredResolutionMigratesToSupportedMaximum() throws {
+        let decoded = try JSONDecoder().decode(VideoFormat.Resolution.self, from: Data(#""uhd8K""#.utf8))
+        #expect(decoded == .uhd4K)
+        #expect(String(decoding: try JSONEncoder().encode(decoded), as: UTF8.self) == #""uhd4K""#)
+    }
+
+    @Test func deliveryFormatKeepsFourKInsideReliableFrameRateEnvelope() {
+        let format = VideoFormat(aspectRatio: .portrait9x16, resolution: .uhd4K, frameRate: 120)
+        #expect(format.deliveryCompatible.resolution == .uhd4K)
+        #expect(format.deliveryCompatible.frameRate == 60)
+        #expect(VideoFormat(aspectRatio: .portrait9x16, resolution: .hd1080, frameRate: 120).deliveryCompatible.frameRate == 120)
+    }
+}
+
 struct TurkishTextTests {
     let turkish = Locale(identifier: "tr_TR")
 

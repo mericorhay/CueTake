@@ -235,6 +235,10 @@ public struct ExportScreen: View {
         .dsScreenLayout()
         .background(DS.Palette.screen)
         .dsEnter(.screen())
+        .onAppear {
+            let compatible = format.deliveryCompatible
+            if compatible != format { format = compatible }
+        }
     }
 
     private var header: some View {
@@ -269,8 +273,7 @@ public struct ExportScreen: View {
                 ForEach(VideoFormat.Resolution.allCases, id: \.self) { resolution in
                     chip(resolution.label, isOn: format.resolution == resolution) {
                         format.resolution = resolution
-                        // Dropping to something the pair can actually be. Choosing 8K and keeping
-                        // 120fps would leave the screen showing a format that does not exist.
+                        // Keep the pair inside the tested delivery envelope.
                         if !format.isPhysicallyPlausible { format.frameRate = 30 }
                     }
                 }
@@ -325,7 +328,7 @@ public struct ExportScreen: View {
     /// Roughly how big the file will be, per minute.
     ///
     /// Per minute rather than in total because the total is a number nobody can check, and the
-    /// point of showing it is to make 8K120 feel like what it is before it fills a phone.
+    /// point of showing it is to make the storage cost clear before it fills a phone.
     static func sizeEstimate(for format: VideoFormat) -> String {
         let megabytesPerMinute = Double(format.suggestedBitRate) * 60 / 8 / 1_000_000
         return String(format: "~%.0f MB/min", megabytesPerMinute)

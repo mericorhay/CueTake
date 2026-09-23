@@ -332,7 +332,7 @@ final class AppModel {
             if fresh.recordings.isEmpty {
                 // Otherwise every import would be forced into the default vertical frame, which is
                 // how a landscape clip came back letterboxed into a shape nobody asked for.
-                fresh.format = clip.recording.format
+                fresh.format = clip.recording.format.deliveryCompatible
             }
             fresh.recordings.append(clip.recording)
             fresh.segments.append(
@@ -568,6 +568,7 @@ final class AppModel {
 
         let composer = VideoComposer()
         var project = project
+        project.format = project.format.deliveryCompatible
         if !burnCaptions {
             for index in project.segments.indices { project.segments[index].captions = [] }
         }

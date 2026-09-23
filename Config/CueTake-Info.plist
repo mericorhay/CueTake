@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CueTakeAppleSignInEnabled</key>
+	<string>$(CUETAKE_APPLE_SIGN_IN_ENABLED)</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_cuetake-team._tcp</string>

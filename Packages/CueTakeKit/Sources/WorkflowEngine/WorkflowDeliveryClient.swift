@@ -90,7 +90,8 @@ public struct WorkflowDeliveryClient: Sendable {
         var probe = delivery
         probe.payload = .json
         probe.fields["test"] = "true"
-        let size = workflow.style.format.renderSize
+        let format = workflow.style.format
+        let size = format.renderSize
         let report = WorkflowDeliveryReport(
             workflowID: workflow.id,
             workflowName: workflow.name,
@@ -99,7 +100,7 @@ public struct WorkflowDeliveryClient: Sendable {
             seconds: 0,
             width: size.width,
             height: size.height,
-            frameRate: workflow.style.frameRate,
+            frameRate: format.frameRate,
             fileName: "test.mov",
             fileBytes: nil,
             captions: ""

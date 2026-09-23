@@ -235,13 +235,14 @@ public final class CameraSession: @unchecked Sendable {
     /// Asks the sensor for a specific resolution and frame rate.
     ///
     /// `sessionPreset` cannot express this. A preset is a rough size and nothing at all about
-    /// frames per second, so anything above 30 — and 4K or 8K at any rate — has to be chosen from
+    /// frames per second, so anything above 30 — and 4K at any rate — has to be chosen from
     /// the device's own format list. This is the difference between an app that records what the
     /// project asked for and one that records whatever the preset felt like.
     ///
-    /// Silent when the format does not exist rather than failing: a phone that cannot shoot 8K
-    /// should still record, at the best thing it has.
+    /// Silent when the format does not exist rather than failing: the phone should still record
+    /// at the best compatible format it has.
     public func apply(_ format: VideoFormat) {
+        let format = format.deliveryCompatible
         queue.async { [self] in
             guard let device = videoDevice,
                   let best = Self.bestFormat(on: device, for: format)
@@ -274,9 +275,11 @@ public final class CameraSession: @unchecked Sendable {
 
         return VideoFormat.Resolution.allCases.compactMap { resolution in
             let rates = VideoFormat.frameRateChoices.filter { rate in
+                let candidate = VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: rate)
+                guard candidate.isPhysicallyPlausible else { return false }
                 Self.bestFormat(
                     on: device,
-                    for: VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: rate)
+                    for: candidate
                 ) != nil
             }
             return rates.isEmpty ? nil : (resolution, rates)

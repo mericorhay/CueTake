@@ -73,6 +73,7 @@ public struct VideoComposer: Sendable {
         // Transitions are short films rendered beforehand and laid over their cuts like any added
         // video (see `TransitionRenderer`). The composition itself stays one track of clips.
         var project = project
+        project.format = project.format.deliveryCompatible
         if !project.transitions.isEmpty {
             if renderBackgrounds {
                 await TransitionRenderer.renderMissing(for: project, in: mediaDirectory)
@@ -742,7 +743,8 @@ public struct VideoComposer: Sendable {
     }
 
     /// Writes the video, and when the full render is refused, tries the simpler renders that
-    /// still give the user a real file: H.264 instead of HEVC, then without the burned-in layer.
+    /// still give the user a real file: 4K can fall back from HEVC to H.264, then the renderer
+    /// retries without the burned-in layer.
     ///
     /// The export used to be a single attempt, and AVFoundation's refusals ("Operation Stopped",
     /// "Cannot Encode") arrived as one generic sentence with nothing to try next.
@@ -761,11 +763,13 @@ public struct VideoComposer: Sendable {
             firstError = error
         }
         var plain = assembled
-        plain.forceH264 = true
-        do {
-            return WriteResult(url: try await write(plain, to: destination, onProgress: onProgress), droppedCaptions: false)
-        } catch {
-            if Task.isCancelled { throw error }
+        if assembled.format.resolution == .uhd4K {
+            plain.forceH264 = true
+            do {
+                return WriteResult(url: try await write(plain, to: destination, onProgress: onProgress), droppedCaptions: false)
+            } catch {
+                if Task.isCancelled { throw error }
+            }
         }
         plain.captions = []
         plain.overlays = []
@@ -847,15 +851,10 @@ public struct VideoComposer: Sendable {
         // A passthrough preset ignores the video composition and hands back the source frames,
         // sideways and unscaled. The render size lives in the composition, so the preset only has
         // to be one that re-encodes.
-        // Above 1080p the codec is not a preference. H.264 has no level that carries 8K, and at
-        // 4K it costs roughly twice the file for the same picture.
-        let preset = assembled.format.resolution.prefersHEVC && !assembled.forceH264
-            ? AVAssetExportPresetHEVCHighestQuality
-            : AVAssetExportPresetHighestQuality
+        // At 4K, HEVC keeps the file practical without sacrificing the selected frame size.
+        let preset = Self.exportPreset(for: assembled)
 
-        guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset)
-            ?? AVAssetExportSession(asset: assembled.composition, presetName: AVAssetExportPresetHighestQuality)
-        else {
+        guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset) else {
             throw ComposeError.exportFailed("no export session")
         }
         // Captions go on here, at the last moment, because the same video composition is handed
@@ -880,6 +879,7 @@ public struct VideoComposer: Sendable {
         }
         session.videoComposition = videoComposition
         session.audioMix = assembled.audioMix
+        session.shouldOptimizeForNetworkUse = true
         // Spectral: the frequency-domain stretch. It is the expensive one and the only one that
         // leaves a slowed or sped-up voice sounding like the same person.
         session.audioTimePitchAlgorithm = .spectral
@@ -913,11 +913,11 @@ public struct VideoComposer: Sendable {
                 session.timeRange = CMTimeRange(start: .zero, end: end)
             }
             try await session.export(to: partial, as: .mov)
-            let rendered = AVURLAsset(url: partial)
-            let duration = try await rendered.load(.duration)
-            let videoTracks = try await rendered.loadTracks(withMediaType: .video)
-            guard duration.seconds > 0.001, !videoTracks.isEmpty
-            else { throw ComposeError.exportFailed("empty output") }
+            try await Self.validateOutput(
+                at: partial,
+                expectedSize: renderSize,
+                requiresHEVC: assembled.format.resolution.prefersHEVC && !assembled.forceH264
+            )
             try? FileManager.default.removeItem(at: destination)
             try FileManager.default.moveItem(at: partial, to: destination)
         } catch {
@@ -925,6 +925,50 @@ public struct VideoComposer: Sendable {
             throw ComposeError.exportFailed(Self.describe(error))
         }
         return destination
+    }
+
+    /// Let the composition own its exact portrait, landscape or square render size. The quality
+    /// presets preserve that custom geometry while selecting the delivery codec; the post-write
+    /// validator below prevents a successful export at an unexpected size.
+    static func exportPreset(for assembled: Assembled) -> String {
+        switch (assembled.format.resolution, assembled.forceH264) {
+        case (.uhd4K, false): AVAssetExportPresetHEVCHighestQuality
+        case (.uhd4K, true), (.hd1080, _): AVAssetExportPresetHighestQuality
+        }
+    }
+
+    /// A completed AVFoundation call is not enough: some device/asset combinations have produced
+    /// a zero-frame or wrongly sized file while still finishing the session. Validate the artifact
+    /// before replacing the user's previous export.
+    static func validateOutput(at url: URL, expectedSize: CGSize, requiresHEVC: Bool) async throws {
+        let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        let bytes = (attributes[.size] as? NSNumber)?.int64Value ?? 0
+        guard bytes > 1_024 else { throw ComposeError.exportFailed("empty output") }
+
+        let asset = AVURLAsset(url: url)
+        let duration = try await asset.load(.duration)
+        let playable = try await asset.load(.isPlayable)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        guard duration.seconds > 0.001, playable, let track = tracks.first else {
+            throw ComposeError.exportFailed("unplayable output")
+        }
+
+        let naturalSize = try await track.load(.naturalSize)
+        let transform = try await track.load(.preferredTransform)
+        let descriptions = try await track.load(.formatDescriptions)
+        let display = CGRect(origin: .zero, size: naturalSize).applying(transform).standardized.size
+        let widthMatches = abs(display.width - expectedSize.width) <= 16
+        let heightMatches = abs(display.height - expectedSize.height) <= 16
+        guard widthMatches, heightMatches else {
+            throw ComposeError.exportFailed(
+                "unexpected output size \(Int(display.width))x\(Int(display.height)); expected \(Int(expectedSize.width))x\(Int(expectedSize.height))"
+            )
+        }
+
+        if requiresHEVC {
+            let isHEVC = descriptions.contains { CMFormatDescriptionGetMediaSubType($0) == kCMVideoCodecType_HEVC }
+            guard isHEVC else { throw ComposeError.exportFailed("4K output codec mismatch") }
+        }
     }
 
     /// The system's reason with its code, which is what a bug report needs.
@@ -953,12 +997,13 @@ extension VideoComposer {
         to destination: URL,
         onProgress: @escaping @Sendable (Double) async -> Void
     ) async throws {
-        let preset = assembled.format.resolution.prefersHEVC && !assembled.forceH264 ? AVAssetExportPresetHEVCHighestQuality : AVAssetExportPresetHighestQuality
+        let preset = Self.exportPreset(for: assembled)
         guard let session = AVAssetExportSession(asset: assembled.composition, presetName: preset) else {
             throw ComposeError.exportFailed("no export session")
         }
         session.videoComposition = assembled.videoComposition
         session.audioMix = assembled.audioMix
+        session.shouldOptimizeForNetworkUse = true
         session.audioTimePitchAlgorithm = .spectral
         let reader = ProgressReader(session: session)
         let reporter = Task {
@@ -972,11 +1017,11 @@ extension VideoComposer {
         defer { reporter.cancel() }
         do {
             try await session.export(to: destination, as: .mov)
-            let rendered = AVURLAsset(url: destination)
-            let duration = try await rendered.load(.duration)
-            let videoTracks = try await rendered.loadTracks(withMediaType: .video)
-            guard duration.seconds > 0.001, !videoTracks.isEmpty
-            else { throw ComposeError.exportFailed("empty filtered output") }
+            try await Self.validateOutput(
+                at: destination,
+                expectedSize: assembled.videoComposition.renderSize,
+                requiresHEVC: assembled.format.resolution.prefersHEVC && !assembled.forceH264
+            )
         } catch {
             try? FileManager.default.removeItem(at: destination)
             if let error = error as? ComposeError { throw error }

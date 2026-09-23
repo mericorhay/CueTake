@@ -1,4 +1,5 @@
 require "shellwords"
+require "tmpdir"
 default_platform(:ios)
 
 # Authenticate with App Store Connect via the API key, never an Apple ID.
@@ -97,7 +98,7 @@ platform :ios do
       xcargs: [
         "CURRENT_PROJECT_VERSION=#{build_number}",
         "CODE_SIGN_ENTITLEMENTS=#{Shellwords.escape(ENV.fetch('CUETAKE_SIGNING_ENTITLEMENTS', 'CueTake/CueTake.entitlements'))}",
-        "INFOPLIST_KEY_CueTakeAppleSignInEnabled=#{ENV.fetch('CUETAKE_APPLE_SIGN_IN_ENABLED', 'NO')}",
+        "CUETAKE_APPLE_SIGN_IN_ENABLED=#{ENV.fetch('CUETAKE_APPLE_SIGN_IN_ENABLED', 'NO')}",
       ].join(" "),
       export_options: {
         method: "app-store",
@@ -109,6 +110,34 @@ platform :ios do
         uploadSymbols: true,
       },
     )
+
+    # Do not upload a binary whose Apple button is disabled by a missing build
+    # setting. This catches the exact class of failure that shipped in build 141.
+    if ENV.fetch("CUETAKE_APPLE_SIGN_IN_ENABLED", "NO") == "YES"
+      ipa = File.expand_path("../build/CueTake.ipa", __dir__)
+      Dir.mktmpdir("cuetake-ipa-check") do |directory|
+        sh("unzip -q #{Shellwords.escape(ipa)} -d #{Shellwords.escape(directory)}", log: false)
+        app = Dir.glob(File.join(directory, "Payload", "*.app")).first
+        UI.user_error!("Built IPA has no app bundle") unless app
+        info_path = File.join(app, "Info.plist")
+        enabled = sh(
+          "/usr/libexec/PlistBuddy -c 'Print :CueTakeAppleSignInEnabled' #{Shellwords.escape(info_path)}",
+          log: false,
+        ).strip
+        UI.user_error!("Built IPA disabled native Apple sign-in") unless enabled == "YES"
+
+        signed_entitlements = File.join(directory, "signed-entitlements.plist")
+        sh(
+          "codesign -d --entitlements :- #{Shellwords.escape(app)} > #{Shellwords.escape(signed_entitlements)} 2>/dev/null",
+          log: false,
+        )
+        entitlement = sh(
+          "/usr/libexec/PlistBuddy -c 'Print :com.apple.developer.applesignin:0' #{Shellwords.escape(signed_entitlements)}",
+          log: false,
+        ).strip
+        UI.user_error!("Built IPA lacks the native Apple sign-in entitlement") unless entitlement == "Default"
+      end
+    end
 
     # Wait for App Store Connect to finish processing. With
     # skip_waiting_for_build_processing:true a binary that fails processing

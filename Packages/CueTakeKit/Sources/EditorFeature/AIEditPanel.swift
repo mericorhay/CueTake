@@ -12,7 +12,6 @@ enum AIEditPanel {
         [
             String(localized: "editor.ai.suggest.tighten", bundle: .module),
             String(localized: "editor.ai.suggest.captions", bundle: .module),
-            String(localized: "editor.ai.suggest.structure", bundle: .module),
             String(localized: "editor.ai.suggest.hook", bundle: .module),
             String(localized: "editor.ai.suggest.title", bundle: .module),
             String(localized: "editor.ai.suggest.look", bundle: .module),

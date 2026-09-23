@@ -76,7 +76,9 @@ extension AppModel {
 
     /// The Settings button.
     func cleanStorageNow() async -> String {
-        guard let freed = await cleanStorage(temporaryAge: 60) else {
+        // This is an explicit cleanup, so completed temporary renders can go immediately. The
+        // activity guards above keep files that are still being written out of the sweep.
+        guard let freed = await cleanStorage(temporaryAge: 0) else {
             return String(localized: "storage.wait")
         }
         await refreshStorage()

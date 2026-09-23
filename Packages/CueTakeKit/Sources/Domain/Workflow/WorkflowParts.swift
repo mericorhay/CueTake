@@ -103,7 +103,7 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
     }
 
     public var format: VideoFormat {
-        VideoFormat(aspectRatio: aspect, resolution: resolution, frameRate: frameRate)
+        VideoFormat(aspectRatio: aspect, resolution: resolution, frameRate: frameRate).deliveryCompatible
     }
 
     public var position: CaptionPosition {
@@ -294,10 +294,11 @@ extension WorkflowDefinition {
       "summary": "one sentence",
       "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5, "clip": 1 } ],
       "style": { "captions": true, "captionPreset": "pop|clean|karaoke|bold|boxed|minimal|neon|story", "captionPosition": "top|middle|bottom",
-                 "aspect": "portrait9x16|landscape16x9|square1x1", "resolution": "hd1080|uhd4K|uhd8K", "frameRate": 24|30|60|120 },
+                 "aspect": "portrait9x16|landscape16x9|square1x1", "resolution": "hd1080|uhd4K", "frameRate": 24|30|60|120 },
       "steps": [ { "kind": { "type": "<type>", "parameters": { } } } ]
     }
     "clip" is which of the user's clips fills the section, counting from 1; leave it out if unknown.
+    Use at most 60 fps with uhd4K. hd1080 may use 24, 30, 60 or 120 fps.
     Step types, in the order they usually run:
     - assembleSections: put the clips into the sections.
     - analyzeSpeech: transcribe what is said. Needed before trimSilences, cutWords and captions.

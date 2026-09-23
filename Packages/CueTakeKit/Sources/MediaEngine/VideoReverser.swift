@@ -10,9 +10,9 @@ import Foundation
 /// on the ones before it, so the only way back is to decode forwards and write out in reverse.
 ///
 /// Done in chunks sized by a memory budget rather than by a fixed number of frames: a second of
-/// 1080p is 47 MB of decoded video and a second of 8K is a gigabyte and a half. A fixed chunk
+/// Decoded video grows quickly with frame size. A fixed chunk
 /// either wastes the small case or kills the app on the large one, so the chunk is whatever fits
-/// in 192 MB at this clip's resolution — three frames at 8K, a hundred at 1080p.
+/// in 192 MB at this clip's resolution, keeping memory predictable across supported formats.
 ///
 /// The result is cached next to the media under a key that includes the trimmed range, so
 /// scrubbing a reversed clip costs nothing after the first time, and the original is untouched.

@@ -108,10 +108,9 @@ public struct MediaImporter: Sendable {
         // Thresholds a little under the nominal edge, because footage is not always exactly the
         // number on the box: 3840, 4096 and 4056 are all 4K as far as anybody cares.
         let longEdge = max(width, height)
-        let resolution: VideoFormat.Resolution =
-            if longEdge >= 7000 { .uhd8K }
-            else if longEdge >= 2000 { .uhd4K }
-            else { .hd1080 }
+        // Larger masters stay intact on disk, but the project renders them through the highest
+        // supported delivery pipeline instead of exposing a format the exporter cannot promise.
+        let resolution: VideoFormat.Resolution = longEdge >= 2000 ? .uhd4K : .hd1080
 
         return VideoFormat(
             aspectRatio: ratio,
