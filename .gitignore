@@ -32,3 +32,7 @@ CueTake/Resources/AssistantEndpoint.json
 
 # Wrangler local cache
 .wrangler/
+
+# Resumable local Ollama translation batches. The committed lock file records
+# the model and final catalog hashes; raw prompts and partial responses stay local.
+.localization-cache/

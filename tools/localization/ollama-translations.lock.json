@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "generator": "Ollama",
+  "model": "gpt-oss:20b",
+  "modelDigest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+  "modelBytes": 13793441244,
+  "sourceLocale": "en",
+  "generatedLocales": [
+    "es",
+    "tr"
+  ],
+  "controls": {
+    "sequentialRequests": true,
+    "numCtx": 8192,
+    "numBatch": 256,
+    "maximumModelBytes": 21474836480
+  },
+  "catalogs": {
+    "CueTake/Resources/InfoPlist.xcstrings": {
+      "sha256": "cf841d4372beaa369cefd00138a36cb5433c33a9c99fe8f94b131288e4ec3683",
+      "translatedUnits": 5
+    },
+    "CueTake/Resources/Localizable.xcstrings": {
+      "sha256": "8def86bbdd5017806bf4b2a09bc20bbea4f38836c3041bdbeabb1e7bc351ed60",
+      "translatedUnits": 156
+    },
+    "Packages/CueTakeKit/Sources/AssistantFeature/Resources/Localizable.xcstrings": {
+      "sha256": "097855cdfb0356903ad21615edb3b7e56f9ef2882eeab15e56fe6b61f1b4a29b",
+      "translatedUnits": 42
+    },
+    "Packages/CueTakeKit/Sources/DesignSystem/Resources/Localizable.xcstrings": {
+      "sha256": "33b3da8e3819d61ce83b26351754a06c38ef3879e3ec75c8ffb4edff0fd73211",
+      "translatedUnits": 19
+    },
+    "Packages/CueTakeKit/Sources/EditorFeature/Resources/Localizable.xcstrings": {
+      "sha256": "7427b26e8c177dc7ad3184941bf0e428aec261954dcd02c740d245ee562b8c5a",
+      "translatedUnits": 823
+    },
+    "Packages/CueTakeKit/Sources/LibraryFeature/Resources/Localizable.xcstrings": {
+      "sha256": "97ee88a48346e647f7dbb9e41604ce468e4cb7c341582d448d2986d428816fa7",
+      "translatedUnits": 32
+    },
+    "Packages/CueTakeKit/Sources/OnboardingFeature/Resources/Localizable.xcstrings": {
+      "sha256": "871778f1879fca97f5cf61f2ff047f8cc804776e81addfcdcc32dab97cab4b5f",
+      "translatedUnits": 15
+    },
+    "Packages/CueTakeKit/Sources/ScriptFeature/Resources/Localizable.xcstrings": {
+      "sha256": "688fb41ffe6bd7f65226082f05f4aebf3e54d4995ba499ed9477623eef1bcf12",
+      "translatedUnits": 108
+    },
+    "Packages/CueTakeKit/Sources/SettingsFeature/Resources/Localizable.xcstrings": {
+      "sha256": "f8e2a90e39c9c16df3c050dbf97d1e50077c473e98e10afac3519890e76cccfc",
+      "translatedUnits": 201
+    },
+    "Packages/CueTakeKit/Sources/StudioFeature/Resources/Localizable.xcstrings": {
+      "sha256": "c4aab243d581b9070ed39b37dd4fd92b45a8676a474ecd1da8f0f8e487ec8e70",
+      "translatedUnits": 58
+    },
+    "Packages/CueTakeKit/Sources/SuflorFeature/Resources/Localizable.xcstrings": {
+      "sha256": "d1dc1b9b4b35752f3cfa424f774a7fd06e4a767a0becd69a5480a85edf98c095",
+      "translatedUnits": 201
+    },
+    "Packages/CueTakeKit/Sources/TeamFeature/Resources/Localizable.xcstrings": {
+      "sha256": "55bc6db5325460a788d929f5db9e24432b6a729e51247d968b7e3293b93da720",
+      "translatedUnits": 43
+    },
+    "Packages/CueTakeKit/Sources/Teleprompter/Resources/Localizable.xcstrings": {
+      "sha256": "008ff6d858569b218da4a883877532b62dfd1b839e6f2d96b77a46c70bb5a458",
+      "translatedUnits": 43
+    },
+    "Packages/CueTakeKit/Sources/WorkflowsFeature/Resources/Localizable.xcstrings": {
+      "sha256": "ebae4f77b1d91ad12b6f1bb0e637b0c4dbe7b823f61747acbc03870741cd4d42",
+      "translatedUnits": 197
+    }
+  }
+}

@@ -1,737 +1,995 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "teleprompter.align.center": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Center"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "teleprompter.align.center" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Center"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Orta"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Orta"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centro"
           }
         }
       }
     },
-    "teleprompter.align.left": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Left"
+    "teleprompter.align.left" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Left"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sol"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sol"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izquierda"
           }
         }
       }
     },
-    "teleprompter.backdrop.off": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "None"
+    "teleprompter.backdrop.off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yok"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yok"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguno"
           }
         }
       }
     },
-    "teleprompter.backdrop.on": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show"
+    "teleprompter.backdrop.on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Var"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Var"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar"
           }
         }
       }
     },
-    "teleprompter.countdown.none": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Now"
+    "teleprompter.countdown.none" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hemen"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hemen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora"
           }
         }
       }
     },
-    "teleprompter.countdown.seconds %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld s"
+    "teleprompter.countdown.seconds %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sn"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sn"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s"
           }
         }
       }
     },
-    "teleprompter.hint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Drag the prompter to move it, pull the corner to resize. Presets snap instantly."
+    "teleprompter.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag the prompter to move it, pull the corner to resize. Presets snap instantly."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taşımak için prompter'ı sürükle, boyutlandırmak için köşesinden çek. Hazır düzenler anında oturur."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taşımak için prompter'ı sürükle, boyutlandırmak için köşesinden çek. Hazır düzenler anında oturur."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra el prompter para moverlo, tira de la esquina para redimensionar. Los presets se ajustan al instante."
           }
         }
       }
     },
-    "teleprompter.mirror.off": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off"
+    "teleprompter.mirror.off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kapalı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapalı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagado"
           }
         }
       }
     },
-    "teleprompter.mirror.on": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On"
+    "teleprompter.mirror.on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Açık"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açık"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encendido"
           }
         }
       }
     },
-    "teleprompter.mode.karaoke": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Karaoke"
+    "teleprompter.mode.karaoke" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Karaoke"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Karaoke"
           }
         }
       }
     },
-    "teleprompter.mode.line": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Line"
+    "teleprompter.mode.line" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Line"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Satır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Línea"
           }
         }
       }
     },
-    "teleprompter.mode.word": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Word"
+    "teleprompter.mode.word" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kelime"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kelime"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Palabra"
           }
         }
       }
     },
-    "teleprompter.pace.fast %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld wpm · slow down"
+    "teleprompter.pace.fast %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm · slow down"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld k/dk · yavaşla"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld k/dk · yavaşla"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm · desacelerar"
           }
         }
       }
     },
-    "teleprompter.pace.good %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld wpm"
+    "teleprompter.pace.good %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld k/dk"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld k/dk"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm"
           }
         }
       }
     },
-    "teleprompter.pace.off": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off"
+    "teleprompter.pace.off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Off"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kapalı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapalı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apagado"
           }
         }
       }
     },
-    "teleprompter.pace.on": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On"
+    "teleprompter.pace.on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Açık"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açık"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encendido"
           }
         }
       }
     },
-    "teleprompter.pace.slow %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld wpm · pick up"
+    "teleprompter.pace.slow %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm · pick up"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld k/dk · hızlan"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld k/dk · hızlan"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld wpm · acelerar"
           }
         }
       }
     },
-    "teleprompter.preset.band": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Band"
+    "teleprompter.preset.band" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Band"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Şerit"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şerit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Banda"
           }
         }
       }
     },
-    "teleprompter.preset.camera": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Camera"
+    "teleprompter.preset.camera" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cámara"
           }
         }
       }
     },
-    "teleprompter.preset.compact": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Compact"
+    "teleprompter.preset.compact" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dar"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compacto"
           }
         }
       }
     },
-    "teleprompter.preset.corner": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Corner"
+    "teleprompter.preset.corner" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corner"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Köşe"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Köşe"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esquina"
           }
         }
       }
     },
-    "teleprompter.preset.custom": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom"
+    "teleprompter.preset.custom" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Özel"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Özel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personalizado"
           }
         }
       }
     },
-    "teleprompter.preset.full": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Full"
+    "teleprompter.preset.full" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tam"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completo"
           }
         }
       }
     },
-    "teleprompter.row.align": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Align"
+    "teleprompter.row.align" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Align"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hizala"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hizala"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alinear"
           }
         }
       }
     },
-    "teleprompter.row.backdrop": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Panel"
+    "teleprompter.row.backdrop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Panel"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Panel"
           }
         }
       }
     },
-    "teleprompter.row.countdown": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start after"
+    "teleprompter.row.countdown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start after"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Başlama"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başlama"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar después"
           }
         }
       }
     },
-    "teleprompter.row.highlight": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Highlight"
+    "teleprompter.row.highlight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Highlight"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vurgu"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vurgu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Destacar"
           }
         }
       }
     },
-    "teleprompter.row.mirror": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mirror"
+    "teleprompter.row.mirror" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mirror"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ayna"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayna"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espejo"
           }
         }
       }
     },
-    "teleprompter.row.pace": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pace coach"
+    "teleprompter.row.pace" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pace coach"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hız koçu"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hız koçu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador de ritmo"
           }
         }
       }
     },
-    "teleprompter.size.bigger": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bigger text"
+    "teleprompter.size.bigger" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bigger text"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yazıyı büyüt"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazıyı büyüt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto más grande"
           }
         }
       }
     },
-    "teleprompter.size.smaller": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smaller text"
+    "teleprompter.size.smaller" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller text"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yazıyı küçült"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazıyı küçült"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto más pequeño"
           }
         }
       }
     },
-    "teleprompter.slider.height": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Height"
+    "teleprompter.slider.height" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Height"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yükseklik"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yükseklik"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altura"
           }
         }
       }
     },
-    "teleprompter.slider.lookAhead": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Look-ahead"
+    "teleprompter.slider.lookAhead" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look-ahead"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "İleri bak"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İleri bak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avance"
           }
         }
       }
     },
-    "teleprompter.slider.opacity": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opacity"
+    "teleprompter.slider.opacity" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opacity"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Saydamlık"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saydamlık"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opacidad"
           }
         }
       }
     },
-    "teleprompter.slider.readingLine": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Read line"
+    "teleprompter.slider.readingLine" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read line"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Okuma yeri"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okuma yeri"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leer línea"
           }
         }
       }
     },
-    "teleprompter.slider.speed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Speed"
+    "teleprompter.slider.speed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speed"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hız"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hız"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velocidad"
           }
         }
       }
     },
-    "teleprompter.slider.textSize": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text size"
+    "teleprompter.slider.textSize" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text size"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yazı boyutu"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazı boyutu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño de texto"
           }
         }
       }
     },
-    "teleprompter.slider.width": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Width"
+    "teleprompter.slider.width" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Width"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Genişlik"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Genişlik"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancho"
           }
         }
       }
     },
-    "teleprompter.speed.faster": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Faster"
+    "teleprompter.speed.faster" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hızlandır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hızlandır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más rápido"
           }
         }
       }
     },
-    "teleprompter.speed.slower": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Slower"
+    "teleprompter.speed.slower" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slower"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yavaşlat"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yavaşlat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más lento"
           }
         }
       }
     },
-    "teleprompter.tab.flow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Flow"
+    "teleprompter.tab.flow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flow"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Akış"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akış"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flujo"
           }
         }
       }
     },
-    "teleprompter.tab.layout": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Layout"
+    "teleprompter.tab.layout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Layout"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Düzen"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzen"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diseño"
           }
         }
       }
     },
-    "teleprompter.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TELEPROMPTER"
+    "teleprompter.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TELEPROMPTER"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TELEPROMPTER"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TELEPROMPTER"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TELEPROMPTER"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

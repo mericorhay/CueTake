@@ -12,6 +12,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  localization:
+    name: Localization integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+      - run: node --test tools/localization/catalogs.test.mjs
+      - run: node tools/localization/validate-localizations.mjs --strict --verify-lock
   accounts:
     name: Account security tests
     runs-on: ubuntu-latest
@@ -61,7 +72,7 @@ jobs:
             DEVELOPMENT_TEAM=""
 
       - name: Capture settings layouts
-        timeout-minutes: 8
+        timeout-minutes: 12
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -70,10 +81,18 @@ jobs:
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" "$RUNNER_TEMP/CueTakeDerived/Build/Products/Debug-iphonesimulator/CueTake.app"
           mkdir -p "$RUNNER_TEMP/settings-layouts"
-          for SCREEN in settings account capture editing intelligence privacy voice certificates; do
-            xcrun simctl launch --terminate-running-process "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages '(tr)' -AppleLocale tr_TR
-            sleep 4
-            xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/settings-layouts/$SCREEN.png"
+          for LANGUAGE in en es tr; do
+            case "$LANGUAGE" in
+              en) LOCALE=en_US ;;
+              es) LOCALE=es_ES ;;
+              tr) LOCALE=tr_TR ;;
+            esac
+            mkdir -p "$RUNNER_TEMP/settings-layouts/$LANGUAGE"
+            for SCREEN in settings account capture editing intelligence privacy voice certificates; do
+              xcrun simctl launch --terminate-running-process "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages "($LANGUAGE)" -AppleLocale "$LOCALE"
+              sleep 4
+              xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/settings-layouts/$LANGUAGE/$SCREEN.png"
+            done
           done
           xcrun simctl terminate "$DEVICE" com.orhay.cuetake || true
 
@@ -82,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: settings-layouts
-          path: ${{ runner.temp }}/settings-layouts/*.png
+          path: ${{ runner.temp }}/settings-layouts/**/*.png
           if-no-files-found: ignore
 
       - name: Run the package tests

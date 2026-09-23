@@ -1,264 +1,354 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "onboarding.1.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One sentence becomes a plan you can shoot: hook, intro, point, call to action."
+  "sourceLanguage" : "en",
+  "strings" : {
+    "onboarding.1.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One sentence becomes a plan you can shoot: hook, intro, point, call to action."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tek cümle, çekime hazır bir plana dönüşür: açılış, giriş, ana fikir, kapanış."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek cümle, çekime hazır bir plana dönüşür: açılış, giriş, ana fikir, kapanış."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una frase se convierte en un plan que puedes grabar: gancho, introducción, punto, llamada a la acción."
           }
         }
       }
     },
-    "onboarding.1.title": {
-      "comment": "Two lines; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Say the idea.\nGet the video."
+    "onboarding.1.title" : {
+      "comment" : "Two lines; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say the idea.\nGet the video."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fikri söyle.\nVideoyu al."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fikri söyle.\nVideoyu al."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di la idea.\nGraba el video."
           }
         }
       }
     },
-    "onboarding.2.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The teleprompter listens and holds your place, line by line. You never touch the screen."
+    "onboarding.2.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The teleprompter listens and holds your place, line by line. You never touch the screen."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Teleprompter seni dinler, satırını kaybetmez. Ekrana hiç dokunmazsın."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teleprompter seni dinler, satırını kaybetmez. Ekrana hiç dokunmazsın."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El teleprompter escucha y mantiene tu posición, línea por línea. Nunca tocas la pantalla."
           }
         }
       }
     },
-    "onboarding.2.title": {
-      "comment": "Two lines; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The script\nfollows you."
+    "onboarding.2.title" : {
+      "comment" : "Two lines; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The script\nfollows you."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metin\nseni takip eder."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin\nseni takip eder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El guion\nte sigue."
           }
         }
       }
     },
-    "onboarding.3.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Re-record a single part. Captions, timing and the rest of the video stay as they are."
+    "onboarding.3.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Re-record a single part. Captions, timing and the rest of the video stay as they are."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sadece o bölümü yeniden çek. Altyazılar, süreler ve videonun kalanı olduğu gibi kalır."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sadece o bölümü yeniden çek. Altyazılar, süreler ve videonun kalanı olduğu gibi kalır."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regraba una sola parte. Los subtítulos, el tiempo y el resto del video se mantienen."
           }
         }
       }
     },
-    "onboarding.3.title": {
-      "comment": "Two lines; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fix one line,\nnot the take."
+    "onboarding.3.title" : {
+      "comment" : "Two lines; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fix one line,\nnot the take."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tek cümleyi düzelt,\nçekimi değil."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tek cümleyi düzelt,\nçekimi değil."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corrige una línea,\nno la toma."
           }
         }
       }
     },
-    "onboarding.card.blueprint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "BLUEPRINT"
+    "onboarding.card.blueprint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BLUEPRINT"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TASLAK"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TASLAK"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PLANTILLA"
           }
         }
       }
     },
-    "onboarding.card.blueprint.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HOOK · INTRO · POINT · CTA"
+    "onboarding.card.blueprint.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HOOK · INTRO · POINT · CTA"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AÇILIŞ · GİRİŞ · FİKİR · CTA"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AÇILIŞ · GİRİŞ · FİKİR · CTA"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GARGANTA · INTRO · PUNTO · CTA"
           }
         }
       }
     },
-    "onboarding.card.idea": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IDEA"
+    "onboarding.card.idea" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IDEA"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FİKİR"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FİKİR"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IDEA"
           }
         }
       }
     },
-    "onboarding.card.idea.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "\"30 sn iPhone reel\""
+    "onboarding.card.idea.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"30 sn iPhone reel\""
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "\"30 sn iPhone reel\""
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"30 sn iPhone reel\""
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"30 sn iPhone reel\""
           }
         }
       }
     },
-    "onboarding.card.video": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "VIDEO"
+    "onboarding.card.video" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VIDEO"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "VİDEO"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VİDEO"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VIDEO"
           }
         }
       }
     },
-    "onboarding.card.video.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:30 · captions burned in"
+    "onboarding.card.video.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0:30 · captions burned in"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:30 · altyazılı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0:30 · altyazılı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0:30 · subtítulos incrustados"
           }
         }
       }
     },
-    "onboarding.next": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next"
+    "onboarding.next" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Devam"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siguiente"
           }
         }
       }
     },
-    "onboarding.skip": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip"
+    "onboarding.skip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Atla"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atla"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir"
           }
         }
       }
     },
-    "onboarding.start": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start creating"
+    "onboarding.start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start creating"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Üretmeye başla"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Üretmeye başla"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comienza a crear"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

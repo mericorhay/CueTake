@@ -1,1850 +1,2498 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "blueprint.action.delete": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "blueprint.action.delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sil"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
         }
       }
     },
-    "blueprint.action.duplicate": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplicate"
+    "blueprint.action.duplicate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çoğalt"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Çoğalt"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicar"
           }
         }
       }
     },
-    "blueprint.action.moveDown": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "↓ Move"
+    "blueprint.action.moveDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↓ Move"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↓ Taşı"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "↓ Taşı"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↓ Mover"
           }
         }
       }
     },
-    "blueprint.action.moveUp": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "↑ Move"
+    "blueprint.action.moveUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↑ Move"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "↑ Taşı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↑ Taşı"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "↑ Mover"
+          }
         }
       }
     },
-    "blueprint.action.regenerate": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Regenerate"
+    "blueprint.action.regenerate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regenerate"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniden üret"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yeniden üret"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regenerar"
           }
         }
       }
     },
-    "blueprint.kicker %@": {
-      "comment": "Header stamp; the argument is the total duration, e.g. 0:30.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "BLUEPRINT · %@"
+    "blueprint.kicker %@" : {
+      "comment" : "Header stamp; the argument is the total duration, e.g. 0:30.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BLUEPRINT · %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TASLAK · %@"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TASLAK · %@"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PLANTILLA · %@"
           }
         }
       }
     },
-    "blueprint.script": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Script"
+    "blueprint.script" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metin"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guion"
           }
         }
       }
     },
-    "blueprint.studio": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Go to Studio"
+    "blueprint.studio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Studio"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stüdyoya geç"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stüdyoya geç"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir al Estudio"
           }
         }
       }
     },
-    "blueprint.title": {
-      "comment": "Project title on the blueprint; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone 17 Pro Max\nCamera"
+    "blueprint.title" : {
+      "comment" : "Project title on the blueprint; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max\nCamera"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone 17 Pro Max\nKamera"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max\nKamera"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max\nCámara"
+          }
         }
       }
     },
-    "create.idea.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI writes the blueprint"
+    "create.idea.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI writes the blueprint"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taslağı AI yazsın"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taslağı AI yazsın"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA escribe la plantilla"
           }
         }
       }
     },
-    "create.idea.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start from Idea"
+    "create.idea.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from Idea"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fikirle başla"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fikirle başla"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comienza con Idea"
+          }
         }
       }
     },
-    "create.import.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clips and photos you already have, in your order"
+    "create.import.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clips and photos you already have, in your order"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çektiğin klipler ve fotoğraflar, senin sıranla"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Çektiğin klipler ve fotoğraflar, senin sıranla"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clips y fotos que ya tienes, en tu orden"
           }
         }
       }
     },
-    "create.import.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import videos and photos"
+    "create.import.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import videos and photos"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video ve fotoğraf at"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Video ve fotoğraf at"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importar videos y fotos"
           }
         }
       }
     },
-    "create.record.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Straight to camera, no script"
+    "create.record.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Straight to camera, no script"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doğrudan kamera, metin yok"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Doğrudan kamera, metin yok"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directo a la cámara, sin guion"
           }
         }
       }
     },
-    "create.record.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Recording"
+    "create.record.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Recording"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayda başla"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kayda başla"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Iniciar grabación"
           }
         }
       }
     },
-    "create.script.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paste what you already wrote"
+    "create.script.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste what you already wrote"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yazdığın metni yapıştır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazdığın metni yapıştır"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pega lo que ya escribiste"
+          }
         }
       }
     },
-    "create.script.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start from Script"
+    "create.script.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from Script"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metinle başla"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metinle başla"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comenzar desde el guion"
           }
         }
       }
     },
-    "create.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick an entry point. Everything else adapts."
+    "create.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick an entry point. Everything else adapts."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir başlangıç seç. Gerisi ona göre şekillenir."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bir başlangıç seç. Gerisi ona göre şekillenir."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige un punto de entrada. Todo lo demás se adapta."
           }
         }
       }
     },
-    "create.title": {
-      "comment": "Two lines; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Where do\nwe start?"
+    "create.title" : {
+      "comment" : "Two lines; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where do\nwe start?"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nereden\nbaşlıyoruz?"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nereden\nbaşlıyoruz?"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dónde\ncomenzamos?"
+          }
         }
       }
     },
-    "create.workflow.subtitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Product Reel · 5 steps"
+    "create.workflow.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Product Reel · 5 steps"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ürün Reel'i · 5 adım"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ürün Reel'i · 5 adım"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reel de producto · 5 pasos"
           }
         }
       }
     },
-    "create.workflow.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use Workflow"
+    "create.workflow.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Workflow"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Workflow kullan"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workflow kullan"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar flujo de trabajo"
+          }
         }
       }
     },
-    "prompt.chip.cameraComparison": {
-      "comment": "Prompt suggestion, in the creator's own language as in the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera karşılaştırması"
+    "prompt.chip.cameraComparison" : {
+      "comment" : "Prompt suggestion, in the creator's own language as in the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera karşılaştırması"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera karşılaştırması"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kamera karşılaştırması"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamera karşılaştırması"
           }
         }
       }
     },
-    "prompt.chip.productReel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sn ürün reel’i"
+    "prompt.chip.productReel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 sn ürün reel’i"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 sn ürün reel’i"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sn ürün reel’i"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 sn ürün reel’i"
           }
         }
       }
     },
-    "prompt.chip.storytelling": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hikâye anlatımı"
+    "prompt.chip.storytelling" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hikâye anlatımı"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hikâye anlatımı"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hikâye anlatımı"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hikâye anlatımı"
           }
         }
       }
     },
-    "prompt.chip.tutorial": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tutorial: 3 adım"
+    "prompt.chip.tutorial" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutorial: 3 adım"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutorial: 3 adım"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tutorial: 3 adım"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutorial: 3 adım"
           }
         }
       }
     },
-    "prompt.default": {
-      "comment": "Prefilled brief, in the creator's own language as in the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+    "prompt.default" : {
+      "comment" : "Prefilled brief, in the creator's own language as in the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+          }
         }
       }
     },
-    "prompt.failed.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing came back. Try describing the video differently."
+    "prompt.failed.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing came back. Try describing the video differently."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir şey dönmedi. Videoyu farklı anlatmayı dene."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bir şey dönmedi. Videoyu farklı anlatmayı dene."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se obtuvo respuesta. Intenta describir el video de otra manera."
           }
         }
       }
     },
-    "prompt.failed.generic": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not write the script."
+    "prompt.failed.generic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not write the script."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metin yazılamadı."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin yazılamadı."
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo escribir el guion."
+          }
         }
       }
     },
-    "prompt.failed.notReady": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The model is still downloading. Try again shortly."
+    "prompt.failed.notReady" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The model is still downloading. Try again shortly."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model hâlâ iniyor. Birazdan tekrar dene."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model hâlâ iniyor. Birazdan tekrar dene."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El modelo sigue descargándose. Intenta de nuevo pronto."
           }
         }
       }
     },
-    "prompt.failed.unavailable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This iPhone cannot run the on-device model."
+    "prompt.failed.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This iPhone cannot run the on-device model."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu iPhone cihaz üstü modeli çalıştıramıyor."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu iPhone cihaz üstü modeli çalıştıramıyor."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este iPhone no puede ejecutar el modelo en el dispositivo."
           }
         }
       }
     },
-    "prompt.generate": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Generate blueprint"
+    "prompt.generate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate blueprint"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Taslağı oluştur"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taslağı oluştur"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generar esquema"
+          }
         }
       }
     },
-    "prompt.kicker": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IDEA → BLUEPRINT"
+    "prompt.kicker" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IDEA → BLUEPRINT"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FİKİR → TASLAK"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FİKİR → TASLAK"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IDEA → ESQUEMA"
           }
         }
       }
     },
-    "prompt.length.seconds %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sec"
+    "prompt.length.seconds %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sec"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sn"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sn"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld seg"
           }
         }
       }
     },
-    "prompt.option.format": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FORMAT"
+    "prompt.option.format" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FORMAT"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FORMAT"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "FORMAT"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FORMATO"
           }
         }
       }
     },
-    "prompt.option.format.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "9:16 Reel"
+    "prompt.option.format.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "9:16 Reel"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "9:16 Reel"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "9:16 Reel"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reel 9:16"
           }
         }
       }
     },
-    "prompt.option.length": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LENGTH"
+    "prompt.option.length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LENGTH"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SÜRE"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SÜRE"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LARGO"
+          }
         }
       }
     },
-    "prompt.option.length.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sec"
+    "prompt.option.length.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 sec"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 sn"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sn"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 seg."
           }
         }
       }
     },
-    "prompt.option.tone": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TONE"
+    "prompt.option.tone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TONE"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TON"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TON"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TÓN"
+          }
         }
       }
     },
-    "prompt.option.tone.value": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Energetic"
+    "prompt.option.tone.value" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energetic"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enerjik"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enerjik"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enérgico"
           }
         }
       }
     },
-    "prompt.step.beats": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Structuring beats"
+    "prompt.step.beats" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Structuring beats"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Akış kuruluyor"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Akış kuruluyor"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estructurar compases"
           }
         }
       }
     },
-    "prompt.step.beats.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "4 segments"
+    "prompt.step.beats.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 segments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 segment"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "4 segment"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 segmentos"
           }
         }
       }
     },
-    "prompt.step.intent": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reading intent"
+    "prompt.step.intent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading intent"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niyet okunuyor"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Niyet okunuyor"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intención de lectura"
           }
         }
       }
     },
-    "prompt.step.intent.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "tone, length"
+    "prompt.step.intent.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tone, length"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ton, süre"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ton, süre"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tono, duración"
+          }
         }
       }
     },
-    "prompt.step.timing": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Timing segments"
+    "prompt.step.timing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timing segments"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Süreler ayarlanıyor"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Süreler ayarlanıyor"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sincronizar segmentos"
           }
         }
       }
     },
-    "prompt.step.timing.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "0:30 total"
+    "prompt.step.timing.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0:30 total"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "toplam 0:30"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "toplam 0:30"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "0:30 total"
           }
         }
       }
     },
-    "prompt.step.writing": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Writing script"
+    "prompt.step.writing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing script"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metin yazılıyor"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metin yazılıyor"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribir guion"
+          }
         }
       }
     },
-    "prompt.step.writing.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TR · 78 words"
+    "prompt.step.writing.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TR · 78 words"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TR · 78 kelime"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TR · 78 kelime"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TR · 78 palabras"
           }
         }
       }
     },
-    "prompt.title": {
-      "comment": "Two lines; the line break is part of the design.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What are we\nmaking?"
+    "prompt.title" : {
+      "comment" : "Two lines; the line break is part of the design.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What are we\nmaking?"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ne çekiyoruz\nbugün?"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne çekiyoruz\nbugün?"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Qué estamos\ncreando?"
+          }
         }
       }
     },
-    "prompt.tone.calm": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calm"
+    "prompt.tone.calm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calm"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sakin"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sakin"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calma"
           }
         }
       }
     },
-    "prompt.tone.energetic": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Energetic"
+    "prompt.tone.energetic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energetic"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enerjik"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enerjik"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enérgico"
           }
         }
       }
     },
-    "prompt.tone.expert": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expert"
+    "prompt.tone.expert" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expert"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uzman"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uzman"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Experto"
           }
         }
       }
     },
-    "prompt.tone.funny": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Funny"
+    "prompt.tone.funny" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funny"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eğlenceli"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eğlenceli"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Divertido"
           }
         }
       }
     },
-    "prompt.tone.story": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Story"
+    "prompt.tone.story" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Story"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hikâye"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hikâye"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historia"
+          }
         }
       }
     },
-    "script.action.longer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Longer"
+    "script.action.longer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longer"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha uzun"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daha uzun"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más largo"
           }
         }
       }
     },
-    "script.action.moreEnergetic": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More energetic"
+    "script.action.moreEnergetic" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More energetic"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daha enerjik"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha enerjik"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más enérgico"
+          }
         }
       }
     },
-    "script.action.moreNatural": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More natural"
+    "script.action.moreNatural" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More natural"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha doğal"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daha doğal"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más natural"
           }
         }
       }
     },
-    "script.action.rewrite": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rewrite"
+    "script.action.rewrite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewrite"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniden yaz"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yeniden yaz"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reescribir"
           }
         }
       }
     },
-    "script.action.shorter": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shorter"
+    "script.action.shorter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shorter"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Daha kısa"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daha kısa"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Más corto"
+          }
         }
       }
     },
-    "script.add": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add a part"
+    "script.add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a part"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bölüm ekle"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bölüm ekle"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir parte"
           }
         }
       }
     },
-    "script.brand.about": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What it is and does"
+    "script.brand.about" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What it is and does"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne yapıyor, ne satıyor"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ne yapıyor, ne satıyor"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué es y hace"
           }
         }
       }
     },
-    "script.brand.add": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Add your brand voice"
+    "script.brand.add" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add your brand voice"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marka sesini ekle"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marka sesini ekle"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade tu voz de marca"
           }
         }
       }
     },
-    "script.brand.audience": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Who the videos are for"
+    "script.brand.audience" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who the videos are for"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videolar kime hitap ediyor"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Videolar kime hitap ediyor"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para quién son los videos"
           }
         }
       }
     },
-    "script.brand.avoid": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Never say"
+    "script.brand.avoid" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never say"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Asla geçmesin"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asla geçmesin"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nunca digas"
+          }
         }
       }
     },
-    "script.brand.cancel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cancel"
+    "script.brand.cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vazgeç"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vazgeç"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
           }
         }
       }
     },
-    "script.brand.edit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit"
+    "script.brand.edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Düzenle"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzenle"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar"
+          }
         }
       }
     },
-    "script.brand.footer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The AI uses this when it writes your scripts. It stays on this phone and is sent only with a script request."
+    "script.brand.footer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The AI uses this when it writes your scripts. It stays on this phone and is sent only with a script request."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI, script yazarken bunu kullanır. Bu telefonda kalır; yalnızca script isteğiyle birlikte gönderilir."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI, script yazarken bunu kullanır. Bu telefonda kalır; yalnızca script isteğiyle birlikte gönderilir."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA usa esto al escribir tus guiones. Se queda en este teléfono y solo se envía con una solicitud de guion."
           }
         }
       }
     },
-    "script.brand.mustSay": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Always say (slogan, sign-off)"
+    "script.brand.mustSay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Always say (slogan, sign-off)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mutlaka geçsin (slogan, kapanış)"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mutlaka geçsin (slogan, kapanış)"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siempre decir (eslogan, despedida)"
           }
         }
       }
     },
-    "script.brand.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brand or creator name"
+    "script.brand.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brand or creator name"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marka ya da içerik üretici adı"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marka ya da içerik üretici adı"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nombre de la marca o creador"
           }
         }
       }
     },
-    "script.brand.save": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save"
+    "script.brand.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydet"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kaydet"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar"
           }
         }
       }
     },
-    "script.brand.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Brand voice"
+    "script.brand.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brand voice"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Marka sesi"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marka sesi"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voz de marca"
+          }
         }
       }
     },
-    "script.brand.unnamed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "my brand"
+    "script.brand.unnamed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "my brand"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "markam"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "markam"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mi marca"
           }
         }
       }
     },
-    "script.brand.use %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write as %@"
+    "script.brand.use %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write as %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sesiyle yaz"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ sesiyle yaz"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe como %@"
           }
         }
       }
     },
-    "script.delete": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
+    "script.delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sil"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
+          }
         }
       }
     },
-    "script.done": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
+    "script.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitti"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bitti"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
           }
         }
       }
     },
-    "script.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to write this part"
+    "script.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to write this part"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu kısmı yazmak için dokun"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu kısmı yazmak için dokun"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca para escribir esta parte"
+          }
         }
       }
     },
-    "script.kicker %lld": {
-      "comment": "Header stamp; the argument is the script's word count.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SCRIPT · %lld WORDS"
+    "script.kicker %lld" : {
+      "comment" : "Header stamp; the argument is the script's word count.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCRIPT · %lld WORDS"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCRIPT · %lld KELİME"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SCRIPT · %lld KELİME"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCRIPT · %lld PALABRAS"
           }
         }
       }
     },
-    "script.library.delete": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
+    "script.library.delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sil"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar"
           }
         }
       }
     },
-    "script.library.save": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep for later"
+    "script.library.save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep for later"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydet"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kaydet"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar para más tarde"
           }
         }
       }
     },
-    "script.library.saveScript": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep this script"
+    "script.library.saveScript" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep this script"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu metni kaydet"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu metni kaydet"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardar este guion"
           }
         }
       }
     },
-    "script.library.saved": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kept"
+    "script.library.saved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kaydedildi"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaydedildi"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado"
+          }
         }
       }
     },
-    "script.library.savedNotice": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kept in your scripts"
+    "script.library.savedNotice" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kept in your scripts"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazır metinlerine kaydedildi"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hazır metinlerine kaydedildi"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado en tus guiones"
           }
         }
       }
     },
-    "script.library.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your scripts"
+    "script.library.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your scripts"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hazır metinlerim"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazır metinlerim"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tus guiones"
+          }
         }
       }
     },
-    "script.library.words %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld words"
+    "script.library.words %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld words"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld kelime"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld kelime"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld palabras"
           }
         }
       }
     },
-    "script.longer.addition": {
-      "comment": "Sentence appended by the Longer rewrite, in the script's language.",
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+    "script.longer.addition" : {
+      "comment" : "Sentence appended by the Longer rewrite, in the script's language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
           }
         }
       }
     },
-    "script.moveDown": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Move down"
+    "script.moveDown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move down"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aşağı taşı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aşağı taşı"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover hacia abajo"
+          }
         }
       }
     },
-    "script.moveUp": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Move up"
+    "script.moveUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move up"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yukarı taşı"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yukarı taşı"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover hacia arriba"
           }
         }
       }
     },
-    "script.natural.prefix": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bak şöyle söyleyeyim:"
+    "script.natural.prefix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bak şöyle söyleyeyim:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bak şöyle söyleyeyim:"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bak şöyle söyleyeyim:"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bak şöyle söyleyeyim:"
           }
         }
       }
     },
-    "script.paste.hint": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paragraphs become parts. One block of text is cut at sentences: the first is the hook, the last the call to action."
+    "script.paste.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paragraphs become parts. One block of text is cut at sentences: the first is the hook, the last the call to action."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paragraflar bölüm olur. Tek parça metin cümlelerden bölünür: ilki kanca, sonuncusu çağrı olur."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paragraflar bölüm olur. Tek parça metin cümlelerden bölünür: ilki kanca, sonuncusu çağrı olur."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los párrafos se convierten en partes. Un bloque de texto se corta en frases: la primera es el gancho, la última la llamada a la acción."
           }
         }
       }
     },
-    "script.paste.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paste or type the whole script here…"
+    "script.paste.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste or type the whole script here…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senaryonun tamamını buraya yapıştır ya da yaz…"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Senaryonun tamamını buraya yapıştır ya da yaz…"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pega o escribe el guion completo aquí…"
           }
         }
       }
     },
-    "script.paste.split": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Split into parts"
+    "script.paste.split" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split into parts"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bölümlere ayır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bölümlere ayır"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dividir en partes"
+          }
         }
       }
     },
-    "script.paste.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your script"
+    "script.paste.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your script"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senaryon"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Senaryon"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu guion"
           }
         }
       }
     },
-    "script.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What you say here…"
+    "script.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What you say here…"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Burada ne söyleyeceksin…"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Burada ne söyleyeceksin…"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que dices aquí…"
+          }
         }
       }
     },
-    "script.rewrite.failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't rewrite that part. Try again."
+    "script.rewrite.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't rewrite that part. Try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu kısım yeniden yazılamadı. Tekrar dene."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu kısım yeniden yazılamadı. Tekrar dene."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo reescribir esa parte. Inténtalo de nuevo."
           }
         }
       }
     },
-    "script.rewrite.prefix": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cidden,"
+    "script.rewrite.prefix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cidden,"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cidden,"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cidden,"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cidden,"
           }
         }
       }
     },
-    "script.rewrite.unavailable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rewriting needs Apple Intelligence turned on in Settings. You can still edit the text by hand."
+    "script.rewrite.unavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewriting needs Apple Intelligence turned on in Settings. You can still edit the text by hand."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniden yazmak için Ayarlar'da Apple Intelligence açık olmalı. Metni yine de elle düzenleyebilirsin."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yeniden yazmak için Ayarlar'da Apple Intelligence açık olmalı. Metni yine de elle düzenleyebilirsin."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reescribir necesita que Apple Intelligence esté activado en Ajustes. Puedes seguir editando el texto manualmente."
           }
         }
       }
     },
-    "script.rewriteAs": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "REWRITE AS"
+    "script.rewriteAs" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REWRITE AS"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ŞÖYLE YAZ"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ŞÖYLE YAZ"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "REESCRIBIR COMO"
           }
         }
       }
     },
-    "script.start.paste": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Paste a script"
+    "script.start.paste" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste a script"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Metni yapıştır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metni yapıştır"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pega un guion"
+          }
         }
       }
     },
-    "script.start.write": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write with AI"
+    "script.start.write" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write with AI"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI yazsın"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI yazsın"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe con IA"
           }
         }
       }
     },
-    "script.studio": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Go to Studio"
+    "script.studio" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Studio"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stüdyoya geç"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stüdyoya geç"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ir a Studio"
           }
         }
       }
     },
-    "script.undo": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Undo"
+    "script.undo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Undo"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geri al"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri al"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshacer"
+          }
         }
       }
     },
-    "script.write.empty": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The AI came back with nothing. Try a clearer idea."
+    "script.write.empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The AI came back with nothing. Try a clearer idea."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI boş döndü. Fikri biraz daha açık yazmayı dene."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AI boş döndü. Fikri biraz daha açık yazmayı dene."
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA no devolvió nada. Prueba con una idea más clara."
           }
         }
       }
     },
-    "script.write.go": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write the script"
+    "script.write.go" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write the script"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Script'i yaz"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Script'i yaz"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe el guion"
+          }
         }
       }
     },
-    "script.write.length": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Length"
+    "script.write.length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Length"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uzunluk"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uzunluk"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Longitud"
           }
         }
       }
     },
-    "script.write.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "e.g. Three mistakes people make with their first espresso machine"
+    "script.write.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. Three mistakes people make with their first espresso machine"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ör. İlk espresso makinesini alanların yaptığı üç hata"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ör. İlk espresso makinesini alanların yaptığı üç hata"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p.ej. Tres errores que la gente comete con su primera máquina de espresso"
           }
         }
       }
     },
-    "script.write.seconds %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld s"
+    "script.write.seconds %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sn"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld sn"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s"
           }
         }
       }
     },
-    "script.write.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What is the video about?"
+    "script.write.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is the video about?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video ne hakkında?"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Video ne hakkında?"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿De qué trata el video?"
           }
         }
       }
     },
-    "script.write.words %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "up to %lld words"
+    "script.write.words %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "up to %lld words"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "en fazla %lld kelime"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en fazla %lld kelime"
           }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hasta %lld palabras"
+          }
         }
       }
     },
-    "script.write.working": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Writing…"
+    "script.write.working" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Writing…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yazılıyor…"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yazılıyor…"
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribiendo…"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

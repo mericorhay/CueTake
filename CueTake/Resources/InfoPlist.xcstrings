@@ -4,36 +4,116 @@
     "CFBundleDisplayName" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake" } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake"
+          }
+        }
       }
     },
     "NSCameraUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake uses the camera to record your videos." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake videolarını çekmek için kamerayı kullanır." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake uses the camera to record your videos."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake videolarını çekmek için kamerayı kullanır."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake usa la cámara para grabar tus videos."
+          }
+        }
       }
     },
     "NSMicrophoneUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake records your voice and listens so the teleprompter can follow you." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake sesini kaydeder ve teleprompter'ın seni takip edebilmesi için konuşmanı dinler." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake records your voice and listens so the teleprompter can follow you."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake sesini kaydeder ve teleprompter'ın seni takip edebilmesi için konuşmanı dinler."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake graba tu voz y escucha para que el teleprompter te siga."
+          }
+        }
       }
     },
     "NSPhotoLibraryAddUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CueTake saves your finished videos to your photo library." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "CueTake bitmiş videolarını fotoğraf arşivine kaydeder." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake saves your finished videos to your photo library."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake bitmiş videolarını fotoğraf arşivine kaydeder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake guarda tus videos terminados en tu biblioteca de fotos."
+          }
+        }
       }
     },
     "NSSpeechRecognitionUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Speech recognition lets the teleprompter follow you and creates captions automatically." } },
-        "tr" : { "stringUnit" : { "state" : "translated", "value" : "Konuşma tanıma, teleprompter'ın seni takip etmesini ve altyazıların otomatik oluşmasını sağlar." } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech recognition lets the teleprompter follow you and creates captions automatically."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konuşma tanıma, teleprompter'ın seni takip etmesini ve altyazıların otomatik oluşmasını sağlar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El reconocimiento de voz permite que el teleprompter te siga y crea subtítulos automáticamente."
+          }
+        }
       }
     }
   },

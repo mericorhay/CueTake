@@ -1,737 +1,995 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "team.addProject %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Put “%@” in this team"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "team.addProject %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put “%@” in this team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "“%@” projesini ekibe koy"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” projesini ekibe koy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade “%@” a este equipo"
           }
         }
       }
     },
-    "team.close": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+    "team.close" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kapat"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapat"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cerrar"
           }
         }
       }
     },
-    "team.explainer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Put a project in your team and everyone in it sees the same video, with every cut, caption and setting — and can change it."
+    "team.explainer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Put a project in your team and everyone in it sees the same video, with every cut, caption and setting — and can change it."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bir projeyi ekibinize koyun; ekipteki herkes aynı videoyu her kesimi, altyazısı ve ayarıyla görür — ve değiştirebilir."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir projeyi ekibinize koyun; ekipteki herkes aynı videoyu her kesimi, altyazısı ve ayarıyla görür — ve değiştirebilir."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añade un proyecto a tu equipo y todos lo verán con el mismo video, cortes, subtítulos y ajustes, y podrán cambiarlo."
           }
         }
       }
     },
-    "team.headline": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit together"
+    "team.headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit together"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Birlikte düzenleyin"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birlikte düzenleyin"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edición colaborativa"
           }
         }
       }
     },
-    "team.inviteLink": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invite by link"
+    "team.inviteLink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite by link"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bağlantıyla davet et"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bağlantıyla davet et"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitar por enlace"
           }
         }
       }
     },
-    "team.inviteNearby": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invite nearby"
+    "team.inviteNearby" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite nearby"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yakındakini davet et"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakındakini davet et"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitar cerca"
           }
         }
       }
     },
-    "team.joinNearby": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Join a team nearby"
+    "team.joinNearby" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Join a team nearby"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yakındaki bir ekibe katıl"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yakındaki bir ekibe katıl"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unirse a un equipo cercano"
           }
         }
       }
     },
-    "team.leave.end": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "End the team"
+    "team.leave.end" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End the team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekibi sonlandır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekibi sonlandır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminar el equipo"
           }
         }
       }
     },
-    "team.leave.endMessage": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Everyone loses access to its projects. Your own copies stay on your phone."
+    "team.leave.endMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everyone loses access to its projects. Your own copies stay on your phone."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Herkes ekibin projelerine erişimini kaybeder. Kendi kopyaların telefonunda kalır."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herkes ekibin projelerine erişimini kaybeder. Kendi kopyaların telefonunda kalır."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos perderán acceso a sus proyectos. Tus copias personales permanecerán en tu teléfono."
           }
         }
       }
     },
-    "team.leave.leave": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Leave the team"
+    "team.leave.leave" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave the team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekipten ayrıl"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekipten ayrıl"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salir del equipo"
           }
         }
       }
     },
-    "team.leave.leaveMessage": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You will no longer see this team’s projects."
+    "team.leave.leaveMessage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You will no longer see this team’s projects."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu ekibin projelerini artık görmeyeceksin."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ekibin projelerini artık görmeyeceksin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya no verás los proyectos de este equipo."
           }
         }
       }
     },
-    "team.leave.title %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "“%@”"
+    "team.leave.title %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "“%@”"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
           }
         }
       }
     },
-    "team.make": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make"
+    "team.make" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kur"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kur"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crear"
           }
         }
       }
     },
-    "team.make.placeholder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New team name"
+    "team.make.placeholder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New team name"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yeni ekip adı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni ekip adı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo nombre de equipo"
           }
         }
       }
     },
-    "team.notYet": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Teams are being switched on. Until then you can try how meeting another phone will look."
+    "team.notYet" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teams are being switched on. Until then you can try how meeting another phone will look."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekipler açılıyor. O zamana kadar başka bir telefonla buluşmanın nasıl görüneceğini deneyebilirsiniz."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekipler açılıyor. O zamana kadar başka bir telefonla buluşmanın nasıl görüneceğini deneyebilirsiniz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los equipos se están activando. Hasta entonces, prueba cómo se ve al reunirte con otro teléfono."
           }
         }
       }
     },
-    "team.pair.bringCloser %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touch the tops of your phone and %@ together."
+    "team.pair.bringCloser %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Touch the tops of your phone and %@ together."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Telefonunun ve %@ cihazının üst kenarlarını birbirine değdir."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefonunun ve %@ cihazının üst kenarlarını birbirine değdir."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca las partes superiores de tu teléfono y %@ juntas."
           }
         }
       }
     },
-    "team.pair.card.joinedYours": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joined your team"
+    "team.pair.card.joinedYours" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joined your team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekibine katıldı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekibine katıldı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te uniste a tu equipo"
           }
         }
       }
     },
-    "team.pair.card.youJoined": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You are in the team"
+    "team.pair.card.youJoined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are in the team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekiptesin"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekiptesin"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estás en el equipo"
           }
         }
       }
     },
-    "team.pair.confirm %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Let %@ into your team?"
+    "team.pair.confirm %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let %@ into your team?"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ ekibine katılsın mı?"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ekibine katılsın mı?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Dejar que %@ entre en tu equipo?"
           }
         }
       }
     },
-    "team.pair.declined": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not let in this time"
+    "team.pair.declined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not let in this time"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu sefer katılım onaylanmadı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu sefer katılım onaylanmadı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No dejar entrar esta vez"
           }
         }
       }
     },
-    "team.pair.done": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
+    "team.pair.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tamam"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo"
           }
         }
       }
     },
-    "team.pair.failed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "That did not go through. Try again"
+    "team.pair.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That did not go through. Try again"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Olmadı. Tekrar dene"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olmadı. Tekrar dene"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo. Inténtalo de nuevo"
           }
         }
       }
     },
-    "team.pair.found": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Phone found"
+    "team.pair.found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phone found"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Telefon bulundu"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefon bulundu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teléfono encontrado"
           }
         }
       }
     },
-    "team.pair.howTo": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Both phones need CueTake open on this screen."
+    "team.pair.howTo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Both phones need CueTake open on this screen."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "İki telefonda da CueTake bu ekranda açık olmalı."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İki telefonda da CueTake bu ekranda açık olmalı."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ambos teléfonos deben tener CueTake abierto en esta pantalla."
           }
         }
       }
     },
-    "team.pair.joined": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In the team"
+    "team.pair.joined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekipte"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekipte"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En el equipo"
           }
         }
       }
     },
-    "team.pair.letIn": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Let them in"
+    "team.pair.letIn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let them in"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Katılsın"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katılsın"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deja que entren"
           }
         }
       }
     },
-    "team.pair.lookingInviter": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hold the other phone to yours"
+    "team.pair.lookingInviter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold the other phone to yours"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diğer telefonu seninkine yaklaştır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diğer telefonu seninkine yaklaştır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostén el otro teléfono al tuyo"
           }
         }
       }
     },
-    "team.pair.lookingJoiner": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hold your phone to theirs"
+    "team.pair.lookingJoiner" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold your phone to theirs"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Telefonunu onunkine yaklaştır"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telefonunu onunkine yaklaştır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sostén tu teléfono al suyo"
           }
         }
       }
     },
-    "team.pair.noICloud": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sign in to iCloud to join a team"
+    "team.pair.noICloud" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in to iCloud to join a team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekibe katılmak için iCloud’a giriş yap"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekibe katılmak için iCloud’a giriş yap"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inicia sesión en iCloud para unirte a un equipo"
           }
         }
       }
     },
-    "team.pair.notNow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not now"
+    "team.pair.notNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Şimdi değil"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdi değil"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahora no"
           }
         }
       }
     },
-    "team.pair.tap": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Meet"
+    "team.pair.tap" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meet"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buluş"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buluş"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reunirse"
           }
         }
       }
     },
-    "team.pair.tapToMeet %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This phone cannot measure distance. Tap Meet on both phones next to %@."
+    "team.pair.tapToMeet %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This phone cannot measure distance. Tap Meet on both phones next to %@."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bu telefon mesafe ölçemiyor. %@ yanındayken iki telefonda da Buluş’a dokun."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu telefon mesafe ölçemiyor. %@ yanındayken iki telefonda da Buluş’a dokun."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este teléfono no puede medir distancia. Toca Reunirse en ambos teléfonos junto a %@."
           }
         }
       }
     },
-    "team.pair.touched": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joining…"
+    "team.pair.touched" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joining…"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Katılıyor…"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katılıyor…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uniendo…"
           }
         }
       }
     },
-    "team.point.invite": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Invite someone by touching the tops of your phones together, or by sending a link."
+    "team.point.invite" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite someone by touching the tops of your phones together, or by sending a link."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Birini davet etmek için telefonlarınızın üst kenarlarını birbirine değdirin ya da bağlantı gönderin."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Birini davet etmek için telefonlarınızın üst kenarlarını birbirine değdirin ya da bağlantı gönderin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invita a alguien tocando las partes superiores de tus teléfonos juntos, o enviando un enlace."
           }
         }
       }
     },
-    "team.point.private": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only people you invite can open it. Projects live in your own iCloud, encrypted — no server of ours in between."
+    "team.point.private" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only people you invite can open it. Projects live in your own iCloud, encrypted — no server of ours in between."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sadece davet ettikleriniz açabilir. Projeler kendi iCloud’unuzda, şifreli durur — arada bizim bir sunucumuz yok."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sadece davet ettikleriniz açabilir. Projeler kendi iCloud’unuzda, şifreli durur — arada bizim bir sunucumuz yok."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo las personas que invites pueden abrirlo. Los proyectos viven en tu propio iCloud, cifrados — sin servidor nuestro entre medio."
           }
         }
       }
     },
-    "team.point.sync": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edits from each phone reach the others by themselves. When two people change the same thing, the newer change is kept and you are told."
+    "team.point.sync" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edits from each phone reach the others by themselves. When two people change the same thing, the newer change is kept and you are told."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Her telefondaki değişiklik diğerlerine kendiliğinden ulaşır. İki kişi aynı şeyi değiştirirse yenisi kalır ve size söylenir."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her telefondaki değişiklik diğerlerine kendiliğinden ulaşır. İki kişi aynı şeyi değiştirirse yenisi kalır ve size söylenir."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ediciones de cada teléfono llegan a los demás por sí mismas. Cuando dos personas cambian lo mismo, se conserva el cambio más reciente y se te informa."
           }
         }
       }
     },
-    "team.preview.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joined your team"
+    "team.preview.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joined your team"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekibine katıldı"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekibine katıldı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Te uniste a tu equipo"
           }
         }
       }
     },
-    "team.preview.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your teammate"
+    "team.preview.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your teammate"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ekip arkadaşın"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekip arkadaşın"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu compañero de equipo"
           }
         }
       }
     },
-    "team.problem": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iCloud did not allow that. Check that you are signed in, then try again."
+    "team.problem" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud did not allow that. Check that you are signed in, then try again."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iCloud buna izin vermedi. Giriş yaptığından emin ol ve tekrar dene."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud buna izin vermedi. Giriş yaptığından emin ol ve tekrar dene."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud no lo permitió. Verifica que hayas iniciado sesión, luego intenta de nuevo."
           }
         }
       }
     },
-    "team.projects %lld": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld projects"
+    "team.projects %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld projects"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld proje"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld proje"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld proyectos"
           }
         }
       }
     },
-    "team.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "TEAM"
+    "team.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TEAM"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EKİP"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EKİP"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EQUIPO"
           }
         }
       }
     },
-    "team.tryLight": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try the light"
+    "team.tryLight" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try the light"
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Işığı dene"
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Işığı dene"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba la luz"
           }
         }
       }
     },
-    "team.tryLight.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A preview on this phone only. Nothing is shared."
+    "team.tryLight.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A preview on this phone only. Nothing is shared."
           }
         },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yalnızca bu telefonda bir önizleme. Hiçbir şey paylaşılmaz."
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yalnızca bu telefonda bir önizleme. Hiçbir şey paylaşılmaz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una vista previa solo en este teléfono. Nada se comparte."
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
