@@ -72,6 +72,10 @@ public struct EditorScreen: View {
     @State private var showsTemplates = false
     @State private var showsStyles = false
     @State private var showsLyrics = false
+    /// The caption the lyrics open on, when they were opened by tapping one.
+    @State private var lyricsFocus: CaptionCue.ID?
+    /// The caption on the video grows into the lyrics screen and shrinks back into it.
+    @Namespace private var lyricsSpace
     /// The template picture whose words are being changed, or nil when adding a new one.
     @State private var templateTarget: Overlay.ID?
     @State private var pickedImage: PhotosPickerItem?
@@ -413,7 +417,8 @@ public struct EditorScreen: View {
             .presentationDragIndicator(.visible)
         }
         .fullScreenCover(isPresented: $showsLyrics) {
-            CaptionLyricsView(model: model) { showsLyrics = false }
+            CaptionLyricsView(model: model, focus: lyricsFocus) { showsLyrics = false }
+                .navigationTransition(.zoom(sourceID: "lyrics", in: lyricsSpace))
         }
         .sheet(isPresented: $showsStyles) {
             StyleSheet(model: model) { showsStyles = false }
@@ -729,15 +734,14 @@ public struct EditorScreen: View {
                     glowToken: model.captionGlowToken,
                     isEditing: editingCaption == cue.id,
                     onTap: {
+                        // A caption opens every caption: the lyrics, on this line. Its look and
+                        // place are still one tap away on the timeline's caption lane.
                         guard !model.isAIDriving else { return }
                         model.pause()
-                        withAnimation(DS.Motion.settle) {
-                            model.inspectedSegment = nil
-                            model.selectedAudio = nil
-                            model.select(overlay: nil)
-                            dockPanel = nil
-                            editingCaption = editingCaption == cue.id ? nil : cue.id
-                        }
+                        editingCaption = nil
+                        dockPanel = nil
+                        lyricsFocus = cue.id
+                        showsLyrics = true
                     },
                     onMove: { y in
                         model.updateCaptionStyle(coalescing: "caption-move") { style in
@@ -748,6 +752,7 @@ public struct EditorScreen: View {
                         }
                     }
                 )
+                .matchedTransitionSource(id: "lyrics", in: lyricsSpace)
                 .id(cue.id)
                 .transition(CaptionOverlay.transition(for: model.project.captionStyle))
             }
@@ -1064,6 +1069,7 @@ public struct EditorScreen: View {
                     },
                     onLyrics: {
                         dockPanel = nil
+                        lyricsFocus = nil
                         showsLyrics = true
                     },
                     onShowAIChanges: { showsAIChanges = true },

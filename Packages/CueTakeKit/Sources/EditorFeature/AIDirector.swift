@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import Foundation
+import MediaEngine
 import SwiftUI
 
 /// Sends the editor's document and an instruction to a model and gets a plan back.
@@ -128,6 +129,23 @@ extension EditorModel {
         EditDocument(project: project, beatStep: beatStep)
     }
 
+    /// The document with what each clip shows, looked at on the phone the first time it is asked
+    /// for. Written off the main thread: on a long video it is enough work to drop frames.
+    func seenDocument(of project: Project) async -> EditDocument {
+        var document = await Task.detached(priority: .userInitiated) { EditDocument(project: project) }.value
+        guard let mediaDirectory else { return document }
+        for (index, segment) in project.segments.enumerated() where document.clips.indices.contains(index) {
+            guard let take = segment.selectedTake else { continue }
+            if sceneNotes[take.id] == nil,
+               let recording = project.recordings.first(where: { $0.id == take.recordingID }) {
+                let url = mediaDirectory.appending(path: (recording.relativePath as NSString).lastPathComponent, directoryHint: .notDirectory)
+                sceneNotes[take.id] = await SceneNotes.describe(url, from: take.sourceRange.start.seconds, duration: take.sourceRange.duration.seconds) ?? ""
+            }
+            if let note = sceneNotes[take.id], !note.isEmpty { document.clips[index].sees = note }
+        }
+        return document
+    }
+
     // MARK: - Asking
 
     /// Sends the document, then runs whatever comes back, live.
@@ -153,10 +171,11 @@ extension EditorModel {
         aiTask = Task { [weak self] in
             do {
                 // Written off the main thread: on a long video it is enough work to drop frames.
-                var document = await Task.detached(priority: .userInitiated) { EditDocument(project: project) }.value
-                document.videoModel = self?.aiVideoModel
+                guard let self else { return }
+                var document = await self.seenDocument(of: project)
+                document.videoModel = self.aiVideoModel
                 var plan = try await request(document, text)
-                guard let self, !Task.isCancelled else { return }
+                guard !Task.isCancelled else { return }
                 // A plan that would change nothing gets one more try, told why.
                 if let problem = self.problem(with: plan) {
                     let second = try await request(document, text + "\n\n" + problem)
@@ -191,7 +210,7 @@ extension EditorModel {
             aiSession?.phase = .thinking
         }
         let result = project
-        var document = await Task.detached(priority: .userInitiated) { EditDocument(project: result) }.value
+        var document = await seenDocument(of: result)
         document.videoModel = aiVideoModel
         let note = """
 

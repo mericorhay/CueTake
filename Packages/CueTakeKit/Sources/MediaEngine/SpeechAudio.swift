@@ -14,7 +14,7 @@ public enum SpeechAudio {
 
     /// Writes the compact copy to a temporary file and returns it. The caller removes it.
     @concurrent
-    public static func compact(_ source: URL) async throws -> URL {
+    public static func compact(_ source: URL, maximumSeconds: Double? = nil) async throws -> URL {
         let asset = AVURLAsset(url: source)
         guard let track = try await asset.loadTracks(withMediaType: .audio).first else { throw SpeechAudioError.noAudio }
 
@@ -22,6 +22,9 @@ public enum SpeechAudio {
             .appending(path: "speech-\(UUID().uuidString).m4a", directoryHint: .notDirectory)
 
         let reader = try AVAssetReader(asset: asset)
+        if let maximumSeconds {
+            reader.timeRange = CMTimeRange(start: .zero, duration: CMTime(seconds: maximumSeconds, preferredTimescale: 600))
+        }
         let output = AVAssetReaderTrackOutput(track: track, outputSettings: [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVSampleRateKey: 16_000,

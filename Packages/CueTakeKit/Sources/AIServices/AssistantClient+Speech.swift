@@ -8,6 +8,8 @@ import Foundation
 /// was said. The phone's answer is never thrown away: both stay in the project, passage by passage.
 extension AssistantClient {
     private struct HeardResponse: Decodable {
+        /// The language Whisper heard, as a name ("english") or a code.
+        var language: String?
         /// `[text, start, end]`.
         var words: [[Lossless]]?
         /// `[start, end, avgLogprob, noSpeechProb, compressionRatio]`.
@@ -41,10 +43,31 @@ extension AssistantClient {
     ///
     /// - Parameter prompt: words likely to be said (the script), to help with names and terms.
     public func transcribe(audio url: URL, localeIdentifier: String, prompt: String) async throws -> [TimedWord] {
+        try await hear(audio: url, localeIdentifier: localeIdentifier, prompt: prompt).words
+    }
+
+    /// The language spoken in an audio file, as a language code ("en"), by Whisper's own detection.
+    public func spokenLanguage(of url: URL) async throws -> String? {
+        try await hear(audio: url, localeIdentifier: "", prompt: "").language
+    }
+
+    /// A Whisper language, given as a name or a code, as a language code.
+    public static func languageCode(fromWhisper value: String?) -> String? {
+        guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(), !value.isEmpty else { return nil }
+        if value.count <= 3, value.allSatisfy(\.isLetter) { return value }
+        let english = Locale(identifier: "en")
+        for code in Locale.LanguageCode.isoLanguageCodes.map(\.identifier) where code.count == 2 {
+            if english.localizedString(forLanguageCode: code)?.lowercased() == value { return code }
+        }
+        return nil
+    }
+
+    private func hear(audio url: URL, localeIdentifier: String, prompt: String) async throws -> (words: [TimedWord], language: String?) {
         guard let endpoint else { throw AssistantError.notConfigured }
 
         var components = URLComponents(url: endpoint.url.appending(path: "transcribe"), resolvingAgainstBaseURL: false)
-        var query = [URLQueryItem(name: "language", value: Locale(identifier: localeIdentifier).language.languageCode?.identifier ?? "")]
+        let language = localeIdentifier.isEmpty ? "" : (Locale(identifier: localeIdentifier).language.languageCode?.identifier ?? "")
+        var query = [URLQueryItem(name: "language", value: language)]
         let hint = String(prompt.prefix(400)).trimmingCharacters(in: .whitespacesAndNewlines)
         if !hint.isEmpty { query.append(URLQueryItem(name: "prompt", value: hint)) }
         components?.queryItems = query
@@ -59,7 +82,7 @@ extension AssistantClient {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.upload(for: request, fromFile: url)
+            (data, response) = try await AssistantTransport.upload(for: request, fromFile: url)
         } catch {
             throw AssistantError.offline
         }
@@ -76,7 +99,7 @@ extension AssistantClient {
             return invented ? start...end : nil
         }
 
-        return (decoded.words ?? []).compactMap { item in
+        let words: [TimedWord] = (decoded.words ?? []).compactMap { item in
             guard item.count >= 3,
                   let text = item[0].string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty,
                   let start = item[1].double, let end = item[2].double, end >= start
@@ -88,6 +111,7 @@ extension AssistantClient {
                 range: MediaTimeRange(start: MediaTime(seconds: start), duration: MediaTime(seconds: max(0.05, end - start)))
             )
         }
+        return (words, Self.languageCode(fromWhisper: decoded.language))
     }
 
     private struct JudgeRequest: Encodable {
@@ -143,7 +167,7 @@ extension AssistantClient {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await AssistantTransport.data(for: request)
         } catch {
             throw AssistantError.offline
         }

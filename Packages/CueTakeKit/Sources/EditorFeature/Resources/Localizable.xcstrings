@@ -19883,19 +19883,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap to play from here, hold to edit"
+            "value" : "Tap to hear it. Hold to fix it."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Buradan oynatmak için dokun, düzenlemek için basılı tut"
+            "value" : "Dinlemek için dokun. Düzeltmek için basılı tut."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca para reproducir desde aquí, mantén pulsado para editar"
+            "value" : "Toca para escucharla. Mantén pulsado para corregirla."
           }
         }
       }
@@ -20862,6 +20862,236 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "este video"
+          }
+        }
+      }
+    },
+    "lyrics.backToNow" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to now"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şu ana dön"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a ahora"
+          }
+        }
+      }
+    },
+    "lyrics.fix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fix"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzelt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corregir"
+          }
+        }
+      }
+    },
+    "lyrics.captionLanguage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caption language"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altyazı dili"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Idioma de los subtítulos"
+          }
+        }
+      }
+    },
+    "lyrics.wrongLanguage" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wrong spoken language?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konuşulan dil yanlış mı?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Idioma hablado incorrecto?"
+          }
+        }
+      }
+    },
+    "lyrics.spoken.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What language is spoken?"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videoda hangi dil konuşuluyor?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Qué idioma se habla?"
+          }
+        }
+      }
+    },
+    "lyrics.spoken.note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The video is heard again in this language and the captions are written from scratch. Lines you fixed by hand are replaced."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Video bu dilde yeniden dinlenir ve altyazılar baştan yazılır. Elle düzelttiğin satırlar da yenilenir."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El vídeo se vuelve a escuchar en este idioma y los subtítulos se escriben de nuevo. Las líneas que corregiste a mano se reemplazan."
+          }
+        }
+      }
+    },
+    "lyrics.relistening" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening again…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniden dinleniyor…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escuchando de nuevo…"
+          }
+        }
+      }
+    },
+    "editor.panel.expand" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make bigger"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Büyüt"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandar"
+          }
+        }
+      }
+    },
+    "editor.panel.shrink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Make smaller"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Küçült"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reducir"
+          }
+        }
+      }
+    },
+    "editor.ai.suggest.ready" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get it ready to post: cut the dead air, fix the captions, put my strongest line on screen"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paylaşıma hazırla: boşlukları kes, altyazıyı düzelt, en güçlü cümlemi ekrana yaz"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjalo listo para publicar: quita los silencios, corrige los subtítulos y pon mi mejor frase en pantalla"
           }
         }
       }

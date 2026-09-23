@@ -66,6 +66,67 @@ extension AppModel {
         return versions
     }
 
+    /// Lets the editor hear the footage again in the language the user says it is in.
+    func connectRelistening() {
+        editorModel.speechRelistener = { [weak self] code in
+            await self?.relisten(inLanguage: code)
+        }
+    }
+
+    /// Throws away what was heard and hears every take again in `code`: for footage whose language
+    /// was guessed wrong. Captions typed by hand are lost with the rest, since they were typed over
+    /// words from the wrong language.
+    func relisten(inLanguage code: String) async {
+        editorModel.relistening = true
+        defer { editorModel.relistening = false }
+        takeEditorEditsIfEditing()
+        project.localeIdentifier = Self.localeIdentifier(for: code, current: project.localeIdentifier)
+        project.captionLanguage = nil
+        for index in project.segments.indices {
+            guard let takeIndex = project.segments[index].takes.firstIndex(where: { $0.id == project.segments[index].selectedTakeID }) else { continue }
+            // A script that was only ever the words heard goes with them; a written one stays.
+            if let heard = project.segments[index].takes[takeIndex].transcript?.text,
+               project.segments[index].script == heard {
+                project.segments[index].script = ""
+            }
+            project.segments[index].takes[takeIndex].transcript = nil
+            project.segments[index].captions = []
+        }
+        for index in project.recordings.indices { project.recordings[index].speech = nil }
+        editorModel.project = project
+        await transcribeNewTakes(hearLanguage: false)
+    }
+
+    /// The language spoken in a file, as a locale identifier: Whisper's detection when the cloud is
+    /// allowed, otherwise the phone's recognisers compared on the opening stretch. `current` when
+    /// neither can tell.
+    func spokenLanguage(in url: URL, current: String) async -> String {
+        let client = dependencies.assistantClient
+        if settingsModel.settings.aiProcessing == .allowCloud, client.isConfigured,
+           let compact = try? await SpeechAudio.compact(url, maximumSeconds: 40) {
+            let code = try? await client.spokenLanguage(of: compact)
+            try? FileManager.default.removeItem(at: compact)
+            if let code { return Self.localeIdentifier(for: code, current: current) }
+        }
+        let candidates = [current] + Locale.preferredLanguages + ["en-US", "tr-TR", "es-ES"]
+        guard let found = await SpokenLanguage.detect(in: url, candidates: candidates) else { return current }
+        return Self.localeIdentifier(for: found, current: current)
+    }
+
+    /// A full locale for a language: the current one when it is that language, else the region the
+    /// phone uses it with, else the language's most common one.
+    nonisolated static func localeIdentifier(for code: String, current: String) -> String {
+        let language = Locale(identifier: code).language.languageCode?.identifier ?? code
+        func languageOf(_ identifier: String) -> String? { Locale(identifier: identifier).language.languageCode?.identifier }
+        if languageOf(current) == language { return current }
+        if let preferred = Locale.preferredLanguages.first(where: { languageOf($0) == language }), preferred.contains("-") {
+            return preferred
+        }
+        if code.contains("-") || code.contains("_") { return code }
+        let usual = ["en": "en-US", "tr": "tr-TR", "es": "es-ES", "de": "de-DE", "fr": "fr-FR", "it": "it-IT", "pt": "pt-BR", "ar": "ar-SA", "ru": "ru-RU", "ja": "ja-JP", "ko": "ko-KR", "zh": "zh-CN", "nl": "nl-NL"]
+        return usual[language] ?? language
+    }
+
     nonisolated private static func deviceTranscript(
         of url: URL,
         speech: any SpeechTranscribing,

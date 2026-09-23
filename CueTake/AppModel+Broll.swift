@@ -59,7 +59,7 @@ extension AppModel {
 
     /// Downloads one shot and imports it beside the footage.
     nonisolated static func fetchStockShot(_ shot: StockShot, into media: URL) async -> MediaImporter.ImportedClip? {
-        guard let (downloaded, response) = try? await URLSession.shared.download(from: shot.video.url),
+        guard let (downloaded, response) = try? await AssistantTransport.download(from: shot.video.url),
               ((response as? HTTPURLResponse)?.statusCode ?? 200) < 300
         else { return nil }
         let file = FileManager.default.temporaryDirectory.appending(path: "stock-\(shot.video.id).mp4", directoryHint: .notDirectory)

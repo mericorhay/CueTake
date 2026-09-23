@@ -31,6 +31,13 @@ public struct VoiceCleaner: Sendable {
         }
     }
 
+    /// The cleaned voice only if it is already made: for a preview that must not wait for it.
+    public func cachedAudio(for recording: Recording, effects: AudioEffects, in directory: URL) -> URL? {
+        guard effects.isActive else { return nil }
+        let cleaned = cleanedURL(for: recording, effects: effects, in: directory)
+        return AudioRenderCache.isUsable(cleaned) ? cleaned : nil
+    }
+
     /// The cleaned voice for a recording, or nil when it cannot be produced — in which case the
     /// composer keeps the original sound rather than dropping it.
     public func cleanedAudio(for recording: Recording, effects: AudioEffects, in directory: URL) async -> URL? {

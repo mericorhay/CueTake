@@ -499,6 +499,7 @@ final class AppModel {
         connectSoundDesign()
         connectStyles()
         connectCaptionTranslation()
+        connectRelistening()
         connectStockBroll()
         connectBeats()
         connectEditorShorts()
@@ -514,9 +515,19 @@ final class AppModel {
             in: mediaDirectory
         )
         if reversing { busy = AppLocalization.string("busy.reversing") }
-        if cleaning { busy = AppLocalization.string("busy.cleaningVoice") }
-        await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
-        if reversing || cleaning { busy = nil }
+        if cleaning {
+            // The picture first, with the voice as recorded; the cleaned voice is made while the
+            // editor is already usable and swapped in when it is ready. Waiting for it held the
+            // editor closed for as long as the video was long.
+            await editorModel.loadPlayback(mediaDirectory: mediaDirectory, cleanVoiceNow: false)
+            if reversing { busy = nil }
+            activity = AppLocalization.string("busy.cleaningVoice")
+            await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
+            activity = nil
+        } else {
+            await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
+            if reversing { busy = nil }
+        }
         // After playback, not before: the waveforms are for looking at and the player is for
         // working with, and reading three minutes of song should never be what delays a play.
         await editorModel.loadWaveforms(mediaDirectory: mediaDirectory)
@@ -1022,7 +1033,7 @@ final class AppModel {
     ///
     /// Always says how it went. Listening used to fail in silence — an unsupported language, a file
     /// without sound — and the button looked broken.
-    func transcribeNewTakes(quietly: Bool = false) async {
+    func transcribeNewTakes(quietly: Bool = false, hearLanguage: Bool = true) async {
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
         takeEditorEditsIfEditing()
 
@@ -1066,8 +1077,20 @@ final class AppModel {
         }
 
         // One listen per file. A studio recording is one file behind every segment.
-        let locale = project.localeIdentifier
+        var locale = project.localeIdentifier
         let recordings = Dictionary(uniqueKeysWithValues: project.recordings.map { ($0.id, $0) })
+        // Footage that came without a script says nothing about its language, and the project
+        // started in the app's. Hearing an English video with a Turkish recogniser misses half of
+        // it, so the language is heard first.
+        if hearLanguage,
+           project.segments.allSatisfy({ $0.script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }),
+           let first = pending.first, let recording = recordings[first] {
+            let url = mediaDirectory.appending(
+                path: (recording.relativePath as NSString).lastPathComponent,
+                directoryHint: .notDirectory
+            )
+            locale = await spokenLanguage(in: url, current: locale)
+        }
         var heard: [Recording.ID: Transcript] = [:]
         var heardVersions: [Recording.ID: TranscriptVersions] = [:]
         var failure: (any Error)?
@@ -1098,6 +1121,7 @@ final class AppModel {
         // Applied to the project as it is now, not as it was when listening began: the user may
         // have cut, trimmed or reordered in the meantime, and those edits must survive.
         takeEditorEditsIfEditing()
+        if !heard.isEmpty { project.localeIdentifier = locale }
         // Both versions kept with the file, so either can be chosen later.
         for (recordingID, versions) in heardVersions {
             if let stored = project.recordings.firstIndex(where: { $0.id == recordingID }) {

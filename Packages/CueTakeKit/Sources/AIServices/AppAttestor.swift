@@ -130,7 +130,7 @@ extension AssistantClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(endpoint.appToken, forHTTPHeaderField: "x-cuetake-app")
         request.httpBody = try JSONEncoder().encode(body)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await AssistantTransport.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw AssistantError.rejected(status: (response as? HTTPURLResponse)?.statusCode ?? 0)
         }

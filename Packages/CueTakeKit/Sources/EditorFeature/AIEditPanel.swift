@@ -10,6 +10,7 @@ import SwiftUI
 enum AIEditPanel {
     static var suggestions: [String] {
         [
+            AppLocalization.string("editor.ai.suggest.ready", bundle: .module),
             AppLocalization.string("editor.ai.suggest.tighten", bundle: .module),
             AppLocalization.string("editor.ai.suggest.captions", bundle: .module),
             AppLocalization.string("editor.ai.suggest.hook", bundle: .module),

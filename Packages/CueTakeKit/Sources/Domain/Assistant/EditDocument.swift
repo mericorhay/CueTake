@@ -47,6 +47,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var videoModel: String?
     /// Earlier requests in this session and what was done, oldest first.
     public var history: [Turn]?
+    /// Everything said, in order, as plain text: what the video is about, in one read.
+    public var transcript: String?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.
@@ -75,6 +77,9 @@ public struct EditDocument: Codable, Sendable, Equatable {
         public var lost: [Double]?
         /// How this clip hands over to the next one: `"crossfade 0.5"`. Nil is a plain cut.
         public var transition: String?
+        /// What the footage shows, seen on the phone: faces, the kind of scene, writing in the
+        /// picture. The only sight of the video the model gets.
+        public var sees: String?
     }
 
     public struct Word: Codable, Sendable, Equatable {
@@ -528,6 +533,8 @@ extension EditDocument {
             beats: beats
         )
         history = Self.history(of: project)
+        let said = clips.flatMap { $0.words.map(\.text) }.joined(separator: " ")
+        transcript = said.isEmpty ? nil : String(said.prefix(1600))
         let moves = Self.cameraMoves(in: project)
         if !moves.isEmpty {
             cameraMoves = moves.enumerated().map { i, move in

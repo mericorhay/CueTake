@@ -16,6 +16,8 @@ struct OverlayInspector: View {
     var onEditTemplate: (() -> Void)? = nil
 
     private var end: Double { overlay.start.seconds + overlay.duration.seconds }
+    /// Half the screen instead of a strip: for working through every control of a text.
+    @State private var expanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -29,7 +31,7 @@ struct OverlayInspector: View {
                                 Image(systemName: "character.cursor.ibeam")
                                     .font(.system(size: 14, weight: .semibold))
                                 Text("editor.template.edit", bundle: .module)
-                                    .dsFont(.sans, .semibold, 14)
+                                    .dsFont(.sans, .semibold, 16)
                             }
                             .foregroundStyle(DS.Palette.inkInverse)
                             .frame(maxWidth: .infinity, minHeight: 44)
@@ -37,6 +39,9 @@ struct OverlayInspector: View {
                         }
                         .buttonStyle(.dsPress)
                     }
+                    Text("editor.overlay.gestureHint", bundle: .module)
+                        .dsFont(.sans, .regular, 13)
+                        .foregroundStyle(DS.Palette.ink(0.56))
                     timing
                     if case .text(let text) = overlay.content {
                         textControls(text)
@@ -50,8 +55,9 @@ struct OverlayInspector: View {
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
         }
-        .padding(16)
-        .frame(maxHeight: 330)
+        .padding(18)
+        .frame(maxHeight: expanded ? 620 : 430)
+        .animation(DS.Motion.settle, value: expanded)
         .dsGlass(
             tint: DS.Palette.glassSheet(0.95),
             in: UnevenRoundedRectangle(topLeadingRadius: DS.Radius.sheet, topTrailingRadius: DS.Radius.sheet, style: .continuous),
@@ -63,30 +69,38 @@ struct OverlayInspector: View {
     private var header: some View {
         HStack(spacing: 10) {
             Image(systemName: overlay.isText ? "textformat" : "photo")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(DS.Palette.inkInverse)
-                .frame(width: 28, height: 28)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(overlay.isText ? DS.Palette.lime : DS.Palette.accentWarm))
+                .frame(width: 36, height: 36)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(overlay.isText ? DS.Palette.lime : DS.Palette.accentWarm))
             VStack(alignment: .leading, spacing: 1) {
                 Text(overlay.isText ? "editor.overlay.text" : "editor.overlay.image", bundle: .module)
-                    .dsFont(.sans, .semibold, 14)
+                    .dsFont(.sans, .semibold, 16)
                     .foregroundStyle(DS.Palette.ink)
                 Text(verbatim: "\(MediaTime(seconds: overlay.start.seconds).preciseTimecode) – \(MediaTime(seconds: end).preciseTimecode)")
-                    .dsFont(.mono, .medium, 10)
+                    .dsFont(.mono, .medium, 12)
                     .foregroundStyle(DS.Palette.ink(0.56))
                     .contentTransition(.numericText())
             }
             Spacer(minLength: 0)
-            Text("editor.overlay.gestureHint", bundle: .module)
-                .dsFont(.sans, .regular, 10)
-                .foregroundStyle(DS.Palette.ink(0.56))
-                .multilineTextAlignment(.trailing)
+            Button {
+                expanded.toggle()
+            } label: {
+                Image(systemName: expanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(DS.Palette.ink)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(DS.Palette.hairline(0.08)))
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.dsPressIcon)
+            .accessibilityLabel(Text(LocalizedStringKey(expanded ? "editor.panel.shrink" : "editor.panel.expand"), bundle: .module))
             Button(action: onClose) {
                 Image(systemName: "checkmark")
                     .dsActionName("checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(DS.Palette.inkInverse)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 40, height: 40)
                     .background(Circle().fill(DS.Palette.lime))
             }
             .buttonStyle(.dsPressIcon)
@@ -97,7 +111,7 @@ struct OverlayInspector: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(AppLocalization.string("editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.when", bundle: .module), size: 12, color: DS.Palette.ink(0.56))
             TimingReadout(start: overlay.start.seconds, end: end)
             HStack(spacing: 8) {
                 smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {
@@ -124,7 +138,7 @@ struct OverlayInspector: View {
 
     private func textControls(_ text: OverlayText) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(AppLocalization.string("editor.overlay.words", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.words", bundle: .module), size: 12, color: DS.Palette.ink(0.56))
             TextEntryField(
                 text: text.text,
                 placeholder: AppLocalization.string("editor.overlay.placeholder", bundle: .module),
@@ -139,9 +153,9 @@ struct OverlayInspector: View {
                             setText { $0.fontName = font }
                         } label: {
                             Text(verbatim: "Aa")
-                                .font(.custom(font, fixedSize: 17))
+                                .font(.custom(font, fixedSize: 22))
                                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink)
-                                .frame(width: 48, height: 38)
+                                .frame(width: 62, height: 50)
                                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(isOn ? DS.Palette.ink : DS.Palette.hairline(0.07)))
                         }
                         .buttonStyle(.dsPress(radius: 10))
@@ -187,7 +201,7 @@ struct OverlayInspector: View {
                     .symbolEffect(.bounce, value: isOn)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("editor.overlay.behind", bundle: .module)
-                        .dsFont(.sans, .semibold, 13)
+                        .dsFont(.sans, .semibold, 15)
                         .foregroundStyle(DS.Palette.ink)
                     Group {
                         if isOn {
@@ -196,7 +210,7 @@ struct OverlayInspector: View {
                             Text("editor.overlay.behind.off", bundle: .module)
                         }
                     }
-                    .dsFont(.sans, .regular, 11)
+                    .dsFont(.sans, .regular, 13)
                     .foregroundStyle(DS.Palette.ink(0.5))
                     .fixedSize(horizontal: false, vertical: true)
                 }
@@ -218,7 +232,7 @@ struct OverlayInspector: View {
 
     private var look: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(AppLocalization.string("editor.overlay.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.look", bundle: .module), size: 12, color: DS.Palette.ink(0.56))
 
             HStack(spacing: 10) {
                 Image(systemName: "square.resize.down").font(.system(size: 12)).foregroundStyle(DS.Palette.ink(0.5))
@@ -244,7 +258,7 @@ struct OverlayInspector: View {
                 )
                 .tint(DS.Palette.lime)
                 Text(verbatim: "\(Int(overlay.transform.opacity * 100))%")
-                    .dsFont(.mono, .medium, 10)
+                    .dsFont(.mono, .medium, 12)
                     .foregroundStyle(DS.Palette.ink(0.6))
                     .frame(width: 34, alignment: .trailing)
             }
@@ -293,10 +307,10 @@ struct OverlayInspector: View {
                         model.updateOverlay(overlay.id, coalescing: "overlay-animation") { $0.animation = animation }
                     } label: {
                         Text(Self.animationLabel(animation))
-                            .dsFont(.sans, .medium, 11)
+                            .dsFont(.sans, .medium, 13)
                             .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.75))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, 12)
                             .background(Capsule().fill(isOn ? DS.Palette.accent : DS.Palette.hairline(0.07)))
                     }
                     .buttonStyle(.dsPress(radius: 20))
@@ -319,7 +333,7 @@ struct OverlayInspector: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "trash").font(.system(size: 11, weight: .semibold))
-                    Text("editor.overlay.delete", bundle: .module).dsFont(.sans, .medium, 12)
+                    Text("editor.overlay.delete", bundle: .module).dsFont(.sans, .medium, 14)
                 }
                 .foregroundStyle(DS.Palette.accent)
                 .padding(.horizontal, 11)
@@ -337,10 +351,10 @@ struct OverlayInspector: View {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
                 Text(AppLocalization.string(key, bundle: .module))
-                    .dsFont(.mono, .medium, 10)
+                    .dsFont(.mono, .medium, 12)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
-                    .dsFont(.mono, .medium, 13)
+                    .dsFont(.mono, .medium, 15)
                     .foregroundStyle(DS.Palette.ink)
                     .contentTransition(.numericText(value: value))
             }
@@ -357,7 +371,7 @@ struct OverlayInspector: View {
                 .dsActionName(symbol)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.Palette.ink)
-                .frame(width: 32, height: 32)
+                .frame(width: 42, height: 42)
                 .background(Circle().fill(DS.Palette.hairline(0.08)))
         }
         .buttonRepeatBehavior(.enabled)
@@ -367,12 +381,12 @@ struct OverlayInspector: View {
     private func smallButton(_ key: String.LocalizationValue, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 5) {
-                Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-                Text(AppLocalization.string(key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
+                Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
+                Text(AppLocalization.string(key, bundle: .module)).dsFont(.sans, .medium, 13).lineLimit(1)
             }
             .foregroundStyle(DS.Palette.ink(0.85))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 13)
+            .frame(minHeight: 42)
             .background(Capsule().fill(DS.Palette.hairline(0.08)))
         }
         .buttonStyle(.dsPress(radius: 20))
@@ -382,10 +396,10 @@ struct OverlayInspector: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .dsActionName(symbol)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.85))
                 .frame(maxWidth: .infinity)
-                .frame(height: 36)
+                .frame(height: 46)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(isOn ? DS.Palette.lime : DS.Palette.hairline(0.08)))
         }
         .buttonStyle(.dsPress(radius: 10))
@@ -400,16 +414,16 @@ struct OverlayInspector: View {
     ) -> some View {
         HStack(spacing: 8) {
             Text(AppLocalization.string(key, bundle: .module))
-                .dsFont(.sans, .medium, 11)
+                .dsFont(.sans, .medium, 13)
                 .foregroundStyle(DS.Palette.ink(0.5))
-                .frame(width: 70, alignment: .leading)
+                .frame(width: 86, alignment: .leading)
             if allowsNone {
                 Button { onPick(nil) } label: {
                     Image(systemName: "nosign")
                         .dsActionName("nosign")
                         .font(.system(size: 12))
                         .foregroundStyle(DS.Palette.ink(0.6))
-                        .frame(width: 26, height: 26)
+                        .frame(width: 34, height: 34)
                         .background(Circle().fill(DS.Palette.hairline(0.07)))
                         .overlay(Circle().stroke(selected == nil ? DS.Palette.accent : .clear, lineWidth: 2).padding(-3))
                 }
@@ -420,7 +434,7 @@ struct OverlayInspector: View {
                 Button { onPick(option.color) } label: {
                     Circle()
                         .fill(CaptionOverlay.color(option.color))
-                        .frame(width: 26, height: 26)
+                        .frame(width: 34, height: 34)
                         .overlay(Circle().stroke(DS.Palette.hairline(0.25), lineWidth: 1))
                         .overlay(Circle().stroke(isOn ? DS.Palette.accent : .clear, lineWidth: 2).padding(-3))
                 }

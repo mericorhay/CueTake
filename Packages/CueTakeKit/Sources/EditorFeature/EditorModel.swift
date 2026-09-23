@@ -181,6 +181,13 @@ public final class EditorModel {
     public var translationProgress: Double?
     /// Why the last translation did not finish, in words for people.
     public var translationFailure: String?
+    /// Hears the footage again in another spoken language and rebuilds the captions from it. Set by
+    /// the app, which owns the listeners; nil hides the choice.
+    @ObservationIgnored public var speechRelistener: ((String) async -> Void)?
+    /// True while the footage is being heard again.
+    public var relistening = false
+    /// What each take's footage shows, read once and kept, for the AI editor.
+    @ObservationIgnored var sceneNotes: [Take.ID: String] = [:]
     /// Finds, fetches and imports stock B-roll for the video, `count` shots at most. Set by the
     /// app, which talks to the server; nil hides stock B-roll.
     @ObservationIgnored public var stockBrollFinder: ((Int) async throws -> [StockBroll])?
@@ -268,7 +275,9 @@ public final class EditorModel {
     /// Called whenever the edit changes shape. Rebuilding is cheap — the composition references
     /// the source files rather than copying them — which is what lets a trim or a reorder be
     /// reflected in playback immediately instead of after a render.
-    public func loadPlayback(mediaDirectory: URL) async {
+    /// - Parameter cleanVoiceNow: false builds a preview straight away with the voice as recorded
+    ///   where the cleaned one is not made yet; call again with true once it is.
+    public func loadPlayback(mediaDirectory: URL, cleanVoiceNow: Bool = true) async {
         self.mediaDirectory = mediaDirectory
         loadOverlayImages()
         prepareBackgrounds()
@@ -291,7 +300,8 @@ public final class EditorModel {
                 renderBackgrounds: false,
                 liveFilters: liveFilters,
                 liveBehind: liveBehind,
-                liveKeys: liveKeys
+                liveKeys: liveKeys,
+                cleanVoiceNow: cleanVoiceNow
             )
         } catch {
             // A build that was superseded or cancelled keeps the picture that is there. Only a real
@@ -338,7 +348,8 @@ public final class EditorModel {
             }
             self.player = player
         }
-        builtSignature = signature
+        // A preview with the raw voice is not the finished build: the next call makes it again.
+        builtSignature = cleanVoiceNow ? signature : nil
         // The new item starts where the playhead is, not at zero, and keeps playing if it was.
         playhead = min(playhead, duration)
         player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }

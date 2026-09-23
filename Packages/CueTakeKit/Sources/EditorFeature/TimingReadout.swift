@@ -28,7 +28,7 @@ struct TimingReadout: View {
             } icon: {
                 Image(systemName: "hand.point.up.left")
             }
-            .dsFont(.sans, .regular, 10)
+            .dsFont(.sans, .regular, 12)
             .foregroundStyle(DS.Palette.ink(0.56))
         }
     }
@@ -36,7 +36,7 @@ struct TimingReadout: View {
     private func value(_ key: String.LocalizationValue, _ seconds: Double, isLength: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(AppLocalization.string(key, bundle: .module))
-                .dsFont(.mono, .medium, 10)
+                .dsFont(.mono, .medium, 12)
                 .foregroundStyle(DS.Palette.ink(0.56))
             Text(verbatim: isLength ? String(format: "%.2f s", max(0, seconds)) : MediaTime(seconds: seconds).preciseTimecode)
                 .dsFont(.mono, .medium, 13)

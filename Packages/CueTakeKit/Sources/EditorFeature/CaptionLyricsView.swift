@@ -12,17 +12,26 @@ import UIKit
 /// a song's cover fills the screen behind its lyrics.
 struct CaptionLyricsView: View {
     @Bindable var model: EditorModel
+    /// The line to open on: the caption that was tapped.
+    var focus: CaptionCue.ID? = nil
     let onClose: () -> Void
 
     /// The translation shown under each line; nil shows the spoken line alone.
     @State private var language: String?
     @State private var rows: [LyricRow] = []
     @State private var editing: LyricRow?
-    @State private var choosingLanguage = false
-    /// A finger on the list stops it following the voice for a moment, as Music does.
-    @State private var heldUntil = Date.distantPast
-    @State private var lastActive: CaptionCue.ID?
+    @State private var picking: PickerMode?
+    /// The line being said now, kept here so the list redraws per line, not per frame.
+    @State private var activeID: CaptionCue.ID?
+    /// Off once a finger scrolls the list, as in Music; "back to now" turns it on again.
+    @State private var following = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    enum PickerMode: String, Identifiable {
+        case translate
+        case spoken
+        var id: String { rawValue }
+    }
 
     struct LyricRow: Identifiable, Equatable {
         let id: CaptionCue.ID
@@ -34,10 +43,7 @@ struct CaptionLyricsView: View {
         let editedTranslations: [String]
     }
 
-    private var activeIndex: Int? {
-        let time = model.playhead
-        return rows.lastIndex { $0.start <= time + 0.05 }
-    }
+    private var activeIndex: Int? { activeID.flatMap { id in rows.firstIndex { $0.id == id } } }
 
     var body: some View {
         ZStack {
@@ -45,16 +51,21 @@ struct CaptionLyricsView: View {
 
             VStack(spacing: 0) {
                 header
-                languageBar
-                    .padding(.top, 12)
+                status
                 lyrics
                 transport
             }
         }
+        .background { PlayheadWatcher(model: model, rows: rows, active: $activeID) }
         .preferredColorScheme(.dark)
         .onAppear {
             rebuild()
             language = model.project.captionLanguage ?? model.project.translationLanguages.first
+            if let focus, let row = rows.first(where: { $0.id == focus }) {
+                model.pause()
+                model.seek(to: row.start + 0.01)
+                activeID = row.id
+            }
         }
         .onChange(of: model.project.segments) { rebuild() }
         .onChange(of: model.project.captionWindow) { rebuild() }
@@ -63,11 +74,17 @@ struct CaptionLyricsView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $choosingLanguage) {
-            LanguagePicker(model: model, existing: model.project.translationLanguages) { code in
-                choosingLanguage = false
-                language = code
-                Task { await model.translateCaptions(to: code) }
+        .sheet(item: $picking) { mode in
+            LanguagePicker(model: model, mode: mode) { code in
+                picking = nil
+                switch mode {
+                case .translate:
+                    language = code
+                    Task { await model.translateCaptions(to: code) }
+                case .spoken:
+                    language = nil
+                    Task { await model.speechRelistener?(code) }
+                }
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
@@ -96,7 +113,7 @@ struct CaptionLyricsView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Button(action: onClose) {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 15, weight: .bold))
@@ -116,108 +133,120 @@ struct CaptionLyricsView: View {
                     .foregroundStyle(.white.opacity(0.6))
             }
             Spacer(minLength: 0)
-            onVideoPill
+            languageMenu
         }
         .padding(.horizontal, 18)
         .padding(.top, 10)
     }
 
-    /// Which language the video itself shows, and a tap to show the one being read.
-    private var onVideoPill: some View {
-        let showing = model.project.captionLanguage
-        let reading = language
-        let matches = showing == reading || (showing == nil && reading == nil)
-        return Button {
-            withAnimation(DS.Motion.snap) { model.showCaptions(in: reading) }
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: matches ? "checkmark.circle.fill" : "rectangle.inset.bottomleft.filled")
-                Text(matches
-                     ? AppLocalization.string("lyrics.onVideo \(name(showing ?? model.spokenLanguage))", bundle: .module)
-                     : AppLocalization.string("lyrics.putOnVideo", bundle: .module))
-                    .lineLimit(1)
-            }
-            .dsFont(.sans, .semibold, 12)
-            .foregroundStyle(matches ? Color.white.opacity(0.8) : Color.black)
-            .padding(.horizontal, 12)
-            .frame(height: 34)
-            .background(Capsule().fill(matches ? Color.white.opacity(0.14) : Color.white))
-        }
-        .buttonStyle(.dsPress(radius: 17))
-        .disabled(matches)
-        .contentTransition(.opacity)
-    }
-
-    private var languageBar: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 7) {
-                chip(title: name(model.spokenLanguage), subtitle: AppLocalization.string("lyrics.original", bundle: .module), isOn: language == nil) {
-                    language = nil
+    /// Everything about languages in one place: what is read here, translating, and hearing the
+    /// footage again when its language was guessed wrong.
+    private var languageMenu: some View {
+        Menu {
+            Section(AppLocalization.string("lyrics.captionLanguage", bundle: .module)) {
+                Button {
+                    withAnimation(DS.Motion.snap) { language = nil }
+                } label: {
+                    choice(name(model.spokenLanguage) + " · " + AppLocalization.string("lyrics.original", bundle: .module), isOn: language == nil)
                 }
                 ForEach(model.project.translationLanguages, id: \.self) { code in
-                    chip(title: name(code), subtitle: nil, isOn: language == code) { language = code }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                if language == code { language = nil }
-                                model.removeCaptionTranslation(code)
-                            } label: {
-                                Label(AppLocalization.string("lyrics.removeLanguage", bundle: .module), systemImage: "trash")
-                            }
-                        }
-                }
-                if let progress = model.translationProgress {
-                    HStack(spacing: 7) {
-                        ProgressView().controlSize(.small).tint(.white)
-                        Text("lyrics.translating \(Int(progress * 100))", bundle: .module)
-                            .contentTransition(.numericText())
+                    Button {
+                        withAnimation(DS.Motion.snap) { language = code }
+                    } label: {
+                        choice(name(code), isOn: language == code)
                     }
-                    .dsFont(.sans, .semibold, 12)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 14)
-                    .frame(height: 38)
-                    .background(Capsule().fill(.white.opacity(0.14)))
-                } else if model.canTranslateCaptions {
-                    Button { choosingLanguage = true } label: {
-                        Label(AppLocalization.string("lyrics.translate", bundle: .module), systemImage: "globe")
-                            .dsFont(.sans, .semibold, 12)
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 14)
-                            .frame(height: 38)
-                            .background(Capsule().fill(.white))
-                    }
-                    .buttonStyle(.dsPress(radius: 19))
                 }
             }
-            .padding(.horizontal, 18)
-        }
-        .scrollIndicators(.hidden)
-        .overlay(alignment: .bottomLeading) {
-            if let failure = model.translationFailure {
-                Text(failure)
-                    .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.accent)
-                    .padding(.horizontal, 20)
-                    .offset(y: 20)
+            if model.canTranslateCaptions, model.translationProgress == nil {
+                Button { picking = .translate } label: {
+                    Label(AppLocalization.string("lyrics.translate", bundle: .module), systemImage: "globe")
+                }
             }
+            if let language {
+                Button(role: .destructive) {
+                    self.language = nil
+                    model.removeCaptionTranslation(language)
+                } label: {
+                    Label(AppLocalization.string("lyrics.removeLanguage", bundle: .module), systemImage: "trash")
+                }
+            }
+            if model.speechRelistener != nil, !model.relistening {
+                Divider()
+                Button { picking = .spoken } label: {
+                    Label(AppLocalization.string("lyrics.wrongLanguage", bundle: .module), systemImage: "waveform")
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                Text(verbatim: name(language ?? model.spokenLanguage))
+                    .lineLimit(1)
+                Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold))
+            }
+            .dsFont(.sans, .semibold, 13)
+            .foregroundStyle(.black)
+            .padding(.horizontal, 14)
+            .frame(height: 38)
+            .background(Capsule().fill(.white))
         }
     }
 
-    private func chip(title: String, subtitle: String?, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: { withAnimation(DS.Motion.snap) { action() } }) {
-            HStack(spacing: 5) {
-                Text(verbatim: title)
-                if let subtitle {
-                    Text(verbatim: subtitle).opacity(0.6)
-                }
-            }
-            .dsFont(.sans, .semibold, 12)
-            .foregroundStyle(isOn ? Color.black : Color.white)
-            .padding(.horizontal, 14)
-            .frame(height: 38)
-            .background(Capsule().fill(isOn ? Color.white : Color.white.opacity(0.12)))
+    @ViewBuilder
+    private func choice(_ title: String, isOn: Bool) -> some View {
+        if isOn {
+            Label(title, systemImage: "checkmark")
+        } else {
+            Text(verbatim: title)
         }
-        .buttonStyle(.dsPress(radius: 19))
-        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+
+    /// Work in progress, a failure, or the offer to put the language being read on the video.
+    private var status: some View {
+        let showing = model.project.captionLanguage
+        let matches = showing == language
+        return Group {
+            if model.relistening {
+                progressPill(Text("lyrics.relistening", bundle: .module))
+            } else if let progress = model.translationProgress {
+                progressPill(Text("lyrics.translating \(Int(progress * 100))", bundle: .module))
+            } else if let failure = model.translationFailure {
+                Text(verbatim: failure)
+                    .dsFont(.sans, .medium, 12)
+                    .foregroundStyle(DS.Palette.accent)
+            } else if !matches {
+                Button {
+                    withAnimation(DS.Motion.snap) { model.showCaptions(in: language) }
+                } label: {
+                    Label(AppLocalization.string("lyrics.putOnVideo", bundle: .module), systemImage: "rectangle.inset.bottomleft.filled")
+                        .dsFont(.sans, .semibold, 12)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(height: 34)
+                        .background(Capsule().fill(.white.opacity(0.16)))
+                }
+                .buttonStyle(.dsPress(radius: 17))
+            } else {
+                Text(verbatim: AppLocalization.string("lyrics.onVideo \(name(showing ?? model.spokenLanguage))", bundle: .module))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 18)
+        .padding(.top, 10)
+        .animation(DS.Motion.snap, value: model.relistening)
+    }
+
+    private func progressPill(_ text: Text) -> some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.small).tint(.white)
+            text.contentTransition(.numericText())
+        }
+        .dsFont(.sans, .semibold, 12)
+        .foregroundStyle(.white)
+        .padding(.horizontal, 14)
+        .frame(height: 34)
+        .background(Capsule().fill(.white.opacity(0.14)))
     }
 
     private var lyrics: some View {
@@ -232,109 +261,95 @@ struct CaptionLyricsView: View {
                         .padding(40)
                         .frame(maxWidth: .infinity)
                 }
-                LazyVStack(alignment: .leading, spacing: 30) {
+                // Not lazy: scrolling to a line needs every line measured. A lazy stack guesses the
+                // height of lines it has not drawn, so the list landed short of the voice and jumped.
+                VStack(alignment: .leading, spacing: 28) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
-                        line(row, distance: active.map { index - $0 } ?? index + 1)
-                            .id(row.id)
+                        LyricLine(
+                            model: model,
+                            row: row,
+                            distance: active.map { index - $0 } ?? index + 1,
+                            language: language,
+                            softens: following && !reduceMotion,
+                            onTap: { hear(row, proxy: proxy) },
+                            onEdit: {
+                                model.pause()
+                                editing = row
+                            }
+                        )
+                        .id(row.id)
                     }
                 }
                 .padding(.horizontal, 26)
-                .padding(.top, 36)
-                .padding(.bottom, 320)
+                .padding(.top, 40)
+                .padding(.bottom, 360)
             }
             .scrollIndicators(.hidden)
-            .simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { _ in heldUntil = .now.addingTimeInterval(3) })
-            .onChange(of: active.map { rows[$0].id }) { _, id in
-                guard let id, id != lastActive else { return }
-                lastActive = id
-                guard Date.now >= heldUntil else { return }
-                withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.6, dampingFraction: 0.86)) {
-                    proxy.scrollTo(id, anchor: UnitPoint(x: 0, y: 0.28))
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting { following = false }
+            }
+            .onChange(of: activeID) { _, id in
+                guard following, let id else { return }
+                withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(response: 0.55, dampingFraction: 0.88)) {
+                    proxy.scrollTo(id, anchor: Self.anchor)
+                }
+            }
+            .onChange(of: following) { _, now in
+                guard now, let activeID else { return }
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.88)) {
+                    proxy.scrollTo(activeID, anchor: Self.anchor)
                 }
             }
             .onAppear {
-                if let active { proxy.scrollTo(rows[active].id, anchor: UnitPoint(x: 0, y: 0.28)) }
+                guard let id = activeID ?? rows.first?.id else { return }
+                DispatchQueue.main.async { proxy.scrollTo(id, anchor: Self.anchor) }
             }
+            .overlay(alignment: .bottom) {
+                if !following, activeID != nil {
+                    Button {
+                        following = true
+                    } label: {
+                        Label(AppLocalization.string("lyrics.backToNow", bundle: .module), systemImage: "arrow.down.to.line")
+                            .dsFont(.sans, .semibold, 13)
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 16)
+                            .frame(height: 40)
+                            .background(Capsule().fill(.white))
+                            .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
+                    }
+                    .buttonStyle(.dsPress(radius: 20))
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(DS.Motion.snap, value: following)
         }
         .mask(
             LinearGradient(
-                stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.06), .init(color: .black, location: 0.88), .init(color: .clear, location: 1)],
+                stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.06), .init(color: .black, location: 0.9), .init(color: .clear, location: 1)],
                 startPoint: .top,
                 endPoint: .bottom
             )
         )
     }
 
-    /// One line: lit word by word while it is said, dimmer and softer the further it is.
-    private func line(_ row: LyricRow, distance: Int) -> some View {
-        let isActive = distance == 0
-        let far = Double(abs(distance))
-        let following = Date.now >= heldUntil
-        let translated = language.flatMap { row.translations[$0] }.flatMap { $0.isEmpty ? nil : $0 }
+    /// Where the line being said sits: a third of the way down, as in Music.
+    private static let anchor = UnitPoint(x: 0, y: 0.3)
 
-        return Button {
-            model.seek(to: row.start + 0.01)
-            if !model.isPlaying { model.togglePlayback() }
-        } label: {
-            VStack(alignment: .leading, spacing: 8) {
-                spoken(row, isActive: isActive)
-                    .font(.system(size: 30, weight: .bold))
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let translated {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(verbatim: translated)
-                            .font(.system(size: 19, weight: .semibold))
-                            .foregroundStyle(.white.opacity(isActive ? 0.78 : 0.34))
-                            .fixedSize(horizontal: false, vertical: true)
-                        if let language, row.editedTranslations.contains(language) {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(.white.opacity(0.45))
-                        }
-                    }
-                } else if language != nil {
-                    Text("lyrics.notTranslated", bundle: .module)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.28))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .scaleEffect(isActive ? 1 : 0.96, anchor: .leading)
-            .blur(radius: following && !reduceMotion ? min(far * 0.9, 3) : 0)
-            .contentShape(Rectangle())
+    /// A tapped line is heard from its start, and the list follows the voice from there.
+    private func hear(_ row: LyricRow, proxy: ScrollViewProxy) {
+        model.seek(to: row.start + 0.01)
+        activeID = row.id
+        following = true
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.88)) {
+            proxy.scrollTo(row.id, anchor: Self.anchor)
         }
-        .buttonStyle(.plain)
-        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.85), value: isActive)
-        .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in
-            model.pause()
-            editing = row
-        })
-        .accessibilityHint(Text("lyrics.lineHint", bundle: .module))
-    }
-
-    /// The spoken line, its said words bright while it plays.
-    private func spoken(_ row: LyricRow, isActive: Bool) -> Text {
-        guard isActive, !row.words.isEmpty else {
-            return Text(verbatim: row.text).foregroundStyle(.white.opacity(isActive ? 1 : 0.32))
-        }
-        let time = model.playhead
-        return row.words.enumerated().reduce(Text(verbatim: "")) { text, item in
-            let (index, word) = item
-            let said = word.range.start.seconds <= time
-            let piece = Text(verbatim: (index == 0 ? "" : " ") + word.text)
-                .foregroundStyle(.white.opacity(said ? 1 : 0.42))
-            return text + piece
-        }
+        if !model.isPlaying { model.togglePlayback() }
     }
 
     private var transport: some View {
         HStack(spacing: 18) {
-            Text(verbatim: MediaTime(seconds: model.playhead).timecode)
-                .dsFont(.mono, .medium, 12)
-                .foregroundStyle(.white.opacity(0.7))
-                .monospacedDigit()
+            PlayheadClock(model: model)
                 .frame(width: 64, alignment: .leading)
 
             Spacer(minLength: 0)
@@ -396,6 +411,130 @@ struct CaptionLyricsView: View {
                 translations: cue?.translations ?? [:],
                 editedTranslations: cue?.editedTranslations ?? []
             )
+        }
+    }
+}
+
+/// Reads the playhead so the list does not have to: the list redraws when the line changes, not
+/// thirty times a second.
+private struct PlayheadWatcher: View {
+    @Bindable var model: EditorModel
+    let rows: [CaptionLyricsView.LyricRow]
+    @Binding var active: CaptionCue.ID?
+
+    var body: some View {
+        let time = model.playhead
+        // The line whose time holds the playhead; in a pause between lines, the one just said.
+        let id = rows.last { $0.start <= time + 0.05 }?.id
+        Color.clear
+            .onChange(of: id, initial: true) { _, new in
+                if active != new { active = new }
+            }
+    }
+}
+
+private struct PlayheadClock: View {
+    @Bindable var model: EditorModel
+
+    var body: some View {
+        Text(verbatim: MediaTime(seconds: model.playhead).timecode)
+            .dsFont(.mono, .medium, 12)
+            .foregroundStyle(.white.opacity(0.7))
+            .monospacedDigit()
+    }
+}
+
+/// One line: lit word by word while it is said, dimmer and softer the further it is.
+private struct LyricLine: View {
+    let model: EditorModel
+    let row: CaptionLyricsView.LyricRow
+    let distance: Int
+    let language: String?
+    let softens: Bool
+    let onTap: () -> Void
+    let onEdit: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let isActive = distance == 0
+        let far = Double(abs(distance))
+        let translated = language.flatMap { row.translations[$0] }.flatMap { $0.isEmpty ? nil : $0 }
+
+        VStack(alignment: .leading, spacing: 8) {
+            Group {
+                if isActive {
+                    ActiveWords(model: model, row: row)
+                } else {
+                    Text(verbatim: row.text).foregroundStyle(.white.opacity(0.34))
+                }
+            }
+            .font(.system(size: 30, weight: .bold))
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+
+            if let translated {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(verbatim: translated)
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.white.opacity(isActive ? 0.78 : 0.34))
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let language, row.editedTranslations.contains(language) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                }
+            } else if language != nil {
+                Text("lyrics.notTranslated", bundle: .module)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.28))
+            }
+
+            if isActive, !model.isPlaying {
+                Button(action: onEdit) {
+                    Label(AppLocalization.string("lyrics.fix", bundle: .module), systemImage: "pencil")
+                        .dsFont(.sans, .semibold, 12)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(Capsule().fill(.white.opacity(0.18)))
+                }
+                .buttonStyle(.dsPress(radius: 15))
+                .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .scaleEffect(isActive ? 1 : 0.96, anchor: .leading)
+        .blur(radius: softens ? min(far * 0.9, 3) : 0)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
+        .contextMenu {
+            Button(action: onEdit) {
+                Label(AppLocalization.string("lyrics.fix", bundle: .module), systemImage: "pencil")
+            }
+        }
+        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.85), value: isActive)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(Text("lyrics.lineHint", bundle: .module))
+    }
+}
+
+/// The line being said, its said words bright. The only part of the list that reads the playhead.
+private struct ActiveWords: View {
+    @Bindable var model: EditorModel
+    let row: CaptionLyricsView.LyricRow
+
+    var body: some View {
+        if row.words.isEmpty {
+            Text(verbatim: row.text).foregroundStyle(.white)
+        } else {
+            let time = model.playhead
+            row.words.enumerated().reduce(Text(verbatim: "")) { text, item in
+                let (index, word) = item
+                let said = word.range.start.seconds <= time + 0.03
+                return text + Text(verbatim: (index == 0 ? "" : " ") + word.text)
+                    .foregroundStyle(.white.opacity(said ? 1 : 0.45))
+            }
         }
     }
 }
@@ -489,23 +628,38 @@ private struct LyricEditor: View {
 
 private struct LanguagePicker: View {
     @Bindable var model: EditorModel
-    let existing: [String]
+    let mode: CaptionLyricsView.PickerMode
     let onPick: (String) -> Void
+
+    private var codes: [String] {
+        switch mode {
+        case .translate: CaptionTranslation.languages.filter { $0 != model.spokenLanguage }
+        case .spoken: CaptionTranslation.languages
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
-                DSKicker(AppLocalization.string("lyrics.translate", bundle: .module))
-                Text("lyrics.translate.note", bundle: .module)
-                    .dsFont(.sans, .regular, 12, lineHeight: 1.35)
-                    .foregroundStyle(DS.Palette.ink(0.58))
-                    .fixedSize(horizontal: false, vertical: true)
+                DSKicker(mode == .translate
+                    ? AppLocalization.string("lyrics.translate", bundle: .module)
+                    : AppLocalization.string("lyrics.spoken.title", bundle: .module))
+                Group {
+                    if mode == .translate {
+                        Text("lyrics.translate.note", bundle: .module)
+                    } else {
+                        Text("lyrics.spoken.note", bundle: .module)
+                    }
+                }
+                .dsFont(.sans, .regular, 12, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.58))
+                .fixedSize(horizontal: false, vertical: true)
             }
             .padding(20)
 
             ScrollView {
                 LazyVStack(spacing: 6) {
-                    ForEach(CaptionTranslation.languages.filter { $0 != model.spokenLanguage }, id: \.self) { code in
+                    ForEach(codes, id: \.self) { code in
                         Button { onPick(code) } label: {
                             HStack {
                                 Text(verbatim: CaptionTranslation.name(of: code, in: AppLocalization.locale))
@@ -515,14 +669,7 @@ private struct LanguagePicker: View {
                                     .dsFont(.sans, .regular, 13)
                                     .foregroundStyle(DS.Palette.ink(0.45))
                                 Spacer(minLength: 0)
-                                if existing.contains(code) {
-                                    Text("lyrics.translate.again", bundle: .module)
-                                        .dsFont(.mono, .medium, 10)
-                                        .foregroundStyle(DS.Palette.lime)
-                                } else {
-                                    Image(systemName: "globe")
-                                        .foregroundStyle(DS.Palette.ink(0.4))
-                                }
+                                trailing(code)
                             }
                             .padding(.horizontal, 16)
                             .frame(height: 52)
@@ -536,6 +683,26 @@ private struct LanguagePicker: View {
             }
         }
         .background(DS.Palette.screen)
+    }
+
+    @ViewBuilder
+    private func trailing(_ code: String) -> some View {
+        switch mode {
+        case .translate:
+            if model.project.translationLanguages.contains(code) {
+                Text("lyrics.translate.again", bundle: .module)
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.lime)
+            } else {
+                Image(systemName: "globe").foregroundStyle(DS.Palette.ink(0.4))
+            }
+        case .spoken:
+            if code == model.spokenLanguage {
+                Image(systemName: "checkmark").foregroundStyle(DS.Palette.lime)
+            } else {
+                Image(systemName: "waveform").foregroundStyle(DS.Palette.ink(0.4))
+            }
+        }
     }
 }
 

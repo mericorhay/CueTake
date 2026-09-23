@@ -1963,19 +1963,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Long silences shortened, voice clarified, podcast captions."
+            "value" : "Long silences and repeats out, voice clarified, soft transitions, podcast captions."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uzun sessizlikler kısalır, ses netleşir, podcast altyazısı."
+            "value" : "Uzun sessizlikler ve tekrarlar çıkar, ses netleşir, yumuşak geçişler, podcast altyazısı."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Silencios largos acortados, voz aclarada, subtítulos de podcast."
+            "value" : "Sin silencios largos ni repeticiones, voz aclarada, transiciones suaves y subtítulos de podcast."
           }
         }
       }
@@ -2009,19 +2009,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pauses and fillers out, captions on, exported."
+            "value" : "Pauses, fillers, repeats and false starts out, captions on, exported."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Boşluklar ve dolgular çıkar, altyazı eklenir, video dışa aktarılır."
+            "value" : "Boşluklar, dolgular, tekrarlar ve yarım cümleler çıkar; altyazı eklenir, video dışa aktarılır."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausas y muletillas eliminadas, subtítulos activados, exportado."
+            "value" : "Sin pausas, muletillas, repeticiones ni arranques en falso; subtítulos activados y exportado."
           }
         }
       }
@@ -2055,19 +2055,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A fast hook, three points, a call to action. Karaoke captions, music, 60 fps."
+            "value" : "A fast hook with your own words as the title, zooms on the beat, transitions, karaoke captions, music and sound design."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hızlı kanca, üç nokta, çağrı. Karaoke altyazı, müzik, 60 fps."
+            "value" : "Kendi sözlerinden başlıklı hızlı bir kanca, müziğin vuruşuna zoom, geçişler, karaoke altyazı, müzik ve ses efektleri."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un gancho rápido, tres puntos y una llamada a la acción. Subtítulos karaoke, música, 60 fps."
+            "value" : "Un gancho rápido con tus propias palabras como título, zooms al ritmo, transiciones, subtítulos karaoke, música y efectos de sonido."
           }
         }
       }
@@ -2239,19 +2239,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pauses and fillers out, voice cleaned, clean captions."
+            "value" : "Best takes kept, pauses and fillers out, voice cleaned, the camera follows your face, clean captions."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Boşluklar ve dolgular çıkar, ses temizlenir, sade altyazı."
+            "value" : "En iyi çekimler seçilir, boşluklar ve dolgular çıkar, ses temizlenir, kamera yüzünü takip eder, sade altyazı."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin pausas ni muletillas, voz limpia y subtítulos claros."
+            "value" : "Se quedan las mejores tomas, sin pausas ni muletillas, voz limpia, la cámara sigue tu cara y subtítulos claros."
           }
         }
       }
@@ -2285,19 +2285,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hook, problem, product, proof, call to action. Clean sound, light music, bold captions."
+            "value" : "Hook, problem, product, proof, call to action. Best takes, punch-ins, your hook on screen, bold captions, music and sound design."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kanca, sorun, ürün, kanıt, çağrı. Temiz ses, hafif müzik, kalın altyazı."
+            "value" : "Kanca, sorun, ürün, kanıt, çağrı. En iyi çekimler, vurgulu zoomlar, ekranda kancan, kalın altyazı, müzik ve ses efektleri."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gancho, problema, producto, prueba y llamada a la acción. Sonido limpio, música suave y subtítulos destacados."
+            "value" : "Gancho, problema, producto, prueba y llamada a la acción. Mejores tomas, zooms de impacto, tu gancho en pantalla, subtítulos destacados, música y efectos de sonido."
           }
         }
       }
