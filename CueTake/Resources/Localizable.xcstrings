@@ -3504,19 +3504,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No video came back"
+            "value" : "No added videos to arrange"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hiç video gelmedi"
+            "value" : "Yerleştirilecek eklenmiş video yok"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se devolvió video"
+            "value" : "No hay videos añadidos para organizar"
           }
         }
       }
@@ -3632,6 +3632,144 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Workflow aplicado. Una sola acción de deshacer en el editor revierte todos sus cambios."
+          }
+        }
+      }
+    },
+    "workflow.skip.nothingToDo" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to change in this video"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu videoda değişecek bir şey yok"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay nada que cambiar en este video"
+          }
+        }
+      }
+    },
+    "workflow.skip.bestTakes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every clip already uses its best take"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her klip zaten en iyi çekimini kullanıyor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada clip ya usa su mejor toma"
+          }
+        }
+      }
+    },
+    "workflow.skip.noBrand" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No brand kit or logo saved yet"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Henüz kayıtlı marka kiti ya da logo yok"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay kit de marca ni logo guardados"
+          }
+        }
+      }
+    },
+    "workflow.skip.noInstruction" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No instruction written for the AI"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI için talimat yazılmamış"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se escribió ninguna instrucción para la IA"
+          }
+        }
+      }
+    },
+    "workflow.trackFace.finding" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finding the face in each clip…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her klipte yüz bulunuyor…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscando el rostro en cada clip…"
+          }
+        }
+      }
+    },
+    "workflow.aiEdit.thinking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The AI is editing…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI düzenliyor…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA está editando…"
           }
         }
       }

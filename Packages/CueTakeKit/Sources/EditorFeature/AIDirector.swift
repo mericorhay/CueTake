@@ -428,6 +428,42 @@ extension EditorModel {
         return EditPlanOutcome(applied: applied, skipped: skippedTypes)
     }
 
+    /// Carries out a plan a workflow made, with no one watching: the slow work a step needs first
+    /// (finding a face through a clip) is done before it runs, and nothing is animated or kept as
+    /// an AI change set, because the workflow run is already one undoable edit of its own.
+    @discardableResult
+    public func applyAutomated(_ original: EditPlan) async -> EditPlanOutcome {
+        let plan = original.resolvingReferences(in: project)
+        let (steps, skipped) = aiSteps(for: plan)
+        isApplyingPlan = true
+        defer { isApplyingPlan = false }
+
+        var applied = 0
+        var skippedTypes = skipped
+        for step in steps {
+            if let prepare = step.prepare { await prepare(self) }
+            guard step.perform(self) != nil else {
+                skippedTypes.append(contentsOf: step.types)
+                continue
+            }
+            applied += step.types.count
+        }
+        project.updatedAt = .now
+        return EditPlanOutcome(applied: applied, skipped: skippedTypes)
+    }
+
+    /// Switches every clip to its best-reading take. Returns how many clips changed.
+    @discardableResult
+    public func chooseBestTakes() -> Int {
+        var changed = 0
+        for index in project.segments.indices {
+            guard let best = betterTake(at: index) else { continue }
+            selectTake(best.id, at: index)
+            changed += 1
+        }
+        return changed
+    }
+
     // MARK: - Light
 
     func glow(_ targets: [AITarget]) {

@@ -4,8 +4,10 @@ import Domain
 import EditorFeature
 import Foundation
 import Persistence
+import ScriptFeature
 import SettingsFeature
 import SwiftUI
+import UIKit
 import WorkflowEngine
 import WorkflowsFeature
 
@@ -533,6 +535,68 @@ extension AppModel {
         case .generateVideo(let options):
             return await generateVideos(options, step: step)
 
+        case .cleanup(let options):
+            guard hasTranscripts else { return .skipped(AppLocalization.string("workflow.skip.needsSpeech")) }
+            editorModel.project = project
+            let cleaned = editorModel.cleanUpAllClips(kinds: options.kinds)
+            project = editorModel.project
+            return cleaned.clips > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+
+        case .bestTakes:
+            editorModel.project = project
+            let changed = editorModel.chooseBestTakes()
+            project = editorModel.project
+            return changed > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.bestTakes"))
+
+        case .brandKit(let options):
+            return await applyWorkflowBrand(options)
+
+        case .addTitle(let options):
+            return await runStudioTool { WorkflowStudioPlanner.title(options, in: $0) }
+
+        case .brandTemplate(let options):
+            return await runStudioTool { WorkflowStudioPlanner.template(options, in: $0) }
+
+        case .filter(let options):
+            return await runStudioTool { WorkflowStudioPlanner.filter(options, in: $0) }
+
+        case .background(let options):
+            return await runStudioTool { WorkflowStudioPlanner.background(options, in: $0) }
+
+        case .autoZoom(let options):
+            return await runStudioTool { WorkflowStudioPlanner.zoom(options, in: $0) }
+
+        case .trackFace(let options):
+            workflowStudio?.note(AppLocalization.string("workflow.trackFace.finding"), for: step)
+            defer { workflowStudio?.note(nil, for: step) }
+            return await runStudioTool { _ in [.trackFace(clip: nil, closeness: min(max(options.closeness, 0.08), 0.2))] }
+
+        case .transitions(let options):
+            return await runStudioTool { WorkflowStudioPlanner.transitions(options, in: $0) }
+
+        case .voiceEffect(let options):
+            return await runStudioTool { WorkflowStudioPlanner.voiceEffect(options, in: $0) }
+
+        case .videoLayout(let options):
+            guard !project.videoLayers.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noVideos")) }
+            return await runStudioTool { _ in [.layoutVideos(layout: options.layout)] }
+
+        case .aiEdit(let options):
+            let instruction = options.instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !instruction.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noInstruction")) }
+            editorModel.project = project
+            workflowStudio?.note(AppLocalization.string("workflow.aiEdit.thinking"), for: step)
+            defer { workflowStudio?.note(nil, for: step) }
+            do {
+                let plan = try await requestEditPlan(editorModel.document(), instruction)
+                if Task.isCancelled { return .skipped(AppLocalization.string("workflow.skip.stopped")) }
+                let outcome = await editorModel.applyAutomated(plan)
+                project = editorModel.project
+                return outcome.applied > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+            } catch {
+                return .skipped(error.localizedDescription)
+            }
+
         case .generateScript, .segmentScript:
             return .skipped(AppLocalization.string("workflow.skip.script"))
 
@@ -542,6 +606,43 @@ extension AppModel {
         case .unsupported:
             return .skipped(AppLocalization.string("workflow.skip.unsupported"))
         }
+    }
+
+    /// Runs a studio tool the way the studio's AI does: the step's operations, worked out for the
+    /// video as it is now, applied by the editor.
+    private func runStudioTool(_ build: (EditDocument) -> [EditPlan.Operation]) async -> StudioStepState {
+        editorModel.project = project
+        let operations = build(editorModel.document())
+        guard !operations.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.nothingToDo")) }
+        let outcome = await editorModel.applyAutomated(EditPlan(summary: "", operations: operations))
+        project = editorModel.project
+        return outcome.applied > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+    }
+
+    /// The brand kit on the video: its colours on captions and titles, its logo in its corner.
+    private func applyWorkflowBrand(_ options: BrandStepOptions) async -> StudioStepState {
+        let kit = scriptLibrary.kit
+        var changed = false
+        if options.colors, !kit.isEmpty {
+            project.apply(kit)
+            changed = true
+        }
+        if options.logo, let logo = brandLogoURL,
+           let media = try? await dependencies.projectStore.mediaDirectory(for: project.id) {
+            let destination = media.appending(path: BrandKit.logoInProject, directoryHint: .notDirectory)
+            try? FileManager.default.removeItem(at: destination)
+            try? FileManager.default.copyItem(at: logo, to: destination)
+            var aspect = kit.logoAspect
+            if let image = UIImage(contentsOfFile: destination.path(percentEncoded: false)), image.size.height > 0 {
+                aspect = image.size.width / image.size.height
+            }
+            var marked = kit
+            marked.watermark.isOn = true
+            editorModel.project = project
+            project.setWatermark(marked, aspect: aspect, totalSeconds: editorModel.duration)
+            changed = true
+        }
+        return changed ? .done : .skipped(AppLocalization.string("workflow.skip.noBrand"))
     }
 
     /// Sends the finished video to the workflow's own API.

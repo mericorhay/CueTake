@@ -228,6 +228,10 @@ public enum WorkflowToolCategory: String, CaseIterable, Hashable, Sendable {
     case cut
     case sound
     case words
+    /// The picture: filters, backgrounds, camera moves, transitions.
+    case look
+    /// Titles, brand templates and the brand kit.
+    case brand
     case deliver
 }
 
@@ -235,10 +239,12 @@ extension WorkflowStepKind {
     public var category: WorkflowToolCategory {
         switch self {
         case .generateScript, .segmentScript, .record, .assembleSections: .structure
-        case .generateVideo: .generate
-        case .trimSilences, .cutWords, .setSpeed: .cut
-        case .cleanAudio, .musicBed: .sound
+        case .generateVideo, .aiEdit: .generate
+        case .trimSilences, .cutWords, .setSpeed, .cleanup, .bestTakes: .cut
+        case .cleanAudio, .musicBed, .voiceEffect: .sound
         case .analyzeSpeech, .generateCaptions, .applyCaptionStyle: .words
+        case .filter, .background, .autoZoom, .trackFace, .transitions, .videoLayout: .look
+        case .addTitle, .brandTemplate, .brandKit: .brand
         case .export, .unsupported: .deliver
         }
     }

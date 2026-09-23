@@ -19,13 +19,26 @@ enum StudioCatalog {
         Tool(type: "generateVideo", symbol: "wand.and.stars", title: "tool.generateVideo", note: "tool.generateVideo.note", category: .generate),
         Tool(type: "assembleSections", symbol: "square.stack.3d.up", title: "tool.assembleSections", note: "tool.assembleSections.note", category: .structure),
         Tool(type: "analyzeSpeech", symbol: "waveform.and.person.filled", title: "tool.analyzeSpeech", note: "tool.analyzeSpeech.note", category: .words),
+        Tool(type: "aiEdit", symbol: "sparkles", title: "tool.aiEdit", note: "tool.aiEdit.note", category: .generate),
+        Tool(type: "cleanup", symbol: "wand.and.stars", title: "tool.cleanup", note: "tool.cleanup.note", category: .cut),
+        Tool(type: "bestTakes", symbol: "film.stack", title: "tool.bestTakes", note: "tool.bestTakes.note", category: .cut),
         Tool(type: "trimSilences", symbol: "arrow.right.and.line.vertical.and.arrow.left", title: "tool.trimSilences", note: "tool.trimSilences.note", category: .cut),
         Tool(type: "cutWords", symbol: "text.badge.minus", title: "tool.cutWords", note: "tool.cutWords.note", category: .cut),
         Tool(type: "setSpeed", symbol: "gauge.with.dots.needle.67percent", title: "tool.setSpeed", note: "tool.setSpeed.note", category: .cut),
         Tool(type: "cleanAudio", symbol: "wind", title: "tool.cleanAudio", note: "tool.cleanAudio.note", category: .sound),
         Tool(type: "musicBed", symbol: "music.note", title: "tool.musicBed", note: "tool.musicBed.note", category: .sound),
+        Tool(type: "voiceEffect", symbol: "waveform.badge.plus", title: "tool.voiceEffect", note: "tool.voiceEffect.note", category: .sound),
         Tool(type: "generateCaptions", symbol: "captions.bubble", title: "tool.generateCaptions", note: "tool.generateCaptions.note", category: .words),
         Tool(type: "applyCaptionStyle", symbol: "textformat.size", title: "tool.applyCaptionStyle", note: "tool.applyCaptionStyle.note", category: .words),
+        Tool(type: "filter", symbol: "camera.filters", title: "tool.filter", note: "tool.filter.note", category: .look),
+        Tool(type: "background", symbol: "person.crop.rectangle", title: "tool.background", note: "tool.background.note", category: .look),
+        Tool(type: "trackFace", symbol: "viewfinder", title: "tool.trackFace", note: "tool.trackFace.note", category: .look),
+        Tool(type: "autoZoom", symbol: "plus.magnifyingglass", title: "tool.autoZoom", note: "tool.autoZoom.note", category: .look),
+        Tool(type: "transitions", symbol: "square.on.square.intersection.dashed", title: "tool.transitions", note: "tool.transitions.note", category: .look),
+        Tool(type: "videoLayout", symbol: "rectangle.split.2x1", title: "tool.videoLayout", note: "tool.videoLayout.note", category: .look),
+        Tool(type: "addTitle", symbol: "textformat", title: "tool.addTitle", note: "tool.addTitle.note", category: .brand),
+        Tool(type: "brandTemplate", symbol: "sparkles.rectangle.stack", title: "tool.brandTemplate", note: "tool.brandTemplate.note", category: .brand),
+        Tool(type: "brandKit", symbol: "paintpalette", title: "tool.brandKit", note: "tool.brandKit.note", category: .brand),
         Tool(type: "export", symbol: "square.and.arrow.up", title: "tool.export", note: "tool.export.note", category: .deliver),
     ]
 
@@ -44,6 +57,8 @@ enum StudioCatalog {
         case .cut: "category.cut"
         case .sound: "category.sound"
         case .words: "category.words"
+        case .look: "category.look"
+        case .brand: "category.brand"
         case .deliver: "category.deliver"
         }
     }
@@ -55,6 +70,8 @@ enum StudioCatalog {
         case .cut: DS.Palette.accent
         case .sound: DS.Palette.accentWarm
         case .words: DS.Palette.lime
+        case .look: DS.Palette.accent
+        case .brand: DS.Palette.accentWarm
         case .deliver: DS.Palette.ink
         }
     }
@@ -75,6 +92,32 @@ enum StudioCatalog {
             return String(format: "%.0f dB", o.levelDB) + (o.ducking ? " · duck" : "")
         case .applyCaptionStyle(let preset):
             return preset
+        case .cleanup(let o):
+            return [o.pauses ? "pause" : nil, o.fillers ? "filler" : nil, o.repeats ? "repeat" : nil, o.restarts ? "restart" : nil]
+                .compactMap { $0 }.joined(separator: " · ")
+        case .brandKit(let o):
+            return [o.colors ? "colors" : nil, o.logo ? "logo" : nil].compactMap { $0 }.joined(separator: " · ")
+        case .addTitle(let o):
+            let text = o.text.isEmpty ? "“…”" : "“\(o.text.prefix(24))”"
+            return "\(text) · \(o.moment.rawValue) · \(String(format: "%.1f", o.duration)) s"
+        case .brandTemplate(let o):
+            return "\(o.style) · \(o.moment.rawValue) · \(String(format: "%.0f", o.duration)) s"
+        case .filter(let o):
+            return "\(o.look) · \(Int(o.intensity * 100))% · \(targetLabel(o.target))"
+        case .background(let o):
+            return "\(o.style) · \(Int(o.strength * 100))% · \(targetLabel(o.target))"
+        case .autoZoom(let o):
+            return "\(o.style.rawValue) · \(Int(o.amount * 100))% · \(String(format: "%.0f", o.spacing)) s"
+        case .trackFace(let o):
+            return "\(Int(o.closeness * 100))%"
+        case .transitions(let o):
+            return "\(o.kind) · \(String(format: "%.1f", o.seconds)) s · \(o.placement.rawValue)"
+        case .voiceEffect(let o):
+            return "\(o.preset) · \(Int(o.amount * 100))% · \(targetLabel(o.target))"
+        case .videoLayout(let o):
+            return o.layout
+        case .aiEdit(let o):
+            return o.instruction.isEmpty ? "" : "“\(o.instruction.prefix(40))”"
         case .generateVideo(let o):
             let name = o.modelPreset.isCustom && !o.customModel.isEmpty ? o.customModel : o.modelPreset.title
             let count = o.prompts.isEmpty ? "§" : "\(o.prompts.count)×"
@@ -88,6 +131,11 @@ enum StudioCatalog {
         default:
             return ""
         }
+    }
+
+    /// The whole video, or a section's role.
+    static func targetLabel(_ target: String) -> String {
+        target == WorkflowTarget.all ? AppLocalization.string("studio.param.all", bundle: .module) : roleLabel(target)
     }
 
     // MARK: - Sections

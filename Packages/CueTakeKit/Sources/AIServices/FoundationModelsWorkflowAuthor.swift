@@ -28,8 +28,9 @@ struct GeneratedStep {
     @Guide(
         description: "The tool.",
         .anyOf([
-            "assembleSections", "analyzeSpeech", "trimSilences", "cutWords", "setSpeed",
-            "cleanAudio", "musicBed", "generateCaptions", "applyCaptionStyle", "export",
+            "assembleSections", "analyzeSpeech", "cleanup", "bestTakes", "trimSilences", "cutWords", "setSpeed",
+            "cleanAudio", "musicBed", "generateCaptions", "applyCaptionStyle", "addTitle", "filter",
+            "trackFace", "autoZoom", "transitions", "brandKit", "export",
         ])
     )
     var type: String
@@ -37,7 +38,7 @@ struct GeneratedStep {
     @Guide(description: "The one number the tool needs: pause length in seconds for trimSilences (0.3 to 1.5), playback speed for setSpeed (0.5 to 2), music level in dB for musicBed (-30 to -3). 0 for every other tool.")
     var amount: Double
 
-    @Guide(description: "The one word the tool needs: which section for setSpeed (all, hook, intro, point, example, cta), the caption look for applyCaptionStyle (pop, clean, karaoke). Empty for every other tool.")
+    @Guide(description: "The one word the tool needs: which section for setSpeed (all, hook, intro, point, example, cta), the caption look for applyCaptionStyle (pop, clean, karaoke), the look for filter (cinematic, warm, cool, vivid, vintage, mono), the transition for transitions (crossfade, fadeBlack, slideLeft, zoomIn), punch, push or mixed for autoZoom. Empty for every other tool.")
     var target: String
 }
 
@@ -52,7 +53,7 @@ struct GeneratedWorkflow {
     @Guide(description: "The structure of the video in order.", .count(1...10))
     var sections: [GeneratedSection]
 
-    @Guide(description: "The tools to run, in the order they should run.", .count(1...12))
+    @Guide(description: "The tools to run, in the order they should run.", .count(1...16))
     var steps: [GeneratedStep]
 
     @Guide(description: "Caption look.", .anyOf(["pop", "clean", "karaoke"]))
@@ -168,6 +169,15 @@ public struct FoundationModelsWorkflowAuthor: Sendable {
             return .musicBed(options)
         case .applyCaptionStyle:
             return .applyCaptionStyle(presetID: ["pop", "clean", "karaoke"].contains(target) ? target : "pop")
+        case .filter(var options):
+            if FilterSettings.Look(rawValue: target) != nil { options.look = target }
+            return .filter(options)
+        case .transitions(var options):
+            if ClipTransition.Kind(rawValue: target) != nil { options.kind = target }
+            return .transitions(options)
+        case .autoZoom(var options):
+            if let style = ZoomStepOptions.Style(rawValue: target) { options.style = style }
+            return .autoZoom(options)
         case let other:
             return other
         }

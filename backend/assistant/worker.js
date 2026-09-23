@@ -83,21 +83,47 @@ Step types, in the order they usually run:
   prompts (subject, action, setting, camera, light), one per video; with no prompts, planned sections are generated from
   their titles. Put it first, before analyzeSpeech.
 - assembleSections — put the clips into the sections (only when the user wants a structure).
-- analyzeSpeech — transcribe. Required before trimSilences, cutWords and generateCaptions.
+- analyzeSpeech — transcribe. Required before cleanup, trimSilences, cutWords and generateCaptions.
+- cleanup { "pauses": true, "fillers": true, "repeats": true, "restarts": true } — the studio's one-tap cleanup:
+  long pauses, filler sounds, doubled words and restarted sentences. Stronger than cutWords; usually replaces it.
+- bestTakes — every clip switches to its best-read take (only useful when clips were shot more than once).
 - trimSilences { "minPause": 0.6, "padding": 0.12 }
 - cutWords { "words": ["um", "uh"] } — use the filler words of the user's language (Turkish: "ee", "ıı", "hani", "şey", "yani" only as filler).
 - setSpeed { "target": "all|hook|intro|point|example|cta", "speed": 1.1 } between 0.25 and 4.
 - cleanAudio { "denoise": true, "enhanceVoice": true, "removeRumble": true }
 - musicBed { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } — only if the project already has music.
+- voiceEffect { "preset": "clean|echo|hall|room|telephone|radio|megaphone|robot|underwater|deep|chipmunk", "amount": 0.4, "target": "all|hook|intro|point|example|cta" }
 - generateCaptions
 - applyCaptionStyle { "presetID": one of the caption presets above }
+Studio tools (the same tools as the editor; each works on the video as it is when the step runs):
+- addTitle { "text": "" (empty = the opening words), "moment": "start|cta|end|at", "seconds": 0 (for at), "duration": 2.5,
+  "y": 0.22 (0 top … 1 bottom), "scale": 1.3, "animation": "pop|fade|slideUp|none", "behind": false (true = person in front of the text) }
+- brandTemplate { "style": "codeCard|coupon|priceTag|spotlight|badge|stat|bigTitle|lowerThird|newDrop|countdown|promoStrip|review|quote|checklist|beforeAfter|poll|giveaway|ticket|location|linkPill|ctaButton|collab",
+  "lines": { "<slot>": "text" }, "color": "#RRGGBB" or "" for the brand's, "moment": "start|cta|end|at", "seconds": 0, "duration": 4 }
+  — a designed sponsor picture. Slots per style as in the studio (codeCard: label, code, note, brand · coupon: number, label, code, date, brand ·
+  priceTag: title, price, oldPrice, brand · lowerThird: brand, title, detail · linkPill: title, brand · ctaButton: detail, cta, brand).
+  Codes, prices, dates and names only as the user gave them; leave a line out rather than invent it.
+- brandKit { "colors": true, "logo": true } — the creator's saved brand colours and logo watermark.
+- filter { "look": "natural|vivid|cinematic|warm|cool|vintage|fade|chrome|instant|dramatic|mono|noir", "intensity": 0.7, "target": "all|hook|…" }
+- background { "style": "blur|dim|studio|black|white|green|color", "strength": 0.7, "color": "#RRGGBB", "target": "all|hook|…" }
+- trackFace { "closeness": 0.12 } — the camera follows the speaker's face in every clip. Put it before autoZoom.
+- autoZoom { "style": "punch|push|mixed", "amount": 0.14, "spacing": 5 } — camera moves on sentence starts, at least spacing seconds apart.
+- transitions { "kind": "crossfade|fadeBlack|fadeWhite|slideLeft|slideUp|pushLeft|wipeLeft|zoomIn|zoomOut", "seconds": 0.5, "placement": "sections|everyCut" }
+- videoLayout { "layout": "pictureInPicture|sideBySide|stacked|grid" } — only when the project has added videos.
+- aiEdit { "instruction": "what the studio's AI should do, in the user's words" } — for anything the other tools cannot
+  express (a specific moment, a creative idea). It uses the cloud AI, so prefer the tools above when they fit.
 - export { "destination": "photoLibrary|files", "delivery": { "endpoint": "https://…", "method": "POST|PUT",
   "payload": "multipart|rawVideo|json", "fields": { } } } — always the last step, exactly once (the app adds it when missing).
   Add "delivery" only when the user asks to send the finished video to a URL, API or automation; never invent an endpoint,
   and never put tokens or passwords in the workflow (the user enters them in the app).
-Use only these types. A comprehensive, high quality workflow usually is: analyzeSpeech, trimSilences,
-cutWords, cleanAudio, generateCaptions, applyCaptionStyle, export — with sections only if the user wants
+Use only these types. A comprehensive, high quality workflow usually is: analyzeSpeech, cleanup,
+cleanAudio, generateCaptions, applyCaptionStyle, export — with sections only if the user wants
 a structure. Leave out sections when the user only wants tools applied to what they already have.
+For "professional", "dynamic" or "viral" add trackFace, autoZoom, a filter, an addTitle on the opening and
+transitions on sections; for a sponsored video add a brandTemplate at the cta with the details the user gave.
+Order: generateVideo, assembleSections, analyzeSpeech, bestTakes, cleanup/trimSilences/cutWords, setSpeed,
+sound steps, captions, look steps (filter, background, trackFace, autoZoom, transitions, videoLayout),
+brand steps (addTitle, brandTemplate, brandKit), aiEdit, export.
 
 Rules:
 - Reply in the language of the user's message.

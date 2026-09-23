@@ -109,6 +109,9 @@ struct WorkflowProposalCard: View {
         case .applyCaptionStyle(let preset): AppLocalization.string("assistant.step.look \(preset.capitalized)", bundle: .module)
         case .export: AppLocalization.string("assistant.step.export", bundle: .module)
         case .generateVideo(let o): o.modelPreset.title
+        case .cleanup, .bestTakes, .brandKit, .addTitle, .brandTemplate, .filter, .background, .autoZoom,
+             .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit:
+            AppLocalization.string(String.LocalizationValue(stringLiteral: "assistant.step." + kind.typeName), bundle: .module)
         case .generateScript, .segmentScript, .record, .unsupported: kind.typeName
         }
     }

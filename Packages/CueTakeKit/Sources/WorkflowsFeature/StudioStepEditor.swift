@@ -120,6 +120,10 @@ struct StudioStepEditor: View {
             case .generateVideo(let options):
                 StudioGenerateVideoEditor(model: model, step: step, options: options)
 
+            case .cleanup, .bestTakes, .brandKit, .addTitle, .brandTemplate, .filter, .background, .autoZoom,
+                 .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit:
+                StudioToolEditor(model: model, step: step)
+
             default:
                 Text(AppLocalization.string(StudioCatalog.tool(for: step.kind.typeName).note, bundle: .module))
                     .dsFont(.sans, .regular, 12, lineHeight: 1.4)

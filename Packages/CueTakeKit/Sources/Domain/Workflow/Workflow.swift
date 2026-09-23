@@ -17,7 +17,8 @@ import Foundation
 /// - `steps` is the pipeline of automatic tools.
 public struct WorkflowDefinition: Identifiable, Hashable, Sendable, Codable {
     /// 2 added sections, style and editing tools; 3 adds variables, conditions and loops. Older
-    /// documents still decode because every added field has a default.
+    /// documents still decode because every added field has a default. The studio tools are new
+    /// step types, not a new schema: an older app reads them as unsupported steps and skips them.
     public static let currentSchemaVersion = 3
 
     public var schemaVersion: Int
@@ -180,6 +181,20 @@ public enum WorkflowStepKind: Hashable, Sendable {
     case generateCaptions
     case applyCaptionStyle(presetID: String)
     case export(ExportPreset)
+    // The studio's own tools, run without anyone in the editor (`WorkflowStudioTools`).
+    case cleanup(CleanupStepOptions)
+    case bestTakes
+    case brandKit(BrandStepOptions)
+    case addTitle(TitleStepOptions)
+    case brandTemplate(TemplateStepOptions)
+    case filter(FilterStepOptions)
+    case background(BackgroundStepOptions)
+    case autoZoom(ZoomStepOptions)
+    case trackFace(TrackFaceOptions)
+    case transitions(TransitionStepOptions)
+    case voiceEffect(VoiceEffectOptions)
+    case videoLayout(VideoLayoutOptions)
+    case aiEdit(AIEditOptions)
     case unsupported(type: String)
 
     /// Steps the runner cannot finish alone; it pauses and hands control to the UI.
@@ -204,13 +219,28 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .generateCaptions: StepType.generateCaptions.rawValue
         case .applyCaptionStyle: StepType.applyCaptionStyle.rawValue
         case .export: StepType.export.rawValue
+        case .cleanup: StepType.cleanup.rawValue
+        case .bestTakes: StepType.bestTakes.rawValue
+        case .brandKit: StepType.brandKit.rawValue
+        case .addTitle: StepType.addTitle.rawValue
+        case .brandTemplate: StepType.brandTemplate.rawValue
+        case .filter: StepType.filter.rawValue
+        case .background: StepType.background.rawValue
+        case .autoZoom: StepType.autoZoom.rawValue
+        case .trackFace: StepType.trackFace.rawValue
+        case .transitions: StepType.transitions.rawValue
+        case .voiceEffect: StepType.voiceEffect.rawValue
+        case .videoLayout: StepType.videoLayout.rawValue
+        case .aiEdit: StepType.aiEdit.rawValue
         case .unsupported(let type): type
         }
     }
 
     enum StepType: String, CaseIterable {
-        case generateScript, generateVideo, segmentScript, record, assembleSections, analyzeSpeech, trimSilences,
-             cutWords, setSpeed, cleanAudio, musicBed, generateCaptions, applyCaptionStyle, export
+        case generateScript, generateVideo, segmentScript, record, assembleSections, analyzeSpeech, cleanup, bestTakes,
+             trimSilences, cutWords, setSpeed, cleanAudio, musicBed, voiceEffect, generateCaptions, applyCaptionStyle,
+             addTitle, brandTemplate, brandKit, filter, background, trackFace, autoZoom, transitions, videoLayout,
+             aiEdit, export
     }
 
     /// Every type name the app understands, in palette order.
@@ -234,6 +264,19 @@ public enum WorkflowStepKind: Hashable, Sendable {
         case .generateCaptions: .generateCaptions
         case .applyCaptionStyle: .applyCaptionStyle(presetID: "pop")
         case .export: .export(.shortFormVertical)
+        case .cleanup: .cleanup(CleanupStepOptions())
+        case .bestTakes: .bestTakes
+        case .brandKit: .brandKit(BrandStepOptions())
+        case .addTitle: .addTitle(TitleStepOptions())
+        case .brandTemplate: .brandTemplate(TemplateStepOptions())
+        case .filter: .filter(FilterStepOptions())
+        case .background: .background(BackgroundStepOptions())
+        case .autoZoom: .autoZoom(ZoomStepOptions())
+        case .trackFace: .trackFace(TrackFaceOptions())
+        case .transitions: .transitions(TransitionStepOptions())
+        case .voiceEffect: .voiceEffect(VoiceEffectOptions())
+        case .videoLayout: .videoLayout(VideoLayoutOptions())
+        case .aiEdit: .aiEdit(AIEditOptions())
         case nil: .unsupported(type: type)
         }
     }
@@ -255,6 +298,10 @@ extension WorkflowStepKind: Codable {
 
         func parameters<T: Decodable>(_: T.Type) throws -> T? {
             try container.decodeIfPresent(T.self, forKey: .parameters)
+        }
+
+        func lenient<T: Decodable>(_: T.Type) -> T? {
+            (try? container.decodeIfPresent(T.self, forKey: .parameters)) ?? nil
         }
 
         switch StepType(rawValue: type) {
@@ -286,6 +333,32 @@ extension WorkflowStepKind: Codable {
             self = .applyCaptionStyle(presetID: try parameters(CaptionStyleParameters.self)?.presetID ?? "pop")
         case .export:
             self = .export(try parameters(ExportPreset.self) ?? .shortFormVertical)
+        case .cleanup:
+            self = .cleanup(lenient(CleanupStepOptions.self) ?? CleanupStepOptions())
+        case .bestTakes:
+            self = .bestTakes
+        case .brandKit:
+            self = .brandKit(lenient(BrandStepOptions.self) ?? BrandStepOptions())
+        case .addTitle:
+            self = .addTitle(lenient(TitleStepOptions.self) ?? TitleStepOptions())
+        case .brandTemplate:
+            self = .brandTemplate(lenient(TemplateStepOptions.self) ?? TemplateStepOptions())
+        case .filter:
+            self = .filter(lenient(FilterStepOptions.self) ?? FilterStepOptions())
+        case .background:
+            self = .background(lenient(BackgroundStepOptions.self) ?? BackgroundStepOptions())
+        case .autoZoom:
+            self = .autoZoom(lenient(ZoomStepOptions.self) ?? ZoomStepOptions())
+        case .trackFace:
+            self = .trackFace(lenient(TrackFaceOptions.self) ?? TrackFaceOptions())
+        case .transitions:
+            self = .transitions(lenient(TransitionStepOptions.self) ?? TransitionStepOptions())
+        case .voiceEffect:
+            self = .voiceEffect(lenient(VoiceEffectOptions.self) ?? VoiceEffectOptions())
+        case .videoLayout:
+            self = .videoLayout(lenient(VideoLayoutOptions.self) ?? VideoLayoutOptions())
+        case .aiEdit:
+            self = .aiEdit(lenient(AIEditOptions.self) ?? AIEditOptions())
         case nil:
             self = .unsupported(type: type)
         }
@@ -315,7 +388,31 @@ extension WorkflowStepKind: Codable {
             try container.encode(CaptionStyleParameters(presetID: presetID), forKey: .parameters)
         case .export(let preset):
             try container.encode(preset, forKey: .parameters)
-        case .segmentScript, .assembleSections, .analyzeSpeech, .generateCaptions, .unsupported:
+        case .cleanup(let options):
+            try container.encode(options, forKey: .parameters)
+        case .brandKit(let options):
+            try container.encode(options, forKey: .parameters)
+        case .addTitle(let options):
+            try container.encode(options, forKey: .parameters)
+        case .brandTemplate(let options):
+            try container.encode(options, forKey: .parameters)
+        case .filter(let options):
+            try container.encode(options, forKey: .parameters)
+        case .background(let options):
+            try container.encode(options, forKey: .parameters)
+        case .autoZoom(let options):
+            try container.encode(options, forKey: .parameters)
+        case .trackFace(let options):
+            try container.encode(options, forKey: .parameters)
+        case .transitions(let options):
+            try container.encode(options, forKey: .parameters)
+        case .voiceEffect(let options):
+            try container.encode(options, forKey: .parameters)
+        case .videoLayout(let options):
+            try container.encode(options, forKey: .parameters)
+        case .aiEdit(let options):
+            try container.encode(options, forKey: .parameters)
+        case .segmentScript, .assembleSections, .analyzeSpeech, .generateCaptions, .bestTakes, .unsupported:
             break
         }
     }
