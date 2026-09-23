@@ -88,7 +88,7 @@ public struct CertificatesScreen: View {
 
     private var topBar: some View {
         HStack {
-            DSKicker(String(localized: "cert.kicker", bundle: .module), size: 11)
+            DSKicker(AppLocalization.string("cert.kicker", bundle: .module), size: 11)
             Spacer(minLength: 0)
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -184,7 +184,7 @@ public struct CertificatesScreen: View {
                 .dsFont(.archivo, .bold, 20)
                 .foregroundStyle(DS.Palette.ink)
                 .contentTransition(.numericText())
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.6))
                 .lineLimit(2)
@@ -261,7 +261,7 @@ private struct LevelCard: View {
                     )
                 }
                 if let previous = level.previous {
-                    check(String(localized: "cert.req.previous \(previous.title)", bundle: .module), done: standing.holdsPrevious)
+                    check(AppLocalization.string("cert.req.previous \(previous.title)", bundle: .module), done: standing.holdsPrevious)
                 }
             }
 
@@ -275,7 +275,7 @@ private struct LevelCard: View {
 
             if earned != nil {
                 Button(action: onShow) {
-                    Label(String(localized: "cert.show", bundle: .module), systemImage: "rosette")
+                    Label(AppLocalization.string("cert.show", bundle: .module), systemImage: "rosette")
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -299,11 +299,11 @@ private struct LevelCard: View {
     @ViewBuilder
     private var stateChip: some View {
         let label: String = if earned != nil {
-            String(localized: "cert.state.earned", bundle: .module)
+            AppLocalization.string("cert.state.earned", bundle: .module)
         } else if !standing.holdsPrevious {
-            String(localized: "cert.state.locked", bundle: .module)
+            AppLocalization.string("cert.state.locked", bundle: .module)
         } else {
-            String(localized: "cert.state.progress \(Int((standing.fraction * 100).rounded()))", bundle: .module)
+            AppLocalization.string("cert.state.progress \(Int((standing.fraction * 100).rounded()))", bundle: .module)
         }
         let symbol = earned != nil ? "checkmark.seal.fill" : (standing.holdsPrevious ? "hourglass" : "lock.fill")
         Label(label, systemImage: symbol)
@@ -317,7 +317,7 @@ private struct LevelCard: View {
     private func requirement(_ key: String.LocalizationValue, fraction: Double) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 13)
                     .foregroundStyle(DS.Palette.ink(0.85))
                 Spacer(minLength: 0)
@@ -578,7 +578,7 @@ private struct CertificateSheet: View {
                 )
                 .padding(.top, 24)
 
-                TextField(String(localized: "cert.name.placeholder", bundle: .module), text: $name)
+                TextField(AppLocalization.string("cert.name.placeholder", bundle: .module), text: $name)
                     .dsFont(.sans, .regular, 15)
                     .foregroundStyle(DS.Palette.ink)
                     .textContentType(.name)
@@ -590,11 +590,11 @@ private struct CertificateSheet: View {
                     .accessibilityLabel(Text("cert.name.label", bundle: .module))
 
                 if let signed {
-                    Label(String(localized: "cert.signed", bundle: .module), systemImage: "checkmark.seal.fill")
+                    Label(AppLocalization.string("cert.signed", bundle: .module), systemImage: "checkmark.seal.fill")
                         .dsFont(.sans, .semibold, 13)
                         .foregroundStyle(level.tint)
                     ShareLink(item: signed.verifyURL) {
-                        Label(String(localized: "cert.shareLink", bundle: .module), systemImage: "link")
+                        Label(AppLocalization.string("cert.shareLink", bundle: .module), systemImage: "link")
                             .dsFont(.sans, .semibold, 14)
                             .foregroundStyle(DS.Palette.ink)
                             .frame(maxWidth: .infinity, minHeight: 44)
@@ -640,7 +640,7 @@ private struct CertificateSheet: View {
                         item: image,
                         preview: SharePreview(level.title, image: image)
                     ) {
-                        Label(String(localized: "cert.shareImage", bundle: .module), systemImage: "square.and.arrow.up")
+                        Label(AppLocalization.string("cert.shareImage", bundle: .module), systemImage: "square.and.arrow.up")
                             .dsFont(.sans, .semibold, 14)
                             .foregroundStyle(DS.Palette.ink)
                             .frame(maxWidth: .infinity, minHeight: 44)
@@ -760,7 +760,7 @@ private struct CertificateCard: View {
 
     private func detail(_ key: String.LocalizationValue, _ value: String) -> some View {
         HStack(spacing: 6) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.mono, .medium, 10, letterSpacing: 0.06)
                 .foregroundStyle(DS.Palette.ink(0.56))
             Text(verbatim: value)
@@ -826,17 +826,17 @@ extension CertificationLevel: Identifiable {
 extension CertificationTask {
     var title: String {
         switch self {
-        case .prompterTake: String(localized: "cert.task.prompterTake", bundle: .module)
-        case .cleanup: String(localized: "cert.task.cleanup", bundle: .module)
-        case .captions: String(localized: "cert.task.captions", bundle: .module)
-        case .transition: String(localized: "cert.task.transition", bundle: .module)
-        case .background: String(localized: "cert.task.background", bundle: .module)
-        case .colorLook: String(localized: "cert.task.colorLook", bundle: .module)
-        case .textBehindPerson: String(localized: "cert.task.textBehindPerson", bundle: .module)
-        case .volumeCurve: String(localized: "cert.task.volumeCurve", bundle: .module)
-        case .layeredVideo: String(localized: "cert.task.layeredVideo", bundle: .module)
-        case .namedVersion: String(localized: "cert.task.namedVersion", bundle: .module)
-        case .workflowRun: String(localized: "cert.task.workflowRun", bundle: .module)
+        case .prompterTake: AppLocalization.string("cert.task.prompterTake", bundle: .module)
+        case .cleanup: AppLocalization.string("cert.task.cleanup", bundle: .module)
+        case .captions: AppLocalization.string("cert.task.captions", bundle: .module)
+        case .transition: AppLocalization.string("cert.task.transition", bundle: .module)
+        case .background: AppLocalization.string("cert.task.background", bundle: .module)
+        case .colorLook: AppLocalization.string("cert.task.colorLook", bundle: .module)
+        case .textBehindPerson: AppLocalization.string("cert.task.textBehindPerson", bundle: .module)
+        case .volumeCurve: AppLocalization.string("cert.task.volumeCurve", bundle: .module)
+        case .layeredVideo: AppLocalization.string("cert.task.layeredVideo", bundle: .module)
+        case .namedVersion: AppLocalization.string("cert.task.namedVersion", bundle: .module)
+        case .workflowRun: AppLocalization.string("cert.task.workflowRun", bundle: .module)
         }
     }
 

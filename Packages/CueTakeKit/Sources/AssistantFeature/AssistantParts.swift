@@ -158,7 +158,7 @@ struct AssistantBubble: View {
                                 HStack(spacing: 6) {
                                     Image(systemName: destination.symbol)
                                         .font(.system(size: 11, weight: .semibold))
-                                    Text(String(localized: destination.titleKey, bundle: .module))
+                                    Text(AppLocalization.string(destination.titleKey, bundle: .module))
                                         .dsFont(.sans, .semibold, 12)
                                     Image(systemName: "arrow.right")
                                         .font(.system(size: 9, weight: .bold))
@@ -271,7 +271,7 @@ struct AssistantSessionsView: View {
                 Button {
                     withAnimation(DS.Motion.settle) { model.newSession() }
                 } label: {
-                    Label(String(localized: "assistant.newChat", bundle: .module), systemImage: "square.and.pencil")
+                    Label(AppLocalization.string("assistant.newChat", bundle: .module), systemImage: "square.and.pencil")
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(maxWidth: .infinity)
@@ -299,7 +299,7 @@ struct AssistantSessionsView: View {
                                     Button(role: .destructive) {
                                         withAnimation(DS.Motion.settle) { model.remove(session.id) }
                                     } label: {
-                                        Label(String(localized: "assistant.delete", bundle: .module), systemImage: "trash")
+                                        Label(AppLocalization.string("assistant.delete", bundle: .module), systemImage: "trash")
                                     }
                                 }
                         }
@@ -310,7 +310,7 @@ struct AssistantSessionsView: View {
                     Button(role: .destructive) {
                         confirmingDeleteAll = true
                     } label: {
-                        Label(String(localized: "assistant.deleteAll", bundle: .module), systemImage: "trash")
+                        Label(AppLocalization.string("assistant.deleteAll", bundle: .module), systemImage: "trash")
                             .dsFont(.sans, .medium, 13)
                             .foregroundStyle(DS.Palette.accent)
                             .frame(maxWidth: .infinity)
@@ -320,11 +320,11 @@ struct AssistantSessionsView: View {
                     .padding(.horizontal, 18)
                     .padding(.bottom, 16)
                     .confirmationDialog(
-                        String(localized: "assistant.deleteAll.confirm", bundle: .module),
+                        AppLocalization.string("assistant.deleteAll.confirm", bundle: .module),
                         isPresented: $confirmingDeleteAll,
                         titleVisibility: .visible
                     ) {
-                        Button(String(localized: "assistant.deleteAll", bundle: .module), role: .destructive) {
+                        Button(AppLocalization.string("assistant.deleteAll", bundle: .module), role: .destructive) {
                             withAnimation(DS.Motion.settle) { model.removeAll() }
                         }
                     }
@@ -344,7 +344,7 @@ struct AssistantSessionsView: View {
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(session.title.isEmpty ? String(localized: "assistant.title", bundle: .module) : session.title)
+                    Text(session.title.isEmpty ? AppLocalization.string("assistant.title", bundle: .module) : session.title)
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                         .lineLimit(1)

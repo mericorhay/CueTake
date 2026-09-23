@@ -29,7 +29,7 @@ extension DS {
         case "ellipsis", "ellipsis.circle": "a11y.more"
         default: nil
         }
-        return key.map { Text(String(localized: $0, bundle: .module)) }
+        return key.map { Text(AppLocalization.string($0, bundle: .module)) }
     }
 }
 

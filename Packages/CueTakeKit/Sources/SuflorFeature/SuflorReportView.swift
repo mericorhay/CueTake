@@ -67,7 +67,7 @@ struct SuflorReportView: View {
             pickedRecording = nil
             Task {
                 guard let movie = try? await item.loadTransferable(type: SuflorMovie.self) else {
-                    model.verifyError = String(localized: "suflor.verify.failed", bundle: .module)
+                    model.verifyError = AppLocalization.string("suflor.verify.failed", bundle: .module)
                     return
                 }
                 await model.verify(recording: movie.url)
@@ -83,22 +83,22 @@ struct SuflorReportView: View {
         let delivered = items.filter { session.evidence(for: $0) != .missing }.count
         return VStack(alignment: .leading, spacing: 0) {
             HStack {
-                DSKicker(String(localized: "suflor.report.kicker \(session.reportID)", bundle: .module), size: 11, tracking: 0.16)
+                DSKicker(AppLocalization.string("suflor.report.kicker \(session.reportID)", bundle: .module), size: 11, tracking: 0.16)
                 Spacer(minLength: 0)
                 DSCircleButton("✕", size: 44, fontSize: 15) { onClose() }
                     .accessibilityLabel(Text("suflor.report.close", bundle: .module))
             }
-            DSHeadline(String(localized: "suflor.report.title", bundle: .module), size: 34)
+            DSHeadline(AppLocalization.string("suflor.report.title", bundle: .module), size: 34)
                 .padding(.top, 10)
             HStack(spacing: 8) {
                 if !items.isEmpty {
                     summaryChip(
-                        String(localized: "suflor.report.summary.items \(delivered) \(items.count)", bundle: .module),
+                        AppLocalization.string("suflor.report.summary.items \(delivered) \(items.count)", bundle: .module),
                         tint: delivered == items.count ? DS.Palette.lime : DS.Palette.amber
                     )
                 }
                 if let ad = session.adDuration {
-                    summaryChip(String(localized: "suflor.report.summary.ad \(SuflorSession.clock(ad))", bundle: .module), tint: DS.Palette.accent)
+                    summaryChip(AppLocalization.string("suflor.report.summary.ad \(SuflorSession.clock(ad))", bundle: .module), tint: DS.Palette.accent)
                 }
             }
             .padding(.top, 12)
@@ -160,7 +160,7 @@ struct SuflorReportView: View {
 
     private var languagePicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.report.language", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.report.language", bundle: .module))
             HStack(spacing: 8) {
                 ForEach(SuflorReportLanguage.allCases) { option in
                     SuflorChip(title: option.name, isOn: language == option) {
@@ -185,7 +185,7 @@ struct SuflorReportView: View {
     private var nameField: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "suflor.report.creator", bundle: .module))
+                DSKicker(AppLocalization.string("suflor.report.creator", bundle: .module))
                 Text("suflor.report.required", bundle: .module)
                     .dsFont(.mono, .medium, 9, letterSpacing: 0.12)
                     .foregroundStyle(DS.Palette.inkInverse)
@@ -193,7 +193,7 @@ struct SuflorReportView: View {
                     .padding(.vertical, 2)
                     .background(Capsule().fill(nameMissing ? DS.Palette.amber : DS.Palette.lime))
             }
-            TextField(String(localized: "suflor.report.creator.placeholder", bundle: .module), text: $model.creator)
+            TextField(AppLocalization.string("suflor.report.creator.placeholder", bundle: .module), text: $model.creator)
                 .focused($editingName)
                 .dsFont(.sans, .semibold, 16)
                 .foregroundStyle(DS.Palette.ink)

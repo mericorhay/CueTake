@@ -48,7 +48,7 @@ struct JourneyMapSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            DSKicker(String(localized: "journey.kicker"))
+            DSKicker(AppLocalization.string("journey.kicker"))
             Text(model.project.title)
                 .dsFont(.archivo, .bold, 24)
                 .foregroundStyle(DS.Palette.ink)
@@ -156,7 +156,7 @@ struct JourneyMapSheet: View {
     /// The single most useful sentence on the sheet.
     private func nextStep(_ stage: Int) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "journey.next"), systemImage: "arrow.forward.circle.fill")
+            Label(AppLocalization.string("journey.next"), systemImage: "arrow.forward.circle.fill")
                 .dsFont(.mono, .medium, 10, letterSpacing: 0.1)
                 .foregroundStyle(DS.Palette.lime)
 
@@ -247,7 +247,7 @@ struct JourneyMapSheet: View {
             AssistantLauncherOrb()
                 .frame(width: 26, height: 26)
 
-            TextField(String(localized: "journey.ask.placeholder"), text: $question, axis: .vertical)
+            TextField(AppLocalization.string("journey.ask.placeholder"), text: $question, axis: .vertical)
                 .dsFont(.sans, .regular, 15)
                 .foregroundStyle(DS.Palette.ink)
                 .lineLimit(1...3)

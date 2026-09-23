@@ -1,3 +1,4 @@
+import DesignSystem
 import AIServices
 import AssistantFeature
 import AVFoundation
@@ -151,8 +152,8 @@ final class AppModel {
     /// Nothing yet: no segments, no footage, not written to disk until something is put in it.
     static func blankProject() -> Project {
         Project(
-            title: String(localized: "project.blank"),
-            localeIdentifier: Locale.current.identifier
+            title: AppLocalization.string("project.blank"),
+            localeIdentifier: AppLocalization.locale.identifier
         )
     }
 
@@ -232,16 +233,16 @@ final class AppModel {
         // Checked before copying: a file copied only to be refused is a minute wasted and space used.
         takeEditorEditsIfEditing()
         guard project.videoLayers.count < VideoLayer.maximumAdditionalLayers else {
-            show(notice: String(localized: "editor.video.limit"))
+            show(notice: AppLocalization.string("editor.video.limit"))
             return
         }
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
-        busy = String(localized: "busy.importing")
+        busy = AppLocalization.string("busy.importing")
         defer { busy = nil }
         guard let movie = try? await item.loadTransferable(type: ImportedMovie.self),
               let imported = try? await MediaImporter().importClip(from: movie.url, into: mediaDirectory)
         else {
-            show(notice: String(localized: "editor.video.importFailed"))
+            show(notice: AppLocalization.string("editor.video.importFailed"))
             return
         }
         try? FileManager.default.removeItem(at: movie.url)
@@ -272,7 +273,7 @@ final class AppModel {
     /// without knowing the footage was not shot here.
     func importFootage(_ items: [PhotosPickerItem]) async {
         guard !items.isEmpty else { return }
-        busy = String(localized: "busy.importing")
+        busy = AppLocalization.string("busy.importing")
         defer { busy = nil }
 
         let store = dependencies.projectStore
@@ -281,8 +282,8 @@ final class AppModel {
         // is how the library ends up with one project that grows forever, and how an import lands
         // in a timeline next to segments from an unrelated script.
         var fresh = Project(
-            title: String(localized: "project.untitled \(Date.now.formatted(date: .abbreviated, time: .shortened))"),
-            localeIdentifier: Locale.current.identifier
+            title: AppLocalization.string("project.untitled \(Date.now.formatted(date: .abbreviated, time: .shortened))"),
+            localeIdentifier: AppLocalization.locale.identifier
         )
         // Your look, not the default one, if you have one.
         settingsModel.settings.applyNewProjectDefaults(to: &fresh)
@@ -292,7 +293,7 @@ final class AppModel {
 
         // Three at a time rather than one after another. Most of an import is waiting on Photos
         // to hand over a file — often from iCloud — and those waits do not need to queue.
-        busy = String(localized: "busy.importing.progress \(0) \(items.count)")
+        busy = AppLocalization.string("busy.importing.progress \(0) \(items.count)")
         var loaded: [Int: MediaImporter.ImportedClip] = [:]
         await withTaskGroup(of: (Int, MediaImporter.ImportedClip?).self) { group in
             var next = 0
@@ -303,7 +304,7 @@ final class AppModel {
                 next += 1
                 let isPhoto = !item.supportedContentTypes.contains { $0.conforms(to: .movie) }
                     && item.supportedContentTypes.contains { $0.conforms(to: .image) }
-                let photoTitle = String(localized: "import.photo.title \(index + 1)")
+                let photoTitle = AppLocalization.string("import.photo.title \(index + 1)")
                 group.addTask {
                     // A photo becomes a clip of its own: the picture held for a few seconds.
                     if isPhoto {
@@ -320,7 +321,7 @@ final class AppModel {
             var done = 0
             for await (index, clip) in group {
                 done += 1
-                busy = String(localized: "busy.importing.progress \(done) \(items.count)")
+                busy = AppLocalization.string("busy.importing.progress \(done) \(items.count)")
                 if let clip { loaded[index] = clip }
                 enqueue()
             }
@@ -505,8 +506,8 @@ final class AppModel {
             effects: editorModel.project.voiceEffects,
             in: mediaDirectory
         )
-        if reversing { busy = String(localized: "busy.reversing") }
-        if cleaning { busy = String(localized: "busy.cleaningVoice") }
+        if reversing { busy = AppLocalization.string("busy.reversing") }
+        if cleaning { busy = AppLocalization.string("busy.cleaningVoice") }
         await editorModel.loadPlayback(mediaDirectory: mediaDirectory)
         if reversing || cleaning { busy = nil }
         // After playback, not before: the waveforms are for looking at and the player is for
@@ -527,7 +528,7 @@ final class AppModel {
     /// video every time is a clip that has to be dragged back every time.
     func importAudio(_ urls: [URL]) async {
         guard !urls.isEmpty else { return }
-        busy = String(localized: "busy.importing.audio")
+        busy = AppLocalization.string("busy.importing.audio")
         defer { busy = nil }
 
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
@@ -562,7 +563,7 @@ final class AppModel {
 
         let store = dependencies.projectStore
         guard let mediaDirectory = try? await store.mediaDirectory(for: project.id) else {
-            exportModel.fail(String(localized: "export.failed.media"))
+            exportModel.fail(AppLocalization.string("export.failed.media"))
             return
         }
 
@@ -597,7 +598,7 @@ final class AppModel {
         } catch {
             let detail: String
             if case VideoComposer.ComposeError.exportFailed(let reason) = error { detail = reason } else { detail = String(describing: error) }
-            exportModel.fail(String(localized: "export.failed.generic"), detail: detail)
+            exportModel.fail(AppLocalization.string("export.failed.generic"), detail: detail)
             return
         }
         exportModel.advance(to: 3)
@@ -624,11 +625,11 @@ final class AppModel {
     static func composeFailureMessage(_ error: any Error) -> String {
         switch error {
         case VideoComposer.ComposeError.nothingToCompose:
-            String(localized: "export.failed.empty")
+            AppLocalization.string("export.failed.empty")
         case VideoComposer.ComposeError.missingMedia, VideoComposer.ComposeError.noVideoTrack:
-            String(localized: "export.failed.media")
+            AppLocalization.string("export.failed.media")
         default:
-            String(localized: "export.failed.generic")
+            AppLocalization.string("export.failed.generic")
         }
     }
 
@@ -696,10 +697,10 @@ final class AppModel {
     /// press. But an app that never mentions saving leaves people wondering whether it did, and
     /// wondering is worse than a button — so it says so, in a sentence, where it can be checked.
     var saveLabel: String {
-        if isSaving { return String(localized: "save.saving") }
-        if saveFailed { return String(localized: "save.failed") }
-        guard let savedAt else { return String(localized: "save.never") }
-        return String(localized: "save.saved \(savedAt.formatted(date: .omitted, time: .shortened))")
+        if isSaving { return AppLocalization.string("save.saving") }
+        if saveFailed { return AppLocalization.string("save.failed") }
+        guard let savedAt else { return AppLocalization.string("save.never") }
+        return AppLocalization.string("save.saved \(savedAt.formatted(date: .omitted, time: .shortened))")
     }
 
     /// Writes now instead of in four hundred milliseconds. What the save button does.
@@ -777,7 +778,7 @@ final class AppModel {
     func generateScript() async {
         promptModel.begin()
 
-        let locale = Locale.current.identifier
+        let locale = AppLocalization.locale.identifier
 
         // The router only returns a provider that is ready, so a nil answer is the interesting
         // case: the user deserves to know whether the model is missing or merely still arriving.
@@ -803,8 +804,8 @@ final class AppModel {
                 .availability(for: .scriptWriting, localeIdentifier: locale)
             promptModel.fail(
                 reason == .unavailable(.modelNotReady)
-                    ? String(localized: "prompt.failed.notReady")
-                    : String(localized: "prompt.failed.unavailable")
+                    ? AppLocalization.string("prompt.failed.notReady")
+                    : AppLocalization.string("prompt.failed.unavailable")
             )
             return
         }
@@ -828,7 +829,7 @@ final class AppModel {
             guard let draft = draft.map({ ScriptBudget.fit($0, seconds: brief.targetDuration.seconds, localeIdentifier: locale) }),
                   !draft.segments.isEmpty
             else {
-                promptModel.fail(String(localized: "prompt.failed.empty"))
+                promptModel.fail(AppLocalization.string("prompt.failed.empty"))
                 return
             }
 
@@ -845,7 +846,7 @@ final class AppModel {
             promptModel.finish()
             go(to: .blueprint)
         } catch {
-            promptModel.fail(String(localized: "prompt.failed.generic"))
+            promptModel.fail(AppLocalization.string("prompt.failed.generic"))
         }
     }
 
@@ -901,7 +902,7 @@ final class AppModel {
             project.segments = [Segment(role: .mainPoint, script: "")]
         }
 
-        busy = String(localized: "busy.aligning")
+        busy = AppLocalization.string("busy.aligning")
         let versions = try? await listen(
             to: capture.url,
             localeIdentifier: project.localeIdentifier,
@@ -1020,16 +1021,16 @@ final class AppModel {
         guard !pending.isEmpty else {
             if !quietly {
                 show(notice: repaired
-                    ? String(localized: "speech.restored")
-                    : String(localized: "speech.nothingNew"))
+                    ? AppLocalization.string("speech.restored")
+                    : AppLocalization.string("speech.nothingNew"))
             }
             return
         }
 
         if quietly {
-            activity = String(localized: "activity.listening")
+            activity = AppLocalization.string("activity.listening")
         } else {
-            busy = String(localized: "busy.transcribing")
+            busy = AppLocalization.string("busy.transcribing")
         }
         defer {
             activity = nil
@@ -1119,21 +1120,21 @@ final class AppModel {
         scheduleSave()
 
         if captioned > 0 {
-            show(notice: String(localized: "speech.done \(captioned)"))
+            show(notice: AppLocalization.string("speech.done \(captioned)"))
         } else {
             switch failure as? SpeechError {
             case .localeNotSupported:
-                show(notice: String(localized: "speech.failed.language"))
+                show(notice: AppLocalization.string("speech.failed.language"))
             case .noAudio:
-                show(notice: String(localized: "speech.failed.noAudio"))
+                show(notice: AppLocalization.string("speech.failed.noAudio"))
             case .notAuthorized:
-                show(notice: String(localized: "speech.failed.permission"))
+                show(notice: AppLocalization.string("speech.failed.permission"))
             default:
                 if let failure {
                     // The system's own words, so a failure nobody anticipated can still be reported.
-                    show(notice: String(localized: "speech.failed.error \(failure.localizedDescription)"))
+                    show(notice: AppLocalization.string("speech.failed.error \(failure.localizedDescription)"))
                 } else {
-                    show(notice: String(localized: "speech.failed.nothingHeard"))
+                    show(notice: AppLocalization.string("speech.failed.nothingHeard"))
                 }
             }
         }

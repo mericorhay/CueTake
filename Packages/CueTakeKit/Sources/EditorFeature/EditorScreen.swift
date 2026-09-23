@@ -226,17 +226,17 @@ public struct EditorScreen: View {
     /// Shots that work as B-roll under a talking video.
     static var generateSuggestions: [String] {
         [
-            String(localized: "editor.generate.suggest.city", bundle: .module),
-            String(localized: "editor.generate.suggest.product", bundle: .module),
-            String(localized: "editor.generate.suggest.nature", bundle: .module),
-            String(localized: "editor.generate.suggest.abstract", bundle: .module),
+            AppLocalization.string("editor.generate.suggest.city", bundle: .module),
+            AppLocalization.string("editor.generate.suggest.product", bundle: .module),
+            AppLocalization.string("editor.generate.suggest.nature", bundle: .module),
+            AppLocalization.string("editor.generate.suggest.abstract", bundle: .module),
         ]
     }
 
     private func typingTitle(_ target: TextEntryTarget) -> String {
         switch target {
-        case .caption: String(localized: "editor.captionQuick.title", bundle: .module)
-        case .overlay: String(localized: "editor.overlay.text", bundle: .module)
+        case .caption: AppLocalization.string("editor.captionQuick.title", bundle: .module)
+        case .overlay: AppLocalization.string("editor.overlay.text", bundle: .module)
         }
     }
 
@@ -535,7 +535,7 @@ public struct EditorScreen: View {
 
                     Text(
                         model.lastChange?.label
-                            ?? String(localized: "editor.changes.none", bundle: .module)
+                            ?? AppLocalization.string("editor.changes.none", bundle: .module)
                     )
                     .dsFont(.sans, .medium, 11)
                     .lineLimit(1)
@@ -648,7 +648,7 @@ public struct EditorScreen: View {
         }
         .buttonStyle(.dsPressIcon)
         .disabled(!enabled)
-        .accessibilityLabel(Text(String(localized: symbol == "arrow.uturn.backward" ? "editor.undo" : "editor.redo", bundle: .module)))
+        .accessibilityLabel(Text(AppLocalization.string(symbol == "arrow.uturn.backward" ? "editor.undo" : "editor.redo", bundle: .module)))
         .animation(DS.Motion.snap, value: enabled)
     }
 
@@ -834,7 +834,7 @@ public struct EditorScreen: View {
     /// 44-point hit area, so the reclaimed space never becomes an accuracy tax.
     private var timelineHeader: some View {
         HStack(spacing: 4) {
-            DSKicker(String(localized: "editor.timeline", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+            DSKicker(AppLocalization.string("editor.timeline", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
 
             Spacer(minLength: 8)
 
@@ -1372,11 +1372,11 @@ extension Segment {
 extension EditorModel.InspectorTab {
     var label: String {
         switch self {
-        case .script: String(localized: "editor.tab.script", bundle: .module)
-        case .caption: String(localized: "editor.tab.caption", bundle: .module)
-        case .timing: String(localized: "editor.tab.timing", bundle: .module)
-        case .take: String(localized: "editor.tab.take", bundle: .module)
-        case .style: String(localized: "editor.tab.style", bundle: .module)
+        case .script: AppLocalization.string("editor.tab.script", bundle: .module)
+        case .caption: AppLocalization.string("editor.tab.caption", bundle: .module)
+        case .timing: AppLocalization.string("editor.tab.timing", bundle: .module)
+        case .take: AppLocalization.string("editor.tab.take", bundle: .module)
+        case .style: AppLocalization.string("editor.tab.style", bundle: .module)
         }
     }
 }

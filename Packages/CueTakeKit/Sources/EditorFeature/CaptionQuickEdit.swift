@@ -90,7 +90,7 @@ struct CaptionQuickPanel: View {
             if let index, let cue {
                 TextEntryField(
                     text: cue.text,
-                    placeholder: String(localized: "editor.captionQuick.placeholder", bundle: .module),
+                    placeholder: AppLocalization.string("editor.captionQuick.placeholder", bundle: .module),
                     action: onType
                 )
 
@@ -202,7 +202,7 @@ struct CaptionQuickPanel: View {
             }
             .buttonRepeatBehavior(.enabled)
             VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: value)

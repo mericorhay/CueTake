@@ -407,10 +407,10 @@ struct RootView: View {
         HStack(spacing: 0) {
             DSTabBar(
                 items: [
-                    .init(id: Screen.home, title: String(localized: "tab.home")),
-                    .init(id: Screen.projects, title: String(localized: "tab.projects")),
-                    .init(id: Screen.workflows, title: String(localized: "tab.workflows")),
-                    .init(id: Screen.settings, title: String(localized: "tab.settings")),
+                    .init(id: Screen.home, title: AppLocalization.string("tab.home")),
+                    .init(id: Screen.projects, title: AppLocalization.string("tab.projects")),
+                    .init(id: Screen.workflows, title: AppLocalization.string("tab.workflows")),
+                    .init(id: Screen.settings, title: AppLocalization.string("tab.settings")),
                 ],
                 selection: model.screen
             ) { tab in

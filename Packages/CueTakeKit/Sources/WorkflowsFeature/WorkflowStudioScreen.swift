@@ -111,11 +111,11 @@ public struct WorkflowStudioScreen: View {
         .sensoryFeedback(.warning, trigger: model.refusedPulse)
         .animation(DS.Motion.settle, value: model.lastRunSummary)
         .confirmationDialog(
-            String(localized: "studio.delete.confirm", bundle: .module),
+            AppLocalization.string("studio.delete.confirm", bundle: .module),
             isPresented: $confirmsDelete,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "studio.delete", bundle: .module), role: .destructive, action: onDelete)
+            Button(AppLocalization.string("studio.delete", bundle: .module), role: .destructive, action: onDelete)
         } message: {
             Text("studio.delete.message", bundle: .module)
         }
@@ -153,12 +153,12 @@ public struct WorkflowStudioScreen: View {
                 Button {
                     showsJSON = true
                 } label: {
-                    Label(String(localized: "studio.json", bundle: .module), systemImage: "curlybraces")
+                    Label(AppLocalization.string("studio.json", bundle: .module), systemImage: "curlybraces")
                 }
                 Button(role: .destructive) {
                     confirmsDelete = true
                 } label: {
-                    Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
+                    Label(AppLocalization.string("studio.delete", bundle: .module), systemImage: "trash")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -188,7 +188,7 @@ public struct WorkflowStudioScreen: View {
                     .symbolEffect(.variableColor.iterative, options: .repeating, isActive: model.isAuthoring)
 
                 TextField(
-                    String(localized: "studio.ai.placeholder", bundle: .module),
+                    AppLocalization.string("studio.ai.placeholder", bundle: .module),
                     text: $model.aiRequest,
                     axis: .vertical
                 )
@@ -422,19 +422,19 @@ public struct WorkflowStudioScreen: View {
             Button {
                 model.duplicateSection(section.id)
             } label: {
-                Label(String(localized: "studio.duplicate", bundle: .module), systemImage: "plus.square.on.square")
+                Label(AppLocalization.string("studio.duplicate", bundle: .module), systemImage: "plus.square.on.square")
             }
             if section.clip != nil {
                 Button {
                     model.assign(clip: nil, to: section.id)
                 } label: {
-                    Label(String(localized: "studio.section.clearClip", bundle: .module), systemImage: "film.stack")
+                    Label(AppLocalization.string("studio.section.clearClip", bundle: .module), systemImage: "film.stack")
                 }
             }
             Button(role: .destructive) {
                 model.removeSection(section.id)
             } label: {
-                Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
+                Label(AppLocalization.string("studio.delete", bundle: .module), systemImage: "trash")
             }
         }
     }
@@ -510,7 +510,7 @@ public struct WorkflowStudioScreen: View {
                     Button {
                         withAnimation(DS.Motion.bloom) { model.autoAssignClips() }
                     } label: {
-                        Label(String(localized: "studio.clips.auto", bundle: .module), systemImage: "wand.and.stars")
+                        Label(AppLocalization.string("studio.clips.auto", bundle: .module), systemImage: "wand.and.stars")
                             .dsFont(.sans, .medium, 11)
                             .foregroundStyle(DS.Palette.lime)
                     }
@@ -555,7 +555,7 @@ public struct WorkflowStudioScreen: View {
                     }
 
                     Button(action: onPickClips) {
-                        Label(String(localized: "studio.clips.pick", bundle: .module), systemImage: "plus")
+                        Label(AppLocalization.string("studio.clips.pick", bundle: .module), systemImage: "plus")
                             .dsFont(.sans, .medium, 11)
                             .foregroundStyle(DS.Palette.ink(0.7))
                             .padding(.horizontal, 12)
@@ -597,13 +597,13 @@ public struct WorkflowStudioScreen: View {
         let steps = model.definition.steps.filter(\.isEnabled).map(\.kind)
         if steps.contains(.assembleSections) {
             if model.clips.isEmpty {
-                notes.append(String(localized: "studio.ready.noClips", bundle: .module))
+                notes.append(AppLocalization.string("studio.ready.noClips", bundle: .module))
             } else if model.definition.sections.contains(where: { $0.clip == nil }) {
-                notes.append(String(localized: "studio.ready.emptySections", bundle: .module))
+                notes.append(AppLocalization.string("studio.ready.emptySections", bundle: .module))
             }
         }
         if let delivery = model.definition.delivery, delivery.isEnabled, delivery.url == nil {
-            notes.append(String(localized: "studio.warning.deliveryURL", bundle: .module))
+            notes.append(AppLocalization.string("studio.warning.deliveryURL", bundle: .module))
         }
         return notes
     }
@@ -619,7 +619,7 @@ public struct WorkflowStudioScreen: View {
             HStack(spacing: 8) {
                 if model.clips.isEmpty || model.definition.sections.contains(where: { $0.clip == nil }) {
                     Button(action: onPickClips) {
-                        Label(String(localized: "studio.clips.pick", bundle: .module), systemImage: "plus")
+                        Label(AppLocalization.string("studio.clips.pick", bundle: .module), systemImage: "plus")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 12)
@@ -632,7 +632,7 @@ public struct WorkflowStudioScreen: View {
                     Button {
                         withAnimation(DS.Motion.bloom) { model.autoAssignClips() }
                     } label: {
-                        Label(String(localized: "studio.clips.auto", bundle: .module), systemImage: "wand.and.stars")
+                        Label(AppLocalization.string("studio.clips.auto", bundle: .module), systemImage: "wand.and.stars")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.ink)
                             .padding(.horizontal, 12)
@@ -703,8 +703,8 @@ public struct WorkflowStudioScreen: View {
                         .symbolEffect(.bounce, value: model.lastRunSummary)
                     Text(
                         model.isRunning
-                            ? String(localized: "studio.run.running", bundle: .module)
-                            : String(localized: "studio.run", bundle: .module)
+                            ? AppLocalization.string("studio.run.running", bundle: .module)
+                            : AppLocalization.string("studio.run", bundle: .module)
                     )
                     .dsFont(.sans, .semibold, 15)
                 }
@@ -749,13 +749,13 @@ public struct WorkflowStudioScreen: View {
     private var runningDetail: String {
         let total = model.definition.steps.count
         let settled = Int((model.runProgress * Double(total)).rounded())
-        if model.isStopping { return String(localized: "studio.run.stopping", bundle: .module) }
-        return String(localized: "studio.run.progress \(settled) \(total)", bundle: .module)
+        if model.isStopping { return AppLocalization.string("studio.run.stopping", bundle: .module) }
+        return AppLocalization.string("studio.run.progress \(settled) \(total)", bundle: .module)
     }
 
     private var runDetail: String {
         guard let summary = model.lastRunSummary else {
-            return String(localized: "studio.run.saved", bundle: .module)
+            return AppLocalization.string("studio.run.saved", bundle: .module)
         }
         return String(
             localized: "studio.run.result \(summary.completed) \(summary.skipped)",
@@ -767,7 +767,7 @@ public struct WorkflowStudioScreen: View {
 
     private func sectionHeader(_ key: String.LocalizationValue, trailing: String) -> some View {
         HStack {
-            DSKicker(String(localized: key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string(key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             Text(trailing)
                 .dsFont(.mono, .medium, 11)
@@ -798,10 +798,10 @@ public struct WorkflowStudioScreen: View {
 
     static func originLabel(_ origin: WorkflowOrigin) -> String {
         switch origin {
-        case .builtIn: String(localized: "studio.origin.builtIn", bundle: .module)
-        case .user: String(localized: "studio.origin.user", bundle: .module)
-        case .remote: String(localized: "studio.origin.remote", bundle: .module)
-        case .ai: String(localized: "studio.origin.ai", bundle: .module)
+        case .builtIn: AppLocalization.string("studio.origin.builtIn", bundle: .module)
+        case .user: AppLocalization.string("studio.origin.user", bundle: .module)
+        case .remote: AppLocalization.string("studio.origin.remote", bundle: .module)
+        case .ai: AppLocalization.string("studio.origin.ai", bundle: .module)
         }
     }
 }

@@ -40,7 +40,7 @@ struct VersionList: View {
 
     private var saveRow: some View {
         HStack(spacing: 8) {
-            TextField(String(localized: "editor.versions.namePlaceholder", bundle: .module), text: $name)
+            TextField(AppLocalization.string("editor.versions.namePlaceholder", bundle: .module), text: $name)
                 .dsFont(.sans, .regular, 13)
                 .foregroundStyle(DS.Palette.ink)
                 .focused($naming)
@@ -50,7 +50,7 @@ struct VersionList: View {
                 .frame(height: 38)
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(DS.Palette.hairline(0.07)))
             Button(action: save) {
-                Label(String(localized: "editor.versions.save", bundle: .module), systemImage: "star.fill")
+                Label(AppLocalization.string("editor.versions.save", bundle: .module), systemImage: "star.fill")
                     .dsFont(.sans, .semibold, 12)
                     .foregroundStyle(DS.Palette.inkInverse)
                     .padding(.horizontal, 12)
@@ -111,7 +111,7 @@ struct VersionList: View {
             Button(role: .destructive) {
                 tools.delete(version.id)
             } label: {
-                Label(String(localized: "editor.versions.delete", bundle: .module), systemImage: "trash")
+                Label(AppLocalization.string("editor.versions.delete", bundle: .module), systemImage: "trash")
             }
         }
     }
@@ -119,6 +119,6 @@ struct VersionList: View {
     private func detail(_ version: ProjectVersion) -> String {
         let when = version.savedAt.formatted(date: .abbreviated, time: .shortened)
         let length = MediaTime(seconds: version.seconds).timecode
-        return String(localized: "editor.versions.detail \(when) \(length) \(version.clips)", bundle: .module)
+        return AppLocalization.string("editor.versions.detail \(when) \(length) \(version.clips)", bundle: .module)
     }
 }

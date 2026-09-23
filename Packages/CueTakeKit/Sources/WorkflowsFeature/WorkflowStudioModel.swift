@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import Observation
@@ -344,7 +345,7 @@ public final class WorkflowStudioModel {
     public func finishAuthoring(with workflow: WorkflowDefinition?) {
         isAuthoring = false
         guard let workflow else {
-            aiFailure = String(localized: "studio.ai.failed", bundle: .module)
+            aiFailure = AppLocalization.string("studio.ai.failed", bundle: .module)
             return
         }
         // The AI never sees the delivery secret, and should not lose the endpoint the user set.

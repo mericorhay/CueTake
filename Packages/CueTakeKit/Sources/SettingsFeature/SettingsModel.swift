@@ -1,4 +1,5 @@
 import Domain
+import DesignSystem
 import Observation
 import Persistence
 
@@ -17,6 +18,7 @@ public final class SettingsModel {
     public init(store: any SettingsStore) {
         self.store = store
         self.settings = store.load()
+        AppLocalization.select(languageCode: settings.language.localeIdentifier)
     }
 
     /// Applies one change. Callers pass a key path rather than a whole `AppSettings`, so a screen
@@ -24,5 +26,10 @@ public final class SettingsModel {
     public func update<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>, to value: Value) {
         settings[keyPath: keyPath] = value
         store.save(settings)
+    }
+
+    public func setLanguage(_ language: AppLanguage) {
+        AppLocalization.select(languageCode: language.localeIdentifier)
+        update(\.language, to: language)
     }
 }

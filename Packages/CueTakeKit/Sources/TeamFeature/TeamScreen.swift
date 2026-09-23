@@ -37,8 +37,8 @@ public struct TeamScreen: View {
             content
         } card: {
             BumpPersonCard(
-                name: String(localized: "team.preview.name", bundle: .module),
-                detail: String(localized: "team.preview.detail", bundle: .module)
+                name: AppLocalization.string("team.preview.name", bundle: .module),
+                detail: AppLocalization.string("team.preview.detail", bundle: .module)
             )
         }
         .background(DS.Palette.screen.ignoresSafeArea())
@@ -49,7 +49,7 @@ public struct TeamScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
-                    DSKicker(String(localized: "team.title", bundle: .module))
+                    DSKicker(AppLocalization.string("team.title", bundle: .module))
                     Spacer(minLength: 0)
                     Button(action: onClose) {
                         Image(systemName: "xmark")
@@ -89,7 +89,7 @@ public struct TeamScreen: View {
                 }
 
                 Button(action: rehearse) {
-                    Label(String(localized: "team.tryLight", bundle: .module), systemImage: "sparkles")
+                    Label(AppLocalization.string("team.tryLight", bundle: .module), systemImage: "sparkles")
                         .dsFont(.sans, .semibold, 15)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(maxWidth: .infinity)
@@ -116,7 +116,7 @@ public struct TeamScreen: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(DS.Palette.lime)
                 .frame(width: 22)
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .regular, 13)
                 .foregroundStyle(DS.Palette.ink(0.8))
         }

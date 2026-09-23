@@ -68,7 +68,7 @@ private struct ProviderKeyRow: View {
         let names = VideoModelPreset.catalog.filter { $0.provider == provider && !$0.isCustom }.map(\.title)
         let own = names.joined(separator: " · ")
         if provider.acceptsAnyModel {
-            let any = String(localized: "settings.apiKey.anyModel", bundle: .module)
+            let any = AppLocalization.string("settings.apiKey.anyModel", bundle: .module)
             return own.isEmpty ? any : "\(own) · \(any)"
         }
         return own
@@ -184,7 +184,7 @@ private struct ProviderKeyRow: View {
                 SecureField(
                     suffix == nil
                         ? provider.keyHint
-                        : String(localized: "settings.apiKey.replace", bundle: .module),
+                        : AppLocalization.string("settings.apiKey.replace", bundle: .module),
                     text: $draft
                 )
                 .textInputAutocapitalization(.never)
@@ -216,7 +216,7 @@ private struct ProviderKeyRow: View {
 
             HStack(spacing: 8) {
                 Link(destination: provider.keyPage) {
-                    Label(String(localized: "settings.apiKey.getKey", bundle: .module), systemImage: "arrow.up.right.square")
+                    Label(AppLocalization.string("settings.apiKey.getKey", bundle: .module), systemImage: "arrow.up.right.square")
                         .dsFont(.sans, .semibold, 12)
                         .foregroundStyle(DS.Palette.ink(0.8))
                         .padding(.horizontal, 12)
@@ -227,7 +227,7 @@ private struct ProviderKeyRow: View {
                     Button {
                         Task { await verify() }
                     } label: {
-                        Label(String(localized: "settings.apiKey.test", bundle: .module), systemImage: "checkmark.shield")
+                        Label(AppLocalization.string("settings.apiKey.test", bundle: .module), systemImage: "checkmark.shield")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.ink(0.8))
                             .padding(.horizontal, 12)
@@ -272,15 +272,15 @@ private struct ProviderKeyRow: View {
             .dsFont(.sans, .medium, 11)
             .foregroundStyle(DS.Palette.ink(0.55))
         case .valid:
-            Label(String(localized: "settings.apiKey.valid", bundle: .module), systemImage: "checkmark.seal.fill")
+            Label(AppLocalization.string("settings.apiKey.valid", bundle: .module), systemImage: "checkmark.seal.fill")
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.lime)
         case .invalid:
-            Label(String(localized: "settings.apiKey.invalid", bundle: .module), systemImage: "xmark.octagon.fill")
+            Label(AppLocalization.string("settings.apiKey.invalid", bundle: .module), systemImage: "xmark.octagon.fill")
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.accentWarm)
         case .unknown:
-            Label(String(localized: "settings.apiKey.unverified", bundle: .module), systemImage: "questionmark.circle")
+            Label(AppLocalization.string("settings.apiKey.unverified", bundle: .module), systemImage: "questionmark.circle")
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.55))
         }

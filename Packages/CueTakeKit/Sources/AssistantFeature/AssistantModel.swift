@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import Observation
@@ -196,7 +197,7 @@ public final class AssistantModel {
             store(session)
         } catch {
             failure = describeFailure?(error)
-                ?? String(localized: "assistant.error.generic", bundle: .module)
+                ?? AppLocalization.string("assistant.error.generic", bundle: .module)
         }
         isSending = false
     }

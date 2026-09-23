@@ -30,12 +30,12 @@ public struct VoiceProfileScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 HStack {
-                    DSKicker(String(localized: "voice.kicker", bundle: .module), size: 11, tracking: 0.16)
+                    DSKicker(AppLocalization.string("voice.kicker", bundle: .module), size: 11, tracking: 0.16)
                     Spacer(minLength: 0)
                     DSCircleButton("✕", size: 44, fontSize: 15) { onClose() }
                         .accessibilityLabel(Text("voice.close", bundle: .module))
                 }
-                DSHeadline(String(localized: "voice.title", bundle: .module), size: 34)
+                DSHeadline(AppLocalization.string("voice.title", bundle: .module), size: 34)
                 Text("voice.subtitle", bundle: .module)
                     .dsFont(.sans, .regular, 15, lineHeight: 1.4)
                     .foregroundStyle(DS.Palette.ink(0.66))
@@ -69,7 +69,7 @@ public struct VoiceProfileScreen: View {
             }
             if !profile.fillers.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    DSKicker(String(localized: "voice.fillers", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                    DSKicker(AppLocalization.string("voice.fillers", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                     FlowLayout(horizontalSpacing: 6, verticalSpacing: 6) {
                         ForEach(profile.fillers, id: \.self) { filler in
                             Text(verbatim: filler)
@@ -121,7 +121,7 @@ public struct VoiceProfileScreen: View {
                 .foregroundStyle(DS.Palette.ink)
                 .monospacedDigit()
                 .contentTransition(.numericText())
-            Text(String(localized: label, bundle: .module))
+            Text(AppLocalization.string(label, bundle: .module))
                 .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
                 .foregroundStyle(DS.Palette.ink(0.56))
                 .lineLimit(2)
@@ -174,7 +174,7 @@ public struct VoiceProfileScreen: View {
         tint: Color
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: title, bundle: .module))
+            DSKicker(AppLocalization.string(title, bundle: .module))
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(items.wrappedValue, id: \.self) { item in
                     HStack(spacing: 10) {
@@ -200,7 +200,7 @@ public struct VoiceProfileScreen: View {
                 }
                 HStack(spacing: 8) {
                     Image(systemName: "plus").font(.system(size: 12, weight: .bold)).foregroundStyle(DS.Palette.ink(0.6))
-                    TextField(String(localized: "voice.add", bundle: .module), text: text)
+                    TextField(AppLocalization.string("voice.add", bundle: .module), text: text)
                         .focused($focused, equals: field)
                         .dsFont(.sans, .medium, 15)
                         .submitLabel(.done)
@@ -216,7 +216,7 @@ public struct VoiceProfileScreen: View {
                 .frame(minHeight: 48)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(DS.Palette.hairline(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 4])))
             }
-            Text(String(localized: hint, bundle: .module))
+            Text(AppLocalization.string(hint, bundle: .module))
                 .dsFont(.sans, .regular, 12)
                 .foregroundStyle(DS.Palette.ink(0.52))
                 .fixedSize(horizontal: false, vertical: true)
@@ -225,8 +225,8 @@ public struct VoiceProfileScreen: View {
 
     private var notes: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "voice.notes", bundle: .module))
-            TextField(String(localized: "voice.notes.placeholder", bundle: .module), text: $profile.notes, axis: .vertical)
+            DSKicker(AppLocalization.string("voice.notes", bundle: .module))
+            TextField(AppLocalization.string("voice.notes.placeholder", bundle: .module), text: $profile.notes, axis: .vertical)
                 .lineLimit(3...6)
                 .focused($focused, equals: .notes)
                 .dsFont(.sans, .regular, 15)

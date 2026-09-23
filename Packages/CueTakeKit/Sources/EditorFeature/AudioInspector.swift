@@ -64,7 +64,7 @@ struct AudioInspector: View {
         let count = clip.orderedVolumeKeys.count
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.audio.curve", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("editor.audio.curve", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 if count > 0 {
                     Text("editor.audio.curve.count \(count)", bundle: .module)
                         .dsFont(.sans, .regular, 10)
@@ -349,7 +349,7 @@ struct AudioInspector: View {
                 Image(systemName: symbol)
                     .font(.system(size: 13, weight: .medium))
                     .symbolEffect(.bounce, value: isOn)
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 10)
                     .lineLimit(1)
             }
@@ -378,7 +378,7 @@ struct AudioInspector: View {
                 .foregroundStyle(DS.Palette.ink(0.56))
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
                     .foregroundStyle(DS.Palette.ink(0.52))
                 Text(String(format: "%.1fs", value))
@@ -417,9 +417,9 @@ struct AudioInspector: View {
 
     static func roleLabel(_ role: AudioClip.Role) -> String {
         switch role {
-        case .music: String(localized: "editor.audio.role.music", bundle: .module)
-        case .voiceover: String(localized: "editor.audio.role.voiceover", bundle: .module)
-        case .effect: String(localized: "editor.audio.role.effect", bundle: .module)
+        case .music: AppLocalization.string("editor.audio.role.music", bundle: .module)
+        case .voiceover: AppLocalization.string("editor.audio.role.voiceover", bundle: .module)
+        case .effect: AppLocalization.string("editor.audio.role.effect", bundle: .module)
         }
     }
 }

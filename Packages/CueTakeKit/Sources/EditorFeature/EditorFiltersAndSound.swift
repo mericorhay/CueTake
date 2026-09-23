@@ -1,3 +1,4 @@
+import DesignSystem
 import AVFoundation
 import Domain
 import MediaEngine
@@ -86,18 +87,18 @@ enum FilterPresets {
 
     static func label(_ look: FilterSettings.Look) -> String {
         switch look {
-        case .natural: String(localized: "editor.filter.natural", bundle: .module)
-        case .vivid: String(localized: "editor.filter.vivid", bundle: .module)
-        case .cinematic: String(localized: "editor.filter.cinematic", bundle: .module)
-        case .warm: String(localized: "editor.filter.warm", bundle: .module)
-        case .cool: String(localized: "editor.filter.cool", bundle: .module)
-        case .vintage: String(localized: "editor.filter.vintage", bundle: .module)
-        case .fade: String(localized: "editor.filter.fade", bundle: .module)
-        case .chrome: String(localized: "editor.filter.chrome", bundle: .module)
-        case .instant: String(localized: "editor.filter.instant", bundle: .module)
-        case .dramatic: String(localized: "editor.filter.dramatic", bundle: .module)
-        case .mono: String(localized: "editor.filter.mono", bundle: .module)
-        case .noir: String(localized: "editor.filter.noir", bundle: .module)
+        case .natural: AppLocalization.string("editor.filter.natural", bundle: .module)
+        case .vivid: AppLocalization.string("editor.filter.vivid", bundle: .module)
+        case .cinematic: AppLocalization.string("editor.filter.cinematic", bundle: .module)
+        case .warm: AppLocalization.string("editor.filter.warm", bundle: .module)
+        case .cool: AppLocalization.string("editor.filter.cool", bundle: .module)
+        case .vintage: AppLocalization.string("editor.filter.vintage", bundle: .module)
+        case .fade: AppLocalization.string("editor.filter.fade", bundle: .module)
+        case .chrome: AppLocalization.string("editor.filter.chrome", bundle: .module)
+        case .instant: AppLocalization.string("editor.filter.instant", bundle: .module)
+        case .dramatic: AppLocalization.string("editor.filter.dramatic", bundle: .module)
+        case .mono: AppLocalization.string("editor.filter.mono", bundle: .module)
+        case .noir: AppLocalization.string("editor.filter.noir", bundle: .module)
         }
     }
 
@@ -127,17 +128,17 @@ enum SoundPresets {
 
     static func label(_ preset: SoundSettings.Preset) -> String {
         switch preset {
-        case .clean: String(localized: "editor.sound.clean", bundle: .module)
-        case .echo: String(localized: "editor.sound.echo", bundle: .module)
-        case .hall: String(localized: "editor.sound.hall", bundle: .module)
-        case .room: String(localized: "editor.sound.room", bundle: .module)
-        case .telephone: String(localized: "editor.sound.telephone", bundle: .module)
-        case .radio: String(localized: "editor.sound.radio", bundle: .module)
-        case .megaphone: String(localized: "editor.sound.megaphone", bundle: .module)
-        case .robot: String(localized: "editor.sound.robot", bundle: .module)
-        case .underwater: String(localized: "editor.sound.underwater", bundle: .module)
-        case .deep: String(localized: "editor.sound.deep", bundle: .module)
-        case .chipmunk: String(localized: "editor.sound.chipmunk", bundle: .module)
+        case .clean: AppLocalization.string("editor.sound.clean", bundle: .module)
+        case .echo: AppLocalization.string("editor.sound.echo", bundle: .module)
+        case .hall: AppLocalization.string("editor.sound.hall", bundle: .module)
+        case .room: AppLocalization.string("editor.sound.room", bundle: .module)
+        case .telephone: AppLocalization.string("editor.sound.telephone", bundle: .module)
+        case .radio: AppLocalization.string("editor.sound.radio", bundle: .module)
+        case .megaphone: AppLocalization.string("editor.sound.megaphone", bundle: .module)
+        case .robot: AppLocalization.string("editor.sound.robot", bundle: .module)
+        case .underwater: AppLocalization.string("editor.sound.underwater", bundle: .module)
+        case .deep: AppLocalization.string("editor.sound.deep", bundle: .module)
+        case .chipmunk: AppLocalization.string("editor.sound.chipmunk", bundle: .module)
         }
     }
 

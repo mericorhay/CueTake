@@ -253,26 +253,26 @@ struct ToolDock: View {
 
     private func title(_ item: Item) -> String {
         switch item {
-        case .ai: String(localized: "editor.dock.ai", bundle: .module)
-        case .generate: String(localized: "editor.dock.generate", bundle: .module)
-        case .background: String(localized: "editor.dock.background", bundle: .module)
-        case .reframe: String(localized: "editor.track.title", bundle: .module)
-        case .zoom: String(localized: "editor.zoom.title", bundle: .module)
-        case .text: String(localized: "editor.dock.text", bundle: .module)
-        case .image: String(localized: "editor.dock.image", bundle: .module)
-        case .template: String(localized: "editor.dock.template", bundle: .module)
-        case .video: String(localized: "editor.dock.video", bundle: .module)
-        case .filter: String(localized: "editor.dock.filter", bundle: .module)
-        case .sound: String(localized: "editor.dock.sound", bundle: .module)
-        case .split: String(localized: "editor.tool.split", bundle: .module)
-        case .transition: String(localized: "editor.dock.transition", bundle: .module)
-        case .shorts: String(localized: "editor.dock.shorts", bundle: .module)
-        case .trim: String(localized: "editor.dock.trim", bundle: .module)
-        case .speed: String(localized: "editor.dock.speed", bundle: .module)
-        case .captions: String(localized: "editor.captions", bundle: .module)
-        case .audio: String(localized: "editor.dock.audio", bundle: .module)
-        case .delete: String(localized: "editor.tool.delete", bundle: .module)
-        case .more: String(localized: "editor.dock.more", bundle: .module)
+        case .ai: AppLocalization.string("editor.dock.ai", bundle: .module)
+        case .generate: AppLocalization.string("editor.dock.generate", bundle: .module)
+        case .background: AppLocalization.string("editor.dock.background", bundle: .module)
+        case .reframe: AppLocalization.string("editor.track.title", bundle: .module)
+        case .zoom: AppLocalization.string("editor.zoom.title", bundle: .module)
+        case .text: AppLocalization.string("editor.dock.text", bundle: .module)
+        case .image: AppLocalization.string("editor.dock.image", bundle: .module)
+        case .template: AppLocalization.string("editor.dock.template", bundle: .module)
+        case .video: AppLocalization.string("editor.dock.video", bundle: .module)
+        case .filter: AppLocalization.string("editor.dock.filter", bundle: .module)
+        case .sound: AppLocalization.string("editor.dock.sound", bundle: .module)
+        case .split: AppLocalization.string("editor.tool.split", bundle: .module)
+        case .transition: AppLocalization.string("editor.dock.transition", bundle: .module)
+        case .shorts: AppLocalization.string("editor.dock.shorts", bundle: .module)
+        case .trim: AppLocalization.string("editor.dock.trim", bundle: .module)
+        case .speed: AppLocalization.string("editor.dock.speed", bundle: .module)
+        case .captions: AppLocalization.string("editor.captions", bundle: .module)
+        case .audio: AppLocalization.string("editor.dock.audio", bundle: .module)
+        case .delete: AppLocalization.string("editor.tool.delete", bundle: .module)
+        case .more: AppLocalization.string("editor.dock.more", bundle: .module)
         }
     }
 
@@ -362,7 +362,7 @@ struct ToolDock: View {
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
                 if ![.ai, .generate, .shorts, .audio, .transition].contains(item), let index {
-                    Text(String(localized: "editor.tool.target \(index + 1)", bundle: .module))
+                    Text(AppLocalization.string("editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.56))
                 }
@@ -435,7 +435,7 @@ struct ToolDock: View {
                         Button {
                             withAnimation(DS.Motion.settle) { model.removeCameraMotionAtPlayhead() }
                         } label: {
-                            Label(String(localized: "editor.zoom.remove", bundle: .module), systemImage: "xmark")
+                            Label(AppLocalization.string("editor.zoom.remove", bundle: .module), systemImage: "xmark")
                                 .dsFont(.sans, .semibold, 10)
                                 .foregroundStyle(DS.Palette.ink(0.55))
                                 .frame(height: 36)
@@ -488,7 +488,7 @@ struct ToolDock: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            DSKicker(String(localized: "editor.zoom.static", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+            DSKicker(AppLocalization.string("editor.zoom.static", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
 
             HStack(spacing: 7) {
                 ForEach([1.0, 1.10, 1.15, 1.20], id: \.self) { value in
@@ -659,11 +659,11 @@ struct ToolDock: View {
 
     private var mainTrackingDetail: String {
         switch model.mainSubjectTracking {
-        case .idle: String(localized: "editor.video.smartReframe.mainHint", bundle: .module)
-        case .analyzing(let progress): String(localized: "editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
-        case .applied(let points): String(localized: "editor.video.smartReframe.done \(points)", bundle: .module)
-        case .noFace: String(localized: "editor.video.smartReframe.noFace", bundle: .module)
-        case .failed: String(localized: "editor.video.smartReframe.failed", bundle: .module)
+        case .idle: AppLocalization.string("editor.video.smartReframe.mainHint", bundle: .module)
+        case .analyzing(let progress): AppLocalization.string("editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
+        case .applied(let points): AppLocalization.string("editor.video.smartReframe.done \(points)", bundle: .module)
+        case .noFace: AppLocalization.string("editor.video.smartReframe.noFace", bundle: .module)
+        case .failed: AppLocalization.string("editor.video.smartReframe.failed", bundle: .module)
         }
     }
 
@@ -705,7 +705,7 @@ struct ToolDock: View {
         HStack(spacing: 0) {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: String(format: "%.1f s", value))
@@ -1028,7 +1028,7 @@ struct ToolDock: View {
         return Button {
             withAnimation(DS.Motion.snap) { backgroundReach = reach }
         } label: {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 12)
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
                 .frame(maxWidth: .infinity)
@@ -1059,14 +1059,14 @@ struct ToolDock: View {
 
     static func label(_ background: ClipBackground?) -> String {
         switch background {
-        case nil: String(localized: "editor.background.none", bundle: .module)
-        case .blur: String(localized: "editor.background.blur", bundle: .module)
-        case .dim: String(localized: "editor.background.dim", bundle: .module)
-        case .studio: String(localized: "editor.background.studio", bundle: .module)
-        case .black: String(localized: "editor.background.black", bundle: .module)
-        case .white: String(localized: "editor.background.white", bundle: .module)
-        case .green: String(localized: "editor.background.green", bundle: .module)
-        case .color: String(localized: "editor.background.color", bundle: .module)
+        case nil: AppLocalization.string("editor.background.none", bundle: .module)
+        case .blur: AppLocalization.string("editor.background.blur", bundle: .module)
+        case .dim: AppLocalization.string("editor.background.dim", bundle: .module)
+        case .studio: AppLocalization.string("editor.background.studio", bundle: .module)
+        case .black: AppLocalization.string("editor.background.black", bundle: .module)
+        case .white: AppLocalization.string("editor.background.white", bundle: .module)
+        case .green: AppLocalization.string("editor.background.green", bundle: .module)
+        case .color: AppLocalization.string("editor.background.color", bundle: .module)
         }
     }
 
@@ -1082,7 +1082,7 @@ struct ToolDock: View {
                 Image(systemName: symbol)
                     .font(.system(size: 11, weight: .semibold))
                     .symbolEffect(.bounce, value: isOn)
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 12)
             }
             .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))

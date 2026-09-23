@@ -118,7 +118,7 @@ struct EditorToolbar: View {
         } label: {
             VStack(spacing: 5) {
                 icon(kind, symbol: symbol)
-                Text(String(localized: titleKey, bundle: .module))
+                Text(AppLocalization.string(titleKey, bundle: .module))
                     .dsFont(.sans, .medium, 10)
             }
             .foregroundStyle(

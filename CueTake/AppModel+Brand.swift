@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import EditorFeature
 import Foundation
@@ -89,7 +90,7 @@ extension AppModel {
         do {
             try png.write(to: url, options: .atomic)
         } catch {
-            show(notice: String(localized: "brand.logo.failed"))
+            show(notice: AppLocalization.string("brand.logo.failed"))
             return
         }
         var kit = scriptLibrary.kit
@@ -111,7 +112,7 @@ extension AppModel {
             if template.usesBrand { await applyWatermark(record: false) }
             adoptEditorEdits()
             scheduleSave()
-            show(notice: String(localized: "brand.template.applied \(template.name)"))
+            show(notice: AppLocalization.string("brand.template.applied \(template.name)"))
         }
     }
 
@@ -120,6 +121,6 @@ extension AppModel {
         takeEditorEditsIfEditing()
         let template = VideoTemplate(name: name, from: project)
         scriptLibrary.save(template)
-        show(notice: String(localized: "brand.template.saved \(template.name)"))
+        show(notice: AppLocalization.string("brand.template.saved \(template.name)"))
     }
 }

@@ -51,8 +51,8 @@ struct StudioExportEditor: View {
                 selected: preset.destination,
                 enabled: { _ in true },
                 label: { $0 == .photoLibrary
-                    ? String(localized: "studio.param.photos", bundle: .module)
-                    : String(localized: "studio.param.files", bundle: .module) }
+                    ? AppLocalization.string("studio.param.photos", bundle: .module)
+                    : AppLocalization.string("studio.param.files", bundle: .module) }
             ) { value in
                 model.updateExport { $0.destination = value }
             }
@@ -70,7 +70,7 @@ struct StudioExportEditor: View {
         set: @escaping (Value) -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
                 .foregroundStyle(DS.Palette.ink(0.52))
             HStack(spacing: 5) {
@@ -169,7 +169,7 @@ struct StudioDeliveryEditor: View {
                 keyboard: .URL
             )
             if !delivery.endpoint.isEmpty, delivery.url == nil {
-                Label(String(localized: "studio.warning.deliveryURL", bundle: .module), systemImage: "exclamationmark.triangle.fill")
+                Label(AppLocalization.string("studio.warning.deliveryURL", bundle: .module), systemImage: "exclamationmark.triangle.fill")
                     .dsFont(.sans, .regular, 10)
                     .foregroundStyle(DS.Palette.accentWarm)
             }
@@ -212,8 +212,8 @@ struct StudioDeliveryEditor: View {
                 .foregroundStyle(DS.Palette.ink(0.52))
             HStack(spacing: 6) {
                 SecureField(
-                    savedSuffix.map { String(localized: "studio.delivery.secret.saved \($0)", bundle: .module) }
-                        ?? String(localized: "studio.delivery.secret.placeholder", bundle: .module),
+                    savedSuffix.map { AppLocalization.string("studio.delivery.secret.saved \($0)", bundle: .module) }
+                        ?? AppLocalization.string("studio.delivery.secret.placeholder", bundle: .module),
                     text: $secret
                 )
                 .dsFont(.mono, .regular, 12)
@@ -332,10 +332,10 @@ struct StudioDeliveryEditor: View {
                 .transition(.opacity)
             }
             HStack(spacing: 6) {
-                TextField(String(localized: "studio.delivery.fieldKey", bundle: .module), text: $newFieldKey)
+                TextField(AppLocalization.string("studio.delivery.fieldKey", bundle: .module), text: $newFieldKey)
                     .focused($focused, equals: .key)
                     .frame(maxWidth: 110)
-                TextField(String(localized: "studio.delivery.fieldValue", bundle: .module), text: $newFieldValue)
+                TextField(AppLocalization.string("studio.delivery.fieldValue", bundle: .module), text: $newFieldValue)
                     .focused($focused, equals: .value)
                     .onSubmit(addField)
                 Button(action: addField) {
@@ -396,7 +396,7 @@ struct StudioDeliveryEditor: View {
             Group {
                 switch model.deliveryTest {
                 case .sent(let status):
-                    Label(String(localized: "studio.delivery.ok \(status)", bundle: .module), systemImage: "checkmark.circle.fill")
+                    Label(AppLocalization.string("studio.delivery.ok \(status)", bundle: .module), systemImage: "checkmark.circle.fill")
                         .foregroundStyle(DS.Palette.lime)
                 case .failed(let reason):
                     Label(reason, systemImage: "xmark.octagon.fill")
@@ -443,7 +443,7 @@ struct StudioDeliveryEditor: View {
         keyboard: UIKeyboardType = .default
     ) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
                 .foregroundStyle(DS.Palette.ink(0.52))
             TextField(prompt, text: text)
@@ -478,17 +478,17 @@ struct StudioDeliveryEditor: View {
 
     static func payloadTitle(_ payload: WorkflowDelivery.Payload) -> String {
         switch payload {
-        case .multipart: String(localized: "studio.delivery.multipart", bundle: .module)
-        case .rawVideo: String(localized: "studio.delivery.raw", bundle: .module)
-        case .json: String(localized: "studio.delivery.json", bundle: .module)
+        case .multipart: AppLocalization.string("studio.delivery.multipart", bundle: .module)
+        case .rawVideo: AppLocalization.string("studio.delivery.raw", bundle: .module)
+        case .json: AppLocalization.string("studio.delivery.json", bundle: .module)
         }
     }
 
     static func payloadNote(_ payload: WorkflowDelivery.Payload) -> String {
         switch payload {
-        case .multipart: String(localized: "studio.delivery.multipart.note", bundle: .module)
-        case .rawVideo: String(localized: "studio.delivery.raw.note", bundle: .module)
-        case .json: String(localized: "studio.delivery.json.note", bundle: .module)
+        case .multipart: AppLocalization.string("studio.delivery.multipart.note", bundle: .module)
+        case .rawVideo: AppLocalization.string("studio.delivery.raw.note", bundle: .module)
+        case .json: AppLocalization.string("studio.delivery.json.note", bundle: .module)
         }
     }
 
@@ -500,11 +500,11 @@ public enum StudioDeliveryText {
     public static func describe(_ error: any Error) -> String {
         switch error {
         case WorkflowDeliveryClient.DeliveryError.invalidEndpoint:
-            String(localized: "studio.warning.deliveryURL", bundle: .module)
+            AppLocalization.string("studio.warning.deliveryURL", bundle: .module)
         case WorkflowDeliveryClient.DeliveryError.missingFile:
-            String(localized: "studio.delivery.error.file", bundle: .module)
+            AppLocalization.string("studio.delivery.error.file", bundle: .module)
         case WorkflowDeliveryClient.DeliveryError.rejected(let status, let reply):
-            String(localized: "studio.delivery.error.status \(status)", bundle: .module)
+            AppLocalization.string("studio.delivery.error.status \(status)", bundle: .module)
                 + (reply.isEmpty ? "" : " · " + String(reply.prefix(80)))
         case WorkflowDeliveryClient.DeliveryError.transport(let reason):
             reason

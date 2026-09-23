@@ -35,7 +35,7 @@ struct TimingReadout: View {
 
     private func value(_ key: String.LocalizationValue, _ seconds: Double, isLength: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.56))
             Text(verbatim: isLength ? String(format: "%.2f s", max(0, seconds)) : MediaTime(seconds: seconds).preciseTimecode)

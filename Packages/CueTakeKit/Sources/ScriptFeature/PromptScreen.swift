@@ -41,7 +41,7 @@ public final class PromptModel {
     /// `Bundle.module` is internal to the module, so the prefilled brief is resolved in the body
     /// rather than in a default argument, which would leak it into the public signature.
     public init(promptText: String? = nil) {
-        self.promptText = promptText ?? String(localized: "prompt.default", bundle: .module)
+        self.promptText = promptText ?? AppLocalization.string("prompt.default", bundle: .module)
     }
 
     public var isRunning: Bool { step > 0 }
@@ -94,7 +94,7 @@ public struct PromptScreen: View {
             HStack {
                 DSBackButton(action: onBack)
                 Spacer(minLength: 0)
-                DSKicker(String(localized: "prompt.kicker", bundle: .module))
+                DSKicker(AppLocalization.string("prompt.kicker", bundle: .module))
             }
 
             if model.isRunning {
@@ -116,7 +116,7 @@ public struct PromptScreen: View {
 
     private var idle: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DSHeadline(String(localized: "prompt.title", bundle: .module), size: 32)
+            DSHeadline(AppLocalization.string("prompt.title", bundle: .module), size: 32)
                 .padding(.top, 24)
                 .padding(.bottom, 18)
 
@@ -133,7 +133,7 @@ public struct PromptScreen: View {
 
             FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach(Array(Self.chipKeys.enumerated()), id: \.offset) { _, key in
-                    let label = String(localized: key, bundle: .module)
+                    let label = AppLocalization.string(key, bundle: .module)
                     Button {
                         model.promptText = label
                     } label: {
@@ -176,7 +176,7 @@ public struct PromptScreen: View {
             Spacer(minLength: 0)
 
             DSPrimaryButton(
-                String(localized: "prompt.generate", bundle: .module),
+                AppLocalization.string("prompt.generate", bundle: .module),
                 radius: DS.Radius.cardLarge,
                 verticalPadding: 19,
                 fontSize: 16
@@ -211,7 +211,7 @@ public struct PromptScreen: View {
         } label: {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 3) {
-                    Text(String(localized: key, bundle: .module))
+                    Text(AppLocalization.string(key, bundle: .module))
                         .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
                         .foregroundStyle(DS.Palette.ink(0.52))
                     Image(systemName: "chevron.up.chevron.down")
@@ -234,16 +234,16 @@ public struct PromptScreen: View {
     }
 
     static func lengthLabel(_ seconds: Int) -> String {
-        String(localized: "prompt.length.seconds \(seconds)", bundle: .module)
+        AppLocalization.string("prompt.length.seconds \(seconds)", bundle: .module)
     }
 
     static func toneLabel(_ tone: PromptModel.Tone) -> String {
         switch tone {
-        case .energetic: String(localized: "prompt.tone.energetic", bundle: .module)
-        case .calm: String(localized: "prompt.tone.calm", bundle: .module)
-        case .funny: String(localized: "prompt.tone.funny", bundle: .module)
-        case .expert: String(localized: "prompt.tone.expert", bundle: .module)
-        case .story: String(localized: "prompt.tone.story", bundle: .module)
+        case .energetic: AppLocalization.string("prompt.tone.energetic", bundle: .module)
+        case .calm: AppLocalization.string("prompt.tone.calm", bundle: .module)
+        case .funny: AppLocalization.string("prompt.tone.funny", bundle: .module)
+        case .expert: AppLocalization.string("prompt.tone.expert", bundle: .module)
+        case .story: AppLocalization.string("prompt.tone.story", bundle: .module)
         }
     }
 
@@ -327,7 +327,7 @@ public struct PromptScreen: View {
             .frame(width: 18, height: 18)
             .animation(DS.Easing.ease(0.4), value: model.step)
 
-            Text(String(localized: step.labelKey, bundle: .module))
+            Text(AppLocalization.string(step.labelKey, bundle: .module))
                 .dsFont(.archivo, .semibold, 17)
                 .foregroundStyle(
                     isDone ? DS.Palette.ink(0.4) : (isActive ? DS.Palette.ink : DS.Palette.ink(0.18))
@@ -336,7 +336,7 @@ public struct PromptScreen: View {
 
             Spacer(minLength: 0)
 
-            Text(String(localized: step.noteKey, bundle: .module))
+            Text(AppLocalization.string(step.noteKey, bundle: .module))
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.52))
         }

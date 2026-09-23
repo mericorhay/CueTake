@@ -52,12 +52,12 @@ struct ChangesSheet: View {
         .animation(DS.Motion.snap, value: showsVersions)
         .onAppear { versionTools?.refresh() }
         .confirmationDialog(
-            String(localized: "editor.versions.restore.title \(pendingRestore?.name ?? "")", bundle: .module),
+            AppLocalization.string("editor.versions.restore.title \(pendingRestore?.name ?? "")", bundle: .module),
             isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
             titleVisibility: .visible
         ) {
             if let pending = pendingRestore {
-                Button(String(localized: "editor.versions.restore.confirm", bundle: .module)) {
+                Button(AppLocalization.string("editor.versions.restore.confirm", bundle: .module)) {
                     versionTools?.restore(pending)
                     pendingRestore = nil
                     onClose()
@@ -67,12 +67,12 @@ struct ChangesSheet: View {
             Text("editor.versions.restore.message", bundle: .module)
         }
         .confirmationDialog(
-            String(localized: "editor.changes.undoThis.also \(pendingUndo?.caught.count ?? 0)", bundle: .module),
+            AppLocalization.string("editor.changes.undoThis.also \(pendingUndo?.caught.count ?? 0)", bundle: .module),
             isPresented: Binding(get: { pendingUndo != nil }, set: { if !$0 { pendingUndo = nil } }),
             titleVisibility: .visible
         ) {
             if let pending = pendingUndo {
-                Button(String(localized: "editor.changes.undoThis.confirm", bundle: .module), role: .destructive) {
+                Button(AppLocalization.string("editor.changes.undoThis.confirm", bundle: .module), role: .destructive) {
                     withAnimation(DS.Motion.settle) { model.undoOnly(pending.entry.id) }
                     pendingUndo = nil
                 }
@@ -86,7 +86,7 @@ struct ChangesSheet: View {
 
     private var header: some View {
         HStack {
-            DSKicker(String(localized: "editor.changes.title", bundle: .module))
+            DSKicker(AppLocalization.string("editor.changes.title", bundle: .module))
             Spacer(minLength: 0)
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -116,7 +116,7 @@ struct ChangesSheet: View {
 
     private func tab(_ key: String.LocalizationValue, symbol: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(String(localized: key, bundle: .module), systemImage: symbol)
+            Label(AppLocalization.string(key, bundle: .module), systemImage: symbol)
                 .dsFont(.sans, .semibold, 12)
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
                 .frame(maxWidth: .infinity)
@@ -280,7 +280,7 @@ struct ChangesSheet: View {
                 Image(systemName: symbol)
                     .font(.system(size: 14, weight: .medium))
                     .symbolEffect(.bounce, value: model.changes.count)
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 11)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)

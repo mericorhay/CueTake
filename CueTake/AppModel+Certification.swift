@@ -1,3 +1,4 @@
+import DesignSystem
 import AIServices
 import Domain
 import EditorFeature
@@ -85,7 +86,7 @@ extension AppModel {
     /// Has the server sign an earned certificate. Nil when it did; otherwise what to say.
     func signCertificate(_ level: CertificationLevel) async -> String? {
         guard let id = certification.certificateID(for: level) else {
-            return String(localized: "cert.error.notEarned")
+            return AppLocalization.string("cert.error.notEarned")
         }
         var request = AssistantClient.CertificateRequest(
             level: level,
@@ -100,13 +101,13 @@ extension AppModel {
             saveCertification()
             return nil
         } catch AssistantClient.AssistantError.rejected(let status) where status == 422 {
-            return String(localized: "cert.error.refused")
+            return AppLocalization.string("cert.error.refused")
         } catch AssistantClient.AssistantError.rejected(let status) where status == 501 {
-            return String(localized: "cert.error.notReady")
+            return AppLocalization.string("cert.error.notReady")
         } catch AssistantClient.AssistantError.rejected(let status) where status == 403 {
-            return String(localized: "cert.error.device")
+            return AppLocalization.string("cert.error.device")
         } catch {
-            return String(localized: "cert.error.offline")
+            return AppLocalization.string("cert.error.offline")
         }
     }
 
@@ -130,15 +131,15 @@ extension AppModel {
             saveCertification()
             return nil
         } catch AssistantClient.AssistantError.rejected(let status) where status == 501 {
-            return String(localized: "cert.error.notReady")
+            return AppLocalization.string("cert.error.notReady")
         } catch AssistantClient.AssistantError.rejected(let status) where status == 403 {
-            return String(localized: "cert.error.device")
+            return AppLocalization.string("cert.error.device")
         } catch AssistantClient.AssistantError.rejected {
-            return String(localized: "cert.error.review")
+            return AppLocalization.string("cert.error.review")
         } catch AssistantClient.AssistantError.offline {
-            return String(localized: "cert.error.offline")
+            return AppLocalization.string("cert.error.offline")
         } catch {
-            return String(localized: "cert.error.review")
+            return AppLocalization.string("cert.error.review")
         }
     }
 
@@ -149,15 +150,15 @@ extension AppModel {
         case .advancedCreator: "CueTake Advanced Creator"
         case .workflowSpecialist: "CueTake Workflow Specialist"
         }
-        show(notice: String(localized: "cert.earned \(title)"))
+        show(notice: AppLocalization.string("cert.earned \(title)"))
     }
 
     /// For the settings row: where the creator stands.
     var certificationSummary: String {
         if let next = certification.next {
             let standing = certification.standing(for: next)
-            return String(localized: "cert.summary \(Int((standing.fraction * 100).rounded()))")
+            return AppLocalization.string("cert.summary \(Int((standing.fraction * 100).rounded()))")
         }
-        return String(localized: "cert.summary.all")
+        return AppLocalization.string("cert.summary.all")
     }
 }

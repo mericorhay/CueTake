@@ -79,7 +79,7 @@ struct EffectInspector: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TimingReadout(start: effect.start.seconds, end: effect.end)
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
@@ -119,7 +119,7 @@ struct EffectInspector: View {
 
     private var cutouts: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.effect.cutout", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.effect.cutout", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             HStack(spacing: 6) {
                 ForEach(Cutout.allCases, id: \.self) { cutout in
                     let isOn = settings.cutout == cutout
@@ -166,17 +166,17 @@ struct EffectInspector: View {
 
     static func label(_ cutout: Cutout) -> String {
         switch cutout {
-        case .person: String(localized: "editor.effect.cutout.person", bundle: .module)
-        case .subject: String(localized: "editor.effect.cutout.subject", bundle: .module)
-        case .color: String(localized: "editor.effect.cutout.color", bundle: .module)
+        case .person: AppLocalization.string("editor.effect.cutout.person", bundle: .module)
+        case .subject: AppLocalization.string("editor.effect.cutout.subject", bundle: .module)
+        case .color: AppLocalization.string("editor.effect.cutout.color", bundle: .module)
         }
     }
 
     static func note(_ cutout: Cutout) -> String {
         switch cutout {
-        case .person: String(localized: "editor.effect.cutout.person.note", bundle: .module)
-        case .subject: String(localized: "editor.effect.cutout.subject.note", bundle: .module)
-        case .color: String(localized: "editor.effect.cutout.color.note", bundle: .module)
+        case .person: AppLocalization.string("editor.effect.cutout.person.note", bundle: .module)
+        case .subject: AppLocalization.string("editor.effect.cutout.subject.note", bundle: .module)
+        case .color: AppLocalization.string("editor.effect.cutout.color.note", bundle: .module)
         }
     }
 
@@ -203,7 +203,7 @@ struct EffectInspector: View {
                     .buttonStyle(.dsPressIcon)
                 }
                 ColorPicker(
-                    String(localized: "editor.effect.keyColor", bundle: .module),
+                    AppLocalization.string("editor.effect.keyColor", bundle: .module),
                     selection: Binding(
                         get: { Color(red: settings.effectiveKey.color.red, green: settings.effectiveKey.color.green, blue: settings.effectiveKey.color.blue) },
                         set: { value in
@@ -299,7 +299,7 @@ struct EffectInspector: View {
 
     private var looks: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.effect.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.effect.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(ToolDock.backgroundChoices, id: \.self) { style in
@@ -394,7 +394,7 @@ struct EffectInspector: View {
                         .buttonStyle(.dsPressIcon)
                     }
                     ColorPicker(
-                        String(localized: "editor.effect.customColor", bundle: .module),
+                        AppLocalization.string("editor.effect.customColor", bundle: .module),
                         selection: Binding(
                             get: { settings.color.map { Color(red: $0.red, green: $0.green, blue: $0.blue) } ?? .black },
                             set: { value in
@@ -478,7 +478,7 @@ struct EffectInspector: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(DS.Palette.ink(0.55))
                 Spacer()
@@ -505,7 +505,7 @@ struct EffectInspector: View {
         HStack(spacing: 0) {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
@@ -537,7 +537,7 @@ struct EffectInspector: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-                Text(String(localized: key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
+                Text(AppLocalization.string(key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
             }
             .foregroundStyle(DS.Palette.ink(0.85))
             .padding(.horizontal, 10)

@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 
@@ -17,7 +18,7 @@ extension TeleprompterModel.Preset {
     }
 
     var label: String {
-        String(localized: labelKey, bundle: .module)
+        AppLocalization.string(labelKey, bundle: .module)
     }
 
     /// Uppercased for the panel's badge. Locale-aware, so Turkish keeps its dotted İ.
@@ -29,8 +30,8 @@ extension TeleprompterModel.Preset {
 extension TeleprompterModel.SettingsTab {
     var label: String {
         switch self {
-        case .layout: String(localized: "teleprompter.tab.layout", bundle: .module)
-        case .flow: String(localized: "teleprompter.tab.flow", bundle: .module)
+        case .layout: AppLocalization.string("teleprompter.tab.layout", bundle: .module)
+        case .flow: AppLocalization.string("teleprompter.tab.flow", bundle: .module)
         }
     }
 }
@@ -38,8 +39,8 @@ extension TeleprompterModel.SettingsTab {
 extension TeleprompterModel.Alignment {
     var label: String {
         switch self {
-        case .left: String(localized: "teleprompter.align.left", bundle: .module)
-        case .center: String(localized: "teleprompter.align.center", bundle: .module)
+        case .left: AppLocalization.string("teleprompter.align.left", bundle: .module)
+        case .center: AppLocalization.string("teleprompter.align.center", bundle: .module)
         }
     }
 }
@@ -47,9 +48,9 @@ extension TeleprompterModel.Alignment {
 extension TeleprompterModel.HighlightMode {
     var label: String {
         switch self {
-        case .word: String(localized: "teleprompter.mode.word", bundle: .module)
-        case .line: String(localized: "teleprompter.mode.line", bundle: .module)
-        case .karaoke: String(localized: "teleprompter.mode.karaoke", bundle: .module)
+        case .word: AppLocalization.string("teleprompter.mode.word", bundle: .module)
+        case .line: AppLocalization.string("teleprompter.mode.line", bundle: .module)
+        case .karaoke: AppLocalization.string("teleprompter.mode.karaoke", bundle: .module)
         }
     }
 }

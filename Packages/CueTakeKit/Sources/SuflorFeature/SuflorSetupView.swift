@@ -55,7 +55,7 @@ struct SuflorSetupView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("suflor.step.a11y \(model.step.rawValue + 1)", bundle: .module))
             Spacer(minLength: 0)
-            DSKicker(String(localized: "suflor.kicker", bundle: .module), size: 11, tracking: 0.18, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("suflor.kicker", bundle: .module), size: 11, tracking: 0.18, color: DS.Palette.ink(0.56))
         }
     }
 }
@@ -73,7 +73,7 @@ private struct SuflorKindStep: View {
                     .padding(.top, 22)
                     .dsEnter(.rise())
 
-                DSHeadline(String(localized: "suflor.kind.title", bundle: .module), size: 32)
+                DSHeadline(AppLocalization.string("suflor.kind.title", bundle: .module), size: 32)
                     .padding(.top, 26)
                 Text("suflor.kind.subtitle", bundle: .module)
                     .dsFont(.sans, .regular, 15, lineHeight: 1.4)
@@ -87,7 +87,7 @@ private struct SuflorKindStep: View {
                 .padding(.top, 22)
                 .dsEnter(.rise(delay: 0.08))
 
-                DSKicker(String(localized: "suflor.platform.title", bundle: .module))
+                DSKicker(AppLocalization.string("suflor.platform.title", bundle: .module))
                     .padding(.top, 26)
                 FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                     ForEach(SuflorBrief.Platform.allCases, id: \.self) { platform in
@@ -98,7 +98,7 @@ private struct SuflorKindStep: View {
                 }
                 .padding(.top, 10)
 
-                DSPrimaryButton(String(localized: "suflor.next", bundle: .module)) { model.next() }
+                DSPrimaryButton(AppLocalization.string("suflor.next", bundle: .module)) { model.next() }
                     .padding(.top, 30)
             }
             .padding(.horizontal, 22)
@@ -109,8 +109,8 @@ private struct SuflorKindStep: View {
 
     private func kindCard(_ kind: SuflorBrief.Kind, symbol: String, title titleKey: String.LocalizationValue, detail detailKey: String.LocalizationValue) -> some View {
         let isOn = model.brief.kind == kind
-        let title = String(localized: titleKey, bundle: .module)
-        let detail = String(localized: detailKey, bundle: .module)
+        let title = AppLocalization.string(titleKey, bundle: .module)
+        let detail = AppLocalization.string(detailKey, bundle: .module)
         return Button {
             withAnimation(DS.Motion.bloom) {
                 model.brief.kind = kind
@@ -158,13 +158,13 @@ extension SuflorCue.Role {
     /// What goes on an empty card of this kind.
     var hint: String {
         switch self {
-        case .opening: String(localized: "suflor.card.hint.opening", bundle: .module)
-        case .topic: String(localized: "suflor.card.hint.topic", bundle: .module)
-        case .bridge: String(localized: "suflor.card.hint.bridge", bundle: .module)
-        case .ad: String(localized: "suflor.card.hint.ad", bundle: .module)
-        case .cta: String(localized: "suflor.card.hint.cta", bundle: .module)
-        case .rescue: String(localized: "suflor.card.hint.rescue", bundle: .module)
-        case .closing: String(localized: "suflor.card.hint.closing", bundle: .module)
+        case .opening: AppLocalization.string("suflor.card.hint.opening", bundle: .module)
+        case .topic: AppLocalization.string("suflor.card.hint.topic", bundle: .module)
+        case .bridge: AppLocalization.string("suflor.card.hint.bridge", bundle: .module)
+        case .ad: AppLocalization.string("suflor.card.hint.ad", bundle: .module)
+        case .cta: AppLocalization.string("suflor.card.hint.cta", bundle: .module)
+        case .rescue: AppLocalization.string("suflor.card.hint.rescue", bundle: .module)
+        case .closing: AppLocalization.string("suflor.card.hint.closing", bundle: .module)
         }
     }
 }
@@ -175,7 +175,7 @@ extension SuflorBrief.Platform {
         case .tiktok: "TikTok"
         case .instagram: "Instagram"
         case .youtube: "YouTube"
-        case .other: String(localized: "suflor.platform.other", bundle: .module)
+        case .other: AppLocalization.string("suflor.platform.other", bundle: .module)
         }
     }
 }
@@ -196,7 +196,7 @@ private struct SuflorBriefStep: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                DSHeadline(String(localized: "suflor.brief.title", bundle: .module), size: 32)
+                DSHeadline(AppLocalization.string("suflor.brief.title", bundle: .module), size: 32)
                     .padding(.top, 26)
                 Text("suflor.brief.subtitle", bundle: .module)
                     .dsFont(.sans, .regular, 15, lineHeight: 1.4)
@@ -210,8 +210,8 @@ private struct SuflorBriefStep: View {
                 .padding(.top, 22)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    DSKicker(String(localized: "suflor.brief.details", bundle: .module))
-                    TextField(String(localized: "suflor.brief.details.placeholder", bundle: .module), text: $model.brief.details, axis: .vertical)
+                    DSKicker(AppLocalization.string("suflor.brief.details", bundle: .module))
+                    TextField(AppLocalization.string("suflor.brief.details.placeholder", bundle: .module), text: $model.brief.details, axis: .vertical)
                         .lineLimit(3...8)
                         .focused($focused, equals: .details)
                         .dsFont(.sans, .regular, 15)
@@ -234,8 +234,8 @@ private struct SuflorBriefStep: View {
                 tone.padding(.top, 22)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    DSKicker(String(localized: "suflor.brief.topic", bundle: .module))
-                    TextField(String(localized: "suflor.brief.topic.placeholder", bundle: .module), text: $model.brief.topic, axis: .vertical)
+                    DSKicker(AppLocalization.string("suflor.brief.topic", bundle: .module))
+                    TextField(AppLocalization.string("suflor.brief.topic.placeholder", bundle: .module), text: $model.brief.topic, axis: .vertical)
                         .lineLimit(2...4)
                         .focused($focused, equals: .topic)
                         .dsFont(.sans, .regular, 15)
@@ -317,7 +317,7 @@ private struct SuflorBriefStep: View {
     }
 
     private func field(_ key: String.LocalizationValue, text: Binding<String>, field: Field) -> some View {
-        let title = String(localized: key, bundle: .module)
+        let title = AppLocalization.string(key, bundle: .module)
         return HStack(spacing: 12) {
             Text(title)
                 .dsFont(.mono, .medium, 11, letterSpacing: 0.14)
@@ -342,7 +342,7 @@ private struct SuflorBriefStep: View {
 
     private var mustSay: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.brief.mustSay", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.brief.mustSay", bundle: .module))
             FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach(model.brief.mustSay, id: \.self) { item in
                     Button {
@@ -363,7 +363,7 @@ private struct SuflorBriefStep: View {
                 }
                 HStack(spacing: 6) {
                     Image(systemName: "plus").font(.system(size: 12, weight: .bold)).foregroundStyle(DS.Palette.ink(0.6))
-                    TextField(String(localized: "suflor.brief.mustSay.placeholder", bundle: .module), text: $newItem)
+                    TextField(AppLocalization.string("suflor.brief.mustSay.placeholder", bundle: .module), text: $newItem)
                         .focused($focused, equals: .item)
                         .dsFont(.sans, .medium, 14)
                         .foregroundStyle(DS.Palette.ink)
@@ -386,8 +386,8 @@ private struct SuflorBriefStep: View {
     private var checks: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 8) {
-                DSKicker(String(localized: "suflor.brief.link", bundle: .module))
-                TextField(String(localized: "suflor.brief.link.placeholder", bundle: .module), text: $model.brief.link)
+                DSKicker(AppLocalization.string("suflor.brief.link", bundle: .module))
+                TextField(AppLocalization.string("suflor.brief.link.placeholder", bundle: .module), text: $model.brief.link)
                     .focused($focused, equals: .link)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -431,7 +431,7 @@ private struct SuflorBriefStep: View {
         tint: Color
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: title, bundle: .module))
+            DSKicker(AppLocalization.string(title, bundle: .module))
             FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach(items.wrappedValue, id: \.self) { item in
                     Button {
@@ -451,7 +451,7 @@ private struct SuflorBriefStep: View {
                 }
                 HStack(spacing: 6) {
                     Image(systemName: "plus").font(.system(size: 12, weight: .bold)).foregroundStyle(DS.Palette.ink(0.6))
-                    TextField(String(localized: placeholder, bundle: .module), text: text)
+                    TextField(AppLocalization.string(placeholder, bundle: .module), text: text)
                         .focused($focused, equals: field)
                         .dsFont(.sans, .medium, 14)
                         .foregroundStyle(DS.Palette.ink)
@@ -469,7 +469,7 @@ private struct SuflorBriefStep: View {
                 .frame(minHeight: 44)
                 .background(Capsule().stroke(DS.Palette.hairline(0.16), style: StrokeStyle(lineWidth: 1, dash: [4, 4])))
             }
-            Text(String(localized: hint, bundle: .module))
+            Text(AppLocalization.string(hint, bundle: .module))
                 .dsFont(.sans, .regular, 12)
                 .foregroundStyle(DS.Palette.ink(0.52))
                 .fixedSize(horizontal: false, vertical: true)
@@ -479,7 +479,7 @@ private struct SuflorBriefStep: View {
     /// How long the brand wants the ad, counted down on stage and in the studio. Off at zero.
     private var adLength: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.brief.adLength", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.brief.adLength", bundle: .module))
             HStack(spacing: 12) {
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -535,12 +535,12 @@ private struct SuflorBriefStep: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.brief.when", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.brief.when", bundle: .module))
             HStack(spacing: 8) {
-                SuflorChip(title: String(localized: "suflor.brief.when.minute", bundle: .module), isOn: isMinute) {
+                SuflorChip(title: AppLocalization.string("suflor.brief.when.minute", bundle: .module), isOn: isMinute) {
                     withAnimation(DS.Motion.snap) { model.brief.timing = .minute(minute) }
                 }
-                SuflorChip(title: String(localized: "suflor.brief.when.none", bundle: .module), isOn: model.brief.timing == .none) {
+                SuflorChip(title: AppLocalization.string("suflor.brief.when.none", bundle: .module), isOn: model.brief.timing == .none) {
                     withAnimation(DS.Motion.snap) { model.brief.timing = .none }
                 }
             }
@@ -600,9 +600,9 @@ private struct SuflorBriefStep: View {
 
     private var timingExplanation: String {
         switch model.brief.timing {
-        case .minute(let value): String(localized: "suflor.brief.when.minute.explain \(value)", bundle: .module)
-        case .manual: String(localized: "suflor.brief.when.manual.explain", bundle: .module)
-        case .none: String(localized: "suflor.brief.when.none.explain", bundle: .module)
+        case .minute(let value): AppLocalization.string("suflor.brief.when.minute.explain \(value)", bundle: .module)
+        case .manual: AppLocalization.string("suflor.brief.when.manual.explain", bundle: .module)
+        case .none: AppLocalization.string("suflor.brief.when.none.explain", bundle: .module)
         }
     }
 
@@ -613,10 +613,10 @@ private struct SuflorBriefStep: View {
 
     private var tone: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "suflor.brief.tone", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.brief.tone", bundle: .module))
             FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
                 ForEach(tones.indices, id: \.self) { index in
-                    let title = String(localized: tones[index], bundle: .module)
+                    let title = AppLocalization.string(tones[index], bundle: .module)
                     SuflorChip(title: title, isOn: model.brief.tone == title, tint: DS.Palette.accentWarm) {
                         withAnimation(DS.Motion.snap) { model.brief.tone = model.brief.tone == title ? "" : title }
                     }
@@ -626,8 +626,8 @@ private struct SuflorBriefStep: View {
     }
 
     private var templateTitle: String {
-        if model.writer == nil { return String(localized: "suflor.brief.template.only", bundle: .module) }
-        return String(localized: "suflor.brief.template", bundle: .module)
+        if model.writer == nil { return AppLocalization.string("suflor.brief.template.only", bundle: .module) }
+        return AppLocalization.string("suflor.brief.template", bundle: .module)
     }
 
     private var actions: some View {
@@ -656,7 +656,7 @@ private struct SuflorBriefStep: View {
     /// The AI, set back: a draft to write over, not the way in.
     private var aiDraft: some View {
         VStack(alignment: .leading, spacing: 12) {
-            DSKicker(String(localized: "suflor.brief.ai.title", bundle: .module), size: 10, color: DS.Palette.ink(0.5))
+            DSKicker(AppLocalization.string("suflor.brief.ai.title", bundle: .module), size: 10, color: DS.Palette.ink(0.5))
             Text("suflor.brief.ai.hint", bundle: .module)
                 .dsFont(.sans, .regular, 13, lineHeight: 1.3)
                 .foregroundStyle(DS.Palette.ink(0.56))
@@ -747,7 +747,7 @@ private struct SuflorFlowStep: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    DSHeadline(String(localized: "suflor.flow.title", bundle: .module), size: 32)
+                    DSHeadline(AppLocalization.string("suflor.flow.title", bundle: .module), size: 32)
                         .padding(.top, 26)
                     pages.padding(.top, 14)
 
@@ -780,8 +780,8 @@ private struct SuflorFlowStep: View {
     /// Two pages, the AI's flow and the creator's own; the other one waits untouched.
     private var pages: some View {
         HStack(spacing: 4) {
-            pageTab(.own, title: String(localized: "suflor.flow.page.own", bundle: .module), symbol: "pencil", count: model.ownCues.count)
-            pageTab(.ai, title: String(localized: "suflor.flow.page.ai", bundle: .module), symbol: "sparkles", count: model.aiCues.count)
+            pageTab(.own, title: AppLocalization.string("suflor.flow.page.own", bundle: .module), symbol: "pencil", count: model.ownCues.count)
+            pageTab(.ai, title: AppLocalization.string("suflor.flow.page.ai", bundle: .module), symbol: "sparkles", count: model.aiCues.count)
         }
         .padding(4)
         .background(Capsule().fill(DS.Palette.hairline(0.06)))
@@ -845,17 +845,17 @@ private struct SuflorFlowStep: View {
         HStack(spacing: 10) {
             SuflorStepper(
                 value: "\(Int(model.wordsPerMinute))",
-                caption: String(localized: "suflor.pace.unit", bundle: .module),
-                minusLabel: String(localized: "suflor.pace.slower", bundle: .module),
-                plusLabel: String(localized: "suflor.pace.faster", bundle: .module),
+                caption: AppLocalization.string("suflor.pace.unit", bundle: .module),
+                minusLabel: AppLocalization.string("suflor.pace.slower", bundle: .module),
+                plusLabel: AppLocalization.string("suflor.pace.faster", bundle: .module),
                 onMinus: { withAnimation(DS.Motion.snap) { model.nudgePace(-10) } },
                 onPlus: { withAnimation(DS.Motion.snap) { model.nudgePace(10) } }
             )
             SuflorStepper(
                 value: "\(Int(model.textSize))",
-                caption: String(localized: "suflor.size.unit", bundle: .module),
-                minusLabel: String(localized: "suflor.size.smaller", bundle: .module),
-                plusLabel: String(localized: "suflor.size.larger", bundle: .module),
+                caption: AppLocalization.string("suflor.size.unit", bundle: .module),
+                minusLabel: AppLocalization.string("suflor.size.smaller", bundle: .module),
+                plusLabel: AppLocalization.string("suflor.size.larger", bundle: .module),
                 onMinus: { withAnimation(DS.Motion.snap) { model.nudgeSize(-2) } },
                 onPlus: { withAnimation(DS.Motion.snap) { model.nudgeSize(2) } }
             )
@@ -889,9 +889,9 @@ private struct SuflorFlowStep: View {
                     .foregroundStyle(cue.role.color)
                 Spacer(minLength: 0)
                 Menu {
-                    Button { model.move(cue, by: -1) } label: { Label(String(localized: "suflor.card.up", bundle: .module), systemImage: "arrow.up") }
-                    Button { model.move(cue, by: 1) } label: { Label(String(localized: "suflor.card.down", bundle: .module), systemImage: "arrow.down") }
-                    Button(role: .destructive) { model.remove(cue) } label: { Label(String(localized: "suflor.card.delete", bundle: .module), systemImage: "trash") }
+                    Button { model.move(cue, by: -1) } label: { Label(AppLocalization.string("suflor.card.up", bundle: .module), systemImage: "arrow.up") }
+                    Button { model.move(cue, by: 1) } label: { Label(AppLocalization.string("suflor.card.down", bundle: .module), systemImage: "arrow.down") }
+                    Button(role: .destructive) { model.remove(cue) } label: { Label(AppLocalization.string("suflor.card.delete", bundle: .module), systemImage: "trash") }
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 14, weight: .semibold))

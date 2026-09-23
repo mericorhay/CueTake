@@ -24,7 +24,7 @@ struct VideoLayerPanel: View {
                     stage
                     if let layer {
                         VStack(alignment: .leading, spacing: 8) {
-                            DSKicker(String(localized: "editor.video.part", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                            DSKicker(AppLocalization.string("editor.video.part", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                             VideoLayerTrimStrip(model: model, layer: layer)
                         }
                         actions(layer)
@@ -78,7 +78,7 @@ struct VideoLayerPanel: View {
                         .fill(layer == nil ? DS.Palette.lime : VideoLayerLane.tint)
                 )
             VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: layer?.title ?? String(localized: "editor.video.main", bundle: .module))
+                Text(verbatim: layer?.title ?? AppLocalization.string("editor.video.main", bundle: .module))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
                     .lineLimit(1)
@@ -111,11 +111,11 @@ struct VideoLayerPanel: View {
     private var stage: some View {
         if !model.project.videoLayers.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                DSKicker(String(localized: "editor.video.stage", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("editor.video.stage", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 ScrollView(.horizontal) {
                     HStack(spacing: 7) {
                         piece(
-                            title: String(localized: "editor.video.main", bundle: .module),
+                            title: AppLocalization.string("editor.video.main", bundle: .module),
                             symbol: "person.crop.rectangle",
                             tint: DS.Palette.lime,
                             isOn: model.isPlacingMainVideo
@@ -166,7 +166,7 @@ struct VideoLayerPanel: View {
         let current = model.project.mainVideoPlacement.bounded
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Text("editor.video.placeOnPicture", bundle: .module)
                     .dsFont(.sans, .regular, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
@@ -322,15 +322,15 @@ struct VideoLayerPanel: View {
     private var trackingDetail: String {
         switch model.subjectTracking {
         case .idle:
-            String(localized: "editor.video.smartReframe.hint", bundle: .module)
+            AppLocalization.string("editor.video.smartReframe.hint", bundle: .module)
         case .analyzing(let progress):
-            String(localized: "editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
+            AppLocalization.string("editor.video.smartReframe.progress \(Int((progress * 100).rounded()))", bundle: .module)
         case .applied(let points):
-            String(localized: "editor.video.smartReframe.done \(points)", bundle: .module)
+            AppLocalization.string("editor.video.smartReframe.done \(points)", bundle: .module)
         case .noFace:
-            String(localized: "editor.video.smartReframe.noFace", bundle: .module)
+            AppLocalization.string("editor.video.smartReframe.noFace", bundle: .module)
         case .failed:
-            String(localized: "editor.video.smartReframe.failed", bundle: .module)
+            AppLocalization.string("editor.video.smartReframe.failed", bundle: .module)
         }
     }
 
@@ -372,7 +372,7 @@ struct VideoLayerPanel: View {
         let current = layer.placement(at: model.playhead)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                DSKicker(String(localized: "editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("editor.video.where", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Text("editor.video.placeOnPicture", bundle: .module)
                     .dsFont(.sans, .regular, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
@@ -402,7 +402,7 @@ struct VideoLayerPanel: View {
         let key = layer.chroma
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                DSKicker(String(localized: "editor.video.key", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("editor.video.key", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 if key != nil {
                     Button {
@@ -478,7 +478,7 @@ struct VideoLayerPanel: View {
                     .fill(Color(red: preset.color.red, green: preset.color.green, blue: preset.color.blue))
                     .frame(width: 14, height: 14)
                     .overlay(Circle().stroke(DS.Palette.hairline(0.3), lineWidth: 1))
-                Text(String(localized: label, bundle: .module))
+                Text(AppLocalization.string(label, bundle: .module))
                     .dsFont(.sans, .medium, 11)
             }
             .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.8))
@@ -543,7 +543,7 @@ struct VideoLayerPanel: View {
             VStack(spacing: 5) {
                 Image(systemName: symbol)
                     .font(.system(size: 15, weight: .medium))
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 10)
                     .lineLimit(1)
             }
@@ -590,7 +590,7 @@ struct VideoLayerPanel: View {
                 .font(.system(size: 12))
                 .foregroundStyle(DS.Palette.ink(0.5))
                 .frame(width: 18)
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.55))
                 .frame(width: 64, alignment: .leading)
@@ -605,10 +605,10 @@ struct VideoLayerPanel: View {
 
     private func layoutLabel(_ layout: VideoLayout) -> String {
         switch layout {
-        case .sideBySide: String(localized: "editor.video.layout.sideBySide", bundle: .module)
-        case .stacked: String(localized: "editor.video.layout.stacked", bundle: .module)
-        case .pictureInPicture: String(localized: "editor.video.layout.pip", bundle: .module)
-        case .grid: String(localized: "editor.video.layout.grid", bundle: .module)
+        case .sideBySide: AppLocalization.string("editor.video.layout.sideBySide", bundle: .module)
+        case .stacked: AppLocalization.string("editor.video.layout.stacked", bundle: .module)
+        case .pictureInPicture: AppLocalization.string("editor.video.layout.pip", bundle: .module)
+        case .grid: AppLocalization.string("editor.video.layout.grid", bundle: .module)
         }
     }
 }

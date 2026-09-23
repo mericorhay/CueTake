@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import UIKit
@@ -69,7 +70,7 @@ extension EditorModel {
     /// Adds a line of text at the playhead and selects it.
     public func addTextOverlay(_ text: String? = nil) {
         let overlay = Overlay(
-            content: .text(OverlayText(text: text ?? String(localized: "editor.overlay.defaultText", bundle: .module))),
+            content: .text(OverlayText(text: text ?? AppLocalization.string("editor.overlay.defaultText", bundle: .module))),
             start: MediaTime(seconds: playhead),
             transform: OverlayTransform(y: 0.3)
         )

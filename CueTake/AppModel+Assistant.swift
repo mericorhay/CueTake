@@ -205,10 +205,10 @@ extension AppModel {
     var journeyContext: DSJourneyContext {
         DSJourneyContext(
             stages: [
-                String(localized: "journey.stage.start"),
-                String(localized: "journey.stage.edit"),
-                String(localized: "journey.stage.captions"),
-                String(localized: "journey.stage.share"),
+                AppLocalization.string("journey.stage.start"),
+                AppLocalization.string("journey.stage.edit"),
+                AppLocalization.string("journey.stage.captions"),
+                AppLocalization.string("journey.stage.share"),
             ],
             current: journeyStage,
             completed: journeyCompleted,
@@ -234,18 +234,18 @@ extension AppModel {
     /// A failure from the assistant endpoint, as a sentence someone can act on.
     static func assistantFailureMessage(_ error: any Error) -> String {
         switch error as? AssistantClient.AssistantError {
-        case .notConfigured: String(localized: "assistant.failure.notConfigured")
-        case .offline: String(localized: "assistant.failure.offline")
-        case .declined: String(localized: "assistant.failure.declined")
+        case .notConfigured: AppLocalization.string("assistant.failure.notConfigured")
+        case .offline: AppLocalization.string("assistant.failure.offline")
+        case .declined: AppLocalization.string("assistant.failure.declined")
         // Said precisely, because "something went wrong" cannot be acted on and each of these
         // has a different fix: a key that does not match, too many messages, the model failing.
         case .rejected(let status) where status == 401:
-            String(localized: "assistant.failure.unauthorized")
+            AppLocalization.string("assistant.failure.unauthorized")
         case .rejected(let status) where status == 429:
-            String(localized: "assistant.failure.busy")
+            AppLocalization.string("assistant.failure.busy")
         case .rejected(let status):
-            String(localized: "assistant.failure.server \(status)")
-        default: String(localized: "assistant.failure.generic")
+            AppLocalization.string("assistant.failure.server \(status)")
+        default: AppLocalization.string("assistant.failure.generic")
         }
     }
 

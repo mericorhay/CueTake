@@ -19,6 +19,9 @@ public struct AppSettings: Hashable, Sendable, Codable {
     public var aiProcessing: AIProcessing
     /// Where a finished video is written.
     public var exportDestination: ExportDestination
+    /// The language CueTake uses. Automatic follows the phone; an explicit choice updates the
+    /// whole view tree immediately and is also used by programmatic status and error copy.
+    public var language: AppLanguage
     /// Whether new projects start with the look of the last one: caption style and position, and
     /// voice cleanup. On by default — a creator's second video almost always looks like their first.
     public var remembersStyle: Bool
@@ -36,6 +39,7 @@ public struct AppSettings: Hashable, Sendable, Codable {
         captionPreset: CaptionPreference = .pop,
         aiProcessing: AIProcessing = .onDeviceOnly,
         exportDestination: ExportDestination = .photoLibrary,
+        language: AppLanguage = .automatic,
         remembersStyle: Bool = true,
         captionPosition: CaptionPosition? = nil,
         voiceEffects: AudioEffects = AudioEffects(),
@@ -49,6 +53,7 @@ public struct AppSettings: Hashable, Sendable, Codable {
         self.captionPreset = captionPreset
         self.aiProcessing = aiProcessing
         self.exportDestination = exportDestination
+        self.language = language
         self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 
@@ -62,10 +67,31 @@ public struct AppSettings: Hashable, Sendable, Codable {
         captionPreset = try container.decodeIfPresent(CaptionPreference.self, forKey: .captionPreset) ?? fallback.captionPreset
         aiProcessing = try container.decodeIfPresent(AIProcessing.self, forKey: .aiProcessing) ?? fallback.aiProcessing
         exportDestination = try container.decodeIfPresent(ExportDestination.self, forKey: .exportDestination) ?? fallback.exportDestination
+        language = try container.decodeIfPresent(AppLanguage.self, forKey: .language) ?? fallback.language
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? fallback.hasCompletedOnboarding
         remembersStyle = try container.decodeIfPresent(Bool.self, forKey: .remembersStyle) ?? fallback.remembersStyle
         captionPosition = try container.decodeIfPresent(CaptionPosition.self, forKey: .captionPosition)
         voiceEffects = try container.decodeIfPresent(AudioEffects.self, forKey: .voiceEffects) ?? fallback.voiceEffects
+    }
+}
+
+public enum AppLanguage: String, Hashable, Sendable, Codable, CaseIterable {
+    case automatic
+    case english = "en"
+    case spanish = "es"
+    case turkish = "tr"
+
+    public var localeIdentifier: String? {
+        switch self {
+        case .automatic: nil
+        case .english: "en"
+        case .spanish: "es"
+        case .turkish: "tr"
+        }
+    }
+
+    public var locale: Locale {
+        localeIdentifier.map(Locale.init(identifier:)) ?? .autoupdatingCurrent
     }
 }
 

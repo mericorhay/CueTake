@@ -34,13 +34,13 @@ public struct OnboardingScreen: View {
                     .padding(.bottom, 34)
 
                 DSHeadline(
-                    String(localized: current.headline, bundle: .module),
+                    AppLocalization.string(current.headline, bundle: .module),
                     size: 44,
                     lineHeight: 0.95,
                     letterSpacing: -0.035
                 )
 
-                Text(String(localized: current.subtitle, bundle: .module))
+                Text(AppLocalization.string(current.subtitle, bundle: .module))
                     .dsFont(.sans, .regular, 15, lineHeight: 1.5)
                     .foregroundStyle(DS.Palette.ink(0.52))
                     .frame(maxWidth: 290, alignment: .leading)
@@ -64,7 +64,7 @@ public struct OnboardingScreen: View {
                 .buttonStyle(.dsPress)
 
                 DSPrimaryButton(
-                    String(localized: current.cta, bundle: .module),
+                    AppLocalization.string(current.cta, bundle: .module),
                     radius: DS.Radius.cardLarge,
                     verticalPadding: 18,
                     fontSize: 16
@@ -136,7 +136,7 @@ public struct OnboardingScreen: View {
         ZStack(alignment: .topLeading) {
             ForEach(Array(Self.stackCards.enumerated()), id: \.offset) { index, card in
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: card.kicker, bundle: .module))
+                    Text(AppLocalization.string(card.kicker, bundle: .module))
                         .dsFont(.mono, .medium, 10, letterSpacing: 0.16)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .opacity(0.65)
@@ -145,7 +145,7 @@ public struct OnboardingScreen: View {
                     // tall. A title that wraps swallows the card beneath it, so it shrinks
                     // instead — the geometry stays identical in both languages.
                     TightText(
-                        String(localized: card.title, bundle: .module),
+                        AppLocalization.string(card.title, bundle: .module),
                         .archivo,
                         .bold,
                         19,

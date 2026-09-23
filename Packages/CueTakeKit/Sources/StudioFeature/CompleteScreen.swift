@@ -38,12 +38,12 @@ public struct CompleteScreen: View {
                 Spacer(minLength: 0)
 
                 DSKicker(
-                    String(localized: "complete.ready", bundle: .module),
+                    AppLocalization.string("complete.ready", bundle: .module),
                     color: DS.Palette.lime
                 )
 
                 DSHeadline(
-                    String(localized: "complete.recorded \(project.segments.filter { $0.selectedTake != nil }.count)", bundle: .module),
+                    AppLocalization.string("complete.recorded \(project.segments.filter { $0.selectedTake != nil }.count)", bundle: .module),
                     size: 32
                 )
                 .padding(.top, 10)
@@ -111,7 +111,7 @@ public struct CompleteScreen: View {
                 }
 
                 DSPrimaryButton(
-                    String(localized: "complete.review", bundle: .module),
+                    AppLocalization.string("complete.review", bundle: .module),
                     glow: false,
                     action: onEdit
                 )
@@ -119,11 +119,11 @@ public struct CompleteScreen: View {
 
                 HStack(spacing: 10) {
                     DSSecondaryButton(
-                        String(localized: "complete.retake", bundle: .module),
+                        AppLocalization.string("complete.retake", bundle: .module),
                         action: { showsRetakePicker = true }
                     )
                     DSSecondaryButton(
-                        String(localized: "complete.export", bundle: .module),
+                        AppLocalization.string("complete.export", bundle: .module),
                         action: onDone
                     )
                 }
@@ -133,7 +133,7 @@ public struct CompleteScreen: View {
             .dsScreenLayout(scrolls: true)
         }
         .dsEnter(.screen(duration: 0.5))
-        .confirmationDialog(String(localized: "complete.chooseSegment", bundle: .module), isPresented: $showsRetakePicker, titleVisibility: .visible) {
+        .confirmationDialog(AppLocalization.string("complete.chooseSegment", bundle: .module), isPresented: $showsRetakePicker, titleVisibility: .visible) {
             ForEach(Array(project.segments.enumerated()), id: \.element.id) { index, segment in
                 Button("\(index + 1) · \(segment.role.displayLabel)") { onRetake(segment.id) }
             }
@@ -146,7 +146,7 @@ public struct CompleteScreen: View {
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.segment(at: segment.role.paletteIndex))
             Text(segment.selectedTake.map { $0.sourceRange.duration.preciseTimecode }
-                ?? String(localized: "complete.notRecorded", bundle: .module))
+                ?? AppLocalization.string("complete.notRecorded", bundle: .module))
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.56))
         }

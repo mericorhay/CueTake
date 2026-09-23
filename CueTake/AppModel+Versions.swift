@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import EditorFeature
 import Foundation
@@ -40,11 +41,11 @@ extension AppModel {
             if kind == .manual { noteCertifiedVersion() }
             await refreshVersions()
             if kind == .manual {
-                show(notice: String(localized: "versions.saved \(version.name)"))
+                show(notice: AppLocalization.string("versions.saved \(version.name)"))
             }
             return version
         } catch {
-            if kind == .manual { show(notice: String(localized: "versions.saveFailed")) }
+            if kind == .manual { show(notice: AppLocalization.string("versions.saveFailed")) }
             return nil
         }
     }
@@ -58,7 +59,7 @@ extension AppModel {
             projectVersions = existing
             return
         }
-        await saveVersion(named: String(localized: "versions.auto.opened"), kind: .automatic)
+        await saveVersion(named: AppLocalization.string("versions.auto.opened"), kind: .automatic)
     }
 
     /// Goes back to a version. What is open now is kept as a version first, so going back is
@@ -68,14 +69,14 @@ extension AppModel {
         guard screen == .editor else { return }
         let store = dependencies.projectStore
         guard let saved = try? await store.loadVersion(version.id, of: project.id) else {
-            show(notice: String(localized: "versions.missing"))
+            show(notice: AppLocalization.string("versions.missing"))
             return
         }
-        await saveVersion(named: String(localized: "versions.auto.beforeRestore"), kind: .automatic)
+        await saveVersion(named: AppLocalization.string("versions.auto.beforeRestore"), kind: .automatic)
         editorModel.restore(saved)
         adoptEditorEdits()
         scheduleSave()
-        show(notice: String(localized: "versions.restored \(version.name)"))
+        show(notice: AppLocalization.string("versions.restored \(version.name)"))
     }
 
     func deleteVersion(_ id: ProjectVersion.ID) async {

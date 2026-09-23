@@ -5,19 +5,19 @@ import SwiftUI
 /// Names for caption looks, entrances, emphases and packs.
 enum CaptionStyleCatalog {
     static func label(_ presetID: String) -> String {
-        String(localized: String.LocalizationValue(stringLiteral: "captions.style." + presetID), bundle: .module)
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "captions.style." + presetID), bundle: .module)
     }
 
     static func label(_ entrance: CaptionEntrance) -> String {
-        String(localized: String.LocalizationValue(stringLiteral: "captions.entrance." + entrance.rawValue), bundle: .module)
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "captions.entrance." + entrance.rawValue), bundle: .module)
     }
 
     static func label(_ emphasis: CaptionEmphasis) -> String {
-        String(localized: String.LocalizationValue(stringLiteral: "captions.emphasis." + emphasis.rawValue), bundle: .module)
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "captions.emphasis." + emphasis.rawValue), bundle: .module)
     }
 
     static func label(pack: StylePack) -> String {
-        String(localized: String.LocalizationValue(stringLiteral: "captions.pack." + pack.id), bundle: .module)
+        AppLocalization.string(String.LocalizationValue(stringLiteral: "captions.pack." + pack.id), bundle: .module)
     }
 
     static func symbol(pack: StylePack) -> String {
@@ -125,7 +125,7 @@ struct StylePackRow: View {
     private func packDetail(_ pack: StylePack) -> String {
         var parts = [CaptionStyleCatalog.label(pack.captionPreset)]
         if let transition = pack.transition {
-            parts.append(String(localized: TransitionMarks.titleKey(transition), bundle: .module))
+            parts.append(AppLocalization.string(TransitionMarks.titleKey(transition), bundle: .module))
         }
         if let look = pack.look {
             parts.append(FilterPresets.label(look))
@@ -142,13 +142,13 @@ struct CaptionMotionTuning: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                DSKicker(String(localized: "captions.tune.entrance", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("captions.tune.entrance", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 chips(CaptionEntrance.allCases, selected: look.resolvedEntrance, label: CaptionStyleCatalog.label) { value in
                     look.entrance = value
                 }
             }
             VStack(alignment: .leading, spacing: 6) {
-                DSKicker(String(localized: "captions.tune.emphasis", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("captions.tune.emphasis", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 chips(CaptionEmphasis.allCases, selected: look.resolvedEmphasis, label: CaptionStyleCatalog.label) { value in
                     look.emphasis = value
                     if value != .none, look.highlightColor == nil {

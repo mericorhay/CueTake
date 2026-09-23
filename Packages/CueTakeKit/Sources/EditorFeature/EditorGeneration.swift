@@ -164,7 +164,7 @@ extension EditorModel {
         guard let target = layInGenerated(clip, prompt: job.prompt, at: job.at, placement: job.placement, recordingEdit: true) else {
             updateJob(id) {
                 $0.phase = .failed
-                $0.failure = String(localized: "editor.generate.noRoom", bundle: .module)
+                $0.failure = AppLocalization.string("editor.generate.noRoom", bundle: .module)
             }
             return
         }

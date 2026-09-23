@@ -154,18 +154,18 @@ struct SpeechVersionsRow: View {
 
     static func name(_ source: SpeechSource) -> String {
         switch source {
-        case .device: String(localized: "editor.speech.device", bundle: .module)
-        case .cloud: String(localized: "editor.speech.cloud", bundle: .module)
+        case .device: AppLocalization.string("editor.speech.device", bundle: .module)
+        case .cloud: AppLocalization.string("editor.speech.cloud", bundle: .module)
         }
     }
 
     static func status(_ passage: TranscriptPassage, agrees: Bool) -> String {
-        if agrees { return String(localized: "editor.speech.agree", bundle: .module) }
+        if agrees { return AppLocalization.string("editor.speech.agree", bundle: .module) }
         let source = name(passage.choice)
         switch passage.decidedBy {
-        case .ai: return String(localized: "editor.speech.byAI \(source)", bundle: .module)
-        case .user: return String(localized: "editor.speech.byYou \(source)", bundle: .module)
-        case .rule: return String(localized: "editor.speech.byRule \(source)", bundle: .module)
+        case .ai: return AppLocalization.string("editor.speech.byAI \(source)", bundle: .module)
+        case .user: return AppLocalization.string("editor.speech.byYou \(source)", bundle: .module)
+        case .rule: return AppLocalization.string("editor.speech.byRule \(source)", bundle: .module)
         }
     }
 }

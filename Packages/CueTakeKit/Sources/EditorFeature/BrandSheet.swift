@@ -78,7 +78,7 @@ struct BrandSheet: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                DSKicker(String(localized: "editor.brand.title", bundle: .module))
+                DSKicker(AppLocalization.string("editor.brand.title", bundle: .module))
                 Text("editor.brand.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11, lineHeight: 1.3)
                     .foregroundStyle(DS.Palette.ink(0.56))
@@ -152,7 +152,7 @@ struct BrandSheet: View {
                 supportsOpacity: false
             )
             .labelsHidden()
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.5))
         }
@@ -358,13 +358,13 @@ struct BrandSheet: View {
                     Button(role: .destructive) {
                         tools.deleteTemplate(template.id)
                     } label: {
-                        Label(String(localized: "editor.brand.delete", bundle: .module), systemImage: "trash")
+                        Label(AppLocalization.string("editor.brand.delete", bundle: .module), systemImage: "trash")
                     }
                 }
             }
 
             HStack(spacing: 8) {
-                TextField(String(localized: "editor.brand.name", bundle: .module), text: $name)
+                TextField(AppLocalization.string("editor.brand.name", bundle: .module), text: $name)
                     .dsFont(.sans, .regular, 13)
                     .padding(.horizontal, 12)
                     .frame(minHeight: 42)
@@ -414,7 +414,7 @@ struct BrandSheet: View {
     }
 
     private func label(_ key: String.LocalizationValue) -> some View {
-        Text(String(localized: key, bundle: .module))
+        Text(AppLocalization.string(key, bundle: .module))
             .dsFont(.mono, .medium, 10, letterSpacing: 0.14)
             .foregroundStyle(DS.Palette.ink(0.56))
     }

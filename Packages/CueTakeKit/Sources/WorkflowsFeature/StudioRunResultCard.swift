@@ -56,7 +56,7 @@ struct StudioRunResultCard: View {
                             Image(systemName: "arrow.turn.down.right")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(DS.Palette.accentWarm)
-                            Text(String(localized: StudioCatalog.tool(for: item.title).title, bundle: .module))
+                            Text(AppLocalization.string(StudioCatalog.tool(for: item.title).title, bundle: .module))
                                 .dsFont(.sans, .semibold, 11)
                                 .foregroundStyle(DS.Palette.ink(0.8))
                             Text(item.reason)
@@ -74,7 +74,7 @@ struct StudioRunResultCard: View {
             HStack(spacing: 8) {
                 if let video = summary.video {
                     ShareLink(item: video) {
-                        Label(String(localized: "studio.result.share", bundle: .module), systemImage: "square.and.arrow.up")
+                        Label(AppLocalization.string("studio.result.share", bundle: .module), systemImage: "square.and.arrow.up")
                             .dsFont(.sans, .semibold, 13)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .frame(maxWidth: .infinity)
@@ -84,7 +84,7 @@ struct StudioRunResultCard: View {
                     .buttonStyle(.dsPress(radius: 21))
                 }
                 Button(action: onOpen) {
-                    Label(String(localized: "studio.result.open", bundle: .module), systemImage: "slider.horizontal.below.rectangle")
+                    Label(AppLocalization.string("studio.result.open", bundle: .module), systemImage: "slider.horizontal.below.rectangle")
                         .dsFont(.sans, .semibold, 13)
                         .foregroundStyle(DS.Palette.ink)
                         .frame(maxWidth: .infinity)

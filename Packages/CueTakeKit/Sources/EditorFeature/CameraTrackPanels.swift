@@ -150,8 +150,8 @@ struct SubjectTrackPanel: View {
                     .foregroundStyle(span.issueTimes.isEmpty ? DS.Palette.lime : DS.Palette.accentWarm)
                 Text(
                     span.issueTimes.isEmpty
-                        ? String(localized: "editor.trackPanel.stable", bundle: .module)
-                        : String(localized: "editor.trackPanel.issues \(span.issueTimes.count)", bundle: .module)
+                        ? AppLocalization.string("editor.trackPanel.stable", bundle: .module)
+                        : AppLocalization.string("editor.trackPanel.issues \(span.issueTimes.count)", bundle: .module)
                 )
                 .dsFont(.sans, .semibold, 12)
                 .foregroundStyle(DS.Palette.ink(0.8))

@@ -16,7 +16,7 @@ struct StudioStyleCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                DSKicker(String(localized: "studio.style", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("studio.style", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 Toggle(isOn: binding(\.captions)) {
                     Text("studio.style.captions", bundle: .module)
@@ -138,7 +138,7 @@ struct StudioStyleCard: View {
         label: @escaping (Value) -> String
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
                 .foregroundStyle(DS.Palette.ink(0.52))
 
@@ -173,9 +173,9 @@ struct StudioStyleCard: View {
 
     static func positionLabel(_ value: String) -> String {
         switch value {
-        case "top": String(localized: "studio.style.top", bundle: .module)
-        case "middle": String(localized: "studio.style.middle", bundle: .module)
-        default: String(localized: "studio.style.bottom", bundle: .module)
+        case "top": AppLocalization.string("studio.style.top", bundle: .module)
+        case "middle": AppLocalization.string("studio.style.middle", bundle: .module)
+        default: AppLocalization.string("studio.style.bottom", bundle: .module)
         }
     }
 

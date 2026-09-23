@@ -57,7 +57,7 @@ public final class GenerationBoard {
     public func cancelWaiting() {
         for index in tiles.indices where tiles[index].phase == .queued || tiles[index].phase == .working {
             tiles[index].phase = .failed
-            tiles[index].failure = String(localized: "studio.generate.stopped", bundle: .module)
+            tiles[index].failure = AppLocalization.string("studio.generate.stopped", bundle: .module)
         }
     }
 }

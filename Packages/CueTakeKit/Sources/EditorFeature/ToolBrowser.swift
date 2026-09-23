@@ -78,7 +78,7 @@ struct ToolBrowser: View {
 
     private var header: some View {
         HStack {
-            DSKicker(String(localized: "editor.tools.title", bundle: .module))
+            DSKicker(AppLocalization.string("editor.tools.title", bundle: .module))
             Spacer(minLength: 0)
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -105,7 +105,7 @@ struct ToolBrowser: View {
                 Image(systemName: category.symbol)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(DS.Palette.ink(0.56))
-                Text(String(localized: category.title, bundle: .module))
+                Text(AppLocalization.string(category.title, bundle: .module))
                     .dsFont(.archivo, .bold, 15)
                     .foregroundStyle(DS.Palette.ink)
             }
@@ -143,10 +143,10 @@ struct ToolBrowser: View {
                     )
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(String(localized: item.title, bundle: .module))
+                    Text(AppLocalization.string(item.title, bundle: .module))
                         .dsFont(.sans, .semibold, 13)
                         .foregroundStyle(item.enabled ? DS.Palette.ink : DS.Palette.ink(0.25))
-                    Text(String(localized: item.note, bundle: .module))
+                    Text(AppLocalization.string(item.note, bundle: .module))
                         .dsFont(.sans, .regular, 10)
                         .foregroundStyle(DS.Palette.ink(0.52))
                         .lineLimit(1)

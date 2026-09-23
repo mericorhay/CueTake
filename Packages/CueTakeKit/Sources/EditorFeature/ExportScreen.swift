@@ -146,10 +146,10 @@ public struct ExportScreen: View {
 
     private var stages: [Stage] {
         [
-            Stage(titleKey: "export.stage.timeline", note: String(localized: "export.stage.timeline.note", bundle: .module)),
-            Stage(titleKey: "export.stage.render", note: String(localized: "export.stage.render.note", bundle: .module)),
-            Stage(titleKey: "export.stage.captions", note: String(localized: "export.stage.captions.note \(captionStyleName)", bundle: .module)),
-            Stage(titleKey: "export.stage.final", note: String(localized: "export.stage.final.note", bundle: .module)),
+            Stage(titleKey: "export.stage.timeline", note: AppLocalization.string("export.stage.timeline.note", bundle: .module)),
+            Stage(titleKey: "export.stage.render", note: AppLocalization.string("export.stage.render.note", bundle: .module)),
+            Stage(titleKey: "export.stage.captions", note: AppLocalization.string("export.stage.captions.note \(captionStyleName)", bundle: .module)),
+            Stage(titleKey: "export.stage.final", note: AppLocalization.string("export.stage.final.note", bundle: .module)),
         ]
     }
 
@@ -173,7 +173,7 @@ public struct ExportScreen: View {
                 finished
             } else if model.isIdle {
                 DSPrimaryButton(
-                    String(localized: model.hasFailed ? "export.retry" : "export.render", bundle: .module),
+                    AppLocalization.string(model.hasFailed ? "export.retry" : "export.render", bundle: .module),
                     radius: DS.Radius.cardLarge,
                     verticalPadding: 19,
                     fontSize: 16
@@ -245,7 +245,7 @@ public struct ExportScreen: View {
         HStack {
             DSBackButton(size: 34, fontSize: 15, action: onBack)
             Spacer(minLength: 0)
-            DSKicker(String(localized: "export.kicker", bundle: .module))
+            DSKicker(AppLocalization.string("export.kicker", bundle: .module))
             Spacer(minLength: 0)
             Color.clear.frame(width: 34, height: 34)
         }
@@ -261,7 +261,7 @@ public struct ExportScreen: View {
     private var formatPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                DSKicker(String(localized: "export.format", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+                DSKicker(AppLocalization.string("export.format", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                 Spacer(minLength: 0)
                 Text(Self.sizeEstimate(for: format))
                     .dsFont(.mono, .medium, 10)
@@ -355,7 +355,7 @@ public struct ExportScreen: View {
                 .modifier(PulseIfActive(isActive: isActive))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(String(localized: stage.titleKey, bundle: .module))
+                Text(AppLocalization.string(stage.titleKey, bundle: .module))
                     .dsFont(.archivo, .bold, 18)
                     .foregroundStyle(ink)
                 Text(stage.note)
@@ -386,7 +386,7 @@ public struct ExportScreen: View {
 
     private var finished: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DSHeadline(String(localized: "export.ready", bundle: .module), size: 28)
+            DSHeadline(AppLocalization.string("export.ready", bundle: .module), size: 28)
                 .padding(.bottom, 6)
 
             if let summary = model.summary {
@@ -441,7 +441,7 @@ public struct ExportScreen: View {
                             .dsGlass(tint: DS.Palette.glass(0.6), in: RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous))
                     }
                 }
-                DSSecondaryButton(String(localized: "export.done", bundle: .module), verticalPadding: 15, fontSize: 14, action: onDone)
+                DSSecondaryButton(AppLocalization.string("export.done", bundle: .module), verticalPadding: 15, fontSize: 14, action: onDone)
             }
             .padding(.top, 10)
         }

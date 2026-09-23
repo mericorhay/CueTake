@@ -142,13 +142,13 @@ public struct HomeScreen: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 0) {
                 DSKicker(
-                    String(localized: "home.greeting.stamp", bundle: .module),
+                    AppLocalization.string("home.greeting.stamp", bundle: .module),
                     size: 11,
                     tracking: 0.14,
                     color: DS.Palette.ink(0.56)
                 )
                 DSHeadline(
-                    String(localized: "home.greeting.title", bundle: .module),
+                    AppLocalization.string("home.greeting.title", bundle: .module),
                     size: 34
                 )
                 .padding(.top, 10)
@@ -171,13 +171,13 @@ public struct HomeScreen: View {
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 0) {
                     DSKicker(
-                        String(localized: "home.create.kicker", bundle: .module),
+                        AppLocalization.string("home.create.kicker", bundle: .module),
                         size: 10,
                         tracking: 0.18,
                         color: DS.Palette.inkInverse(0.6)
                     )
                     DSHeadline(
-                        String(localized: "home.create.title", bundle: .module),
+                        AppLocalization.string("home.create.title", bundle: .module),
                         size: 30,
                         color: DS.Palette.inkInverse
                     )
@@ -299,7 +299,7 @@ public struct HomeScreen: View {
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                sectionLabel(String(localized: "home.section.recent", bundle: .module))
+                sectionLabel(AppLocalization.string("home.section.recent", bundle: .module))
                 Spacer(minLength: 0)
                 Button(action: onOpenAllProjects) {
                     Text("home.recent.all", bundle: .module)
@@ -314,8 +314,8 @@ public struct HomeScreen: View {
 
             if recents.isEmpty {
                 LibraryEmptyState(
-                    message: String(localized: "home.empty", bundle: .module),
-                    action: String(localized: "home.empty.action", bundle: .module),
+                    message: AppLocalization.string("home.empty", bundle: .module),
+                    action: AppLocalization.string("home.empty.action", bundle: .module),
                     onTap: onCreate
                 )
                 .padding(.horizontal, 22)
@@ -375,7 +375,7 @@ public struct HomeScreen: View {
 
     private var workflowSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(String(localized: "home.section.workflows", bundle: .module))
+            sectionLabel(AppLocalization.string("home.section.workflows", bundle: .module))
 
             Button(action: onOpenWorkflow) {
                 HStack(spacing: 13) {

@@ -74,7 +74,7 @@ struct CleanupPanel: View {
                 Image(systemName: plan.alignment == nil ? "waveform" : "text.badge.checkmark")
                     .font(.system(size: 11, weight: .semibold))
                 if plan.alignment != nil {
-                    Text(String(localized: "editor.cleanup.scripted \(Int(((plan.alignment?.accuracy ?? 0) * 100).rounded()))", bundle: .module))
+                    Text(AppLocalization.string("editor.cleanup.scripted \(Int(((plan.alignment?.accuracy ?? 0) * 100).rounded()))", bundle: .module))
                 } else {
                     Text("editor.cleanup.unscripted", bundle: .module)
                 }
@@ -82,7 +82,7 @@ struct CleanupPanel: View {
             .dsFont(.sans, .medium, 11)
             .foregroundStyle(plan.alignment == nil ? DS.Palette.ink(0.45) : DS.Palette.lime)
 
-            Text(String(localized: "editor.cleanup.summary \(cuts) \(Self.seconds(saved))", bundle: .module))
+            Text(AppLocalization.string("editor.cleanup.summary \(cuts) \(Self.seconds(saved))", bundle: .module))
                 .dsFont(.sans, .semibold, 15)
                 .foregroundStyle(DS.Palette.ink)
                 .contentTransition(.numericText())
@@ -254,7 +254,7 @@ struct CleanupPanel: View {
                     let done = withAnimation(reduceMotion ? .easeOut(duration: 0.15) : DS.Motion.settle) {
                         model.cleanUpAllClips(kinds: kinds, options: CleanupOptions(pause: pause))
                     }
-                    result = String(localized: "editor.cleanup.allDone \(done.clips) \(Self.seconds(done.seconds))", bundle: .module)
+                    result = AppLocalization.string("editor.cleanup.allDone \(done.clips) \(Self.seconds(done.seconds))", bundle: .module)
                     self.chosen = nil
                 } label: {
                     Text("editor.cleanup.applyAll", bundle: .module)
@@ -300,11 +300,11 @@ struct CleanupPanel: View {
 
     static func label(_ kind: CleanupItem.Kind) -> String {
         switch kind {
-        case .pause: String(localized: "editor.cleanup.kind.pause", bundle: .module)
-        case .filler: String(localized: "editor.cleanup.kind.filler", bundle: .module)
-        case .repeated: String(localized: "editor.cleanup.kind.repeated", bundle: .module)
-        case .restart: String(localized: "editor.cleanup.kind.restart", bundle: .module)
-        case .offScript: String(localized: "editor.cleanup.kind.offScript", bundle: .module)
+        case .pause: AppLocalization.string("editor.cleanup.kind.pause", bundle: .module)
+        case .filler: AppLocalization.string("editor.cleanup.kind.filler", bundle: .module)
+        case .repeated: AppLocalization.string("editor.cleanup.kind.repeated", bundle: .module)
+        case .restart: AppLocalization.string("editor.cleanup.kind.restart", bundle: .module)
+        case .offScript: AppLocalization.string("editor.cleanup.kind.offScript", bundle: .module)
         }
     }
 
@@ -330,7 +330,7 @@ struct CleanupBanner: View {
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(DS.Palette.lime)
-                Text(String(localized: "editor.cleanup.cleaned \(CleanupPanel.seconds(group.removed))", bundle: .module))
+                Text(AppLocalization.string("editor.cleanup.cleaned \(CleanupPanel.seconds(group.removed))", bundle: .module))
                     .dsFont(.sans, .medium, 12)
                     .foregroundStyle(DS.Palette.ink(0.8))
                 Spacer(minLength: 0)

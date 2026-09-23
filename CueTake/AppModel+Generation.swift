@@ -1,3 +1,4 @@
+import DesignSystem
 import AVFoundation
 import Domain
 import EditorFeature
@@ -20,19 +21,19 @@ extension AppModel {
         let preset = options.modelPreset
         let provider = preset.provider
         guard !options.resolvedModel.isEmpty else {
-            return .skipped(String(localized: "workflow.skip.noModel"))
+            return .skipped(AppLocalization.string("workflow.skip.noModel"))
         }
         guard let key = ProviderKeyStore().key(for: provider) else {
-            return .skipped(String(localized: "workflow.skip.noKey \(provider.displayName)"))
+            return .skipped(AppLocalization.string("workflow.skip.noKey \(provider.displayName)"))
         }
 
         let jobs = generationJobs(for: options)
-        guard !jobs.isEmpty else { return .skipped(String(localized: "workflow.skip.noPrompts")) }
+        guard !jobs.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noPrompts")) }
 
         let store = dependencies.projectStore
         try? await store.save(project)
         guard let media = try? await store.mediaDirectory(for: project.id) else {
-            return .skipped(String(localized: "workflow.skip.exportFailed"))
+            return .skipped(AppLocalization.string("workflow.skip.exportFailed"))
         }
         let staging = media.appending(path: "generated", directoryHint: .isDirectory)
         let service = VideoGenerationService()
@@ -83,7 +84,7 @@ extension AppModel {
                     made[index] = clip
                     board.finish(index, thumbnail: thumbnail)
                 } else {
-                    board.fail(index, message: failure ?? String(localized: "workflow.skip.stopped"))
+                    board.fail(index, message: failure ?? AppLocalization.string("workflow.skip.stopped"))
                 }
                 if firstError == nil, let failure { firstError = failure }
                 // A stopped run starts nothing new.
@@ -96,10 +97,10 @@ extension AppModel {
         layIn(made, for: jobs)
 
         if made.isEmpty {
-            return .skipped(firstError.map { "\(provider.displayName): \($0)" } ?? String(localized: "workflow.skip.noVideos"))
+            return .skipped(firstError.map { "\(provider.displayName): \($0)" } ?? AppLocalization.string("workflow.skip.noVideos"))
         }
         if made.count < total {
-            show(notice: String(localized: "workflow.generate.partial \(made.count) \(total) \(firstError ?? "")"))
+            show(notice: AppLocalization.string("workflow.generate.partial \(made.count) \(total) \(firstError ?? "")"))
         }
         return .done
     }
@@ -138,7 +139,7 @@ extension AppModel {
             let store = self.dependencies.projectStore
             let projectID = self.editorModel.project.id
             guard let media = try? await store.mediaDirectory(for: projectID) else {
-                throw GenerationError.failed(String(localized: "workflow.skip.exportFailed"))
+                throw GenerationError.failed(AppLocalization.string("workflow.skip.exportFailed"))
             }
             let staging = media.appending(path: "generated", directoryHint: .isDirectory)
             let file = try await VideoGenerationService().generate(

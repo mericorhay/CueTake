@@ -31,7 +31,7 @@ struct TeamHome: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack {
-                    DSKicker(String(localized: "team.title", bundle: .module))
+                    DSKicker(AppLocalization.string("team.title", bundle: .module))
                     Spacer(minLength: 0)
                     Button(action: onClose) {
                         Image(systemName: "xmark")
@@ -64,7 +64,7 @@ struct TeamHome: View {
                 Button {
                     pairing = Pairing(role: .joiner, team: nil)
                 } label: {
-                    Label(String(localized: "team.joinNearby", bundle: .module), systemImage: "iphone.gen3.radiowaves.left.and.right")
+                    Label(AppLocalization.string("team.joinNearby", bundle: .module), systemImage: "iphone.gen3.radiowaves.left.and.right")
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                         .frame(maxWidth: .infinity)
@@ -96,7 +96,7 @@ struct TeamHome: View {
                 .ignoresSafeArea()
         }
         .confirmationDialog(
-            String(localized: "team.leave.title \(leaving?.name ?? "")", bundle: .module),
+            AppLocalization.string("team.leave.title \(leaving?.name ?? "")", bundle: .module),
             isPresented: Binding(get: { leaving != nil }, set: { if !$0 { leaving = nil } }),
             titleVisibility: .visible
         ) {
@@ -116,9 +116,9 @@ struct TeamHome: View {
 
     private func leaveTitle(for team: TeamInfo) -> String {
         if team.isOwner {
-            return String(localized: "team.leave.end", bundle: .module)
+            return AppLocalization.string("team.leave.end", bundle: .module)
         }
-        return String(localized: "team.leave.leave", bundle: .module)
+        return AppLocalization.string("team.leave.leave", bundle: .module)
     }
 
     // MARK: - Parts
@@ -141,9 +141,9 @@ struct TeamHome: View {
                 Menu {
                     Button(role: .destructive) { leaving = team } label: {
                         if team.isOwner {
-                            Label(String(localized: "team.leave.end", bundle: .module), systemImage: "trash")
+                            Label(AppLocalization.string("team.leave.end", bundle: .module), systemImage: "trash")
                         } else {
-                            Label(String(localized: "team.leave.leave", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right")
+                            Label(AppLocalization.string("team.leave.leave", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right")
                         }
                     }
                 } label: {
@@ -155,7 +155,7 @@ struct TeamHome: View {
             }
 
             if let current = tools.currentProject, !team.projects.contains(current.id) {
-                action("square.and.arrow.up.on.square", String(localized: "team.addProject \(current.title)", bundle: .module)) {
+                action("square.and.arrow.up.on.square", AppLocalization.string("team.addProject \(current.title)", bundle: .module)) {
                     busy = true
                     Task {
                         await tools.addCurrentProject(team)
@@ -166,10 +166,10 @@ struct TeamHome: View {
 
             if team.isOwner {
                 HStack(spacing: 8) {
-                    action("iphone.gen3.radiowaves.left.and.right", String(localized: "team.inviteNearby", bundle: .module)) {
+                    action("iphone.gen3.radiowaves.left.and.right", AppLocalization.string("team.inviteNearby", bundle: .module)) {
                         pairing = Pairing(role: .inviter, team: team)
                     }
-                    action("link", String(localized: "team.inviteLink", bundle: .module)) {
+                    action("link", AppLocalization.string("team.inviteLink", bundle: .module)) {
                         run { inviting = Invite(share: try await tools.share(team)) }
                     }
                 }
@@ -181,7 +181,7 @@ struct TeamHome: View {
 
     private var makeRow: some View {
         HStack(spacing: 8) {
-            TextField(String(localized: "team.make.placeholder", bundle: .module), text: $newName)
+            TextField(AppLocalization.string("team.make.placeholder", bundle: .module), text: $newName)
                 .dsFont(.sans, .regular, 14)
                 .foregroundStyle(DS.Palette.ink)
                 .submitLabel(.done)
@@ -234,7 +234,7 @@ struct TeamHome: View {
             do {
                 try await work()
             } catch {
-                problem = String(localized: "team.problem", bundle: .module)
+                problem = AppLocalization.string("team.problem", bundle: .module)
             }
             busy = false
         }

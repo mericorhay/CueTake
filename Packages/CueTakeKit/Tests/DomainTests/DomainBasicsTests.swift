@@ -28,6 +28,18 @@ struct VideoFormatTests {
     }
 }
 
+struct AppLanguageTests {
+    @Test func oldSettingsFollowThePhoneAndExplicitLanguageRoundTrips() throws {
+        let old = try JSONDecoder().decode(AppSettings.self, from: Data("{}".utf8))
+        #expect(old.language == .automatic)
+
+        let chosen = AppSettings(language: .spanish)
+        let restored = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(chosen))
+        #expect(restored.language == .spanish)
+        #expect(restored.language.localeIdentifier == "es")
+    }
+}
+
 struct TurkishTextTests {
     let turkish = Locale(identifier: "tr_TR")
 

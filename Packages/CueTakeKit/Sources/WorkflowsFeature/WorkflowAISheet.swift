@@ -17,10 +17,10 @@ struct WorkflowAISheet: View {
 
     private var ideas: [String] {
         [
-            String(localized: "workflows.ai.idea.clean", bundle: .module),
-            String(localized: "workflows.ai.idea.reel", bundle: .module),
-            String(localized: "workflows.ai.idea.podcast", bundle: .module),
-            String(localized: "workflows.ai.idea.tutorial", bundle: .module),
+            AppLocalization.string("workflows.ai.idea.clean", bundle: .module),
+            AppLocalization.string("workflows.ai.idea.reel", bundle: .module),
+            AppLocalization.string("workflows.ai.idea.podcast", bundle: .module),
+            AppLocalization.string("workflows.ai.idea.tutorial", bundle: .module),
         ]
     }
 
@@ -48,7 +48,7 @@ struct WorkflowAISheet: View {
             }
 
             ZStack(alignment: .topLeading) {
-                TextField(String(localized: "workflows.ai.placeholder", bundle: .module), text: $description, axis: .vertical)
+                TextField(AppLocalization.string("workflows.ai.placeholder", bundle: .module), text: $description, axis: .vertical)
                     .lineLimit(3...6)
                     .dsFont(.sans, .regular, 15, lineHeight: 1.4)
                     .foregroundStyle(DS.Palette.ink)

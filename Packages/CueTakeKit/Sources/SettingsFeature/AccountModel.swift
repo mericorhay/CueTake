@@ -1,3 +1,4 @@
+import DesignSystem
 import AccountEngine
 import AuthenticationServices
 import Foundation
@@ -59,7 +60,7 @@ public final class AccountModel {
     public func configure(_ request: ASAuthorizationAppleIDRequest) {
         guard let challenge, Date().timeIntervalSince(challengeDate) < 280 else {
             ready = false
-            message = String(localized: "account.expired", bundle: .module)
+            message = AppLocalization.string("account.expired", bundle: .module)
             return
         }
         isBusy = true
@@ -147,7 +148,7 @@ public final class AccountModel {
             clear()
         } catch AccountError.unauthorized {
             clear()
-            if deleting { message = String(localized: "account.delete.reauth", bundle: .module) }
+            if deleting { message = AppLocalization.string("account.delete.reauth", bundle: .module) }
         } catch { show(error) }
     }
 
@@ -185,6 +186,6 @@ public final class AccountModel {
         case AccountError.secureStorage: key = "account.storageError"
         default: key = "account.networkError"
         }
-        message = String(localized: key, bundle: .module)
+        message = AppLocalization.string(key, bundle: .module)
     }
 }

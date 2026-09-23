@@ -88,7 +88,7 @@ struct SuflorStageView: View {
             if let seconds, seconds <= 5, seconds > 0 { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
         }
         .confirmationDialog(Text("suflor.stage.end.title", bundle: .module), isPresented: $confirmingEnd, titleVisibility: .visible) {
-            Button(String(localized: "suflor.stage.end.confirm", bundle: .module), role: .destructive) { model.endStage() }
+            Button(AppLocalization.string("suflor.stage.end.confirm", bundle: .module), role: .destructive) { model.endStage() }
         }
         .statusBarHidden(true)
     }
@@ -160,10 +160,10 @@ struct SuflorStageView: View {
     /// view above it.
     private var readyGuide: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "suflor.stage.guide.title", bundle: .module), size: 10, tracking: 0.18, color: DS.Palette.lime)
-            guideStep(1, done: hasFloated, text: String(localized: "suflor.stage.guide.step1", bundle: .module))
-            guideStep(2, done: false, text: String(localized: "suflor.stage.guide.step2", bundle: .module))
-            guideStep(3, done: false, text: String(localized: "suflor.stage.guide.step3", bundle: .module))
+            DSKicker(AppLocalization.string("suflor.stage.guide.title", bundle: .module), size: 10, tracking: 0.18, color: DS.Palette.lime)
+            guideStep(1, done: hasFloated, text: AppLocalization.string("suflor.stage.guide.step1", bundle: .module))
+            guideStep(2, done: false, text: AppLocalization.string("suflor.stage.guide.step2", bundle: .module))
+            guideStep(3, done: false, text: AppLocalization.string("suflor.stage.guide.step3", bundle: .module))
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -440,17 +440,17 @@ struct SuflorStageView: View {
                     HStack(spacing: 8) {
                         SuflorStepper(
                             value: "\(Int(model.wordsPerMinute))",
-                            caption: String(localized: "suflor.pace.unit", bundle: .module),
-                            minusLabel: String(localized: "suflor.pace.slower", bundle: .module),
-                            plusLabel: String(localized: "suflor.pace.faster", bundle: .module),
+                            caption: AppLocalization.string("suflor.pace.unit", bundle: .module),
+                            minusLabel: AppLocalization.string("suflor.pace.slower", bundle: .module),
+                            plusLabel: AppLocalization.string("suflor.pace.faster", bundle: .module),
                             onMinus: { withAnimation(DS.Motion.snap) { model.nudgePace(-10) } },
                             onPlus: { withAnimation(DS.Motion.snap) { model.nudgePace(10) } }
                         )
                         SuflorStepper(
                             value: "\(Int(model.textSize))",
-                            caption: String(localized: "suflor.size.unit", bundle: .module),
-                            minusLabel: String(localized: "suflor.size.smaller", bundle: .module),
-                            plusLabel: String(localized: "suflor.size.larger", bundle: .module),
+                            caption: AppLocalization.string("suflor.size.unit", bundle: .module),
+                            minusLabel: AppLocalization.string("suflor.size.smaller", bundle: .module),
+                            plusLabel: AppLocalization.string("suflor.size.larger", bundle: .module),
                             onMinus: { withAnimation(DS.Motion.snap) { model.nudgeSize(-2) } },
                             onPlus: { withAnimation(DS.Motion.snap) { model.nudgeSize(2) } }
                         )

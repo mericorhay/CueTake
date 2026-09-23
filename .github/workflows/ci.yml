@@ -88,7 +88,7 @@ jobs:
               tr) LOCALE=tr_TR ;;
             esac
             mkdir -p "$RUNNER_TEMP/settings-layouts/$LANGUAGE"
-            for SCREEN in settings account capture editing intelligence privacy voice certificates; do
+            for SCREEN in settings account capture editing intelligence privacy language voice certificates; do
               xcrun simctl launch --terminate-running-process "$DEVICE" com.orhay.cuetake -settings-preview "-$SCREEN-preview" -AppleLanguages "($LANGUAGE)" -AppleLocale "$LOCALE"
               sleep 4
               xcrun simctl io "$DEVICE" screenshot "$RUNNER_TEMP/settings-layouts/$LANGUAGE/$SCREEN.png"

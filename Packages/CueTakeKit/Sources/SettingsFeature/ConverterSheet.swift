@@ -84,7 +84,7 @@ struct ConverterSheet: View {
                     .foregroundStyle(DS.Palette.lime)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(source?.lastPathComponent ?? String(localized: "converter.pick", bundle: .module))
+                    Text(source?.lastPathComponent ?? AppLocalization.string("converter.pick", bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                         .lineLimit(1)
@@ -144,7 +144,7 @@ struct ConverterSheet: View {
 
     private var convert: some View {
         DSPrimaryButton(
-            String(localized: isWorking ? "converter.working" : "converter.run", bundle: .module),
+            AppLocalization.string(isWorking ? "converter.working" : "converter.run", bundle: .module),
             radius: DS.Radius.cardLarge,
             verticalPadding: 17,
             fontSize: 15
@@ -164,7 +164,7 @@ struct ConverterSheet: View {
                         )
                     )
                 } catch {
-                    failure = String(localized: "converter.failed", bundle: .module)
+                    failure = AppLocalization.string("converter.failed", bundle: .module)
                 }
                 isWorking = false
             }

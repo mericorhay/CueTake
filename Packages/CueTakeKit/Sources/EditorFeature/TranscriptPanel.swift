@@ -62,8 +62,8 @@ struct TranscriptPanel: View {
             VStack(alignment: .leading, spacing: 2) {
                 DSKicker(
                     cleaning
-                        ? String(localized: "editor.cleanup.title", bundle: .module)
-                        : String(localized: "editor.transcript.title", bundle: .module)
+                        ? AppLocalization.string("editor.cleanup.title", bundle: .module)
+                        : AppLocalization.string("editor.transcript.title", bundle: .module)
                 )
                 Text(
                     String(
@@ -284,7 +284,7 @@ struct TranscriptPanel: View {
             HStack(spacing: 7) {
                 Image(systemName: symbol)
                     .font(.system(size: 12, weight: .medium))
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 12)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
@@ -317,7 +317,7 @@ private struct SpeechSampleShare: View {
         if let sample = model.speechSample(at: index) {
             ShareLink(
                 item: sample,
-                preview: SharePreview(String(localized: "editor.transcript.exportSample", bundle: .module))
+                preview: SharePreview(AppLocalization.string("editor.transcript.exportSample", bundle: .module))
             ) {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 12, weight: .semibold))

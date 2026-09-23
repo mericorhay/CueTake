@@ -127,7 +127,7 @@ struct SubjectTrackingEditor: View {
                         activeStroke.removeAll()
                     }
                 } label: {
-                    Label(String(localized: "editor.track.clear", bundle: .module), systemImage: "arrow.counterclockwise")
+                    Label(AppLocalization.string("editor.track.clear", bundle: .module), systemImage: "arrow.counterclockwise")
                         .dsFont(.sans, .semibold, 11)
                         .foregroundStyle(DS.Palette.ink(0.7))
                         .frame(height: 44)
@@ -157,16 +157,16 @@ struct SubjectTrackingEditor: View {
 
     private var statusText: String {
         if isCorrecting, !isAnalyzing {
-            return String(localized: "editor.track.correctInstruction", bundle: .module)
+            return AppLocalization.string("editor.track.correctInstruction", bundle: .module)
         }
         if isReviewing {
-            return String(localized: "editor.track.applied", bundle: .module)
+            return AppLocalization.string("editor.track.applied", bundle: .module)
         }
         return switch model.mainSubjectTracking {
-        case .idle: String(localized: "editor.track.instruction", bundle: .module)
-        case .analyzing(let progress): String(localized: "editor.track.progress \(Int((progress * 100).rounded()))", bundle: .module)
-        case .applied: String(localized: "editor.track.instruction", bundle: .module)
-        case .noFace, .failed: String(localized: "editor.track.failed", bundle: .module)
+        case .idle: AppLocalization.string("editor.track.instruction", bundle: .module)
+        case .analyzing(let progress): AppLocalization.string("editor.track.progress \(Int((progress * 100).rounded()))", bundle: .module)
+        case .applied: AppLocalization.string("editor.track.instruction", bundle: .module)
+        case .noFace, .failed: AppLocalization.string("editor.track.failed", bundle: .module)
         }
     }
 
@@ -187,7 +187,7 @@ struct SubjectTrackingEditor: View {
                         }
                         model.mainSubjectTracking = .idle
                     } label: {
-                        Label(String(localized: "editor.track.redraw", bundle: .module), systemImage: "hand.draw")
+                        Label(AppLocalization.string("editor.track.redraw", bundle: .module), systemImage: "hand.draw")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.ink)
                             .frame(maxWidth: .infinity)
@@ -205,7 +205,7 @@ struct SubjectTrackingEditor: View {
                             activeStroke.removeAll()
                         }
                     } label: {
-                        Label(String(localized: "editor.trackPanel.delete", bundle: .module), systemImage: "trash")
+                        Label(AppLocalization.string("editor.trackPanel.delete", bundle: .module), systemImage: "trash")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.accentWarm)
                             .frame(maxWidth: .infinity)
@@ -241,7 +241,7 @@ struct SubjectTrackingEditor: View {
                         withAnimation(DS.Motion.snap) { mode = choice }
                     } label: {
                         Label(
-                            String(localized: choice == .lasso ? "editor.track.lasso" : "editor.track.paint", bundle: .module),
+                            AppLocalization.string(choice == .lasso ? "editor.track.lasso" : "editor.track.paint", bundle: .module),
                             systemImage: choice == .lasso ? "lasso" : "paintbrush.pointed"
                         )
                         .dsFont(.sans, .semibold, 11)
@@ -448,14 +448,14 @@ private struct SubjectTrackConfidenceSpine: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Label(String(localized: "editor.track.confidence", bundle: .module), systemImage: "waveform.path.ecg")
+                Label(AppLocalization.string("editor.track.confidence", bundle: .module), systemImage: "waveform.path.ecg")
                     .dsFont(.sans, .semibold, 11)
                     .foregroundStyle(DS.Palette.ink(0.76))
                 Spacer(minLength: 8)
                 Text(
                     weakPoints.isEmpty
-                        ? String(localized: "editor.track.stable", bundle: .module)
-                        : String(localized: "editor.track.weak \(weakPoints.count)", bundle: .module)
+                        ? AppLocalization.string("editor.track.stable", bundle: .module)
+                        : AppLocalization.string("editor.track.weak \(weakPoints.count)", bundle: .module)
                 )
                 .dsFont(.mono, .medium, 10)
                 .foregroundStyle(weakPoints.isEmpty ? DS.Palette.lime : DS.Palette.accentWarm)
@@ -495,7 +495,7 @@ private struct SubjectTrackConfidenceSpine: View {
 
             if let weakest = weakPoints.min(by: { $0.confidence < $1.confidence }) {
                 Button { onSelect(weakest) } label: {
-                    Label(String(localized: "editor.track.correctWeakest", bundle: .module), systemImage: "scope")
+                    Label(AppLocalization.string("editor.track.correctWeakest", bundle: .module), systemImage: "scope")
                         .dsFont(.sans, .semibold, 11)
                         .foregroundStyle(DS.Palette.accentWarm)
                         .frame(maxWidth: .infinity, minHeight: 44)

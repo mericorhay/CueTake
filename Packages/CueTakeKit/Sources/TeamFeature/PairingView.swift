@@ -39,12 +39,12 @@ struct PairingView: View {
         .task { await run() }
         .onDisappear { link?.stop() }
         .confirmationDialog(
-            String(localized: "team.pair.confirm \(peer ?? "")", bundle: .module),
+            AppLocalization.string("team.pair.confirm \(peer ?? "")", bundle: .module),
             isPresented: Binding(get: { waiting != nil }, set: { if !$0 { decline() } }),
             titleVisibility: .visible
         ) {
-            Button(String(localized: "team.pair.letIn", bundle: .module)) { Task { await letIn() } }
-            Button(String(localized: "team.pair.notNow", bundle: .module), role: .cancel) { decline() }
+            Button(AppLocalization.string("team.pair.letIn", bundle: .module)) { Task { await letIn() } }
+            Button(AppLocalization.string("team.pair.notNow", bundle: .module), role: .cancel) { decline() }
         }
     }
 
@@ -119,24 +119,24 @@ struct PairingView: View {
         if let problem { return problem }
         switch phase {
         case .idle, .sensing:
-            if peer != nil { return String(localized: "team.pair.found", bundle: .module) }
+            if peer != nil { return AppLocalization.string("team.pair.found", bundle: .module) }
             return role == .inviter
-                ? String(localized: "team.pair.lookingInviter", bundle: .module)
-                : String(localized: "team.pair.lookingJoiner", bundle: .module)
+                ? AppLocalization.string("team.pair.lookingInviter", bundle: .module)
+                : AppLocalization.string("team.pair.lookingJoiner", bundle: .module)
         case .contact:
-            return String(localized: "team.pair.touched", bundle: .module)
+            return AppLocalization.string("team.pair.touched", bundle: .module)
         case .connected:
-            return String(localized: "team.pair.joined", bundle: .module)
+            return AppLocalization.string("team.pair.joined", bundle: .module)
         }
     }
 
     private var detail: String {
         if let peer, phase == .sensing {
             return canMeasure
-                ? String(localized: "team.pair.bringCloser \(peer)", bundle: .module)
-                : String(localized: "team.pair.tapToMeet \(peer)", bundle: .module)
+                ? AppLocalization.string("team.pair.bringCloser \(peer)", bundle: .module)
+                : AppLocalization.string("team.pair.tapToMeet \(peer)", bundle: .module)
         }
-        return String(localized: "team.pair.howTo", bundle: .module)
+        return AppLocalization.string("team.pair.howTo", bundle: .module)
     }
 
     private var cardName: String {
@@ -145,8 +145,8 @@ struct PairingView: View {
 
     private var cardDetail: String {
         role == .inviter
-            ? String(localized: "team.pair.card.joinedYours", bundle: .module)
-            : String(localized: "team.pair.card.youJoined", bundle: .module)
+            ? AppLocalization.string("team.pair.card.joinedYours", bundle: .module)
+            : AppLocalization.string("team.pair.card.youJoined", bundle: .module)
     }
 
     // MARK: - The meeting
@@ -252,7 +252,7 @@ struct PairingView: View {
     }
 
     private func fail(_ key: String.LocalizationValue) {
-        problem = String(localized: key, bundle: .module)
+        problem = AppLocalization.string(key, bundle: .module)
         phase = .sensing
     }
 

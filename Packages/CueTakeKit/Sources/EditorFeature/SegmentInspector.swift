@@ -219,7 +219,7 @@ struct SegmentInspector: View {
             }
 
             if let note = SegmentInspector.note(for: segment.playback) {
-                Text(String(localized: note, bundle: .module))
+                Text(AppLocalization.string(note, bundle: .module))
                     .dsFont(.sans, .regular, 11)
                     .foregroundStyle(DS.Palette.ink(0.56))
                     .transition(.opacity)
@@ -302,7 +302,7 @@ struct SegmentInspector: View {
                                         .foregroundStyle(DS.Palette.ink(0.75))
                                 }
                             } else {
-                                Text(String(localized: SegmentInspector.statusLabel(take.status), bundle: .module))
+                                Text(AppLocalization.string(SegmentInspector.statusLabel(take.status), bundle: .module))
                                     .dsFont(.mono, .medium, 10)
                                     .foregroundStyle(DS.Palette.ink(0.56))
                             }
@@ -389,7 +389,7 @@ struct SegmentInspector: View {
                 label("editor.style.notes")
 
                 TextField(
-                    String(localized: "editor.style.notesPlaceholder", bundle: .module),
+                    AppLocalization.string("editor.style.notesPlaceholder", bundle: .module),
                     text: Binding(
                         get: { segment.teleprompter.speakerNotes ?? "" },
                         set: { text in
@@ -436,10 +436,10 @@ struct SegmentInspector: View {
                         .frame(width: 26, height: 26)
                         .background(Circle().fill(DS.Palette.lime(0.13)))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(String(localized: "editor.style.analyzeStructure", bundle: .module))
+                        Text(AppLocalization.string("editor.style.analyzeStructure", bundle: .module))
                             .dsFont(.sans, .semibold, 13)
                             .foregroundStyle(DS.Palette.ink)
-                        Text(String(localized: "editor.style.analyzeStructureHint", bundle: .module))
+                        Text(AppLocalization.string("editor.style.analyzeStructureHint", bundle: .module))
                             .dsFont(.sans, .regular, 10)
                             .foregroundStyle(DS.Palette.ink(0.56))
                             .lineLimit(2)
@@ -461,7 +461,7 @@ struct SegmentInspector: View {
 
             if structureSuggestions.isEmpty == false {
                 VStack(alignment: .leading, spacing: 7) {
-                    Text(String(localized: "editor.style.structureReady \(structureSuggestions.count)", bundle: .module))
+                    Text(AppLocalization.string("editor.style.structureReady \(structureSuggestions.count)", bundle: .module))
                         .dsFont(.sans, .medium, 11)
                         .foregroundStyle(DS.Palette.ink(0.58))
 
@@ -490,7 +490,7 @@ struct SegmentInspector: View {
                             structureChecked = false
                         }
                     } label: {
-                        Text(String(localized: "editor.style.applyStructure", bundle: .module))
+                        Text(AppLocalization.string("editor.style.applyStructure", bundle: .module))
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .frame(maxWidth: .infinity)
@@ -503,7 +503,7 @@ struct SegmentInspector: View {
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.accent(0.06)))
                 .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
             } else if structureChecked {
-                Label(String(localized: "editor.style.structureCurrent", bundle: .module), systemImage: "checkmark.circle.fill")
+                Label(AppLocalization.string("editor.style.structureCurrent", bundle: .module), systemImage: "checkmark.circle.fill")
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(DS.Palette.lime)
                     .padding(.horizontal, 10)
@@ -519,7 +519,7 @@ struct SegmentInspector: View {
     // MARK: - Parts
 
     private func label(_ key: String.LocalizationValue) -> some View {
-        Text(String(localized: key, bundle: .module))
+        Text(AppLocalization.string(key, bundle: .module))
             .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
             .foregroundStyle(DS.Palette.ink(0.52))
     }
@@ -533,12 +533,12 @@ struct SegmentInspector: View {
             HStack(spacing: 7) {
                 Image(systemName: symbol)
                     .font(.system(size: 12))
-                Text(String(localized: title, bundle: .module))
+                Text(AppLocalization.string(title, bundle: .module))
                     .dsFont(.sans, .semibold, 13)
             }
             .foregroundStyle(DS.Palette.ink(0.7))
 
-            Text(String(localized: hint, bundle: .module))
+            Text(AppLocalization.string(hint, bundle: .module))
                 .dsFont(.sans, .regular, 11, lineHeight: 1.4)
                 .foregroundStyle(DS.Palette.ink(0.52))
         }
@@ -653,7 +653,7 @@ struct SegmentInspector: View {
                 Image(systemName: symbol)
                     .font(.system(size: 12, weight: .medium))
                     .symbolEffect(.bounce, value: isOn)
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 12)
             }
             .foregroundStyle(

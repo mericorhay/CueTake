@@ -161,7 +161,7 @@ struct StudioGenerateVideoEditor: View {
 
             HStack(alignment: .bottom, spacing: 6) {
                 // Pasting several lines adds one video per line: a list of 60 topics goes in at once.
-                TextField(String(localized: "studio.param.addPrompt", bundle: .module), text: $newPrompt, axis: .vertical)
+                TextField(AppLocalization.string("studio.param.addPrompt", bundle: .module), text: $newPrompt, axis: .vertical)
                     .lineLimit(1...5)
                     .dsFont(.sans, .regular, 13)
                     .padding(.horizontal, 10)
@@ -188,7 +188,7 @@ struct StudioGenerateVideoEditor: View {
         VStack(alignment: .leading, spacing: 6) {
             label("studio.param.styleNote")
             TextField(
-                String(localized: "studio.param.styleNote.placeholder", bundle: .module),
+                AppLocalization.string("studio.param.styleNote.placeholder", bundle: .module),
                 text: Binding(get: { options.styleNote }, set: { value in update { $0.styleNote = value } }),
                 axis: .vertical
             )
@@ -282,7 +282,7 @@ struct StudioGenerateVideoEditor: View {
     }
 
     private func label(_ key: String.LocalizationValue) -> some View {
-        Text(String(localized: key, bundle: .module))
+        Text(AppLocalization.string(key, bundle: .module))
             .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
             .foregroundStyle(DS.Palette.ink(0.52))
     }

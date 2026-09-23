@@ -10,13 +10,13 @@ import SwiftUI
 enum AIEditPanel {
     static var suggestions: [String] {
         [
-            String(localized: "editor.ai.suggest.tighten", bundle: .module),
-            String(localized: "editor.ai.suggest.captions", bundle: .module),
-            String(localized: "editor.ai.suggest.hook", bundle: .module),
-            String(localized: "editor.ai.suggest.title", bundle: .module),
-            String(localized: "editor.ai.suggest.look", bundle: .module),
-            String(localized: "editor.ai.suggest.energy", bundle: .module),
-            String(localized: "editor.ai.suggest.camera", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.tighten", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.captions", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.hook", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.title", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.look", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.energy", bundle: .module),
+            AppLocalization.string("editor.ai.suggest.camera", bundle: .module),
         ]
     }
 }

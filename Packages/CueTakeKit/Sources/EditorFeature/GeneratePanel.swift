@@ -64,7 +64,7 @@ struct GeneratePanel: View {
 
             HStack(spacing: 8) {
                 Button(action: onCompose) {
-                    Text(verbatim: draft.isEmpty ? String(localized: "editor.generate.placeholder", bundle: .module) : draft)
+                    Text(verbatim: draft.isEmpty ? AppLocalization.string("editor.generate.placeholder", bundle: .module) : draft)
                         .dsFont(.sans, .regular, 14)
                         .foregroundStyle(draft.isEmpty ? DS.Palette.ink(0.4) : DS.Palette.ink)
                         .lineLimit(2)
@@ -164,7 +164,7 @@ struct GeneratePanel: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Label(
-                            String(localized: place == .broll ? "editor.generate.broll" : "editor.generate.clip", bundle: .module),
+                            AppLocalization.string(place == .broll ? "editor.generate.broll" : "editor.generate.clip", bundle: .module),
                             systemImage: place == .broll ? "square.2.layers.3d" : "film"
                         )
                         .dsFont(.sans, .semibold, 12)

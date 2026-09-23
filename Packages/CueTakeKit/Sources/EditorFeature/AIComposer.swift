@@ -185,7 +185,7 @@ struct AIComposer: View {
     private var field: some View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField(
-                isEdit ? String(localized: "editor.ai.placeholder", bundle: .module) : String(localized: "editor.generate.placeholder", bundle: .module),
+                isEdit ? AppLocalization.string("editor.ai.placeholder", bundle: .module) : AppLocalization.string("editor.generate.placeholder", bundle: .module),
                 text: $text,
                 axis: .vertical
             )
@@ -247,7 +247,7 @@ struct AIComposer: View {
                             withAnimation(DS.Motion.snap) { model.generationPlacement = placement }
                         } label: {
                             Label(
-                                String(localized: placement == .broll ? "editor.generate.broll" : "editor.generate.clip", bundle: .module),
+                                AppLocalization.string(placement == .broll ? "editor.generate.broll" : "editor.generate.clip", bundle: .module),
                                 systemImage: placement == .broll ? "rectangle.on.rectangle" : "film.stack"
                             )
                             .dsFont(.sans, .semibold, 11)
@@ -405,7 +405,7 @@ struct AIComposer: View {
                             sessionPulse += 1
                         }
                     } label: {
-                        Label(String(localized: "editor.ai.newSession", bundle: .module), systemImage: "plus.bubble")
+                        Label(AppLocalization.string("editor.ai.newSession", bundle: .module), systemImage: "plus.bubble")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(AIPalette.blue)
                             .padding(.horizontal, 12)

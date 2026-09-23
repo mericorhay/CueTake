@@ -44,7 +44,7 @@ public struct WorkflowsScreen: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                DSHeadline(String(localized: "workflows.title", bundle: .module), size: 34)
+                DSHeadline(AppLocalization.string("workflows.title", bundle: .module), size: 34)
 
                 Text("workflows.subtitle", bundle: .module)
                     .dsFont(.sans, .regular, 13)
@@ -105,12 +105,12 @@ public struct WorkflowsScreen: View {
                 .presentationCornerRadius(30)
         }
         .confirmationDialog(
-            String(localized: "workflows.delete.title", bundle: .module),
+            AppLocalization.string("workflows.delete.title", bundle: .module),
             isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
             titleVisibility: .visible,
             presenting: pendingDelete
         ) { workflow in
-            Button(String(localized: "workflows.delete", bundle: .module), role: .destructive) {
+            Button(AppLocalization.string("workflows.delete", bundle: .module), role: .destructive) {
                 onDelete(workflow)
             }
         } message: { workflow in
@@ -124,17 +124,17 @@ public struct WorkflowsScreen: View {
         Button {
             onOpen(workflow)
         } label: {
-            Label(String(localized: "workflows.action.open", bundle: .module), systemImage: "slider.horizontal.3")
+            Label(AppLocalization.string("workflows.action.open", bundle: .module), systemImage: "slider.horizontal.3")
         }
         Button {
             onDuplicate(workflow)
         } label: {
-            Label(String(localized: "workflows.action.duplicate", bundle: .module), systemImage: "plus.square.on.square")
+            Label(AppLocalization.string("workflows.action.duplicate", bundle: .module), systemImage: "plus.square.on.square")
         }
         Button(role: .destructive) {
             pendingDelete = workflow
         } label: {
-            Label(String(localized: "workflows.delete", bundle: .module), systemImage: "trash")
+            Label(AppLocalization.string("workflows.delete", bundle: .module), systemImage: "trash")
         }
     }
 
@@ -142,7 +142,7 @@ public struct WorkflowsScreen: View {
     /// copies it into the library to change.
     private var recipeRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "workflows.recipes", bundle: .module))
+            DSKicker(AppLocalization.string("workflows.recipes", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: 10) {
                     ForEach(recipes) { recipe in
@@ -170,7 +170,7 @@ public struct WorkflowsScreen: View {
                                     .lineLimit(3)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Spacer(minLength: 0)
-                                Text(String(localized: "workflows.recipes.steps \(recipe.steps.count)", bundle: .module))
+                                Text(AppLocalization.string("workflows.recipes.steps \(recipe.steps.count)", bundle: .module))
                                     .dsFont(.mono, .medium, 9)
                                     .foregroundStyle(DS.Palette.ink(0.5))
                             }
@@ -183,7 +183,7 @@ public struct WorkflowsScreen: View {
                             Button {
                                 onDuplicate(recipe)
                             } label: {
-                                Label(String(localized: "workflows.recipes.copy", bundle: .module), systemImage: "plus.square.on.square")
+                                Label(AppLocalization.string("workflows.recipes.copy", bundle: .module), systemImage: "plus.square.on.square")
                             }
                         }
                     }
@@ -325,7 +325,7 @@ public struct WorkflowsScreen: View {
                         Image(systemName: tool.symbol)
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(StudioCatalog.tint(tool.category))
-                        Text(String(localized: tool.title, bundle: .module))
+                        Text(AppLocalization.string(tool.title, bundle: .module))
                             .dsFont(.mono, .medium, 10, letterSpacing: 0.04)
                             .foregroundStyle(DS.Palette.ink(0.6))
                     }

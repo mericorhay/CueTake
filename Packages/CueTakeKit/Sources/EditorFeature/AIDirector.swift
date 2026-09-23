@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import SwiftUI
@@ -169,7 +170,7 @@ extension EditorModel {
                 guard let self, !Task.isCancelled else { return }
                 withAnimation(.snappy(duration: 0.3)) {
                     self.aiSession?.phase = .failed(
-                        String(localized: "editor.ai.failed \(error.localizedDescription)", bundle: .module)
+                        AppLocalization.string("editor.ai.failed \(error.localizedDescription)", bundle: .module)
                     )
                 }
             }
@@ -280,8 +281,8 @@ extension EditorModel {
             withAnimation(.snappy(duration: 0.3)) {
                 aiSession?.phase = .failed(
                     plan.summary.isEmpty
-                        ? String(localized: "editor.ai.nothing", bundle: .module)
-                        : String(localized: "editor.ai.nothingDone \(plan.summary)", bundle: .module)
+                        ? AppLocalization.string("editor.ai.nothing", bundle: .module)
+                        : AppLocalization.string("editor.ai.nothingDone \(plan.summary)", bundle: .module)
                 )
             }
             return
@@ -366,7 +367,7 @@ extension EditorModel {
                 } else if earlier.applied > 0 {
                     aiSession?.phase = .finished(applied: earlier.applied, skipped: earlier.skipped)
                 } else {
-                    aiSession?.phase = .failed(String(localized: "editor.ai.nothing", bundle: .module))
+                    aiSession?.phase = .failed(AppLocalization.string("editor.ai.nothing", bundle: .module))
                 }
             }
             return
@@ -1595,7 +1596,7 @@ extension EditorModel {
     // MARK: - Words for the steps
 
     private func L(_ key: String.LocalizationValue) -> String {
-        String(localized: key, bundle: .module)
+        AppLocalization.string(key, bundle: .module)
     }
 
     static func seconds(_ value: Double) -> String {
@@ -1796,7 +1797,7 @@ extension EditorModel {
         case .generateVideo(let request):
             L("editor.ai.op.generateVideo \(String(request.prompt.prefix(40)))")
         case .transition(let clip, let kind, _):
-            L("editor.ai.op.transition \(ClipTransition.Kind(loose: kind).map { String(localized: TransitionMarks.titleKey($0), bundle: .module) } ?? kind) \(clip.map(clipNumber) ?? "*")")
+            L("editor.ai.op.transition \(ClipTransition.Kind(loose: kind).map { AppLocalization.string(TransitionMarks.titleKey($0), bundle: .module) } ?? kind) \(clip.map(clipNumber) ?? "*")")
         case .removeTransition(let clip):
             L("editor.ai.op.removeTransition \(clip.map(clipNumber) ?? "*")")
         case .unknown(let type):

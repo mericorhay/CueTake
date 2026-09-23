@@ -27,7 +27,7 @@ struct WorkflowProposalCard: View {
                     .foregroundStyle(DS.Palette.ink)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                Text(String(localized: "assistant.workflow.steps \(workflow.steps.count)", bundle: .module))
+                Text(AppLocalization.string("assistant.workflow.steps \(workflow.steps.count)", bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
             }
@@ -77,7 +77,7 @@ struct WorkflowProposalCard: View {
                 .glassEffect(.regular.interactive(), in: .capsule)
 
                 Button(action: onRun) {
-                    Label(String(localized: "assistant.workflow.run", bundle: .module), systemImage: "play.fill")
+                    Label(AppLocalization.string("assistant.workflow.run", bundle: .module), systemImage: "play.fill")
                         .dsFont(.sans, .semibold, 12)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .frame(maxWidth: .infinity)
@@ -98,16 +98,16 @@ struct WorkflowProposalCard: View {
     /// Plain names for the tools, in the conversation's language.
     static func stepName(_ kind: WorkflowStepKind) -> String {
         switch kind {
-        case .assembleSections: String(localized: "assistant.step.assemble", bundle: .module)
-        case .analyzeSpeech: String(localized: "assistant.step.transcribe", bundle: .module)
-        case .trimSilences: String(localized: "assistant.step.pauses", bundle: .module)
-        case .cutWords: String(localized: "assistant.step.fillers", bundle: .module)
-        case .setSpeed(let o): String(localized: "assistant.step.speed \(String(format: "%g", o.speed))", bundle: .module)
-        case .cleanAudio: String(localized: "assistant.step.clean", bundle: .module)
-        case .musicBed: String(localized: "assistant.step.music", bundle: .module)
-        case .generateCaptions: String(localized: "assistant.step.captions", bundle: .module)
-        case .applyCaptionStyle(let preset): String(localized: "assistant.step.look \(preset.capitalized)", bundle: .module)
-        case .export: String(localized: "assistant.step.export", bundle: .module)
+        case .assembleSections: AppLocalization.string("assistant.step.assemble", bundle: .module)
+        case .analyzeSpeech: AppLocalization.string("assistant.step.transcribe", bundle: .module)
+        case .trimSilences: AppLocalization.string("assistant.step.pauses", bundle: .module)
+        case .cutWords: AppLocalization.string("assistant.step.fillers", bundle: .module)
+        case .setSpeed(let o): AppLocalization.string("assistant.step.speed \(String(format: "%g", o.speed))", bundle: .module)
+        case .cleanAudio: AppLocalization.string("assistant.step.clean", bundle: .module)
+        case .musicBed: AppLocalization.string("assistant.step.music", bundle: .module)
+        case .generateCaptions: AppLocalization.string("assistant.step.captions", bundle: .module)
+        case .applyCaptionStyle(let preset): AppLocalization.string("assistant.step.look \(preset.capitalized)", bundle: .module)
+        case .export: AppLocalization.string("assistant.step.export", bundle: .module)
         case .generateVideo(let o): o.modelPreset.title
         case .generateScript, .segmentScript, .record, .unsupported: kind.typeName
         }

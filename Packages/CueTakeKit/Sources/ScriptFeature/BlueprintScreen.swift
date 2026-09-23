@@ -39,7 +39,7 @@ public struct BlueprintScreen: View {
         HStack {
             DSBackButton(action: onBack)
             Spacer(minLength: 0)
-            DSKicker(String(localized: "blueprint.kicker \(project.estimatedTotalLabel)", bundle: .module))
+            DSKicker(AppLocalization.string("blueprint.kicker \(project.estimatedTotalLabel)", bundle: .module))
             Spacer(minLength: 0)
             DSCircleButton("↻", fontSize: 14) { openSegment = nil }
         }
@@ -50,7 +50,7 @@ public struct BlueprintScreen: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 0) {
-            DSHeadline(String(localized: "blueprint.title", bundle: .module), size: 30)
+            DSHeadline(AppLocalization.string("blueprint.title", bundle: .module), size: 30)
 
             // Proportional bar: each segment takes its share of the running time.
             GeometryReader { proxy in
@@ -147,7 +147,7 @@ public struct BlueprintScreen: View {
 
     private func action(_ key: String.LocalizationValue, run: @escaping () -> Void) -> some View {
         Button(action: run) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.inkInverse)
                 .padding(.horizontal, 11)
@@ -179,11 +179,11 @@ public struct BlueprintScreen: View {
     private var footer: some View {
         FlexRow(spacing: 10, weights: [1, 1.4]) {
             DSSecondaryButton(
-                String(localized: "blueprint.script", bundle: .module),
+                AppLocalization.string("blueprint.script", bundle: .module),
                 action: onOpenScript
             )
             DSPrimaryButton(
-                String(localized: "blueprint.studio", bundle: .module),
+                AppLocalization.string("blueprint.studio", bundle: .module),
                 action: onOpenStudio
             )
         }

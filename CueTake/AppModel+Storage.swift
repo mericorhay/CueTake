@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import MediaEngine
@@ -79,12 +80,12 @@ extension AppModel {
         // This is an explicit cleanup, so completed temporary renders can go immediately. The
         // activity guards above keep files that are still being written out of the sweep.
         guard let freed = await cleanStorage(temporaryAge: 0) else {
-            return String(localized: "storage.wait")
+            return AppLocalization.string("storage.wait")
         }
         await refreshStorage()
         return freed > 1_000_000
-            ? String(localized: "storage.cleaned \(ByteCountFormatter.string(fromByteCount: freed, countStyle: .file))")
-            : String(localized: "storage.nothing")
+            ? AppLocalization.string("storage.cleaned \(ByteCountFormatter.string(fromByteCount: freed, countStyle: .file))")
+            : AppLocalization.string("storage.nothing")
     }
 
     /// A quiet sweep a little after launch, once the app has settled.

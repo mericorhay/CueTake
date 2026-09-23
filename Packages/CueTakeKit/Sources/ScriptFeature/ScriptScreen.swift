@@ -121,7 +121,7 @@ public struct ScriptScreen: View {
 
             if focused == nil, !isBlank {
                 DSPrimaryButton(
-                    String(localized: "script.studio", bundle: .module),
+                    AppLocalization.string("script.studio", bundle: .module),
                     verticalPadding: 18,
                     fontSize: 16,
                     action: onOpenStudio
@@ -154,7 +154,7 @@ public struct ScriptScreen: View {
         HStack {
             DSBackButton(action: onBack)
             Spacer(minLength: 0)
-            DSKicker(String(localized: "script.kicker \(project.wordCount)", bundle: .module))
+            DSKicker(AppLocalization.string("script.kicker \(project.wordCount)", bundle: .module))
                 .contentTransition(.numericText())
             Spacer(minLength: 0)
             if focused != nil {
@@ -212,7 +212,7 @@ public struct ScriptScreen: View {
 
             if isOpen {
                 TextField(
-                    String(localized: "script.placeholder", bundle: .module),
+                    AppLocalization.string("script.placeholder", bundle: .module),
                     text: scriptBinding(at: index),
                     axis: .vertical
                 )
@@ -227,7 +227,7 @@ public struct ScriptScreen: View {
                     if isWorking { WritingShimmer(color: color) }
                 }
             } else {
-                Text(segment.script.isEmpty ? String(localized: "script.empty", bundle: .module) : segment.script)
+                Text(segment.script.isEmpty ? AppLocalization.string("script.empty", bundle: .module) : segment.script)
                     .dsFont(.sans, .regular, 16, lineHeight: 1.5)
                     .foregroundStyle(segment.script.isEmpty ? DS.Palette.ink(0.35) : DS.Palette.ink)
                     .multilineTextAlignment(.leading)
@@ -264,21 +264,21 @@ public struct ScriptScreen: View {
             Button {
                 move(from: index, to: index - 1)
             } label: {
-                Label(String(localized: "script.moveUp", bundle: .module), systemImage: "arrow.up")
+                Label(AppLocalization.string("script.moveUp", bundle: .module), systemImage: "arrow.up")
             }
             .disabled(index == 0)
 
             Button {
                 move(from: index, to: index + 1)
             } label: {
-                Label(String(localized: "script.moveDown", bundle: .module), systemImage: "arrow.down")
+                Label(AppLocalization.string("script.moveDown", bundle: .module), systemImage: "arrow.down")
             }
             .disabled(index + 1 >= project.segments.count)
 
             Button(role: .destructive) {
                 remove(at: index)
             } label: {
-                Label(String(localized: "script.delete", bundle: .module), systemImage: "trash")
+                Label(AppLocalization.string("script.delete", bundle: .module), systemImage: "trash")
             }
             .disabled(project.segments.count <= 1)
         } label: {
@@ -338,7 +338,7 @@ public struct ScriptScreen: View {
         Button {
             Task { await rewrite(at: index, with: action) }
         } label: {
-            Text(String(localized: action.labelKey, bundle: .module))
+            Text(AppLocalization.string(action.labelKey, bundle: .module))
                 .dsFont(.sans, .medium, 12)
                 .foregroundStyle(DS.Palette.lime)
                 .padding(.horizontal, 12)
@@ -362,16 +362,16 @@ public struct ScriptScreen: View {
         Menu {
             Button {
                 guard let library, library.save(project.scriptText, title: project.title) != nil else { return }
-                show(String(localized: "script.library.savedNotice", bundle: .module))
+                show(AppLocalization.string("script.library.savedNotice", bundle: .module))
             } label: {
-                Label(String(localized: "script.library.saveScript", bundle: .module), systemImage: "bookmark")
+                Label(AppLocalization.string("script.library.saveScript", bundle: .module), systemImage: "bookmark")
             }
             .disabled(isBlank)
 
             Button {
                 editingBrand = true
             } label: {
-                Label(String(localized: "script.brand.title", bundle: .module), systemImage: "seal")
+                Label(AppLocalization.string("script.brand.title", bundle: .module), systemImage: "seal")
             }
         } label: {
             Image(systemName: "ellipsis")
@@ -518,7 +518,7 @@ public struct ScriptScreen: View {
             beforeRewrite[segment.id] = segment.script
             withAnimation(DS.Easing.ease(0.3)) { setScript(result, at: current) }
         } catch {
-            failure = String(localized: "script.rewrite.failed", bundle: .module)
+            failure = AppLocalization.string("script.rewrite.failed", bundle: .module)
         }
     }
 

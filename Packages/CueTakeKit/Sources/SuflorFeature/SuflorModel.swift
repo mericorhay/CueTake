@@ -108,7 +108,7 @@ public final class SuflorModel {
     public static let paceRange: ClosedRange<Double> = 80...220
     public static let sizeRange: ClosedRange<Double> = 20...44
 
-    public init(localeIdentifier: String = Locale.current.identifier, defaults: UserDefaults = .standard) {
+    public init(localeIdentifier: String = AppLocalization.locale.identifier, defaults: UserDefaults = .standard) {
         self.localeIdentifier = localeIdentifier
         self.defaults = defaults
         let decoder = JSONDecoder()
@@ -179,7 +179,7 @@ public final class SuflorModel {
             let voice = useMyVoice ? voiceSample : nil
             let written = try await writer(brief, localeIdentifier, voice)
             guard !written.isEmpty else {
-                writeError = String(localized: "suflor.write.empty", bundle: .module)
+                writeError = AppLocalization.string("suflor.write.empty", bundle: .module)
                 return
             }
             cueSource = .ai
@@ -194,13 +194,13 @@ public final class SuflorModel {
             freshCues = []
         } catch WriteError.cloudOff {
             writeNeedsCloud = true
-            writeError = String(localized: "suflor.write.cloudOff", bundle: .module)
+            writeError = AppLocalization.string("suflor.write.cloudOff", bundle: .module)
         } catch WriteError.offline {
-            writeError = String(localized: "suflor.write.offline", bundle: .module)
+            writeError = AppLocalization.string("suflor.write.offline", bundle: .module)
         } catch WriteError.server(let status) {
-            writeError = String(localized: "suflor.write.server \(status)", bundle: .module)
+            writeError = AppLocalization.string("suflor.write.server \(status)", bundle: .module)
         } catch {
-            writeError = String(localized: "suflor.write.empty", bundle: .module)
+            writeError = AppLocalization.string("suflor.write.empty", bundle: .module)
         }
     }
 
@@ -468,13 +468,13 @@ public final class SuflorModel {
         verifyError = nil
         defer { isVerifying = false }
         guard var made = await reporter() else {
-            verifyError = String(localized: "suflor.verify.failed", bundle: .module)
+            verifyError = AppLocalization.string("suflor.verify.failed", bundle: .module)
             return
         }
         made.creator = defaults.string(forKey: Keys.creator) ?? ""
         session = made
         if !made.plan.brief.mustSay.isEmpty, made.proofs.isEmpty {
-            verifyError = String(localized: "suflor.verify.none", bundle: .module)
+            verifyError = AppLocalization.string("suflor.verify.none", bundle: .module)
         }
     }
 
@@ -492,10 +492,10 @@ public final class SuflorModel {
             session.creator = creator
             self.session = session
             if session.allProofs.isEmpty {
-                verifyError = String(localized: "suflor.verify.none", bundle: .module)
+                verifyError = AppLocalization.string("suflor.verify.none", bundle: .module)
             }
         } catch {
-            verifyError = String(localized: "suflor.verify.failed", bundle: .module)
+            verifyError = AppLocalization.string("suflor.verify.failed", bundle: .module)
         }
     }
 
@@ -513,7 +513,7 @@ public final class SuflorModel {
         if let previewCache, previewCache.key == key { return (previewCache.layout, previewCache.fonts) }
         let fonts = Self.fonts(size: CGFloat(textSize))
         var ordered = plan.ordered
-        if ordered.isEmpty { ordered = [SuflorCue(role: .opening, text: String(localized: "suflor.flow.empty", bundle: .module))] }
+        if ordered.isEmpty { ordered = [SuflorCue(role: .opening, text: AppLocalization.string("suflor.flow.empty", bundle: .module))] }
         let layout = SuflorLayout(cues: ordered, fontSize: CGFloat(textSize), fonts: fonts, labels: Self.roleLabels, highlights: brief.mustSay)
         previewCache = (key, layout, fonts)
         return (layout, fonts)
@@ -556,15 +556,15 @@ public final class SuflorModel {
 
     static var chromeText: SuflorChromeText {
         SuflorChromeText(
-            live: String(localized: "suflor.chrome.live", bundle: .module),
-            video: String(localized: "suflor.chrome.video", bundle: .module),
-            toAd: String(localized: "suflor.chrome.toAd", bundle: .module),
-            ad: String(localized: "suflor.chrome.ad", bundle: .module),
-            paused: String(localized: "suflor.chrome.paused", bundle: .module),
-            hold: String(localized: "suflor.chrome.hold", bundle: .module),
-            holdManual: String(localized: "suflor.chrome.holdManual", bundle: .module),
-            done: String(localized: "suflor.chrome.done", bundle: .module),
-            ready: String(localized: "suflor.chrome.ready", bundle: .module)
+            live: AppLocalization.string("suflor.chrome.live", bundle: .module),
+            video: AppLocalization.string("suflor.chrome.video", bundle: .module),
+            toAd: AppLocalization.string("suflor.chrome.toAd", bundle: .module),
+            ad: AppLocalization.string("suflor.chrome.ad", bundle: .module),
+            paused: AppLocalization.string("suflor.chrome.paused", bundle: .module),
+            hold: AppLocalization.string("suflor.chrome.hold", bundle: .module),
+            holdManual: AppLocalization.string("suflor.chrome.holdManual", bundle: .module),
+            done: AppLocalization.string("suflor.chrome.done", bundle: .module),
+            ready: AppLocalization.string("suflor.chrome.ready", bundle: .module)
         )
     }
 
@@ -598,13 +598,13 @@ extension SuflorCue.Role {
 
     public var title: String {
         switch self {
-        case .opening: String(localized: "suflor.role.opening", bundle: .module)
-        case .topic: String(localized: "suflor.role.topic", bundle: .module)
-        case .bridge: String(localized: "suflor.role.bridge", bundle: .module)
-        case .ad: String(localized: "suflor.role.ad", bundle: .module)
-        case .cta: String(localized: "suflor.role.cta", bundle: .module)
-        case .rescue: String(localized: "suflor.role.rescue", bundle: .module)
-        case .closing: String(localized: "suflor.role.closing", bundle: .module)
+        case .opening: AppLocalization.string("suflor.role.opening", bundle: .module)
+        case .topic: AppLocalization.string("suflor.role.topic", bundle: .module)
+        case .bridge: AppLocalization.string("suflor.role.bridge", bundle: .module)
+        case .ad: AppLocalization.string("suflor.role.ad", bundle: .module)
+        case .cta: AppLocalization.string("suflor.role.cta", bundle: .module)
+        case .rescue: AppLocalization.string("suflor.role.rescue", bundle: .module)
+        case .closing: AppLocalization.string("suflor.role.closing", bundle: .module)
         }
     }
 }

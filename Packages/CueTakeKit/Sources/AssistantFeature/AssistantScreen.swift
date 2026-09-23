@@ -68,7 +68,7 @@ public struct AssistantScreen: View {
                 .glassEffectID("sessions", in: glass)
 
                 VStack(spacing: 1) {
-                    Text(model.current?.title.isEmpty == false ? model.current!.title : String(localized: "assistant.title", bundle: .module))
+                    Text(model.current?.title.isEmpty == false ? model.current!.title : AppLocalization.string("assistant.title", bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                         .lineLimit(1)
@@ -80,10 +80,10 @@ public struct AssistantScreen: View {
                             .frame(width: 5, height: 5)
                         Text(
                             model.isSending
-                                ? String(localized: "assistant.status.thinking", bundle: .module)
+                                ? AppLocalization.string("assistant.status.thinking", bundle: .module)
                                 : (model.isConnected
-                                    ? String(localized: "assistant.status.ready", bundle: .module)
-                                    : String(localized: "assistant.status.offline", bundle: .module))
+                                    ? AppLocalization.string("assistant.status.ready", bundle: .module)
+                                    : AppLocalization.string("assistant.status.offline", bundle: .module))
                         )
                         .dsFont(.mono, .medium, 10, letterSpacing: 0.08)
                         .foregroundStyle(DS.Palette.ink(0.56))
@@ -145,7 +145,7 @@ public struct AssistantScreen: View {
                 }
 
                 if !model.isConnected {
-                    Label(String(localized: "assistant.notConnected", bundle: .module), systemImage: "bolt.horizontal.circle")
+                    Label(AppLocalization.string("assistant.notConnected", bundle: .module), systemImage: "bolt.horizontal.circle")
                         .dsFont(.sans, .regular, 12)
                         .foregroundStyle(DS.Palette.accentWarm)
                         .padding(.horizontal, 14)
@@ -155,7 +155,7 @@ public struct AssistantScreen: View {
 
                 VStack(spacing: 9) {
                     ForEach(Array(Self.suggestions.enumerated()), id: \.offset) { index, key in
-                        let text = String(localized: key, bundle: .module)
+                        let text = AppLocalization.string(key, bundle: .module)
                         Button {
                             model.draft = text
                             Task { await model.submit() }
@@ -290,7 +290,7 @@ public struct AssistantScreen: View {
         GlassEffectContainer(spacing: 10) {
             HStack(alignment: .bottom, spacing: 10) {
                 TextField(
-                    String(localized: "assistant.placeholder", bundle: .module),
+                    AppLocalization.string("assistant.placeholder", bundle: .module),
                     text: $model.draft,
                     axis: .vertical
                 )

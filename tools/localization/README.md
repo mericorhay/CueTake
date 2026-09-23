@@ -2,6 +2,8 @@
 
 CueTake ships English (`en`), Spanish (`es`), and Turkish (`tr`) from Apple String Catalogs. English is the authored source language. Human-facing generated translations are produced only by a local Ollama model; the pipeline itself never contains translated copy.
 
+The in-app language picker persists `AppSettings.language`, applies that locale to SwiftUI, and routes programmatic labels through `AppLocalization`. This keeps alerts, status text and model-created UI copy in the same language without sending the user to iOS Settings or requiring a restart.
+
 ## Generate translations locally
 
 Run from the repository root:

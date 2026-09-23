@@ -116,6 +116,6 @@ struct ClipRangeBar: View {
                 .background(Capsule().fill(DS.Palette.hairline(0.08)))
         }
         .buttonStyle(.dsPressIcon)
-        .accessibilityLabel(Text(String(localized: key, bundle: .module)))
+        .accessibilityLabel(Text(AppLocalization.string(key, bundle: .module)))
     }
 }

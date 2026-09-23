@@ -142,14 +142,14 @@ public struct TeleprompterPanel: View {
             if frameSize.width * model.frame.width / 100 >= 280 {
                 stepper(
                     label: model.speedLabel,
-                    less: String(localized: "teleprompter.speed.slower", bundle: .module),
-                    more: String(localized: "teleprompter.speed.faster", bundle: .module)
+                    less: AppLocalization.string("teleprompter.speed.slower", bundle: .module),
+                    more: AppLocalization.string("teleprompter.speed.faster", bundle: .module)
                 ) { model.nudgeSpeed($0) }
 
                 stepper(
                     label: "A",
-                    less: String(localized: "teleprompter.size.smaller", bundle: .module),
-                    more: String(localized: "teleprompter.size.bigger", bundle: .module)
+                    less: AppLocalization.string("teleprompter.size.smaller", bundle: .module),
+                    more: AppLocalization.string("teleprompter.size.bigger", bundle: .module)
                 ) { model.nudgeTextSize($0) }
             }
 
@@ -283,9 +283,9 @@ public struct TeleprompterPanel: View {
     static func paceText(_ verdict: PaceMeter.Verdict, pace: Double) -> String {
         let words = Int(pace.rounded())
         switch verdict {
-        case .good: return String(localized: "teleprompter.pace.good \(words)", bundle: .module)
-        case .fast: return String(localized: "teleprompter.pace.fast \(words)", bundle: .module)
-        case .slow: return String(localized: "teleprompter.pace.slow \(words)", bundle: .module)
+        case .good: return AppLocalization.string("teleprompter.pace.good \(words)", bundle: .module)
+        case .fast: return AppLocalization.string("teleprompter.pace.fast \(words)", bundle: .module)
+        case .slow: return AppLocalization.string("teleprompter.pace.slow \(words)", bundle: .module)
         }
     }
 

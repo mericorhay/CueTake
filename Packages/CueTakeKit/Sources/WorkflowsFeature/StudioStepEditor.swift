@@ -48,7 +48,7 @@ struct StudioStepEditor: View {
                     "studio.param.target",
                     options: ["all"] + WorkflowSection.standardRoles,
                     selected: options.target,
-                    label: { $0 == "all" ? String(localized: "studio.param.all", bundle: .module) : StudioCatalog.roleLabel($0) }
+                    label: { $0 == "all" ? AppLocalization.string("studio.param.all", bundle: .module) : StudioCatalog.roleLabel($0) }
                 ) { value in
                     var changed = options
                     changed.target = value
@@ -121,7 +121,7 @@ struct StudioStepEditor: View {
                 StudioGenerateVideoEditor(model: model, step: step, options: options)
 
             default:
-                Text(String(localized: StudioCatalog.tool(for: step.kind.typeName).note, bundle: .module))
+                Text(AppLocalization.string(StudioCatalog.tool(for: step.kind.typeName).note, bundle: .module))
                     .dsFont(.sans, .regular, 12, lineHeight: 1.4)
                     .foregroundStyle(DS.Palette.ink(0.5))
             }
@@ -132,7 +132,7 @@ struct StudioStepEditor: View {
     // MARK: - Controls
 
     private func label(_ key: String.LocalizationValue) -> some View {
-        Text(String(localized: key, bundle: .module))
+        Text(AppLocalization.string(key, bundle: .module))
             .dsFont(.mono, .medium, 10, letterSpacing: 0.12)
             .foregroundStyle(DS.Palette.ink(0.52))
     }
@@ -193,7 +193,7 @@ struct StudioStepEditor: View {
 
     private func toggle(_ key: String.LocalizationValue, isOn: Bool, flip: @escaping () -> Void) -> some View {
         Toggle(isOn: Binding(get: { isOn }, set: { _ in flip() })) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 13)
                 .foregroundStyle(DS.Palette.ink(0.8))
         }
@@ -229,7 +229,7 @@ struct StudioStepEditor: View {
             }
 
             HStack(spacing: 6) {
-                TextField(String(localized: "studio.param.addWord", bundle: .module), text: $newWord)
+                TextField(AppLocalization.string("studio.param.addWord", bundle: .module), text: $newWord)
                     .dsFont(.sans, .regular, 13)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -281,7 +281,7 @@ struct StudioJSONSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    DSKicker(String(localized: "studio.json", bundle: .module))
+                    DSKicker(AppLocalization.string("studio.json", bundle: .module))
                     Text("studio.json.note", bundle: .module)
                         .dsFont(.sans, .regular, 11)
                         .foregroundStyle(DS.Palette.ink(0.56))
@@ -324,7 +324,7 @@ struct StudioJSONSheet: View {
                     copied = true
                 } label: {
                     Label(
-                        copied ? String(localized: "studio.json.copied", bundle: .module) : String(localized: "studio.json.copy", bundle: .module),
+                        copied ? AppLocalization.string("studio.json.copied", bundle: .module) : AppLocalization.string("studio.json.copy", bundle: .module),
                         systemImage: copied ? "checkmark" : "doc.on.doc"
                     )
                     .contentTransition(.symbolEffect(.replace))

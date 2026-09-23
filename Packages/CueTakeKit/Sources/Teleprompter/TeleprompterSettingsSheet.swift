@@ -43,7 +43,7 @@ public struct TeleprompterSettingsSheet: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            DSKicker(String(localized: "teleprompter.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("teleprompter.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             Button {
                 model.isSettingsOpen = false
@@ -137,34 +137,34 @@ public struct TeleprompterSettingsSheet: View {
     private var sliderRows: some View {
         switch model.settingsTab {
         case .layout:
-            sliderRow(String(localized: "teleprompter.slider.textSize", bundle: .module), value: $model.textSize, in: TeleprompterModel.textSizeRange, step: 1) {
+            sliderRow(AppLocalization.string("teleprompter.slider.textSize", bundle: .module), value: $model.textSize, in: TeleprompterModel.textSizeRange, step: 1) {
                 "\(Int(model.textSize))pt"
             }
-            sliderRow(String(localized: "teleprompter.slider.width", bundle: .module), value: $model.frame.width, in: 26...96, step: 1, onEdit: {
+            sliderRow(AppLocalization.string("teleprompter.slider.width", bundle: .module), value: $model.frame.width, in: 26...96, step: 1, onEdit: {
                 model.preset = .custom
                 model.frame.x = min(model.frame.x, 98 - model.frame.width)
             }) {
                 "\(Int(model.frame.width.rounded()))%"
             }
-            sliderRow(String(localized: "teleprompter.slider.height", bundle: .module), value: $model.frame.height, in: 12...80, step: 1, onEdit: {
+            sliderRow(AppLocalization.string("teleprompter.slider.height", bundle: .module), value: $model.frame.height, in: 12...80, step: 1, onEdit: {
                 model.preset = .custom
                 model.frame.y = min(model.frame.y, 93 - model.frame.height)
             }) {
                 "\(Int(model.frame.height.rounded()))%"
             }
             if model.showsBackdrop {
-                sliderRow(String(localized: "teleprompter.slider.opacity", bundle: .module), value: $model.opacity, in: 10...100, step: 1) {
+                sliderRow(AppLocalization.string("teleprompter.slider.opacity", bundle: .module), value: $model.opacity, in: 10...100, step: 1) {
                     "\(Int(model.opacity))%"
                 }
             }
         case .flow:
-            sliderRow(String(localized: "teleprompter.slider.speed", bundle: .module), value: $model.speed, in: 0...100, step: 1) {
+            sliderRow(AppLocalization.string("teleprompter.slider.speed", bundle: .module), value: $model.speed, in: 0...100, step: 1) {
                 model.speedLabel
             }
-            sliderRow(String(localized: "teleprompter.slider.lookAhead", bundle: .module), value: lookAheadBinding, in: 0...4, step: 1) {
+            sliderRow(AppLocalization.string("teleprompter.slider.lookAhead", bundle: .module), value: lookAheadBinding, in: 0...4, step: 1) {
                 "\(model.lookAhead)w"
             }
-            sliderRow(String(localized: "teleprompter.slider.readingLine", bundle: .module), value: readingLineBinding, in: 15...60, step: 1) {
+            sliderRow(AppLocalization.string("teleprompter.slider.readingLine", bundle: .module), value: readingLineBinding, in: 15...60, step: 1) {
                 "\(Int((model.readingLine * 100).rounded()))%"
             }
         }
@@ -223,48 +223,48 @@ public struct TeleprompterSettingsSheet: View {
         switch model.settingsTab {
         case .layout:
             segmentedRow(
-                String(localized: "teleprompter.row.align", bundle: .module),
+                AppLocalization.string("teleprompter.row.align", bundle: .module),
                 options: TeleprompterModel.Alignment.allCases,
                 label: { $0.label },
                 isOn: { model.alignment == $0 },
                 select: { model.alignment = $0 }
             )
             segmentedRow(
-                String(localized: "teleprompter.row.backdrop", bundle: .module),
+                AppLocalization.string("teleprompter.row.backdrop", bundle: .module),
                 options: [false, true],
-                label: { $0 ? String(localized: "teleprompter.backdrop.on", bundle: .module) : String(localized: "teleprompter.backdrop.off", bundle: .module) },
+                label: { $0 ? AppLocalization.string("teleprompter.backdrop.on", bundle: .module) : AppLocalization.string("teleprompter.backdrop.off", bundle: .module) },
                 isOn: { model.showsBackdrop == $0 },
                 select: { model.showsBackdrop = $0 }
             )
             segmentedRow(
-                String(localized: "teleprompter.row.mirror", bundle: .module),
+                AppLocalization.string("teleprompter.row.mirror", bundle: .module),
                 options: [false, true],
-                label: { $0 ? String(localized: "teleprompter.mirror.on", bundle: .module) : String(localized: "teleprompter.mirror.off", bundle: .module) },
+                label: { $0 ? AppLocalization.string("teleprompter.mirror.on", bundle: .module) : AppLocalization.string("teleprompter.mirror.off", bundle: .module) },
                 isOn: { model.isMirrored == $0 },
                 select: { model.isMirrored = $0 }
             )
         case .flow:
             segmentedRow(
-                String(localized: "teleprompter.row.highlight", bundle: .module),
+                AppLocalization.string("teleprompter.row.highlight", bundle: .module),
                 options: TeleprompterModel.HighlightMode.allCases,
                 label: { $0.label },
                 isOn: { model.mode == $0 },
                 select: { model.mode = $0 }
             )
             segmentedRow(
-                String(localized: "teleprompter.row.pace", bundle: .module),
+                AppLocalization.string("teleprompter.row.pace", bundle: .module),
                 options: [true, false],
-                label: { $0 ? String(localized: "teleprompter.pace.on", bundle: .module) : String(localized: "teleprompter.pace.off", bundle: .module) },
+                label: { $0 ? AppLocalization.string("teleprompter.pace.on", bundle: .module) : AppLocalization.string("teleprompter.pace.off", bundle: .module) },
                 isOn: { model.coachesPace == $0 },
                 select: { model.coachesPace = $0 }
             )
             segmentedRow(
-                String(localized: "teleprompter.row.countdown", bundle: .module),
+                AppLocalization.string("teleprompter.row.countdown", bundle: .module),
                 options: TeleprompterModel.countdownChoices,
                 label: { seconds in
                     seconds == 0
-                        ? String(localized: "teleprompter.countdown.none", bundle: .module)
-                        : String(localized: "teleprompter.countdown.seconds \(seconds)", bundle: .module)
+                        ? AppLocalization.string("teleprompter.countdown.none", bundle: .module)
+                        : AppLocalization.string("teleprompter.countdown.seconds \(seconds)", bundle: .module)
                 },
                 isOn: { model.countdown == $0 },
                 select: { model.countdown = $0 }

@@ -9,6 +9,7 @@ struct CueTakeApp: App {
     var body: some Scene {
         WindowGroup {
             RootView(model: model)
+                .environment(\.locale, model.settingsModel.settings.language.locale)
                 // Type follows the reader's text size this far; past it the layouts stop holding.
                 .dynamicTypeSize(...DS.largestTextSize)
                 .task { model.startCertificationClock() }

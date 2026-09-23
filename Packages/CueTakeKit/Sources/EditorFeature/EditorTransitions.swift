@@ -247,7 +247,7 @@ struct TransitionPanel: View {
                     Button {
                         model.previewTransition(after: cut)
                     } label: {
-                        Label(String(localized: "editor.transition.preview", bundle: .module), systemImage: "play.fill")
+                        Label(AppLocalization.string("editor.transition.preview", bundle: .module), systemImage: "play.fill")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .frame(maxWidth: .infinity)
@@ -261,7 +261,7 @@ struct TransitionPanel: View {
                             model.applyTransitionEverywhere(current.kind, duration: current.duration)
                         }
                     } label: {
-                        Label(String(localized: "editor.transition.all", bundle: .module), systemImage: "square.stack.3d.forward.dottedline")
+                        Label(AppLocalization.string("editor.transition.all", bundle: .module), systemImage: "square.stack.3d.forward.dottedline")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.ink)
                             .frame(maxWidth: .infinity)

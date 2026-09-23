@@ -136,7 +136,7 @@ struct ShortsPanel: View {
             }
 
             TextField(
-                String(localized: "editor.shorts.placeholder", bundle: .module),
+                AppLocalization.string("editor.shorts.placeholder", bundle: .module),
                 text: $model.shorts.instruction
             )
             .dsFont(.sans, .regular, 13)
@@ -174,8 +174,8 @@ struct ShortsPanel: View {
                                 .font(.system(size: 12, weight: .semibold))
                         }
                         Text(verbatim: model.shorts.candidates.isEmpty
-                            ? String(localized: "editor.shorts.find", bundle: .module)
-                            : String(localized: "editor.shorts.again", bundle: .module))
+                            ? AppLocalization.string("editor.shorts.find", bundle: .module)
+                            : AppLocalization.string("editor.shorts.again", bundle: .module))
                             .dsFont(.sans, .semibold, 13)
                     }
                     .foregroundStyle(DS.Palette.inkInverse)
@@ -287,7 +287,7 @@ private struct ShortCard: View {
 
             HStack(spacing: 8) {
                 Button(action: onPreview) {
-                    Label(String(localized: "editor.shorts.preview", bundle: .module), systemImage: "play.fill")
+                    Label(AppLocalization.string("editor.shorts.preview", bundle: .module), systemImage: "play.fill")
                         .dsFont(.sans, .semibold, 12)
                         .foregroundStyle(DS.Palette.ink)
                         .frame(maxWidth: .infinity)
@@ -298,8 +298,8 @@ private struct ShortCard: View {
                 Button(action: onCreate) {
                     Label(
                         created
-                            ? String(localized: "editor.shorts.createAgain", bundle: .module)
-                            : String(localized: "editor.shorts.create", bundle: .module),
+                            ? AppLocalization.string("editor.shorts.createAgain", bundle: .module)
+                            : AppLocalization.string("editor.shorts.create", bundle: .module),
                         systemImage: created ? "checkmark" : "rectangle.portrait.badge.plus"
                     )
                     .dsFont(.sans, .semibold, 12)
@@ -326,7 +326,7 @@ private struct ShortCard: View {
                 }
             }
             .frame(height: 5)
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 10)
                 .foregroundStyle(DS.Palette.ink(0.5))
                 .lineLimit(1)
@@ -353,7 +353,7 @@ struct ShortsSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    DSKicker(String(localized: "editor.dock.shorts", bundle: .module))
+                    DSKicker(AppLocalization.string("editor.dock.shorts", bundle: .module))
                     Text("editor.shorts.hint", bundle: .module)
                         .dsFont(.sans, .regular, 11, lineHeight: 1.3)
                         .foregroundStyle(DS.Palette.ink(0.56))

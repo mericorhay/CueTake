@@ -97,7 +97,7 @@ struct OverlayInspector: View {
 
     private var timing: some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.when", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TimingReadout(start: overlay.start.seconds, end: end)
             HStack(spacing: 8) {
                 smallButton("editor.overlay.startHere", symbol: "arrow.right.to.line") {
@@ -124,10 +124,10 @@ struct OverlayInspector: View {
 
     private func textControls(_ text: OverlayText) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "editor.overlay.words", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.words", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             TextEntryField(
                 text: text.text,
-                placeholder: String(localized: "editor.overlay.placeholder", bundle: .module),
+                placeholder: AppLocalization.string("editor.overlay.placeholder", bundle: .module),
                 action: onType
             )
 
@@ -218,7 +218,7 @@ struct OverlayInspector: View {
 
     private var look: some View {
         VStack(alignment: .leading, spacing: 10) {
-            DSKicker(String(localized: "editor.overlay.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("editor.overlay.look", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
 
             HStack(spacing: 10) {
                 Image(systemName: "square.resize.down").font(.system(size: 12)).foregroundStyle(DS.Palette.ink(0.5))
@@ -336,7 +336,7 @@ struct OverlayInspector: View {
         HStack(spacing: 0) {
             stepButton("minus") { onStep(-0.1) }
             VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)
@@ -368,7 +368,7 @@ struct OverlayInspector: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-                Text(String(localized: key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
+                Text(AppLocalization.string(key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
             }
             .foregroundStyle(DS.Palette.ink(0.85))
             .padding(.horizontal, 10)
@@ -399,7 +399,7 @@ struct OverlayInspector: View {
         onPick: @escaping (RGBAColor?) -> Void
     ) -> some View {
         HStack(spacing: 8) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(DS.Palette.ink(0.5))
                 .frame(width: 70, alignment: .leading)
@@ -432,10 +432,10 @@ struct OverlayInspector: View {
 
     static func animationLabel(_ animation: OverlayAnimation) -> String {
         switch animation {
-        case .none: String(localized: "editor.overlay.anim.none", bundle: .module)
-        case .fade: String(localized: "editor.overlay.anim.fade", bundle: .module)
-        case .pop: String(localized: "editor.overlay.anim.pop", bundle: .module)
-        case .slideUp: String(localized: "editor.overlay.anim.slide", bundle: .module)
+        case .none: AppLocalization.string("editor.overlay.anim.none", bundle: .module)
+        case .fade: AppLocalization.string("editor.overlay.anim.fade", bundle: .module)
+        case .pop: AppLocalization.string("editor.overlay.anim.pop", bundle: .module)
+        case .slideUp: AppLocalization.string("editor.overlay.anim.slide", bundle: .module)
         }
     }
 }

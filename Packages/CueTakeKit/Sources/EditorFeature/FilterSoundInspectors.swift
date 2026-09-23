@@ -95,7 +95,7 @@ struct EffectPanelShell<Content: View>: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 Image(systemName: symbol).font(.system(size: 10, weight: .semibold))
-                Text(String(localized: key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
+                Text(AppLocalization.string(key, bundle: .module)).dsFont(.sans, .medium, 11).lineLimit(1)
             }
             .foregroundStyle(destructive ? DS.Palette.accent : DS.Palette.ink(0.85))
             .padding(.horizontal, 10)
@@ -123,7 +123,7 @@ struct EffectSlider: View {
                 Image(systemName: symbol)
                     .font(.system(size: 11))
                     .foregroundStyle(DS.Palette.ink(0.56))
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 11)
                     .foregroundStyle(DS.Palette.ink(0.6))
                 Spacer()

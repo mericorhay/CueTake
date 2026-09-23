@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 
@@ -54,7 +55,7 @@ extension EditorModel {
                 project: project,
                 entry: ChangeEntry(
                     id: editCount,
-                    label: String(localized: label, bundle: .module),
+                    label: AppLocalization.string(label, bundle: .module),
                     symbol: symbol
                 ),
                 coalescingKey: key
@@ -96,7 +97,7 @@ extension EditorModel {
                 project: before,
                 entry: ChangeEntry(
                     id: editCount,
-                    label: String(localized: label, bundle: .module),
+                    label: AppLocalization.string(label, bundle: .module),
                     symbol: symbol
                 ),
                 coalescingKey: nil

@@ -106,7 +106,7 @@ struct ScriptStartCard: View {
                 .controlSize(.small)
             }
 
-            TextField(String(localized: "script.paste.placeholder", bundle: .module), text: $pasted, axis: .vertical)
+            TextField(AppLocalization.string("script.paste.placeholder", bundle: .module), text: $pasted, axis: .vertical)
                 .lineLimit(6...14)
                 .dsFont(.sans, .regular, 15, lineHeight: 1.45)
                 .foregroundStyle(DS.Palette.ink)
@@ -144,7 +144,7 @@ struct ScriptStartCard: View {
             .onChange(of: pasted) { _, _ in savedNote = false }
 
             DSPrimaryButton(
-                String(localized: "script.paste.split", bundle: .module),
+                AppLocalization.string("script.paste.split", bundle: .module),
                 verticalPadding: 14,
                 fontSize: 15,
                 glow: false
@@ -168,7 +168,7 @@ struct ScriptStartCard: View {
                 .dsFont(.sans, .semibold, 15)
                 .foregroundStyle(DS.Palette.ink)
 
-            TextField(String(localized: "script.write.placeholder", bundle: .module), text: $idea, axis: .vertical)
+            TextField(AppLocalization.string("script.write.placeholder", bundle: .module), text: $idea, axis: .vertical)
                 .lineLimit(2...5)
                 .dsFont(.sans, .regular, 15, lineHeight: 1.45)
                 .foregroundStyle(DS.Palette.ink)
@@ -184,7 +184,7 @@ struct ScriptStartCard: View {
                         .dsFont(.sans, .medium, 12)
                         .foregroundStyle(DS.Palette.ink(0.55))
                     Spacer(minLength: 0)
-                    Text(String(localized: "script.write.words \(ScriptBudget.maxWords(seconds: Double(seconds), localeIdentifier: localeIdentifier))", bundle: .module))
+                    Text(AppLocalization.string("script.write.words \(ScriptBudget.maxWords(seconds: Double(seconds), localeIdentifier: localeIdentifier))", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.56))
                         .contentTransition(.numericText())
@@ -192,7 +192,7 @@ struct ScriptStartCard: View {
                 HStack(spacing: 6) {
                     ForEach(ScriptBudget.lengthChoices, id: \.self) { choice in
                         DSPill(
-                            String(localized: "script.write.seconds \(choice)", bundle: .module),
+                            AppLocalization.string("script.write.seconds \(choice)", bundle: .module),
                             isOn: seconds == choice,
                             fontSize: 12,
                             radius: 10,
@@ -265,7 +265,7 @@ struct ScriptStartCard: View {
                     HStack(spacing: 6) {
                         Image(systemName: library.usesBrand ? "checkmark.seal.fill" : "seal")
                             .font(.system(size: 12, weight: .semibold))
-                        Text(String(localized: "script.brand.use \(Self.brandName(library.brand))", bundle: .module))
+                        Text(AppLocalization.string("script.brand.use \(Self.brandName(library.brand))", bundle: .module))
                             .dsFont(.sans, .medium, 12)
                             .lineLimit(1)
                     }
@@ -287,7 +287,7 @@ struct ScriptStartCard: View {
 
     static func brandName(_ brand: BrandVoice) -> String {
         let name = brand.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? String(localized: "script.brand.unnamed", bundle: .module) : name
+        return name.isEmpty ? AppLocalization.string("script.brand.unnamed", bundle: .module) : name
     }
 
     private func write() {
@@ -307,7 +307,7 @@ struct ScriptStartCard: View {
                 let draft = try await writer(brief)
                 isWriting = false
                 guard !draft.segments.isEmpty else {
-                    failure = String(localized: "script.write.empty", bundle: .module)
+                    failure = AppLocalization.string("script.write.empty", bundle: .module)
                     return
                 }
                 onBeats(draft.segments, draft.title)
@@ -323,7 +323,7 @@ struct ScriptStartCard: View {
 
     private func savedRow(_ library: ScriptLibraryStore) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            DSKicker(String(localized: "script.library.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string("script.library.title", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(library.scripts) { saved in
@@ -337,7 +337,7 @@ struct ScriptStartCard: View {
                                     .dsFont(.sans, .semibold, 13)
                                     .foregroundStyle(DS.Palette.ink)
                                     .lineLimit(1)
-                                Text(String(localized: "script.library.words \(ScriptText.words(in: saved.text).count)", bundle: .module))
+                                Text(AppLocalization.string("script.library.words \(ScriptText.words(in: saved.text).count)", bundle: .module))
                                     .dsFont(.mono, .medium, 10)
                                     .foregroundStyle(DS.Palette.ink(0.56))
                             }
@@ -354,7 +354,7 @@ struct ScriptStartCard: View {
                             Button(role: .destructive) {
                                 library.delete(saved.id)
                             } label: {
-                                Label(String(localized: "script.library.delete", bundle: .module), systemImage: "trash")
+                                Label(AppLocalization.string("script.library.delete", bundle: .module), systemImage: "trash")
                             }
                         }
                     }
@@ -377,31 +377,31 @@ struct BrandVoiceSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField(String(localized: "script.brand.name", bundle: .module), text: $draft.name)
-                    TextField(String(localized: "script.brand.about", bundle: .module), text: $draft.about, axis: .vertical)
+                    TextField(AppLocalization.string("script.brand.name", bundle: .module), text: $draft.name)
+                    TextField(AppLocalization.string("script.brand.about", bundle: .module), text: $draft.about, axis: .vertical)
                         .lineLimit(2...4)
-                    TextField(String(localized: "script.brand.audience", bundle: .module), text: $draft.audience, axis: .vertical)
+                    TextField(AppLocalization.string("script.brand.audience", bundle: .module), text: $draft.audience, axis: .vertical)
                         .lineLimit(1...3)
                 } footer: {
                     Text("script.brand.footer", bundle: .module)
                 }
                 Section {
-                    TextField(String(localized: "script.brand.mustSay", bundle: .module), text: $draft.mustSay, axis: .vertical)
+                    TextField(AppLocalization.string("script.brand.mustSay", bundle: .module), text: $draft.mustSay, axis: .vertical)
                         .lineLimit(1...3)
-                    TextField(String(localized: "script.brand.avoid", bundle: .module), text: $draft.avoid, axis: .vertical)
+                    TextField(AppLocalization.string("script.brand.avoid", bundle: .module), text: $draft.avoid, axis: .vertical)
                         .lineLimit(1...3)
                 }
             }
             .scrollContentBackground(.hidden)
             .background(DS.Palette.screen)
-            .navigationTitle(String(localized: "script.brand.title", bundle: .module))
+            .navigationTitle(AppLocalization.string("script.brand.title", bundle: .module))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "script.brand.cancel", bundle: .module), action: onClose)
+                    Button(AppLocalization.string("script.brand.cancel", bundle: .module), action: onClose)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "script.brand.save", bundle: .module)) {
+                    Button(AppLocalization.string("script.brand.save", bundle: .module)) {
                         onSave(draft)
                         onClose()
                     }

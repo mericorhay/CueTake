@@ -36,7 +36,7 @@ extension AppModel {
     /// and the four tools almost everyone wants is easier to edit into something than nothing is.
     func createWorkflow() {
         let workflow = WorkflowDefinition(
-            name: String(localized: "workflow.new.name"),
+            name: AppLocalization.string("workflow.new.name"),
             sections: [
                 WorkflowSection(role: "hook", title: "Hook", seconds: 3),
                 WorkflowSection(role: "point", title: "Point", seconds: 12),
@@ -97,7 +97,7 @@ extension AppModel {
         guard var copy = try? WorkflowDefinition.decode(json: (try? workflow.jsonString()) ?? "") else { return }
         // Decoding without an id gives a fresh one; the copy is named as a copy.
         copy = WorkflowDefinition(
-            name: workflow.name + " " + String(localized: "workflow.copySuffix"),
+            name: workflow.name + " " + AppLocalization.string("workflow.copySuffix"),
             summary: copy.summary,
             origin: .user,
             sections: copy.sections,
@@ -134,7 +134,7 @@ extension AppModel {
             written = try? await dependencies.workflowAuthor.author(request: text, current: nil, clipCount: currentClips().count)
         }
         guard let written else {
-            return failure.map { Self.assistantFailureMessage($0) } ?? String(localized: "workflow.ai.failed")
+            return failure.map { Self.assistantFailureMessage($0) } ?? AppLocalization.string("workflow.ai.failed")
         }
 
         try? await dependencies.workflowStore?.save(written)
@@ -167,7 +167,7 @@ extension AppModel {
             return StudioClip(
                 slot: index + 1,
                 name: (title?.isEmpty == false ? title : nil)
-                    ?? String(localized: "workflow.clip \(index + 1)"),
+                    ?? AppLocalization.string("workflow.clip \(index + 1)"),
                 seconds: recording.duration.seconds
             )
         }
@@ -272,11 +272,11 @@ extension AppModel {
 
         for step in definition.steps {
             if Task.isCancelled {
-                studio.mark(step.id, .skipped(String(localized: "workflow.skip.stopped")))
+                studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.stopped")))
                 continue
             }
             guard step.isEnabled else {
-                studio.mark(step.id, .skipped(String(localized: "workflow.skip.disabled")))
+                studio.mark(step.id, .skipped(AppLocalization.string("workflow.skip.disabled")))
                 continue
             }
 
@@ -294,7 +294,7 @@ extension AppModel {
         studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
         if !Task.isCancelled { noteCertifiedWorkflowRun() }
         if before.segments != project.segments {
-            show(notice: String(localized: "workflow.undoable"))
+            show(notice: AppLocalization.string("workflow.undoable"))
         }
     }
 
@@ -305,10 +305,10 @@ extension AppModel {
 
         case .analyzeSpeech:
             await transcribeNewTakes()
-            return hasTranscripts ? .done : .skipped(String(localized: "workflow.skip.noSpeech"))
+            return hasTranscripts ? .done : .skipped(AppLocalization.string("workflow.skip.noSpeech"))
 
         case .trimSilences(let options):
-            guard hasTranscripts else { return .skipped(String(localized: "workflow.skip.needsSpeech")) }
+            guard hasTranscripts else { return .skipped(AppLocalization.string("workflow.skip.needsSpeech")) }
             editorModel.project = project
             for index in editorModel.project.segments.indices.reversed() {
                 editorModel.tightenSilences(at: index, threshold: options.minPause, pad: options.padding)
@@ -317,7 +317,7 @@ extension AppModel {
             return .done
 
         case .cutWords(let options):
-            guard hasTranscripts else { return .skipped(String(localized: "workflow.skip.needsSpeech")) }
+            guard hasTranscripts else { return .skipped(AppLocalization.string("workflow.skip.needsSpeech")) }
             editorModel.project = project
             cutWords(options.words)
             project = editorModel.project
@@ -333,7 +333,7 @@ extension AppModel {
                 changed += 1
             }
             project = editorModel.project
-            return changed > 0 ? .done : .skipped(String(localized: "workflow.skip.noSection"))
+            return changed > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.noSection"))
 
         case .cleanAudio(let options):
             let effects = AudioEffects(
@@ -351,7 +351,7 @@ extension AppModel {
 
         case .musicBed(let options):
             let music = project.audio.indices.filter { project.audio[$0].role == .music }
-            guard !music.isEmpty else { return .skipped(String(localized: "workflow.skip.noMusic")) }
+            guard !music.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noMusic")) }
             for index in music {
                 project.audio[index].setDecibels(options.levelDB)
                 project.audio[index].ducksUnderVoice = options.ducking
@@ -361,15 +361,15 @@ extension AppModel {
             return .done
 
         case .generateCaptions:
-            guard definition.style.captions else { return .skipped(String(localized: "workflow.skip.captionsOff")) }
+            guard definition.style.captions else { return .skipped(AppLocalization.string("workflow.skip.captionsOff")) }
             if !hasTranscripts { await transcribeNewTakes() }
             rebuildCaptions()
             return project.segments.contains { !$0.captions.isEmpty }
                 ? .done
-                : .skipped(String(localized: "workflow.skip.needsSpeech"))
+                : .skipped(AppLocalization.string("workflow.skip.needsSpeech"))
 
         case .applyCaptionStyle(let preset):
-            guard definition.style.captions else { return .skipped(String(localized: "workflow.skip.captionsOff")) }
+            guard definition.style.captions else { return .skipped(AppLocalization.string("workflow.skip.captionsOff")) }
             applyCaptionStyle(presetID: preset, position: definition.style.position)
             return .done
 
@@ -382,18 +382,18 @@ extension AppModel {
             // Captions off in the workflow: the file is written without them, the project keeps them.
             await exportProject(burnCaptions: definition.style.captions && preset.burnsInCaptions)
             guard let video = exportModel.outputURL else {
-                let reason = exportModel.failureDetail.map { String(localized: "workflow.skip.exportFailed") + " · " + $0 }
-                    ?? String(localized: "workflow.skip.exportFailed")
+                let reason = exportModel.failureDetail.map { AppLocalization.string("workflow.skip.exportFailed") + " · " + $0 }
+                    ?? AppLocalization.string("workflow.skip.exportFailed")
                 return .skipped(reason)
             }
             workflowVideo = video
             if let delivery = preset.delivery, delivery.isEnabled {
-                workflowStudio?.note(String(localized: "workflow.delivery.sending"), for: step)
+                workflowStudio?.note(AppLocalization.string("workflow.delivery.sending"), for: step)
                 let result = await deliverWorkflowVideo(video, delivery: delivery, definition: definition)
                 workflowDeliveryResult = result
                 workflowStudio?.note(nil, for: step)
                 if case .failed(let reason) = result {
-                    return .skipped(String(localized: "workflow.delivery.failed \(reason)"))
+                    return .skipped(AppLocalization.string("workflow.delivery.failed \(reason)"))
                 }
             }
             return .done
@@ -402,13 +402,13 @@ extension AppModel {
             return await generateVideos(options, step: step)
 
         case .generateScript, .segmentScript:
-            return .skipped(String(localized: "workflow.skip.script"))
+            return .skipped(AppLocalization.string("workflow.skip.script"))
 
         case .record:
-            return .skipped(String(localized: "workflow.skip.record"))
+            return .skipped(AppLocalization.string("workflow.skip.record"))
 
         case .unsupported:
-            return .skipped(String(localized: "workflow.skip.unsupported"))
+            return .skipped(AppLocalization.string("workflow.skip.unsupported"))
         }
     }
 
@@ -472,8 +472,8 @@ extension AppModel {
     /// A section's take points at its whole clip and keeps any transcript that clip already has,
     /// so re-running a workflow does not listen to the same footage twice.
     private func assemble(_ sections: [WorkflowSection]) -> StudioStepState {
-        guard !sections.isEmpty else { return .skipped(String(localized: "workflow.skip.noSections")) }
-        guard !project.recordings.isEmpty else { return .skipped(String(localized: "workflow.skip.noClips")) }
+        guard !sections.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noSections")) }
+        guard !project.recordings.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noClips")) }
 
         // Clips named by a section, and the ones left over for the sections that name none.
         var claimed = Set<Int>()
@@ -523,7 +523,7 @@ extension AppModel {
             )
         }
 
-        guard !segments.isEmpty else { return .skipped(String(localized: "workflow.skip.noClips")) }
+        guard !segments.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noClips")) }
 
         project.segments = segments
         project.transitions.removeAll { transition in
@@ -533,7 +533,7 @@ extension AppModel {
         editorModel.project = project
         if unused > 0 {
             // Sections with no footage left are dropped rather than left as holes in the video.
-            show(notice: String(localized: "workflow.assembled \(segments.count) \(unused)"))
+            show(notice: AppLocalization.string("workflow.assembled \(segments.count) \(unused)"))
         }
         return .done
     }

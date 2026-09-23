@@ -28,7 +28,7 @@ public struct ProjectsScreen: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                DSHeadline(String(localized: "projects.title", bundle: .module), size: 34)
+                DSHeadline(AppLocalization.string("projects.title", bundle: .module), size: 34)
 
                 Text(LocalizedStringKey(isSelecting ? "projects.select.hintActive" : "projects.select.hint"), bundle: .module)
                     .dsFont(.sans, .regular, 13)
@@ -37,7 +37,7 @@ public struct ProjectsScreen: View {
 
                 if projects.isEmpty {
                     LibraryEmptyState(
-                        message: String(localized: "projects.empty", bundle: .module),
+                        message: AppLocalization.string("projects.empty", bundle: .module),
                         action: nil,
                         onTap: nil
                     )
@@ -92,11 +92,11 @@ public struct ProjectsScreen: View {
             selection = selection.map { $0.intersection(ids) }
         }
         .confirmationDialog(
-            String(localized: "projects.select.confirm \(selection?.count ?? 0)", bundle: .module),
+            AppLocalization.string("projects.select.confirm \(selection?.count ?? 0)", bundle: .module),
             isPresented: $confirmingDelete,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "projects.select.delete", bundle: .module), role: .destructive) {
+            Button(AppLocalization.string("projects.select.delete", bundle: .module), role: .destructive) {
                 let chosen = projects.filter { selection?.contains($0.id) == true }
                 withAnimation(DS.Motion.settle) { selection = nil }
                 onDeleteProjects(chosen)

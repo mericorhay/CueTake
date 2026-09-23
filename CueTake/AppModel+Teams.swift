@@ -1,3 +1,4 @@
+import DesignSystem
 import CloudKit
 import Domain
 import EditorFeature
@@ -36,9 +37,9 @@ extension AppModel: TeamLibrary {
             await engine.adopt(team)
             await engine.refresh()
             teams = await engine.teams()
-            show(notice: String(localized: "team.joined \(team.name)"))
+            show(notice: AppLocalization.string("team.joined \(team.name)"))
         } catch {
-            show(notice: String(localized: "team.joinFailed"))
+            show(notice: AppLocalization.string("team.joinFailed"))
         }
     }
 
@@ -123,6 +124,6 @@ extension AppModel: TeamLibrary {
 
     func teamCollided(_ collisions: [ProjectMerge.Collision], in project: Project.ID) async {
         guard !collisions.isEmpty else { return }
-        show(notice: String(localized: "team.collided \(collisions.count)"))
+        show(notice: AppLocalization.string("team.collided \(collisions.count)"))
     }
 }

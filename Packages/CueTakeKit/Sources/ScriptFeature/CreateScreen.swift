@@ -85,7 +85,7 @@ public struct CreateScreen: View {
         VStack(alignment: .leading, spacing: 0) {
             DSBackButton(action: onBack)
 
-            DSHeadline(String(localized: "create.title", bundle: .module), size: 36, lineHeight: 0.98)
+            DSHeadline(AppLocalization.string("create.title", bundle: .module), size: 36, lineHeight: 0.98)
                 .padding(.top, 22)
                 .padding(.bottom, 6)
 
@@ -128,10 +128,10 @@ public struct CreateScreen: View {
                     )
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(String(localized: card.titleKey, bundle: .module))
+                    Text(AppLocalization.string(card.titleKey, bundle: .module))
                         .dsFont(.archivo, .bold, 17)
                         .foregroundStyle(ink)
-                    Text(String(localized: card.subtitleKey, bundle: .module))
+                    Text(AppLocalization.string(card.subtitleKey, bundle: .module))
                         .dsFont(.sans, .regular, 12)
                         .foregroundStyle(subInk)
                 }

@@ -1,3 +1,4 @@
+import DesignSystem
 import AIServices
 import ScriptFeature
 import SettingsFeature
@@ -108,15 +109,15 @@ extension AppModel {
                     draft = partial
                 }
             } catch {
-                throw DescribedError(message: String(localized: "prompt.failed.generic"))
+                throw DescribedError(message: AppLocalization.string("prompt.failed.generic"))
             }
             guard let draft, !draft.segments.isEmpty else {
-                throw DescribedError(message: String(localized: "prompt.failed.empty"))
+                throw DescribedError(message: AppLocalization.string("prompt.failed.empty"))
             }
             return ScriptBudget.fit(draft, seconds: brief.targetDuration.seconds, localeIdentifier: locale)
         }
         guard dependencies.assistantClient.isConfigured else {
-            throw DescribedError(message: String(localized: "prompt.failed.unavailable"))
+            throw DescribedError(message: AppLocalization.string("prompt.failed.unavailable"))
         }
         guard settingsModel.settings.aiProcessing == .allowCloud else {
             throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))

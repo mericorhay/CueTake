@@ -121,7 +121,7 @@ struct VideoLayerPlacementEditor: View {
                 }
 
                 HStack(spacing: 10) {
-                    Label(String(localized: "editor.video.placementHint", bundle: .module), systemImage: "hand.draw")
+                    Label(AppLocalization.string("editor.video.placementHint", bundle: .module), systemImage: "hand.draw")
                         .dsFont(.sans, .medium, 11)
                         .foregroundStyle(DS.Palette.ink(0.7))
                         .lineLimit(2)
@@ -140,7 +140,7 @@ struct VideoLayerPlacementEditor: View {
                     Button {
                         model.addVideoKeyframe(to: layer.id)
                     } label: {
-                        Label(String(localized: "editor.video.keyframe", bundle: .module), systemImage: "diamond.fill")
+                        Label(AppLocalization.string("editor.video.keyframe", bundle: .module), systemImage: "diamond.fill")
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.ink)
                             .padding(.horizontal, 13)

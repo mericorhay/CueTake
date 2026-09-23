@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 
@@ -8,8 +9,8 @@ import Foundation
 extension CameraPosition {
     var label: String {
         switch self {
-        case .front: String(localized: "settings.camera.front", bundle: .module)
-        case .back: String(localized: "settings.camera.back", bundle: .module)
+        case .front: AppLocalization.string("settings.camera.front", bundle: .module)
+        case .back: AppLocalization.string("settings.camera.back", bundle: .module)
         }
     }
 }
@@ -17,15 +18,15 @@ extension CameraPosition {
 extension CaptionPreference {
     var label: String {
         switch self {
-        case .off: String(localized: "settings.captions.off", bundle: .module)
-        case .pop: String(localized: "settings.captions.pop", bundle: .module)
-        case .clean: String(localized: "settings.captions.clean", bundle: .module)
-        case .karaoke: String(localized: "settings.captions.karaoke", bundle: .module)
-        case .bold: String(localized: "settings.captions.bold", bundle: .module)
-        case .boxed: String(localized: "settings.captions.boxed", bundle: .module)
-        case .minimal: String(localized: "settings.captions.minimal", bundle: .module)
-        case .neon: String(localized: "settings.captions.neon", bundle: .module)
-        case .story: String(localized: "settings.captions.story", bundle: .module)
+        case .off: AppLocalization.string("settings.captions.off", bundle: .module)
+        case .pop: AppLocalization.string("settings.captions.pop", bundle: .module)
+        case .clean: AppLocalization.string("settings.captions.clean", bundle: .module)
+        case .karaoke: AppLocalization.string("settings.captions.karaoke", bundle: .module)
+        case .bold: AppLocalization.string("settings.captions.bold", bundle: .module)
+        case .boxed: AppLocalization.string("settings.captions.boxed", bundle: .module)
+        case .minimal: AppLocalization.string("settings.captions.minimal", bundle: .module)
+        case .neon: AppLocalization.string("settings.captions.neon", bundle: .module)
+        case .story: AppLocalization.string("settings.captions.story", bundle: .module)
         }
     }
 }
@@ -33,8 +34,8 @@ extension CaptionPreference {
 extension AIProcessing {
     var label: String {
         switch self {
-        case .onDeviceOnly: String(localized: "settings.ai.onDevice", bundle: .module)
-        case .allowCloud: String(localized: "settings.ai.cloud", bundle: .module)
+        case .onDeviceOnly: AppLocalization.string("settings.ai.onDevice", bundle: .module)
+        case .allowCloud: AppLocalization.string("settings.ai.cloud", bundle: .module)
         }
     }
 }
@@ -42,8 +43,8 @@ extension AIProcessing {
 extension ExportDestination {
     var label: String {
         switch self {
-        case .photoLibrary: String(localized: "settings.export.photos", bundle: .module)
-        case .files: String(localized: "settings.export.files", bundle: .module)
+        case .photoLibrary: AppLocalization.string("settings.export.photos", bundle: .module)
+        case .files: AppLocalization.string("settings.export.files", bundle: .module)
         }
     }
 }
@@ -52,7 +53,7 @@ extension Bool {
     /// "On" or "Off" for the remember-my-style row.
     var rememberLabel: String {
         self
-            ? String(localized: "settings.rememberStyle.on", bundle: .module)
-            : String(localized: "settings.rememberStyle.off", bundle: .module)
+            ? AppLocalization.string("settings.rememberStyle.on", bundle: .module)
+            : AppLocalization.string("settings.rememberStyle.off", bundle: .module)
     }
 }

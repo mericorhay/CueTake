@@ -32,7 +32,7 @@ struct DeletionNote: View {
             }
             Spacer(minLength: 0)
             Button(action: onUndo) {
-                Label(String(localized: "editor.delete.undo", bundle: .module), systemImage: "arrow.uturn.backward")
+                Label(AppLocalization.string("editor.delete.undo", bundle: .module), systemImage: "arrow.uturn.backward")
                     .dsFont(.sans, .semibold, 13)
                     .foregroundStyle(DS.Palette.inkInverse)
                     .padding(.horizontal, 14)

@@ -4623,6 +4623,78 @@
           }
         }
       }
+    },
+    "settings.language.detail" : {
+      "comment" : "Subtitle for the in-app language picker.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the language CueTake uses. Changes apply instantly."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elige el idioma que CueTake usará. Los cambios se aplican al instante."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake’ın kullandığı dili seçin. Değişiklikler anında uygulanır."
+          }
+        }
+      }
+    },
+    "settings.language.automatic" : {
+      "comment" : "Language option that follows the iPhone system language.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomatik"
+          }
+        }
+      }
+    },
+    "settings.language.device" : {
+      "comment" : "Short uppercase badge for the automatic device-language option.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DEVICE"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DISPOSITIVO"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CİHAZ"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

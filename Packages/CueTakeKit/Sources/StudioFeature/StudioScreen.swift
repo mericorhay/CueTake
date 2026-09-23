@@ -134,13 +134,13 @@ public struct StudioScreen: View {
                 Task { await model.startCamera(position: camera) }
             }
         }
-        .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
+        .alert(AppLocalization.string("studio.capture.error", bundle: .module), isPresented: Binding(
             get: { model.captureError != nil },
             set: { if !$0 { model.captureError = nil } }
         )) {
-            Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
+            Button(AppLocalization.string("studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
             if model.needsCapturePermissions {
-                Button(String(localized: "studio.settings.open", bundle: .module)) { openSettings() }
+                Button(AppLocalization.string("studio.settings.open", bundle: .module)) { openSettings() }
             }
         } message: {
             Text(model.captureError ?? "")
@@ -359,9 +359,9 @@ public struct StudioScreen: View {
 
     private static func badgeText(for mode: PrompterMode) -> String {
         switch mode {
-        case .listening: String(localized: "studio.prompter.listening", bundle: .module)
-        case .followingVoice: String(localized: "studio.prompter.following", bundle: .module)
-        case .autoScroll: String(localized: "studio.prompter.auto", bundle: .module)
+        case .listening: AppLocalization.string("studio.prompter.listening", bundle: .module)
+        case .followingVoice: AppLocalization.string("studio.prompter.following", bundle: .module)
+        case .autoScroll: AppLocalization.string("studio.prompter.auto", bundle: .module)
         }
     }
 
@@ -424,7 +424,7 @@ public struct StudioScreen: View {
                 HStack(spacing: 10) {
                     ProgressView()
                         .tint(DS.Palette.ink)
-                    Text(String(localized: model.phase == .preparing ? "studio.capture.preparing" : "studio.saving", bundle: .module))
+                    Text(AppLocalization.string(model.phase == .preparing ? "studio.capture.preparing" : "studio.saving", bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                 }
@@ -529,7 +529,7 @@ public struct StudioScreen: View {
                 .dsGlass(in: Circle())
         }
         .buttonStyle(.dsPressIcon)
-        .accessibilityLabel(Text(String(localized: label, bundle: .module)))
+        .accessibilityLabel(Text(AppLocalization.string(label, bundle: .module)))
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
@@ -540,7 +540,7 @@ public struct StudioScreen: View {
                     .font(.system(size: 19, weight: .medium))
                     .frame(width: 48, height: 48)
                     .dsGlass(in: Circle())
-                Text(String(localized: label, bundle: .module))
+                Text(AppLocalization.string(label, bundle: .module))
                     .dsFont(.sans, .medium, 11)
                     .lineLimit(1)
             }

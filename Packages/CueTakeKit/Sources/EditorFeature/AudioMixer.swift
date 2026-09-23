@@ -94,7 +94,7 @@ struct AudioMixerPanel: View {
                     withAnimation(DS.Motion.snap) { model.setAllAudioMuted(!allMuted) }
                 } label: {
                     Label(
-                        String(localized: allMuted ? "editor.mixer.unmuteAll" : "editor.mixer.muteAll", bundle: .module),
+                        AppLocalization.string(allMuted ? "editor.mixer.unmuteAll" : "editor.mixer.muteAll", bundle: .module),
                         systemImage: allMuted ? "speaker.wave.2" : "speaker.slash"
                     )
                     .dsFont(.sans, .semibold, 11)
@@ -107,7 +107,7 @@ struct AudioMixerPanel: View {
                 .disabled(model.project.audio.isEmpty)
 
                 Button(action: onAdd) {
-                    Label(String(localized: "editor.mixer.add", bundle: .module), systemImage: "plus")
+                    Label(AppLocalization.string("editor.mixer.add", bundle: .module), systemImage: "plus")
                         .dsFont(.sans, .semibold, 11)
                         .foregroundStyle(DS.Palette.inkInverse)
                         .padding(.horizontal, 12)
@@ -226,12 +226,12 @@ struct AudioMixerPanel: View {
             Button {
                 model.duplicateAudio(clip.id)
             } label: {
-                Label(String(localized: "editor.tool.duplicate", bundle: .module), systemImage: "plus.square.on.square")
+                Label(AppLocalization.string("editor.tool.duplicate", bundle: .module), systemImage: "plus.square.on.square")
             }
             Button(role: .destructive) {
                 withAnimation(DS.Motion.settle) { model.removeAudio(clip.id) }
             } label: {
-                Label(String(localized: "editor.tool.delete", bundle: .module), systemImage: "trash")
+                Label(AppLocalization.string("editor.tool.delete", bundle: .module), systemImage: "trash")
             }
         }
     }

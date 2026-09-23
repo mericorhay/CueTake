@@ -1,3 +1,4 @@
+import DesignSystem
 import CaptureEngine
 import Domain
 import Foundation
@@ -135,7 +136,7 @@ public final class StudioModel {
     }
 
     public func failCapture(_ key: String.LocalizationValue) {
-        captureError = String(localized: key, bundle: .module)
+        captureError = AppLocalization.string(key, bundle: .module)
         phase = .idle
     }
 

@@ -131,11 +131,11 @@ public struct CaptionsScreen: View {
         .animation(DS.Motion.settle, value: focusedCue)
         .sensoryFeedback(.selection, trigger: snapTick)
         .confirmationDialog(
-            String(localized: "captions.rebuild", bundle: .module),
+            AppLocalization.string("captions.rebuild", bundle: .module),
             isPresented: $confirmsRebuild,
             titleVisibility: .visible
         ) {
-            Button(String(localized: "captions.rebuild", bundle: .module), role: .destructive) {
+            Button(AppLocalization.string("captions.rebuild", bundle: .module), role: .destructive) {
                 rebuildFromSpeech()
             }
         } message: {
@@ -147,7 +147,7 @@ public struct CaptionsScreen: View {
     private var header: some View {
         HStack(spacing: 10) {
             DSBackButton(size: 34, fontSize: 15, action: onBack)
-            DSKicker(String(localized: "captions.kicker", bundle: .module), color: DS.Palette.ink(0.55))
+            DSKicker(AppLocalization.string("captions.kicker", bundle: .module), color: DS.Palette.ink(0.55))
             Spacer(minLength: 0)
 
             if focusedCue != nil {
@@ -168,14 +168,14 @@ public struct CaptionsScreen: View {
                     Button {
                         onTranscribe()
                     } label: {
-                        Label(String(localized: "captions.listen", bundle: .module), systemImage: "waveform.and.person.filled")
+                        Label(AppLocalization.string("captions.listen", bundle: .module), systemImage: "waveform.and.person.filled")
                     }
                     .disabled(!hasFootage)
 
                     Button(role: .destructive) {
                         confirmsRebuild = true
                     } label: {
-                        Label(String(localized: "captions.rebuild", bundle: .module), systemImage: "arrow.counterclockwise")
+                        Label(AppLocalization.string("captions.rebuild", bundle: .module), systemImage: "arrow.counterclockwise")
                     }
                     .disabled(rows.isEmpty)
                 } label: {
@@ -398,7 +398,7 @@ public struct CaptionsScreen: View {
             }
 
             HStack(spacing: 8) {
-                DSKicker(String(localized: "captions.position", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+                DSKicker(AppLocalization.string("captions.position", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                 Text("captions.drag.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11)
                     .foregroundStyle(DS.Palette.ink(0.56))
@@ -537,7 +537,7 @@ public struct CaptionsScreen: View {
         return VStack(alignment: .leading, spacing: 8) {
             if !all.isEmpty {
                 HStack {
-                    DSKicker(String(localized: "captions.count \(all.count)", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
+                    DSKicker(AppLocalization.string("captions.count \(all.count)", bundle: .module), size: 10, color: DS.Palette.ink(0.52))
                     Spacer(minLength: 0)
                     if fastCount > 0 {
                         Label {
@@ -612,7 +612,7 @@ public struct CaptionsScreen: View {
 
             if isSelected {
                 TextField(
-                    String(localized: "captions.placeholder", bundle: .module),
+                    AppLocalization.string("captions.placeholder", bundle: .module),
                     text: textBinding(for: row),
                     axis: .vertical
                 )
@@ -651,10 +651,10 @@ public struct CaptionsScreen: View {
 
     private func timing(_ row: CueRow) -> some View {
         HStack(spacing: 8) {
-            stepper(String(localized: "captions.edit.start", bundle: .module), value: row.cue.range.start.seconds) { delta in
+            stepper(AppLocalization.string("captions.edit.start", bundle: .module), value: row.cue.range.start.seconds) { delta in
                 edit(row) { $0.nudgeCaption(row.id, start: delta) }
             }
-            stepper(String(localized: "captions.edit.end", bundle: .module), value: row.cue.range.end.seconds) { delta in
+            stepper(AppLocalization.string("captions.edit.end", bundle: .module), value: row.cue.range.end.seconds) { delta in
                 edit(row) { $0.nudgeCaption(row.id, end: delta) }
             }
         }
@@ -726,7 +726,7 @@ public struct CaptionsScreen: View {
             HStack(spacing: 5) {
                 Image(systemName: symbol)
                     .font(.system(size: 11, weight: .semibold))
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.sans, .medium, 12)
             }
             .foregroundStyle(destructive ? DS.Palette.accent : DS.Palette.ink(0.85))
@@ -964,7 +964,7 @@ struct CaptionTuningPanel: View {
 
     private func row<Trailing: View>(_ key: String.LocalizationValue, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack {
-            DSKicker(String(localized: key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+            DSKicker(AppLocalization.string(key, bundle: .module), size: 10, color: DS.Palette.ink(0.56))
             Spacer(minLength: 0)
             trailing()
         }
@@ -1044,7 +1044,7 @@ struct CaptionWindowControl: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                DSKicker(String(localized: "captions.window", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("captions.window", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 HStack(spacing: 4) {
                     choice("captions.window.all", isOn: window == nil) {
@@ -1084,7 +1084,7 @@ struct CaptionWindowControl: View {
 
     private func choice(_ key: String.LocalizationValue, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(String(localized: key, bundle: .module))
+            Text(AppLocalization.string(key, bundle: .module))
                 .dsFont(.sans, .medium, 11)
                 .foregroundStyle(isOn ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
                 .padding(.horizontal, 10)
@@ -1098,7 +1098,7 @@ struct CaptionWindowControl: View {
         HStack(spacing: 0) {
             button("minus") { onStep(-0.5) }
             VStack(spacing: 1) {
-                Text(String(localized: key, bundle: .module))
+                Text(AppLocalization.string(key, bundle: .module))
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(DS.Palette.ink(0.56))
                 Text(verbatim: MediaTime(seconds: value).preciseTimecode)

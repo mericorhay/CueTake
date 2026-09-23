@@ -1,3 +1,4 @@
+import DesignSystem
 import Domain
 import Foundation
 import SettingsFeature
@@ -22,8 +23,8 @@ extension AppModel {
         case .quickFinish:
             return WorkflowDefinition(
                 id: Self.recipeID(0),
-                name: String(localized: "recipe.quick.name"),
-                summary: String(localized: "recipe.quick.summary"),
+                name: AppLocalization.string("recipe.quick.name"),
+                summary: AppLocalization.string("recipe.quick.summary"),
                 origin: .builtIn,
                 style: WorkflowStyle(captionPreset: captions, aspect: format.aspectRatio, resolution: format.resolution, frameRate: format.frameRate),
                 steps: [
@@ -38,15 +39,15 @@ extension AppModel {
         case .ugcAd:
             return WorkflowDefinition(
                 id: Self.recipeID(1),
-                name: String(localized: "recipe.ugc.name"),
-                summary: String(localized: "recipe.ugc.summary"),
+                name: AppLocalization.string("recipe.ugc.name"),
+                summary: AppLocalization.string("recipe.ugc.summary"),
                 origin: .builtIn,
                 sections: [
-                    WorkflowSection(role: "hook", title: String(localized: "recipe.section.hook"), seconds: 3),
-                    WorkflowSection(role: "problem", title: String(localized: "recipe.section.problem"), seconds: 5),
-                    WorkflowSection(role: "point", title: String(localized: "recipe.section.product"), seconds: 10),
-                    WorkflowSection(role: "example", title: String(localized: "recipe.section.proof"), seconds: 6),
-                    WorkflowSection(role: "cta", title: String(localized: "recipe.section.cta"), seconds: 4),
+                    WorkflowSection(role: "hook", title: AppLocalization.string("recipe.section.hook"), seconds: 3),
+                    WorkflowSection(role: "problem", title: AppLocalization.string("recipe.section.problem"), seconds: 5),
+                    WorkflowSection(role: "point", title: AppLocalization.string("recipe.section.product"), seconds: 10),
+                    WorkflowSection(role: "example", title: AppLocalization.string("recipe.section.proof"), seconds: 6),
+                    WorkflowSection(role: "cta", title: AppLocalization.string("recipe.section.cta"), seconds: 4),
                 ],
                 style: WorkflowStyle(captionPreset: "bold"),
                 steps: [
@@ -65,15 +66,15 @@ extension AppModel {
         case .myReel:
             return WorkflowDefinition(
                 id: Self.recipeID(2),
-                name: String(localized: "recipe.reel.name"),
-                summary: String(localized: "recipe.reel.summary"),
+                name: AppLocalization.string("recipe.reel.name"),
+                summary: AppLocalization.string("recipe.reel.summary"),
                 origin: .builtIn,
                 sections: [
-                    WorkflowSection(role: "hook", title: String(localized: "recipe.section.hook"), seconds: 3),
-                    WorkflowSection(role: "point", title: String(localized: "recipe.section.point \(1)"), seconds: 7),
-                    WorkflowSection(role: "point", title: String(localized: "recipe.section.point \(2)"), seconds: 7),
-                    WorkflowSection(role: "point", title: String(localized: "recipe.section.point \(3)"), seconds: 7),
-                    WorkflowSection(role: "cta", title: String(localized: "recipe.section.cta"), seconds: 3),
+                    WorkflowSection(role: "hook", title: AppLocalization.string("recipe.section.hook"), seconds: 3),
+                    WorkflowSection(role: "point", title: AppLocalization.string("recipe.section.point \(1)"), seconds: 7),
+                    WorkflowSection(role: "point", title: AppLocalization.string("recipe.section.point \(2)"), seconds: 7),
+                    WorkflowSection(role: "point", title: AppLocalization.string("recipe.section.point \(3)"), seconds: 7),
+                    WorkflowSection(role: "cta", title: AppLocalization.string("recipe.section.cta"), seconds: 3),
                 ],
                 style: WorkflowStyle(captionPreset: "karaoke", captionPosition: "middle", frameRate: 60),
                 steps: [
@@ -91,8 +92,8 @@ extension AppModel {
         case .talkingHead:
             return WorkflowDefinition(
                 id: Self.recipeID(3),
-                name: String(localized: "recipe.talking.name"),
-                summary: String(localized: "recipe.talking.summary"),
+                name: AppLocalization.string("recipe.talking.name"),
+                summary: AppLocalization.string("recipe.talking.summary"),
                 origin: .builtIn,
                 style: WorkflowStyle(captionPreset: "clean", aspect: format.aspectRatio, resolution: format.resolution, frameRate: format.frameRate),
                 steps: [
@@ -107,8 +108,8 @@ extension AppModel {
         case .podcast:
             return WorkflowDefinition(
                 id: Self.recipeID(4),
-                name: String(localized: "recipe.podcast.name"),
-                summary: String(localized: "recipe.podcast.summary"),
+                name: AppLocalization.string("recipe.podcast.name"),
+                summary: AppLocalization.string("recipe.podcast.summary"),
                 origin: .builtIn,
                 style: WorkflowStyle(captionPreset: "podcast", aspect: format.aspectRatio, resolution: format.resolution, frameRate: format.frameRate),
                 steps: [

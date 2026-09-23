@@ -1,3 +1,4 @@
+import DesignSystem
 import AIServices
 import AVFoundation
 import Domain
@@ -50,7 +51,7 @@ extension AppModel {
         guard let source = try? await store.mediaDirectory(for: project.id),
               let target = try? await store.mediaDirectory(for: clip.id)
         else { return }
-        busy = String(localized: "busy.makingShort")
+        busy = AppLocalization.string("busy.makingShort")
         defer { busy = nil }
 
         // Hard links: the same bytes under a second name, so a short costs no space.

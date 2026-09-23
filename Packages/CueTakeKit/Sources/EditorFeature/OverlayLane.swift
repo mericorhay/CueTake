@@ -127,7 +127,7 @@ struct OverlayLane: View {
     static func label(for overlay: Overlay) -> String {
         switch overlay.content {
         case .text(let text): text.text
-        case .image: String(localized: "editor.overlay.image", bundle: .module)
+        case .image: AppLocalization.string("editor.overlay.image", bundle: .module)
         }
     }
 }

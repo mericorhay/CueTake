@@ -85,14 +85,14 @@ public final class RetakeModel {
     }
 
     public func failCapture(_ key: String.LocalizationValue) {
-        captureError = String(localized: key, bundle: .module)
+        captureError = AppLocalization.string(key, bundle: .module)
         countdown = nil
         isStarting = false
         state = .ready
     }
 
     /// - Parameter localeIdentifier: the project's language, for listening to the reader.
-    public init(segment: Segment, localeIdentifier: String = Locale.current.identifier, speech: any SpeechTranscribing = SystemSpeechTranscriber()) {
+    public init(segment: Segment, localeIdentifier: String = AppLocalization.locale.identifier, speech: any SpeechTranscribing = SystemSpeechTranscriber()) {
         self.segment = segment
         driver = PrompterDriver(scripts: [segment.script], localeIdentifier: localeIdentifier, speech: speech)
         driver.onMove = { [weak self] position in
@@ -268,7 +268,7 @@ public struct RetakeScreen: View {
                     DSBackButton(size: 34, fontSize: 15, style: .glass, action: onBack)
                         .disabled(model.state == .rolling || model.isSaving || model.isStarting)
                     DSKicker(
-                        String(localized: "retake.kicker \(model.segment.role.displayLabel)", bundle: .module),
+                        AppLocalization.string("retake.kicker \(model.segment.role.displayLabel)", bundle: .module),
                         color: DS.Palette.ink(0.55)
                     )
                 }
@@ -309,13 +309,13 @@ public struct RetakeScreen: View {
                 Task { await model.startCamera(position: camera) }
             }
         }
-        .alert(String(localized: "studio.capture.error", bundle: .module), isPresented: Binding(
+        .alert(AppLocalization.string("studio.capture.error", bundle: .module), isPresented: Binding(
             get: { model.captureError != nil },
             set: { if !$0 { model.captureError = nil } }
         )) {
-            Button(String(localized: "studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
+            Button(AppLocalization.string("studio.dismiss", bundle: .module), role: .cancel) { model.captureError = nil }
             if model.needsCapturePermissions {
-                Button(String(localized: "studio.settings.open", bundle: .module)) {
+                Button(AppLocalization.string("studio.settings.open", bundle: .module)) {
                     if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
                 }
             }
@@ -392,7 +392,7 @@ public struct RetakeScreen: View {
                 }
                 .padding(.top, 12)
             } else if model.isStarting {
-                ProgressView(String(localized: "studio.capture.preparing", bundle: .module))
+                ProgressView(AppLocalization.string("studio.capture.preparing", bundle: .module))
                     .tint(DS.Palette.ink)
                     .padding(.top, 12)
             }
@@ -488,7 +488,7 @@ public struct RetakeScreen: View {
     private var compareState: some View {
         VStack(spacing: 0) {
             if model.isSaving {
-                ProgressView(String(localized: "studio.saving", bundle: .module))
+                ProgressView(AppLocalization.string("studio.saving", bundle: .module))
                     .tint(DS.Palette.ink)
                     .padding(.bottom, 14)
             }
@@ -506,24 +506,24 @@ public struct RetakeScreen: View {
             HStack(spacing: 8) {
                 takeCard(
                     .old,
-                    kicker: String(localized: "retake.take.old.kicker", bundle: .module),
-                    title: String(localized: "retake.take.old.title", bundle: .module),
+                    kicker: AppLocalization.string("retake.take.old.kicker", bundle: .module),
+                    title: AppLocalization.string("retake.take.old.title", bundle: .module),
                     meta: model.segment.selectedTake?.sourceRange.duration.preciseTimecode
-                        ?? String(localized: "retake.noPrevious", bundle: .module)
+                        ?? AppLocalization.string("retake.noPrevious", bundle: .module)
                 )
                 takeCard(
                     .new,
-                    kicker: String(localized: "retake.take.new.kicker", bundle: .module),
-                    title: String(localized: "retake.take.new.title", bundle: .module),
+                    kicker: AppLocalization.string("retake.take.new.kicker", bundle: .module),
+                    title: AppLocalization.string("retake.take.new.title", bundle: .module),
                     meta: model.lastCapture.map { MediaTime(seconds: $0.duration).preciseTimecode }
-                        ?? String(localized: "studio.saving", bundle: .module)
+                        ?? AppLocalization.string("studio.saving", bundle: .module)
                 )
             }
             .padding(.bottom, 14)
 
             FlexRow(spacing: 10, weights: [1, 1.3]) {
                 DSSecondaryButton(
-                    String(localized: "retake.shootAgain", bundle: .module),
+                    AppLocalization.string("retake.shootAgain", bundle: .module),
                     verticalPadding: 16
                 ) {
                     model.redo()
@@ -559,7 +559,7 @@ public struct RetakeScreen: View {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
-            model.captureError = String(localized: "retake.preview.audio", bundle: .module)
+            model.captureError = AppLocalization.string("retake.preview.audio", bundle: .module)
         }
         let item = AVPlayerItem(url: url)
         let player = AVPlayer(playerItem: item)

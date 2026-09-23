@@ -17,18 +17,18 @@ enum AdCategory: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .beauty: String(localized: "editor.template.category.beauty", bundle: .module)
-        case .fashion: String(localized: "editor.template.category.fashion", bundle: .module)
-        case .food: String(localized: "editor.template.category.food", bundle: .module)
-        case .tech: String(localized: "editor.template.category.tech", bundle: .module)
-        case .gaming: String(localized: "editor.template.category.gaming", bundle: .module)
-        case .fitness: String(localized: "editor.template.category.fitness", bundle: .module)
-        case .travel: String(localized: "editor.template.category.travel", bundle: .module)
-        case .finance: String(localized: "editor.template.category.finance", bundle: .module)
-        case .home: String(localized: "editor.template.category.home", bundle: .module)
-        case .education: String(localized: "editor.template.category.education", bundle: .module)
-        case .events: String(localized: "editor.template.category.events", bundle: .module)
-        case .partnership: String(localized: "editor.template.category.partnership", bundle: .module)
+        case .beauty: AppLocalization.string("editor.template.category.beauty", bundle: .module)
+        case .fashion: AppLocalization.string("editor.template.category.fashion", bundle: .module)
+        case .food: AppLocalization.string("editor.template.category.food", bundle: .module)
+        case .tech: AppLocalization.string("editor.template.category.tech", bundle: .module)
+        case .gaming: AppLocalization.string("editor.template.category.gaming", bundle: .module)
+        case .fitness: AppLocalization.string("editor.template.category.fitness", bundle: .module)
+        case .travel: AppLocalization.string("editor.template.category.travel", bundle: .module)
+        case .finance: AppLocalization.string("editor.template.category.finance", bundle: .module)
+        case .home: AppLocalization.string("editor.template.category.home", bundle: .module)
+        case .education: AppLocalization.string("editor.template.category.education", bundle: .module)
+        case .events: AppLocalization.string("editor.template.category.events", bundle: .module)
+        case .partnership: AppLocalization.string("editor.template.category.partnership", bundle: .module)
         }
     }
 
@@ -56,23 +56,23 @@ enum AdSlot: String, CaseIterable {
 
     var name: String {
         switch self {
-        case .brand: String(localized: "editor.template.slot.brand", bundle: .module)
-        case .label: String(localized: "editor.template.slot.label", bundle: .module)
-        case .title: String(localized: "editor.template.slot.title", bundle: .module)
-        case .detail: String(localized: "editor.template.slot.detail", bundle: .module)
-        case .code: String(localized: "editor.template.slot.code", bundle: .module)
-        case .price: String(localized: "editor.template.slot.price", bundle: .module)
-        case .oldPrice: String(localized: "editor.template.slot.oldPrice", bundle: .module)
-        case .number: String(localized: "editor.template.slot.number", bundle: .module)
-        case .note: String(localized: "editor.template.slot.note", bundle: .module)
-        case .date: String(localized: "editor.template.slot.date", bundle: .module)
-        case .place: String(localized: "editor.template.slot.place", bundle: .module)
-        case .cta: String(localized: "editor.template.slot.cta", bundle: .module)
-        case .optionA: String(localized: "editor.template.slot.optionA", bundle: .module)
-        case .optionB: String(localized: "editor.template.slot.optionB", bundle: .module)
-        case .item1: String(localized: "editor.template.slot.item1", bundle: .module)
-        case .item2: String(localized: "editor.template.slot.item2", bundle: .module)
-        case .item3: String(localized: "editor.template.slot.item3", bundle: .module)
+        case .brand: AppLocalization.string("editor.template.slot.brand", bundle: .module)
+        case .label: AppLocalization.string("editor.template.slot.label", bundle: .module)
+        case .title: AppLocalization.string("editor.template.slot.title", bundle: .module)
+        case .detail: AppLocalization.string("editor.template.slot.detail", bundle: .module)
+        case .code: AppLocalization.string("editor.template.slot.code", bundle: .module)
+        case .price: AppLocalization.string("editor.template.slot.price", bundle: .module)
+        case .oldPrice: AppLocalization.string("editor.template.slot.oldPrice", bundle: .module)
+        case .number: AppLocalization.string("editor.template.slot.number", bundle: .module)
+        case .note: AppLocalization.string("editor.template.slot.note", bundle: .module)
+        case .date: AppLocalization.string("editor.template.slot.date", bundle: .module)
+        case .place: AppLocalization.string("editor.template.slot.place", bundle: .module)
+        case .cta: AppLocalization.string("editor.template.slot.cta", bundle: .module)
+        case .optionA: AppLocalization.string("editor.template.slot.optionA", bundle: .module)
+        case .optionB: AppLocalization.string("editor.template.slot.optionB", bundle: .module)
+        case .item1: AppLocalization.string("editor.template.slot.item1", bundle: .module)
+        case .item2: AppLocalization.string("editor.template.slot.item2", bundle: .module)
+        case .item3: AppLocalization.string("editor.template.slot.item3", bundle: .module)
         }
     }
 }
@@ -83,9 +83,9 @@ enum AdFont: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .display: String(localized: "editor.template.font.display", bundle: .module)
-        case .clean: String(localized: "editor.template.font.clean", bundle: .module)
-        case .mono: String(localized: "editor.template.font.mono", bundle: .module)
+        case .display: AppLocalization.string("editor.template.font.display", bundle: .module)
+        case .clean: AppLocalization.string("editor.template.font.clean", bundle: .module)
+        case .mono: AppLocalization.string("editor.template.font.mono", bundle: .module)
         }
     }
 
@@ -170,7 +170,7 @@ struct AdTemplate: Identifiable, Hashable {
     let accent: UInt32
     let isLight: Bool
 
-    private static var turkish: Bool { Locale.current.language.languageCode?.identifier == "tr" }
+    private static var turkish: Bool { AppLocalization.locale.language.languageCode?.identifier == "tr" }
     private static func say(_ tr: String, _ en: String) -> String { turkish ? tr : en }
 
     private init(_ id: String, _ category: AdCategory, _ style: AdStyle, _ accent: UInt32, light: Bool = false, _ texts: [AdSlot: String]) {
@@ -1044,11 +1044,11 @@ struct AdTemplateSheet: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .background(DS.Palette.screen)
-            .navigationTitle(String(localized: titleKey, bundle: .module))
+            .navigationTitle(AppLocalization.string(titleKey, bundle: .module))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "editor.template.cancel", bundle: .module), action: onClose)
+                    Button(AppLocalization.string("editor.template.cancel", bundle: .module), action: onClose)
                 }
             }
             .safeAreaInset(edge: .bottom) { addButton }
@@ -1130,8 +1130,8 @@ struct AdTemplateSheet: View {
             }
             .scrollIndicators(.hidden)
             HStack(spacing: 8) {
-                option(String(localized: "editor.template.dark", bundle: .module), isOn: !fields.isLight) { fields.isLight = false }
-                option(String(localized: "editor.template.light", bundle: .module), isOn: fields.isLight) { fields.isLight = true }
+                option(AppLocalization.string("editor.template.dark", bundle: .module), isOn: !fields.isLight) { fields.isLight = false }
+                option(AppLocalization.string("editor.template.light", bundle: .module), isOn: fields.isLight) { fields.isLight = true }
                 Spacer(minLength: 0)
             }
             HStack(spacing: 8) {
@@ -1161,7 +1161,7 @@ struct AdTemplateSheet: View {
     private var categories: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
-                chip(nil, title: String(localized: "editor.template.all", bundle: .module), symbol: "square.grid.2x2")
+                chip(nil, title: AppLocalization.string("editor.template.all", bundle: .module), symbol: "square.grid.2x2")
                 ForEach(AdCategory.allCases) { item in
                     chip(item, title: item.title, symbol: item.symbol)
                 }
@@ -1230,7 +1230,7 @@ struct AdTemplateSheet: View {
     }
 
     private var addButton: some View {
-        DSPrimaryButton(String(localized: actionKey, bundle: .module)) {
+        DSPrimaryButton(AppLocalization.string(actionKey, bundle: .module)) {
             guard let data = AdTemplateArt.render(selected.style, fields: fields) else { return }
             onAdd(data, selected.style, fields.stored(templateID: selected.id))
         }

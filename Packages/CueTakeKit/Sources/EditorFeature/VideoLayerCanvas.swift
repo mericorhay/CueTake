@@ -58,7 +58,7 @@ struct VideoLayerCanvas: View {
                         Button {
                             model.seek(to: layer.start.seconds + 0.01)
                         } label: {
-                            Label(String(localized: "editor.video.goToIt", bundle: .module), systemImage: "arrow.uturn.forward")
+                            Label(AppLocalization.string("editor.video.goToIt", bundle: .module), systemImage: "arrow.uturn.forward")
                                 .dsFont(.sans, .semibold, 11)
                                 .foregroundStyle(DS.Palette.inkInverse)
                                 .padding(.horizontal, 10)

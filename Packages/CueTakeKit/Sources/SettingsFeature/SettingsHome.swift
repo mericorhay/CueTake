@@ -141,6 +141,7 @@ public struct SettingsScreen: View {
             if ProcessInfo.processInfo.arguments.contains("-editing-preview") { destination = .editing }
             if ProcessInfo.processInfo.arguments.contains("-intelligence-preview") { destination = .intelligence }
             if ProcessInfo.processInfo.arguments.contains("-privacy-preview") { destination = .device }
+            if ProcessInfo.processInfo.arguments.contains("-language-preview") { destination = .device }
             #endif
         }
         .sheet(item: $destination) { selected in
@@ -222,6 +223,7 @@ struct SettingsPanel: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsKeys = false
     @State private var showsConverter = false
+    @State private var showsLanguage = false
     @State private var confirmsCleaning = false
     @State private var keyCount = APIKeySheet.connectedCount
     @State private var isCleaning = false
@@ -241,13 +243,29 @@ struct SettingsPanel: View {
         }
         .scrollIndicators(.hidden)
         .background(DS.Palette.screen)
-        .onAppear { displayedStorage = storage }
+        .onAppear {
+            displayedStorage = storage
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-language-preview") {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(350))
+                    showsLanguage = true
+                }
+            }
+            #endif
+        }
         .onChange(of: storage) { _, value in displayedStorage = value }
         .sheet(isPresented: $showsKeys, onDismiss: { keyCount = APIKeySheet.connectedCount }) {
             APIKeySheet { showsKeys = false }.presentationDragIndicator(.visible).presentationCornerRadius(32)
         }
         .sheet(isPresented: $showsConverter) {
             ConverterSheet { showsConverter = false }.presentationDetents([.large]).presentationDragIndicator(.visible).presentationCornerRadius(32)
+        }
+        .sheet(isPresented: $showsLanguage) {
+            LanguageSheet(model: model) { showsLanguage = false }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
         }
         .confirmationDialog(settingsText("settings.storage.confirm"), isPresented: $confirmsCleaning, titleVisibility: .visible) {
             Button(settingsText("settings.storage.clean")) {
@@ -307,14 +325,12 @@ struct SettingsPanel: View {
             }.padding(12).sensoryFeedback(.selection, trigger: model.settings.aiProcessing)
             Button { showsKeys = true } label: {
                 SettingsRow(icon: "key.horizontal", title: settingsText("settings.apiKey"),
-                            detail: keyCount == 0 ? settingsText("settings.apiKey.none") : String(localized: "settings.apiKey.connected \(keyCount)", bundle: .module))
+                            detail: keyCount == 0 ? settingsText("settings.apiKey.none") : AppLocalization.string("settings.apiKey.connected \(keyCount)", bundle: .module))
             }.buttonStyle(SettingsPressStyle())
         case .device:
-            Button {
-                if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-            } label: {
+            Button { showsLanguage = true } label: {
                 SettingsRow(icon: "globe", title: settingsText("settings.language"),
-                            detail: Locale.current.localizedString(forLanguageCode: Bundle.main.preferredLocalizations.first ?? "en"))
+                            detail: languageName(model.settings.language))
             }.buttonStyle(SettingsPressStyle())
             if onCleanStorage != nil {
                 Button { confirmsCleaning = true } label: {
@@ -356,7 +372,70 @@ struct SettingsPanel: View {
     }
 }
 
-func settingsText(_ key: String.LocalizationValue) -> String { String(localized: key, bundle: .module) }
+func settingsText(_ key: String.LocalizationValue) -> String { AppLocalization.string(key, bundle: .module) }
+
+private func languageName(_ language: AppLanguage) -> String {
+    switch language {
+    case .automatic: settingsText("settings.language.automatic")
+    case .english: "English"
+    case .spanish: "Español"
+    case .turkish: "Türkçe"
+    }
+}
+
+private struct LanguageSheet: View {
+    let model: SettingsModel
+    let close: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                SettingsSheetHeader(
+                    icon: "globe",
+                    title: settingsText("settings.language"),
+                    detail: settingsText("settings.language.detail"),
+                    close: close
+                )
+
+                VStack(spacing: 8) {
+                    ForEach(AppLanguage.allCases, id: \.self) { language in
+                        let selected = model.settings.language == language
+                        Button {
+                            withAnimation(reduceMotion ? nil : DS.Motion.snap) {
+                                model.setLanguage(language)
+                            }
+                        } label: {
+                            HStack(spacing: 15) {
+                                Text(languageName(language))
+                                    .font(DS.archivo(.semibold, 18))
+                                    .foregroundStyle(DS.Palette.ink)
+                                Spacer(minLength: 0)
+                                Text(language.localeIdentifier?.uppercased() ?? settingsText("settings.language.device"))
+                                    .font(DS.mono(10)).tracking(1.2)
+                                    .foregroundStyle(selected ? DS.Palette.accent : DS.Palette.ink(0.42))
+                                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 21, weight: .semibold))
+                                    .foregroundStyle(selected ? DS.Palette.accent : DS.Palette.ink(0.2))
+                                    .contentTransition(reduceMotion ? .identity : .symbolEffect(.replace))
+                            }
+                            .padding(.horizontal, 18)
+                            .frame(minHeight: 66)
+                            .background(selected ? DS.Palette.accent(0.09) : DS.Palette.surface, in: RoundedRectangle(cornerRadius: 20))
+                            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(selected ? DS.Palette.accent(0.32) : DS.Palette.hairline(0.06)))
+                        }
+                        .buttonStyle(SettingsPressStyle())
+                        .accessibilityAddTraits(selected ? .isSelected : [])
+                    }
+                }
+            }
+            .padding(22).padding(.top, 14).padding(.bottom, 28)
+        }
+        .scrollIndicators(.hidden)
+        .background(DS.Palette.screen)
+        .sensoryFeedback(.selection, trigger: model.settings.language)
+    }
+}
 
 struct SettingsRow: View {
     let icon: String

@@ -40,7 +40,7 @@ struct AIChangesSheet: View {
         HStack(spacing: 9) {
             AIOrb(fast: false, size: 26)
             VStack(alignment: .leading, spacing: 2) {
-                DSKicker(String(localized: "editor.aiChanges.title", bundle: .module))
+                DSKicker(AppLocalization.string("editor.aiChanges.title", bundle: .module))
                 Text("editor.aiChanges.hint", bundle: .module)
                     .dsFont(.sans, .regular, 11)
                     .foregroundStyle(DS.Palette.ink(0.56))

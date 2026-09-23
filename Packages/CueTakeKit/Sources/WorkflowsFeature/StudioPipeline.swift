@@ -17,10 +17,10 @@ struct StudioPipeline: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                DSKicker(String(localized: "studio.pipeline", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
+                DSKicker(AppLocalization.string("studio.pipeline", bundle: .module), size: 10, color: DS.Palette.ink(0.56))
                 Spacer(minLength: 0)
                 Button(action: onShowPalette) {
-                    Label(String(localized: "studio.pipeline.add", bundle: .module), systemImage: "plus")
+                    Label(AppLocalization.string("studio.pipeline.add", bundle: .module), systemImage: "plus")
                         .dsFont(.sans, .semibold, 12)
                         .foregroundStyle(DS.Palette.lime)
                 }
@@ -70,7 +70,7 @@ struct StudioPipeline: View {
                             Image(systemName: tool.symbol)
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(tint)
-                            Text(String(localized: tool.title, bundle: .module))
+                            Text(AppLocalization.string(tool.title, bundle: .module))
                                 .dsFont(.sans, .medium, 11)
                                 .foregroundStyle(DS.Palette.ink(0.75))
                         }
@@ -80,7 +80,7 @@ struct StudioPipeline: View {
                     }
                     .buttonStyle(.dsPress(radius: 20))
                     .draggable(StudioDrag.tool + tool.type) {
-                        Label(String(localized: tool.title, bundle: .module), systemImage: tool.symbol)
+                        Label(AppLocalization.string(tool.title, bundle: .module), systemImage: tool.symbol)
                             .dsFont(.sans, .semibold, 12)
                             .foregroundStyle(DS.Palette.inkInverse)
                             .padding(.horizontal, 12)
@@ -128,7 +128,7 @@ struct StudioPipeline: View {
                             .symbolEffect(.bounce, value: state == .done)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(String(localized: tool.title, bundle: .module))
+                            Text(AppLocalization.string(tool.title, bundle: .module))
                                 .dsFont(.sans, .semibold, 14)
                                 .foregroundStyle(step.isEnabled ? DS.Palette.ink : DS.Palette.ink(0.35))
                                 .strikethrough(!step.isEnabled, color: DS.Palette.ink(0.52))
@@ -160,7 +160,7 @@ struct StudioPipeline: View {
                     }
 
                     if let warning, step.isEnabled {
-                        Label(String(localized: warning, bundle: .module), systemImage: "exclamationmark.triangle.fill")
+                        Label(AppLocalization.string(warning, bundle: .module), systemImage: "exclamationmark.triangle.fill")
                             .dsFont(.sans, .regular, 11)
                             .foregroundStyle(DS.Palette.accentWarm)
                             .transition(.opacity)
@@ -176,7 +176,7 @@ struct StudioPipeline: View {
                             .transition(.opacity.combined(with: .move(edge: .top)))
 
                         if locked {
-                            Label(String(localized: "studio.export.lockedNote", bundle: .module), systemImage: "lock")
+                            Label(AppLocalization.string("studio.export.lockedNote", bundle: .module), systemImage: "lock")
                                 .dsFont(.sans, .regular, 10)
                                 .foregroundStyle(DS.Palette.ink(0.56))
                         } else {
@@ -187,7 +187,7 @@ struct StudioPipeline: View {
                                 Button(role: .destructive) {
                                     withAnimation(DS.Motion.settle) { model.removeStep(step.id) }
                                 } label: {
-                                    Label(String(localized: "studio.delete", bundle: .module), systemImage: "trash")
+                                    Label(AppLocalization.string("studio.delete", bundle: .module), systemImage: "trash")
                                         .dsFont(.sans, .medium, 12)
                                         .foregroundStyle(DS.Palette.accent)
                                         .padding(.horizontal, 12)
@@ -218,7 +218,7 @@ struct StudioPipeline: View {
                         model.expandedStep = isExpanded ? nil : step.id
                     }
                 }
-                .modifier(StepDrag(enabled: !locked, payload: StudioDrag.step + step.id.uuidString, title: String(localized: tool.title, bundle: .module), symbol: tool.symbol, tint: tint))
+                .modifier(StepDrag(enabled: !locked, payload: StudioDrag.step + step.id.uuidString, title: AppLocalization.string(tool.title, bundle: .module), symbol: tool.symbol, tint: tint))
                 .padding(.bottom, 10)
             }
             .animation(DS.Motion.snap, value: isTarget)
@@ -305,8 +305,8 @@ struct StudioPipeline: View {
                         .font(.system(size: 12, weight: .semibold))
                     Text(
                         model.definition.steps.isEmpty
-                            ? String(localized: "studio.pipeline.empty", bundle: .module)
-                            : String(localized: "studio.pipeline.drop", bundle: .module)
+                            ? AppLocalization.string("studio.pipeline.empty", bundle: .module)
+                            : AppLocalization.string("studio.pipeline.drop", bundle: .module)
                     )
                     .dsFont(.sans, .medium, 12)
                 }
@@ -351,11 +351,11 @@ struct StudioPipeline: View {
 
     static func subtitle(_ step: WorkflowStep, state: StudioStepState?, note: String.LocalizationValue) -> String {
         switch state {
-        case .running: return String(localized: "studio.step.running", bundle: .module)
+        case .running: return AppLocalization.string("studio.step.running", bundle: .module)
         case .skipped(let reason): return reason
         default:
             let summary = StudioCatalog.summary(of: step.kind)
-            return summary.isEmpty ? String(localized: note, bundle: .module) : summary
+            return summary.isEmpty ? AppLocalization.string(note, bundle: .module) : summary
         }
     }
 
@@ -443,7 +443,7 @@ struct StudioToolPalette: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                DSKicker(String(localized: "studio.palette", bundle: .module))
+                DSKicker(AppLocalization.string("studio.palette", bundle: .module))
                 Spacer(minLength: 0)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -465,7 +465,7 @@ struct StudioToolPalette: View {
                         let tools = StudioCatalog.addable.filter { $0.category == category }
                         if !tools.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(String(localized: StudioCatalog.categoryTitle(category), bundle: .module))
+                                Text(AppLocalization.string(StudioCatalog.categoryTitle(category), bundle: .module))
                                     .dsFont(.archivo, .bold, 15)
                                     .foregroundStyle(DS.Palette.ink)
 
@@ -504,10 +504,10 @@ struct StudioToolPalette: View {
                     .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.14)))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: tool.title, bundle: .module))
+                    Text(AppLocalization.string(tool.title, bundle: .module))
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
-                    Text(String(localized: tool.note, bundle: .module))
+                    Text(AppLocalization.string(tool.note, bundle: .module))
                         .dsFont(.sans, .regular, 11)
                         .foregroundStyle(DS.Palette.ink(0.56))
                         .lineLimit(2)
