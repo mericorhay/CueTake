@@ -496,6 +496,7 @@ final class AppModel {
     /// The editor asks for playback; only this layer knows where the project's media lives.
     func prepareEditorPlayback() async {
         connectEditorGeneration()
+        connectSoundDesign()
         connectEditorShorts()
         guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else { return }
 

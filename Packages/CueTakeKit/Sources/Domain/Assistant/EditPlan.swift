@@ -126,6 +126,9 @@ public struct EditPlan: Codable, Sendable, Equatable {
         /// A transition out of a clip (every cut when nil): crossfade, fadeBlack, slideLeft…
         case transition(clip: String?, kind: String, seconds: Double?)
         case removeTransition(clip: String?)
+        /// Lays the sound design over the whole video — whooshes, pops, hits — at `intensity`
+        /// (subtle, normal, bold); `on: false` takes the automatic sounds away.
+        case soundDesign(intensity: String?, on: Bool)
 
         case unknown(type: String)
 
@@ -187,6 +190,7 @@ public struct EditPlan: Codable, Sendable, Equatable {
             case .generateVideo: "generateVideo"
             case .transition: "transition"
             case .removeTransition: "removeTransition"
+            case .soundDesign: "soundDesign"
             case .unknown(let type): type
             }
         }
@@ -618,6 +622,8 @@ extension EditPlan.Operation: Codable {
             )
         case "removeTransition", "removeTransitions":
             self = .removeTransition(clip: f.string("clip") ?? f.string("after"))
+        case "soundDesign", "addSoundEffects", "sfx":
+            self = .soundDesign(intensity: f.string("intensity") ?? f.string("level"), on: f.flag("on") ?? true)
         case "removeTrack", "stopTracking":
             self = .removeTrack(clip: f.string("clip"))
         case "useTranscript":
@@ -808,6 +814,8 @@ extension EditPlan.Operation: Codable {
             try put("clip", clip); try put("kind", kind); try put("seconds", seconds)
         case .removeTransition(let clip):
             try put("clip", clip)
+        case .soundDesign(let intensity, let on):
+            try put("intensity", intensity); try put("on", on)
         case .unknown:
             break
         }
@@ -877,7 +885,7 @@ extension EditPlan {
             case .generateVideo: op
             case .transition(let clip, let kind, let seconds): .transition(clip: clip.map(refs.clip), kind: kind, seconds: seconds)
             case .removeTransition(let clip): .removeTransition(clip: clip.map(refs.clip))
-            case .layoutVideos, .mainVolume: op
+            case .layoutVideos, .mainVolume, .soundDesign: op
             case .captionStyle, .captionLook, .captionWindow, .addText, .voiceCleanup, .voiceEffects, .setTitle, .unknown: op
             }
         })

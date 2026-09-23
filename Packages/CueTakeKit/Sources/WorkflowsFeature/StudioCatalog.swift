@@ -27,6 +27,7 @@ enum StudioCatalog {
         Tool(type: "setSpeed", symbol: "gauge.with.dots.needle.67percent", title: "tool.setSpeed", note: "tool.setSpeed.note", category: .cut),
         Tool(type: "cleanAudio", symbol: "wind", title: "tool.cleanAudio", note: "tool.cleanAudio.note", category: .sound),
         Tool(type: "musicBed", symbol: "music.note", title: "tool.musicBed", note: "tool.musicBed.note", category: .sound),
+        Tool(type: "soundDesign", symbol: "speaker.wave.3.fill", title: "tool.soundDesign", note: "tool.soundDesign.note", category: .sound),
         Tool(type: "voiceEffect", symbol: "waveform.badge.plus", title: "tool.voiceEffect", note: "tool.voiceEffect.note", category: .sound),
         Tool(type: "generateCaptions", symbol: "captions.bubble", title: "tool.generateCaptions", note: "tool.generateCaptions.note", category: .words),
         Tool(type: "applyCaptionStyle", symbol: "textformat.size", title: "tool.applyCaptionStyle", note: "tool.applyCaptionStyle.note", category: .words),
@@ -116,6 +117,9 @@ enum StudioCatalog {
             return "\(o.preset) · \(Int(o.amount * 100))% · \(targetLabel(o.target))"
         case .videoLayout(let o):
             return o.layout
+        case .soundDesign(let o):
+            return [o.intensity.rawValue, o.whooshes ? "whoosh" : nil, o.pops ? "pop" : nil, o.impacts ? "hit" : nil, o.dings ? "ding" : nil]
+                .compactMap { $0 }.joined(separator: " · ")
         case .aiEdit(let o):
             return o.instruction.isEmpty ? "" : "“\(o.instruction.prefix(40))”"
         case .generateVideo(let o):

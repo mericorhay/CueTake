@@ -93,6 +93,9 @@ Step types, in the order they usually run:
 - cleanAudio { "denoise": true, "enhanceVoice": true, "removeRumble": true }
 - musicBed { "levelDB": -12, "ducking": true, "fadeIn": 0.5, "fadeOut": 1.2 } — only if the project already has music.
 - voiceEffect { "preset": "clean|echo|hall|room|telephone|radio|megaphone|robot|underwater|deep|chipmunk", "amount": 0.4, "target": "all|hook|intro|point|example|cta" }
+- soundDesign { "intensity": "subtle|normal|bold", "whooshes": true, "pops": true, "impacts": true, "dings": true } — sound
+  effects made by the app (no music): whooshes on transitions and section changes, pops on titles and templates, a hit on
+  punch-ins, a ding on the call to action. Put it after the look and brand steps so it hears them.
 - generateCaptions
 - applyCaptionStyle { "presetID": one of the caption presets above }
 Studio tools (the same tools as the editor; each works on the video as it is when the step runs):
@@ -123,7 +126,8 @@ For "professional", "dynamic" or "viral" add trackFace, autoZoom, a filter, an a
 transitions on sections; for a sponsored video add a brandTemplate at the cta with the details the user gave.
 Order: generateVideo, assembleSections, analyzeSpeech, bestTakes, cleanup/trimSilences/cutWords, setSpeed,
 sound steps, captions, look steps (filter, background, trackFace, autoZoom, transitions, videoLayout),
-brand steps (addTitle, brandTemplate, brandKit), aiEdit, export.
+brand steps (addTitle, brandTemplate, brandKit), soundDesign, aiEdit, export. Add soundDesign to every
+"professional", "dynamic", "viral" or ad workflow: videos without it feel unfinished.
 
 Rules:
 - Reply in the language of the user's message.
@@ -193,6 +197,10 @@ Camera: cameraMove{move|null,at,to,kind push|pull|punch|hold,amount 0.04-0.35,fe
 Transitions: transition{clip|null,kind,seconds 0.2-2} (how clip hands over to the next; null = every cut)
   kind crossfade|fadeBlack|fadeWhite|slideLeft|slideRight|slideUp|slideDown|pushLeft|pushRight|wipeLeft|wipeRight|wipeUp|wipeDown|zoomIn|zoomOut
   removeTransition{clip|null}. clips[].transition shows the current one. The video keeps its length.
+Sound design: soundDesign{intensity subtle|normal|bold, on true|false} lays app-made sound effects over the whole video
+  (whoosh on transitions, pop on titles and templates, hit on punch-ins, ding on the call to action), replacing earlier
+  automatic ones; on false removes them. Send it once, after the other operations, whenever the edit adds titles,
+  transitions or camera moves or the user asks for a professional, dynamic or viral edit.
 Project: setTitle{title} renameClip{clip,title} setRole{clip,role hook|intro|point|example|cta} setScript{clip,text} selectTake{clip,take}
 Example: {"op":"setFilter","from":0,"to":3.2,"look":"cinematic","intensity":0.7}
 

@@ -241,7 +241,7 @@ extension WorkflowStepKind {
         case .generateScript, .segmentScript, .record, .assembleSections: .structure
         case .generateVideo, .aiEdit: .generate
         case .trimSilences, .cutWords, .setSpeed, .cleanup, .bestTakes: .cut
-        case .cleanAudio, .musicBed, .voiceEffect: .sound
+        case .cleanAudio, .musicBed, .voiceEffect, .soundDesign: .sound
         case .analyzeSpeech, .generateCaptions, .applyCaptionStyle: .words
         case .filter, .background, .autoZoom, .trackFace, .transitions, .videoLayout: .look
         case .addTitle, .brandTemplate, .brandKit: .brand

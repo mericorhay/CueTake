@@ -20,6 +20,42 @@
 
 ---
 
+## Kalite planı: 3 tur (23 Eylül 2026)
+
+**Sorun:** Araç sayısı yetiyor ama çıkan video Instagram'daki iyi reels'lerin yanında vasat duruyor. Üç sebep var:
+1. **Ses tasarımı yok.** Kesmede whoosh, yazıda pop, vurguda darbe sesi yok, video "çıplak" duruyor.
+2. **Araçlar tarz değil, düğme.** Kullanıcı "filtre yoğunluğu 0.7" değil, "şu tarzda olsun" istiyor. Tarzı biz tasarlamazsak her araç ayrı ayrı vasat kalıyor.
+3. **Ara görüntü ve ritim yok.** İyi reels'lerde 3-5 saniyede bir B-roll var, kesmeler müziğe oturuyor.
+
+**Kural: lisans riski yok.** Üçüncü taraf ses ya da müzik paketi gömülmez.
+- **SFX:** cihazda kodla sentezlenir. Sesler bizim, telif yok.
+- **Müzik:** kullanıcının kendi dosyası ya da ileride kullanıcının kendi AI anahtarıyla ürettiği müzik (BYOK).
+- **B-roll:** ticari kullanımı serbest bir hazır görüntü servisi, anahtarı Worker'da.
+
+### Tur 1: Parlatma ve ses tasarımı
+- [x] **Sentez SFX motoru** (`MediaEngine/SoundDesignSynth`): whoosh, pop, impact, ding, click, riser. Gürültü, filtre süpürme ve FM ile üretilir. Sürümlenmiş dosya olarak projeye bir kez yazılır.
+- [x] **Otomatik ses tasarımı** (`Domain/Audio/SoundDesign`): Sesler videodaki olaylara oturur.
+  - Geçiş ve bölüm değişimi: whoosh.
+  - Başlık, şablon ya da yazı girişi: pop.
+  - Ani zoom: impact.
+  - CTA: ding.
+  - Açılıştan hemen sonra: riser (sadece "güçlü" seviyede).
+  - Yoğunluk: sade / normal / güçlü. Tekrar çalıştırınca eski otomatik sesleri siler, yenilerini koyar.
+- [x] **Nerede kullanılır:** workflow adımı (`soundDesign`), editörde tek düğme, AI'ın `soundDesign` işlemi.
+- [ ] **Ses seviyesi eşitleme:** −14 LUFS entegre, −1 dBTP tepe. Export sonrası ölçülür, gerekirse ses kazancıyla yeniden yazılır.
+- [ ] **Parlatma adımı** (`polish`): hafif renk ve kontrast düzeltmesi, netlik, ses eşitleme.
+
+### Tur 2: Tarz paketleri
+- [ ] 6 hazır tarz: Cesur İş, Vlog, Podcast Kesiti, UGC Reklam, Minimal Estetik, Enerjik.
+  - Her tarz şunları birlikte ayarlar: altyazı görünümü, vurgu rengi, zoom sıklığı, SFX yoğunluğu, filtre, tempo (duraklama eşiği), açılış başlığı.
+- [ ] Editörde "Tarz" düğmesi, tek dokunuşla ve geri alınabilir. Workflow'da `applyStyle` adımı. Reçeteler tarzlarla yeniden yazılır.
+- [ ] Anahtar kelime vurgusu: kelime renklenir, emoji çıkar, pop sesi çalar. Üçü aynı anda.
+
+### Tur 3: B-roll ve ritim
+- [ ] Hazır görüntüden otomatik B-roll: konuşmadaki somut kelimeye göre aranır, 3-5 sn, konuşanın üstüne yerleşir. Anahtar Worker'da durur.
+- [ ] Beat motoru: kullanıcının müziğinde vuruş bulunur. Kesmeler, zoom'lar ve altyazı girişleri vuruşa yapışır.
+- [ ] Kıyas testi: kullanıcının seçtiği 3 reels aynı tarzla yeniden yapılır, yan yana karşılaştırılır.
+
 ## 0. Durum panosu
 
 Son güncelleme: 18 Eylül 2026, build 104. ✅ bitti · 🟢 kodu bitti, cihazda denenmedi · 🟡 kısmen · ⬜ başlanmadı.

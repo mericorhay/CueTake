@@ -117,6 +117,16 @@ struct StudioToolEditor: View {
                 }
                 note("studio.param.aiEditNote")
 
+            case .soundDesign(let options):
+                chips("studio.param.sfxLevel", options: SoundDesignOptions.Intensity.allCases.map(\.rawValue), selected: options.intensity.rawValue, prefix: "studio.sfx.") {
+                    var o = options; o.intensity = SoundDesignOptions.Intensity(rawValue: $0) ?? .normal; set(.soundDesign(o))
+                }
+                toggle("studio.param.sfxWhoosh", isOn: options.whooshes) { var o = options; o.whooshes.toggle(); set(.soundDesign(o)) }
+                toggle("studio.param.sfxPop", isOn: options.pops) { var o = options; o.pops.toggle(); set(.soundDesign(o)) }
+                toggle("studio.param.sfxImpact", isOn: options.impacts) { var o = options; o.impacts.toggle(); set(.soundDesign(o)) }
+                toggle("studio.param.sfxDing", isOn: options.dings) { var o = options; o.dings.toggle(); set(.soundDesign(o)) }
+                note("studio.param.sfxNote")
+
             case .bestTakes:
                 note("tool.bestTakes.note")
 

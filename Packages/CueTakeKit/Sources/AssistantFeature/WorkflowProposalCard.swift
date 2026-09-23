@@ -110,7 +110,7 @@ struct WorkflowProposalCard: View {
         case .export: AppLocalization.string("assistant.step.export", bundle: .module)
         case .generateVideo(let o): o.modelPreset.title
         case .cleanup, .bestTakes, .brandKit, .addTitle, .brandTemplate, .filter, .background, .autoZoom,
-             .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit:
+             .trackFace, .transitions, .voiceEffect, .videoLayout, .aiEdit, .soundDesign:
             AppLocalization.string(String.LocalizationValue(stringLiteral: "assistant.step." + kind.typeName), bundle: .module)
         case .generateScript, .segmentScript, .record, .unsupported: kind.typeName
         }

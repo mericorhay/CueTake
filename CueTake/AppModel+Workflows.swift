@@ -551,6 +551,13 @@ extension AppModel {
         case .brandKit(let options):
             return await applyWorkflowBrand(options)
 
+        case .soundDesign(let options):
+            connectSoundDesign()
+            editorModel.project = project
+            let laid = await editorModel.applySoundDesign(options)
+            project = editorModel.project
+            return laid > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
+
         case .addTitle(let options):
             return await runStudioTool { WorkflowStudioPlanner.title(options, in: $0) }
 

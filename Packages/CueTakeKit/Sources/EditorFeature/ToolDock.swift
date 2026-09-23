@@ -38,11 +38,11 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, text, image, template, video, captions, audio, delete, more
+        case ai, generate, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.
-        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound].contains(self) }
+        var opensPanel: Bool { [.trim, .speed, .generate, .zoom, .background, .filter, .sound, .sfx].contains(self) }
     }
 
     /// The tool whose panel is open. Bound, so the picture above can make room for it.
@@ -53,6 +53,9 @@ struct ToolDock: View {
     @State private var playbackRangeClip: Segment.ID?
     /// Where a new background goes: this clip, from the playhead on, or the whole video.
     @State private var backgroundReach: BackgroundReach = .clip
+    /// How much sound design the one-tap button lays in.
+    @State private var sfxIntensity: SoundDesignOptions.Intensity = .normal
+    @State private var designingSound = false
 
     enum BackgroundReach: Hashable {
         case clip, fromHere, whole
@@ -99,7 +102,7 @@ struct ToolDock: View {
         // A tool that acts on a clip closes when there is no clip to act on.
         .onChange(of: index == nil) { _, lost in
             // The AI works on the whole video, not the clip under the playhead.
-            if lost, open != .ai, open != .audio, open != .generate { open = nil }
+            if lost, open != .ai, open != .audio, open != .generate, open != .sfx { open = nil }
         }
     }
 
@@ -132,6 +135,7 @@ struct ToolDock: View {
         case .zoom:
             index.map { model.project.segments[$0].selectedTake != nil } ?? false
         case .filter, .sound: !model.project.segments.isEmpty
+        case .sfx: model.canDesignSound
         case .delete: index.map { model.canDeleteSegment(at: $0) } ?? false
         case .transition: model.project.segments.count > 1
         case .shorts: model.project.segments.contains { $0.selectedTake != nil }
@@ -222,6 +226,7 @@ struct ToolDock: View {
         case .text, .image, .template, .video: glyph.symbolEffect(.bounce.up, value: count)
         case .filter: glyph.symbolEffect(.bounce, value: count)
         case .sound: glyph.symbolEffect(.variableColor.iterative, value: count)
+        case .sfx: glyph.symbolEffect(.variableColor.iterative, options: .repeating, isActive: designingSound)
         case .captions, .audio, .more: glyph.symbolEffect(.bounce, value: count)
         }
     }
@@ -239,6 +244,7 @@ struct ToolDock: View {
         case .video: "rectangle.split.2x1"
         case .filter: "camera.filters"
         case .sound: "waveform.badge.plus"
+        case .sfx: "speaker.wave.3.fill"
         case .split: "scissors"
         case .transition: "square.on.square.intersection.dashed"
         case .shorts: "film.stack"
@@ -264,6 +270,7 @@ struct ToolDock: View {
         case .video: AppLocalization.string("editor.dock.video", bundle: .module)
         case .filter: AppLocalization.string("editor.dock.filter", bundle: .module)
         case .sound: AppLocalization.string("editor.dock.sound", bundle: .module)
+        case .sfx: AppLocalization.string("editor.dock.sfx", bundle: .module)
         case .split: AppLocalization.string("editor.tool.split", bundle: .module)
         case .transition: AppLocalization.string("editor.dock.transition", bundle: .module)
         case .shorts: AppLocalization.string("editor.dock.shorts", bundle: .module)
@@ -346,7 +353,7 @@ struct ToolDock: View {
         case .shorts:
             open = nil
             onShorts()
-        case .trim, .speed, .generate, .zoom, .background, .filter, .sound: break
+        case .trim, .speed, .generate, .zoom, .background, .filter, .sound, .sfx: break
         }
     }
 
@@ -361,7 +368,7 @@ struct ToolDock: View {
                 Text(title(item))
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                if ![.ai, .generate, .shorts, .audio, .transition].contains(item), let index {
+                if ![.ai, .generate, .shorts, .audio, .transition, .sfx].contains(item), let index {
                     Text(AppLocalization.string("editor.tool.target \(index + 1)", bundle: .module))
                         .dsFont(.mono, .medium, 10)
                         .foregroundStyle(DS.Palette.ink(0.56))
@@ -389,6 +396,8 @@ struct ToolDock: View {
                     mainReframePanel
                 } else if item == .zoom {
                     zoomPanel
+                } else if item == .sfx {
+                    sfxPanel
                 } else if let index {
                     switch item {
                     case .trim: trimPanel(at: index)
@@ -409,6 +418,77 @@ struct ToolDock: View {
             in: RoundedRectangle(cornerRadius: 22, style: .continuous),
             border: DS.Palette.accent(0.35)
         )
+    }
+
+    /// One tap for the sounds a finished short has: whooshes on the transitions, pops on titles,
+    /// a hit on each punch-in, a ding on the call to action. Made on the phone, never licensed.
+    private var sfxPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("editor.sfx.hint", bundle: .module)
+                .dsFont(.sans, .regular, 11, lineHeight: 1.35)
+                .foregroundStyle(DS.Palette.ink(0.58))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 6) {
+                ForEach(SoundDesignOptions.Intensity.allCases, id: \.self) { level in
+                    let active = sfxIntensity == level
+                    Button {
+                        withAnimation(DS.Motion.snap) { sfxIntensity = level }
+                    } label: {
+                        Text(AppLocalization.string(String.LocalizationValue(stringLiteral: "editor.sfx.level." + level.rawValue), bundle: .module))
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(active ? DS.Palette.inkInverse : DS.Palette.ink(0.7))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 38)
+                            .background(Capsule().fill(active ? DS.Palette.lime : DS.Palette.hairline(0.07)))
+                    }
+                    .buttonStyle(.dsPress(radius: 19))
+                    .accessibilityAddTraits(active ? .isSelected : [])
+                }
+            }
+
+            HStack(spacing: 8) {
+                Button {
+                    guard !designingSound else { return }
+                    designingSound = true
+                    let options = SoundDesignOptions(intensity: sfxIntensity)
+                    Task {
+                        await model.applySoundDesign(options)
+                        designingSound = false
+                    }
+                } label: {
+                    HStack(spacing: 7) {
+                        if designingSound {
+                            ProgressView().controlSize(.small).tint(DS.Palette.inkInverse)
+                        } else {
+                            Image(systemName: "speaker.wave.2.fill")
+                        }
+                        Text(model.hasSoundDesign ? "editor.sfx.redo" : "editor.sfx.apply", bundle: .module)
+                    }
+                    .dsFont(.sans, .semibold, 13)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(Capsule().fill(DS.Palette.accent))
+                }
+                .buttonStyle(.dsPress(radius: 22))
+                .disabled(designingSound)
+
+                if model.hasSoundDesign {
+                    Button {
+                        withAnimation(DS.Motion.settle) { model.removeSoundDesign() }
+                    } label: {
+                        Label(AppLocalization.string("editor.sfx.remove", bundle: .module), systemImage: "speaker.slash")
+                            .dsFont(.sans, .semibold, 12)
+                            .foregroundStyle(DS.Palette.ink(0.7))
+                            .padding(.horizontal, 14)
+                            .frame(height: 44)
+                            .background(Capsule().fill(DS.Palette.hairline(0.08)))
+                    }
+                    .buttonStyle(.dsPress(radius: 22))
+                }
+            }
+        }
     }
 
     private var zoomPanel: some View {

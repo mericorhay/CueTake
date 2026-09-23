@@ -60,6 +60,7 @@ extension AppModel {
                     WorkflowStep(kind: .musicBed(MusicBedOptions(levelDB: -16))),
                     WorkflowStep(kind: .generateCaptions),
                     WorkflowStep(kind: .applyCaptionStyle(presetID: "bold")),
+                    WorkflowStep(kind: .soundDesign(SoundDesignOptions(intensity: .normal))),
                     WorkflowStep(kind: .export(.shortFormVertical)),
                 ]
             )
@@ -86,6 +87,7 @@ extension AppModel {
                     WorkflowStep(kind: .musicBed(MusicBedOptions())),
                     WorkflowStep(kind: .generateCaptions),
                     WorkflowStep(kind: .applyCaptionStyle(presetID: "karaoke")),
+                    WorkflowStep(kind: .soundDesign(SoundDesignOptions(intensity: .bold))),
                     WorkflowStep(kind: .export(.shortFormVertical)),
                 ]
             )

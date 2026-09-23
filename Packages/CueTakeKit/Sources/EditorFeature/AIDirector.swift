@@ -1542,6 +1542,34 @@ extension EditorModel {
             }
         }
 
+        // Sound design last: its sounds follow the cuts, titles and camera moves made above.
+        for op in ops {
+            guard case .soundDesign(let intensity, let on) = op else { continue }
+            guard on else {
+                add("speaker.slash", describe(op), op) { m in
+                    let removed = m.project.audio.filter(SoundDesign.isAutomatic).map(\.id)
+                    guard !removed.isEmpty else { return nil }
+                    m.project.audio.removeAll(where: SoundDesign.isAutomatic)
+                    return removed.map { .audio($0) }
+                }
+                continue
+            }
+            guard soundDesigner != nil else { skipped.append(op.type); continue }
+            let options = SoundDesignOptions(intensity: SoundDesignOptions.Intensity(rawValue: intensity?.lowercased() ?? "") ?? .normal)
+            let box = AISoundDesignBox()
+            steps.append(AIStep(
+                info: AIStepInfo(id: steps.count, symbol: "speaker.wave.2.fill", text: describe(op)),
+                types: [op.type],
+                locate: { _ in (nil, nil) },
+                perform: { m in
+                    guard let clips = box.clips, !clips.isEmpty else { return nil }
+                    m.layInSoundDesign(clips)
+                    return clips.map { .audio($0.id) }
+                },
+                prepare: { m in box.clips = await m.soundDesigner?(options, m.document()) }
+            ))
+        }
+
         return (steps, skipped)
     }
 
@@ -1716,6 +1744,7 @@ extension EditorModel {
         case .generateVideo: "wand.and.stars"
         case .transition: "square.on.square.intersection.dashed"
         case .removeTransition: "scissors"
+        case .soundDesign: "speaker.wave.2.fill"
         case .unknown: "questionmark"
         }
     }
@@ -1836,6 +1865,8 @@ extension EditorModel {
             L("editor.ai.op.transition \(ClipTransition.Kind(loose: kind).map { AppLocalization.string(TransitionMarks.titleKey($0), bundle: .module) } ?? kind) \(clip.map(clipNumber) ?? "*")")
         case .removeTransition(let clip):
             L("editor.ai.op.removeTransition \(clip.map(clipNumber) ?? "*")")
+        case .soundDesign(_, let on):
+            on ? L("editor.ai.op.soundDesign") : L("editor.ai.op.soundDesignOff")
         case .unknown(let type):
             L("editor.ai.op.unknown \(type)")
         }

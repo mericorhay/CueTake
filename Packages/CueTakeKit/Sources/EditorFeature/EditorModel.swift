@@ -169,6 +169,9 @@ public final class EditorModel {
     var editCount = 0
     /// True while an AI plan is being carried out, so its many tool calls make one undo step.
     @ObservationIgnored var isApplyingPlan = false
+    /// Makes the sound design's sounds for a document and returns them as clips to lay in. Set by
+    /// the app, which owns the project's media folder; nil hides sound design.
+    @ObservationIgnored public var soundDesigner: ((SoundDesignOptions, EditDocument) async -> [AudioClip])?
     /// Batches begun inside another batch, so ending the inner one does not end the outer.
     @ObservationIgnored var batchDepth = 0
 

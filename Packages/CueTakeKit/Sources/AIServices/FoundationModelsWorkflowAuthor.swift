@@ -30,7 +30,7 @@ struct GeneratedStep {
         .anyOf([
             "assembleSections", "analyzeSpeech", "cleanup", "bestTakes", "trimSilences", "cutWords", "setSpeed",
             "cleanAudio", "musicBed", "generateCaptions", "applyCaptionStyle", "addTitle", "filter",
-            "trackFace", "autoZoom", "transitions", "brandKit", "export",
+            "trackFace", "autoZoom", "transitions", "soundDesign", "brandKit", "export",
         ])
     )
     var type: String
@@ -38,7 +38,7 @@ struct GeneratedStep {
     @Guide(description: "The one number the tool needs: pause length in seconds for trimSilences (0.3 to 1.5), playback speed for setSpeed (0.5 to 2), music level in dB for musicBed (-30 to -3). 0 for every other tool.")
     var amount: Double
 
-    @Guide(description: "The one word the tool needs: which section for setSpeed (all, hook, intro, point, example, cta), the caption look for applyCaptionStyle (pop, clean, karaoke), the look for filter (cinematic, warm, cool, vivid, vintage, mono), the transition for transitions (crossfade, fadeBlack, slideLeft, zoomIn), punch, push or mixed for autoZoom. Empty for every other tool.")
+    @Guide(description: "The one word the tool needs: which section for setSpeed (all, hook, intro, point, example, cta), the caption look for applyCaptionStyle (pop, clean, karaoke), the look for filter (cinematic, warm, cool, vivid, vintage, mono), the transition for transitions (crossfade, fadeBlack, slideLeft, zoomIn), punch, push or mixed for autoZoom, subtle, normal or bold for soundDesign. Empty for every other tool.")
     var target: String
 }
 
@@ -175,6 +175,9 @@ public struct FoundationModelsWorkflowAuthor: Sendable {
         case .transitions(var options):
             if ClipTransition.Kind(rawValue: target) != nil { options.kind = target }
             return .transitions(options)
+        case .soundDesign(var options):
+            if let intensity = SoundDesignOptions.Intensity(rawValue: target) { options.intensity = intensity }
+            return .soundDesign(options)
         case .autoZoom(var options):
             if let style = ZoomStepOptions.Style(rawValue: target) { options.style = style }
             return .autoZoom(options)

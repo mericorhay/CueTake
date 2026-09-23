@@ -1265,6 +1265,29 @@
           }
         }
       }
+    },
+    "assistant.step.soundDesign" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound design"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses tasarımı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diseño de sonido"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
