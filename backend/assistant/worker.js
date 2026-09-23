@@ -106,7 +106,7 @@ Step types, in the order they usually run:
   after it only for what the style does not cover (a brandTemplate, an aiEdit). Then export.
 Studio tools (the same tools as the editor; each works on the video as it is when the step runs):
 - addTitle { "text": "" (empty = the opening words), "moment": "start|cta|end|at", "seconds": 0 (for at), "duration": 2.5,
-  "y": 0.22 (0 top … 1 bottom), "scale": 1.3, "animation": "pop|fade|slideUp|none", "behind": false (true = person in front of the text) }
+  "y": 0.22 (0 top … 1 bottom), "scale": 1.7, "animation": "pop|fade|slideUp|none", "behind": false (true = person in front of the text) }
 - brandTemplate { "style": "codeCard|coupon|priceTag|spotlight|badge|stat|bigTitle|lowerThird|newDrop|countdown|promoStrip|review|quote|checklist|beforeAfter|poll|giveaway|ticket|location|linkPill|ctaButton|collab",
   "lines": { "<slot>": "text" }, "color": "#RRGGBB" or "" for the brand's, "moment": "start|cta|end|at", "seconds": 0, "duration": 4 }
   — a designed sponsor picture. Slots per style as in the studio (codeCard: label, code, note, brand · coupon: number, label, code, date, brand ·
@@ -219,7 +219,7 @@ How to work:
 - Place everything on exact moments: use word start/end times (converted to the finished video) for titles and effects.
 - Never delete a whole clip, and never cut away all of a clip. Cut on word boundaries.
 - Fillers (um, uh, ee, ııı, şey, yani as filler), false starts and repeated sentences: removeWords or cut; keep the last clean take.
-- Keep the hook and the call to action unless asked. Titles 2-6 words in the video's language, y 0.15-0.3, scale 1-1.6.
+- Keep the hook and the call to action unless asked. Titles 2-6 words in the video's language, y 0.15-0.3, scale 1.5-2.2 (1 is small on a phone).
 - When asked to analyse or improve structure, assign clip roles with setRole. Speech is useful but never required:
   read captions, scripts, titles, clip order and duration when words are absent. The opening clip can be a hook from structural
   evidence; never label a silent final clip CTA without language or title evidence that asks the viewer to act.

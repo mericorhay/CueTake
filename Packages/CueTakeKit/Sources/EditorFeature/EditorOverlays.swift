@@ -72,7 +72,7 @@ extension EditorModel {
         let overlay = Overlay(
             content: .text(OverlayText(text: text ?? AppLocalization.string("editor.overlay.defaultText", bundle: .module))),
             start: MediaTime(seconds: playhead),
-            transform: OverlayTransform(y: 0.3)
+            transform: OverlayTransform(y: 0.3, scale: 1.6)
         )
         record("editor.change.overlayAdd", symbol: "textformat")
         project.overlays.append(overlay)

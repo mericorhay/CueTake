@@ -131,31 +131,32 @@ enum AdStyle: String, CaseIterable {
     }
 
     /// Where it lands on the frame — its centre, from the left and the top — and how wide it is
-    /// as a share of the frame's width.
+    /// as a share of the frame's width. Wide on purpose: a card is read on a phone in a second,
+    /// and its small lines (a label, a brand) must still be legible after Instagram compresses it.
     var placement: (x: Double, y: Double, width: Double) {
         switch self {
-        case .codeCard: (0.5, 0.72, 0.64)
-        case .coupon: (0.5, 0.7, 0.72)
-        case .priceTag: (0.5, 0.74, 0.62)
-        case .spotlight: (0.5, 0.66, 0.62)
-        case .badge: (0.75, 0.22, 0.32)
-        case .stat: (0.5, 0.3, 0.62)
-        case .bigTitle: (0.5, 0.24, 0.86)
-        case .lowerThird: (0.5, 0.84, 0.88)
-        case .newDrop: (0.5, 0.3, 0.64)
-        case .countdown: (0.5, 0.16, 0.7)
+        case .codeCard: (0.5, 0.72, 0.86)
+        case .coupon: (0.5, 0.7, 0.9)
+        case .priceTag: (0.5, 0.74, 0.84)
+        case .spotlight: (0.5, 0.66, 0.84)
+        case .badge: (0.75, 0.22, 0.44)
+        case .stat: (0.5, 0.3, 0.84)
+        case .bigTitle: (0.5, 0.24, 0.94)
+        case .lowerThird: (0.5, 0.84, 0.94)
+        case .newDrop: (0.5, 0.3, 0.86)
+        case .countdown: (0.5, 0.16, 0.9)
         case .promoStrip: (0.5, 0.5, 1.1)
-        case .review: (0.5, 0.72, 0.72)
-        case .quote: (0.5, 0.3, 0.8)
-        case .checklist: (0.5, 0.66, 0.7)
-        case .beforeAfter: (0.5, 0.74, 0.86)
-        case .poll: (0.5, 0.62, 0.66)
-        case .giveaway: (0.5, 0.66, 0.72)
-        case .ticket: (0.5, 0.72, 0.76)
-        case .location: (0.5, 0.8, 0.62)
-        case .linkPill: (0.5, 0.86, 0.58)
-        case .ctaButton: (0.5, 0.82, 0.62)
-        case .collab: (0.5, 0.14, 0.62)
+        case .review: (0.5, 0.72, 0.9)
+        case .quote: (0.5, 0.3, 0.92)
+        case .checklist: (0.5, 0.66, 0.88)
+        case .beforeAfter: (0.5, 0.74, 0.94)
+        case .poll: (0.5, 0.62, 0.86)
+        case .giveaway: (0.5, 0.66, 0.9)
+        case .ticket: (0.5, 0.72, 0.92)
+        case .location: (0.5, 0.8, 0.84)
+        case .linkPill: (0.5, 0.86, 0.78)
+        case .ctaButton: (0.5, 0.82, 0.82)
+        case .collab: (0.5, 0.14, 0.84)
         }
     }
 }

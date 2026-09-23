@@ -880,7 +880,7 @@ extension EditorModel {
                         id: id,
                         content: .text(OverlayText(text: patch.text ?? "")),
                         start: MediaTime(seconds: max(0, patch.start ?? here)),
-                        transform: OverlayTransform(y: 0.3),
+                        transform: OverlayTransform(y: 0.3, scale: 1.6),
                         animation: .pop
                     )
                     Self.apply(patch, to: &overlay)

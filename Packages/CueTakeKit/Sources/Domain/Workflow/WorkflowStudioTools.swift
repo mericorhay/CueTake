@@ -105,7 +105,7 @@ public struct TitleStepOptions: Hashable, Sendable, Codable {
 
     public init(
         text: String = "", moment: WorkflowMoment = .start, seconds: Double = 0, duration: Double = 2.5,
-        y: Double = 0.22, scale: Double = 1.3, animation: String = "pop", behind: Bool = false
+        y: Double = 0.22, scale: Double = 1.7, animation: String = "pop", behind: Bool = false
     ) {
         self.text = text
         self.moment = moment
@@ -126,7 +126,7 @@ public struct TitleStepOptions: Hashable, Sendable, Codable {
         seconds = c.value(.seconds, or: 0)
         duration = c.value(.duration, or: 2.5)
         y = c.value(.y, or: 0.22)
-        scale = c.value(.scale, or: 1.3)
+        scale = c.value(.scale, or: 1.7)
         animation = c.value(.animation, or: "pop")
         behind = c.value(.behind, or: false)
     }

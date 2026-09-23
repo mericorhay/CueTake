@@ -69,7 +69,7 @@ public enum VideoStyle: String, Hashable, Sendable, Codable, CaseIterable, Ident
                 .filter(FilterStepOptions(look: "vivid", intensity: 0.35)),
                 .trackFace(TrackFaceOptions(closeness: 0.12)),
                 .autoZoom(ZoomStepOptions(style: .mixed, amount: 0.16, spacing: 3.5)),
-                .addTitle(TitleStepOptions(moment: .start, duration: 2.2, y: 0.2, scale: 1.4, animation: "pop")),
+                .addTitle(TitleStepOptions(moment: .start, duration: 2.2, y: 0.2, scale: 1.8, animation: "pop")),
                 .soundDesign(SoundDesignOptions(intensity: .bold, keywords: true)),
             ]
         case .vlog:
@@ -100,7 +100,7 @@ public enum VideoStyle: String, Hashable, Sendable, Codable, CaseIterable, Ident
                 .filter(FilterStepOptions(look: "vivid", intensity: 0.3)),
                 .autoZoom(ZoomStepOptions(style: .mixed, amount: 0.14, spacing: 4)),
                 .transitions(TransitionStepOptions(kind: "slideLeft", seconds: 0.35, placement: .sections)),
-                .addTitle(TitleStepOptions(moment: .start, duration: 2.4, y: 0.2, scale: 1.3, animation: "pop")),
+                .addTitle(TitleStepOptions(moment: .start, duration: 2.4, y: 0.2, scale: 1.7, animation: "pop")),
                 .brandKit(BrandStepOptions()),
                 .soundDesign(SoundDesignOptions(intensity: .normal, keywords: true)),
             ]
@@ -123,7 +123,7 @@ public enum VideoStyle: String, Hashable, Sendable, Codable, CaseIterable, Ident
                 .trackFace(TrackFaceOptions(closeness: 0.12)),
                 .autoZoom(ZoomStepOptions(style: .punch, amount: 0.15, spacing: 2.5)),
                 .transitions(TransitionStepOptions(kind: "zoomIn", seconds: 0.35, placement: .everyCut)),
-                .addTitle(TitleStepOptions(moment: .start, duration: 1.8, y: 0.22, scale: 1.5, animation: "pop")),
+                .addTitle(TitleStepOptions(moment: .start, duration: 1.8, y: 0.22, scale: 1.9, animation: "pop")),
                 .soundDesign(SoundDesignOptions(intensity: .bold)),
             ]
         }
