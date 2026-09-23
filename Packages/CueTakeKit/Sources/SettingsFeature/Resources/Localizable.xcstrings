@@ -2370,29 +2370,6 @@
         }
       }
     },
-    "settings.profile.name" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deniz Aksoy"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deniz Aksoy"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deniz Aksoy"
-          }
-        }
-      }
-    },
     "settings.profile.plan" : {
       "extractionState" : "manual",
       "localizations" : {

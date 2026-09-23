@@ -19,6 +19,10 @@ import {
 const config = await readConfig();
 const localeArgument = process.argv.find(argument => argument.startsWith("--locale="))?.split("=")[1];
 const locale = localeArgument ?? config.generatedLocales[0];
+const selectedKeys = new Set(process.argv
+  .filter(argument => argument.startsWith("--key="))
+  .flatMap(argument => argument.slice("--key=".length).split(","))
+  .filter(Boolean));
 const refresh = process.argv.includes("--refresh");
 const discardCache = process.argv.includes("--discard-cache");
 const dryRun = process.argv.includes("--dry-run");
@@ -58,6 +62,7 @@ for (const file of await catalogFiles()) {
   const catalog = await readCatalog(file);
   catalogs.set(file, catalog);
   for (const unit of translationUnits(file, catalog, config.sourceLocale)) {
+    if (selectedKeys.size && !selectedKeys.has(unit.key)) continue;
     const existing = catalog.strings[unit.key].localizations?.[locale];
     let cursor = existing;
     for (let index = 0; cursor && index < unit.path.length; index += 3) {
@@ -68,14 +73,17 @@ for (const file of await catalogFiles()) {
   }
 }
 
-let cache = { model: modelName, modelDigest: model.digest, promptVersion: config.promptVersion, locale, translations: {} };
+let cache = { model: modelName, modelDigest: model.digest, promptVersion: config.promptVersion, locale, translations: {}, sources: {} };
 try {
   const stored = JSON.parse(await fs.readFile(cacheFile, "utf8"));
   if (!discardCache && stored.model === modelName && stored.modelDigest === model.digest
       && stored.promptVersion === config.promptVersion && stored.locale === locale) cache = stored;
 } catch { /* A new run has no cache. */ }
 
-const pending = allUnits.filter(unit => !(unit.id in cache.translations));
+cache.sources ??= {};
+// A translation is reusable only for the exact authored source that produced it. This prevents
+// a refreshed catalog from silently restoring stale model output after English copy changes.
+const pending = allUnits.filter(unit => !(unit.id in cache.translations) || cache.sources[unit.id] !== unit.source);
 console.log(`${allUnits.length} units selected; ${pending.length} require model output; ${allUnits.length - pending.length} resumed from cache.`);
 if (dryRun) process.exit(0);
 
@@ -169,7 +177,10 @@ while (queue.length) {
     continue;
   }
 
-  for (const [id, text] of translated) cache.translations[id] = text;
+  for (const [id, text] of translated) {
+    cache.translations[id] = text;
+    cache.sources[id] = batch.find(unit => unit.id === id)?.source;
+  }
   const running = await ollama("/api/ps");
   const loaded = (running.models ?? []).find(candidate => candidate.name === modelName);
   if (loaded?.size > config.maximumModelBytes) {

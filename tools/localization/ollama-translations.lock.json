@@ -37,20 +37,20 @@
       "translatedUnits": 823
     },
     "Packages/CueTakeKit/Sources/LibraryFeature/Resources/Localizable.xcstrings": {
-      "sha256": "97ee88a48346e647f7dbb9e41604ce468e4cb7c341582d448d2986d428816fa7",
-      "translatedUnits": 32
+      "sha256": "26849a3a0d22b1a2b0f41eed225da02029f6d2ef9c7ce056bd9dbb88aab18781",
+      "translatedUnits": 31
     },
     "Packages/CueTakeKit/Sources/OnboardingFeature/Resources/Localizable.xcstrings": {
       "sha256": "871778f1879fca97f5cf61f2ff047f8cc804776e81addfcdcc32dab97cab4b5f",
       "translatedUnits": 15
     },
     "Packages/CueTakeKit/Sources/ScriptFeature/Resources/Localizable.xcstrings": {
-      "sha256": "688fb41ffe6bd7f65226082f05f4aebf3e54d4995ba499ed9477623eef1bcf12",
+      "sha256": "d05c3f709a107e8a075b32dfe77493014fe96f46e2f6ab36d8e280c97b8554f0",
       "translatedUnits": 108
     },
     "Packages/CueTakeKit/Sources/SettingsFeature/Resources/Localizable.xcstrings": {
-      "sha256": "5aa5b084f1646ea9982671ee1efe319d386fe79a806c1dba1a6adbb7abcc4184",
-      "translatedUnits": 204
+      "sha256": "931a8881a364e5660177ffe8508fed7aed6e4c9a15ee8ef276cfe150ad59c889",
+      "translatedUnits": 203
     },
     "Packages/CueTakeKit/Sources/StudioFeature/Resources/Localizable.xcstrings": {
       "sha256": "c4aab243d581b9070ed39b37dd4fd92b45a8676a474ecd1da8f0f8e487ec8e70",

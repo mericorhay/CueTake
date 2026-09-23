@@ -81,5 +81,6 @@ let package = Package(
         .testTarget(name: "PersistenceTests", dependencies: ["Domain", "Persistence"], swiftSettings: concurrency),
         .testTarget(name: "TeamSyncTests", dependencies: ["Domain", "Persistence", "TeamSync"], swiftSettings: concurrency),
         .testTarget(name: "EditorFeatureTests", dependencies: ["Domain", "EditorFeature"], swiftSettings: ui),
+        .testTarget(name: "SettingsFeatureTests", dependencies: ["Domain", "DesignSystem", "Persistence", "SettingsFeature"], swiftSettings: ui),
     ]
 )

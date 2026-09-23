@@ -116,54 +116,6 @@
         }
       }
     },
-    "home.greeting.stamp" : {
-      "comment" : "Day and time above the greeting.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "FRIDAY · 20:14"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CUMA · 20:14"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VIERNES · 20:14"
-          }
-        }
-      }
-    },
-    "home.greeting.title" : {
-      "comment" : "Two lines; the line break is part of the design.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ready when\nyou are, Deniz."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hazırsan\nbaşlayalım, Deniz."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Listo cuando\nestés, Deniz."
-          }
-        }
-      }
-    },
     "home.recent.all" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -738,6 +690,30 @@
           }
         }
       }
+    },
+    "home.greeting.title.anonymous" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready when you\nare."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listo cuando tú\nestés."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hazırsan,\nbaşla."
+          }
+        }
+      },
+      "comment" : "A warm invitation to start creating. Translate idiomatically; do not repeat the word ready."
     }
   },
   "version" : "1.0"

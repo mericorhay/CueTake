@@ -39,6 +39,12 @@ for (const file of await catalogFiles()) {
       continue;
     }
     leafCount += sourceLeaves.length;
+    for (const sourceLeaf of sourceLeaves) {
+      const prose = sourceLeaf.stringUnit.value.replaceAll(/suflör/gi, "");
+      if (/[çğıİöşüÇĞÖŞÜ]/.test(prose)) {
+        errors.push(`${name} :: ${key} [${config.sourceLocale}]: source copy appears to be Turkish`);
+      }
+    }
 
     for (const locale of config.requiredLocales) {
       const targetLeaves = leafUnits(entry.localizations?.[locale]);

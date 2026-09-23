@@ -10,11 +10,22 @@ struct CueTakeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(model: model)
-                .environment(\.locale, model.settingsModel.settings.language.locale)
-                // Type follows the reader's text size this far; past it the layouts stop holding.
-                .dynamicTypeSize(...DS.largestTextSize)
-                .task { model.startCertificationClock() }
+            AppContent(model: model, settings: model.settingsModel)
         }
+    }
+}
+
+/// Reads the language model directly so every explicit selection invalidates the locale
+/// environment, including a second or third change while the language sheet is still open.
+private struct AppContent: View {
+    @Bindable var model: AppModel
+    @Bindable var settings: SettingsModel
+
+    var body: some View {
+        RootView(model: model)
+            .environment(\.locale, settings.settings.language.locale)
+            // Type follows the reader's text size this far; past it the layouts stop holding.
+            .dynamicTypeSize(...DS.largestTextSize)
+            .task { model.startCertificationClock() }
     }
 }

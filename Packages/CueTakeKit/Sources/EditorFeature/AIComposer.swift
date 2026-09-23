@@ -319,9 +319,12 @@ struct AIComposer: View {
                         Text(suggestion)
                             .dsFont(.sans, .medium, 11)
                             .foregroundStyle(DS.Palette.ink(0.85))
-                            .padding(.horizontal, 10)
-                            .frame(minHeight: 32)
-                            .background(Capsule().fill(DS.Palette.hairline(0.07)))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 8)
+                            .frame(minWidth: 116, maxWidth: 190, minHeight: 40, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DS.Palette.hairline(0.07)))
                     }
                     .buttonStyle(.dsPress(radius: 20))
                     // The chips arrive one after another.
@@ -332,7 +335,8 @@ struct AIComposer: View {
             }
         }
         .scrollIndicators(.hidden)
-        .scrollClipDisabled()
+        // Suggestions remain swipeable, but never draw through the composer's right edge.
+        .contentMargins(.horizontal, 1, for: .scrollContent)
     }
 
     private var consent: some View {

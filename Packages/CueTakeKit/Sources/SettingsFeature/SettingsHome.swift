@@ -6,7 +6,7 @@ import SwiftUI
 import UIKit
 
 public struct SettingsScreen: View {
-    private let model: SettingsModel
+    @Bindable private var model: SettingsModel
     private let account: AccountModel
     private let storage: String?
     private let onCleanStorage: (() async -> (message: String, storage: String?))?
@@ -25,7 +25,7 @@ public struct SettingsScreen: View {
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
                 onVoiceProfile: (() -> Void)? = nil) {
-        self.model = model; self.account = account; self.storage = storage
+        self._model = Bindable(wrappedValue: model); self.account = account; self.storage = storage
         self.onCleanStorage = onCleanStorage; self.onTeam = onTeam; self.onPreviewLight = onPreviewLight
         self.certificates = certificates; self.onCertificates = onCertificates
         self.voiceProfile = voiceProfile; self.onVoiceProfile = onVoiceProfile

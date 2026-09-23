@@ -24,8 +24,13 @@ public final class SettingsModel {
     /// Applies one change. Callers pass a key path rather than a whole `AppSettings`, so a screen
     /// can never write back a stale copy of the fields it was not editing.
     public func update<Value>(_ keyPath: WritableKeyPath<AppSettings, Value>, to value: Value) {
-        settings[keyPath: keyPath] = value
-        store.save(settings)
+        // Assign a new value instead of mutating through the key path in place. Observation
+        // reliably publishes the outer `settings` write across module boundaries, which is
+        // essential for preferences such as language that redraw the whole application.
+        var next = settings
+        next[keyPath: keyPath] = value
+        settings = next
+        store.save(next)
     }
 
     public func setLanguage(_ language: AppLanguage) {

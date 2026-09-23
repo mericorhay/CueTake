@@ -77,7 +77,7 @@ public struct DSBackButton: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.dsPressIcon)
-            .accessibilityLabel(Text("Back"))
+            .accessibilityLabel(Text(AppLocalization.string("a11y.back", bundle: .module)))
 
             Rectangle()
                 .fill(DS.Palette.hairline(0.14))

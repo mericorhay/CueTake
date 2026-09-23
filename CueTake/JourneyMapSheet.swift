@@ -109,7 +109,7 @@ struct JourneyMapSheet: View {
                                     .dsFont(.sans, .semibold, 16)
                                     .foregroundStyle(DS.Palette.ink(isCurrent || isDone ? 1 : 0.6))
                                 if isCurrent {
-                                    Text("journey.here")
+                                    Text(AppLocalization.string("journey.here"))
                                         .dsFont(.mono, .medium, 9, letterSpacing: 0.1)
                                         .foregroundStyle(DS.Palette.inkInverse)
                                         .padding(.horizontal, 7)

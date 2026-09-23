@@ -1,5 +1,6 @@
 import DesignSystem
 import Domain
+import Foundation
 import SwiftUI
 import UIKit
 
@@ -139,29 +140,37 @@ public struct HomeScreen: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 0) {
-                DSKicker(
-                    AppLocalization.string("home.greeting.stamp", bundle: .module),
-                    size: 11,
-                    tracking: 0.14,
-                    color: DS.Palette.ink(0.56)
-                )
-                DSHeadline(
-                    AppLocalization.string("home.greeting.title", bundle: .module),
-                    size: 34
-                )
-                .padding(.top, 10)
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 0) {
+                    DSKicker(
+                        greetingStamp(at: context.date),
+                        size: 11,
+                        tracking: 0.14,
+                        color: DS.Palette.ink(0.56)
+                    )
+                    DSHeadline(greetingTitle, size: 34)
+                        .padding(.top, 10)
+                }
+
+                Spacer(minLength: 0)
+
+                DSBrandMark(height: 30)
+                    .padding(.top, 24)
             }
-
-            Spacer(minLength: 0)
-
-            // The mark where the placeholder circle was: the one spot on the home screen that says
-            // whose app this is, top right, where a profile picture would otherwise sit.
-            DSBrandMark(height: 30)
-                .padding(.top, 24)
         }
         .padding(.horizontal, 22)
+    }
+
+    private var greetingTitle: String {
+        AppLocalization.string("home.greeting.title.anonymous", bundle: .module)
+    }
+
+    private func greetingStamp(at date: Date) -> String {
+        let locale = AppLocalization.locale
+        let weekday = date.formatted(Date.FormatStyle().weekday(.wide).locale(locale)).uppercased(with: locale)
+        let time = date.formatted(Date.FormatStyle().hour().minute().locale(locale))
+        return "\(weekday) · \(time)"
     }
 
     // MARK: - Create

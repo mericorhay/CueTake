@@ -494,19 +494,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kamera karşılaştırması"
+            "value" : "Camera Comparison"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kamera karşılaştırması"
+            "value" : "Kamera Karşılaştırması"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kamera karşılaştırması"
+            "value" : "Comparación de cámara"
           }
         }
       }
@@ -517,19 +517,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "30 sn ürün reel’i"
+            "value" : "30‑second Product Reel"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "30 sn ürün reel’i"
+            "value" : "30 saniyelik Ürün Reelsi"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "30 sn ürün reel’i"
+            "value" : "Reel de producto de 30 s"
           }
         }
       }
@@ -540,19 +540,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hikâye anlatımı"
+            "value" : "Storytelling"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hikâye anlatımı"
+            "value" : "Hikaye Anlatımı"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hikâye anlatımı"
+            "value" : "Narración"
           }
         }
       }
@@ -563,19 +563,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tutorial: 3 adım"
+            "value" : "Tutorial: 3 Steps"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tutorial: 3 adım"
+            "value" : "Eğitim: 3 Adım"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tutorial: 3 adım"
+            "value" : "Tutorial: 3 pasos"
           }
         }
       }
@@ -587,19 +587,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+            "value" : "30‑second energetic Reel showcasing iPhone 17 Pro Max camera features"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+            "value" : "iPhone 17 Pro Max kamera özelliklerini gösteren 30 saniyelik enerjik Reel"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "iPhone 17 Pro Max kamera özelliklerini anlatan 30 saniyelik enerjik bir Reel"
+            "value" : "Reel energético de 30 s mostrando las funciones de la cámara del iPhone 17 Pro Max"
           }
         }
       }
@@ -1924,19 +1924,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+            "value" : "And you’ll notice it even without a tripod, while shooting handheld."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+            "value" : "Ayrıca, tripod olmadan bile, elden çekim yaparken fark edeceksiniz."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Üstelik bunu tripod olmadan, elde çekerken bile fark ediyorsun."
+            "value" : "Y lo notarás incluso sin trípode, al grabar a mano."
           }
         }
       }
@@ -1993,19 +1993,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bak şöyle söyleyeyim:"
+            "value" : "Let me put it this way:"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bak şöyle söyleyeyim:"
+            "value" : "Şöyle diyelim:"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bak şöyle söyleyeyim:"
+            "value" : "Déjame decirlo así:"
           }
         }
       }
