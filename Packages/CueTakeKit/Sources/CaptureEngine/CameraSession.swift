@@ -277,7 +277,7 @@ public final class CameraSession: @unchecked Sendable {
             let rates = VideoFormat.frameRateChoices.filter { rate in
                 let candidate = VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: rate)
                 guard candidate.isPhysicallyPlausible else { return false }
-                Self.bestFormat(
+                return Self.bestFormat(
                     on: device,
                     for: candidate
                 ) != nil
