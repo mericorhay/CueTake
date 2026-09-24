@@ -143,7 +143,7 @@ extension AppModel {
                 locked: plan == .free && AccessPolicy.isProOnly(point)
             )
         }
-        let plusOnly: [AccessPoint] = [.suflorReport, .videoStyle(.energetic), .soundDesign, .beatSync, .brandTemplate, .multiPlatformExport, .highResolutionCapture, .highResolutionExport]
+        let plusOnly: [AccessPoint] = [.iCloudBackup, .suflorReport, .videoStyle(.energetic), .soundDesign, .beatSync, .brandTemplate, .multiPlatformExport, .highResolutionCapture, .highResolutionExport]
         return PlusUsage(
             isPlus: plan == .pro,
             rows: rows,

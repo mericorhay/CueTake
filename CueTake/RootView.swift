@@ -162,6 +162,8 @@ struct RootView: View {
         .task { await model.accountModel.refresh() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.accountModel.refresh() } }
+            // Leaving the app: the projects go to the creator's iCloud while iOS allows.
+            if phase == .background, model.access.plan == .pro { model.cloudBackup.backUpInBackground() }
         }
         .onReceive(NotificationCenter.default.publisher(for: ASAuthorizationAppleIDProvider.credentialRevokedNotification)) { _ in
             Task { await model.accountModel.revokeLocalSession() }
@@ -409,7 +411,8 @@ struct RootView: View {
                 suflorReports: model.suflorReportCount > 0 ? "\(model.suflorReportCount)" : AppLocalization.string("suflorReports.none"),
                 onSuflorReports: { showsSuflorReports = true },
                 allowsHighResolution: { model.access.use(.highResolutionCapture) },
-                captureResolutions: CameraSession.supportedResolutions(for: model.settingsModel.settings.defaultCamera)
+                captureResolutions: CameraSession.supportedResolutions(for: model.settingsModel.settings.defaultCamera),
+                cloudBackup: model.cloudBackupRow
             )
             .sheet(isPresented: $showsSuflorReports) {
                 SuflorReportsList(

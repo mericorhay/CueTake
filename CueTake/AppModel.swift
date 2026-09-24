@@ -76,6 +76,8 @@ final class AppModel {
     let access = AccessModel()
     /// CueTake+ in the App Store.
     let plusStore = PlusStore()
+    /// Projects in the creator's own iCloud.
+    let cloudBackup = CloudBackup()
     /// How many suflör reports are kept, for Settings.
     var suflorReportCount = SuflorReportStore.count()
 

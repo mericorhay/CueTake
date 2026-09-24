@@ -22,6 +22,8 @@ public struct SettingsScreen: View {
     private let plus: PlusUsage?
     private let onUpgrade: (() -> Void)?
     private let onRestore: (() -> Void)?
+    /// The iCloud backup section; nil hides it.
+    private let cloudBackup: CloudBackupRow?
     private let onManageSubscription: (() -> Void)?
     /// How many suflör reports are kept, and the way to them; nil hides the row.
     private let suflorReports: String?
@@ -42,7 +44,9 @@ public struct SettingsScreen: View {
                 plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onRestore: (() -> Void)? = nil,
                 onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
-                allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil) {
+                allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil,
+                cloudBackup: CloudBackupRow? = nil) {
+        self.cloudBackup = cloudBackup
         self.captureResolutions = captureResolutions
         self.suflorReports = suflorReports
         self.onSuflorReports = onSuflorReports
@@ -106,6 +110,11 @@ public struct SettingsScreen: View {
                     if let plus {
                         PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription, onRestore: onRestore)
                             .settingsEntrance(appeared, delay: 0.06, reduced: reduceMotion)
+                    }
+
+                    if let cloudBackup {
+                        CloudBackupCard(row: cloudBackup)
+                            .settingsEntrance(appeared, delay: 0.07, reduced: reduceMotion)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {

@@ -103,6 +103,8 @@ Son güncelleme: 18 Eylül 2026, build 104. ✅ bitti · 🟢 kodu bitti, cihazd
 3. İki telefonla (iki farklı Apple ID) dene: tokuşturmayla katılma, bağlantıyla davet, projeyi ekibe koyma, iki yönlü düzenleme, aynı anda düzenleme.
 4. Açık risk: `shareParticipants(for:)` ile kullanıcı kaydı kimliğinden katılımcı bulma gerçek cihazda doğrulanmadı; tutmazsa tokuşturma yerine bağlantıyla davet çalışır.
 
+**iCloud yedekleme (build 174, CueTake+):** Projeler kullanıcının kendi iCloud'una, özel CloudKit veritabanında `Backups` bölgesine dosya dosya gider (`CueTake/CloudBackup.swift`). Üretimde çalışması için CloudKit Console → `iCloud.com.orhay.cuetake` → Development'ta `BackupFile` kayıt türünü oluştur: `path` (String), `project` (String), `size` (Int64), `modified` (Date/Time), `file` (Asset); sonra *Deploy Schema Changes* ile Production'a gönder. Geri yükleme bölge değişiklikleriyle listelediği için dizin gerekmez.
+
 **Sahne (build 95–96):** ana video artık tam ekran olmak zorunda değil — `Project.mainVideoPlacement` kanvastan taşınıp boyutlanıyor, `StagePiece` ile eklenen videolarla aynı muameleyi görüyor. Bölünmüş ekran ön ayarları iki resmi birlikte yerleştiriyor, takas var. Yarım ekrana düşen resim mektup kutusu yerine kırpılıyor.
 
 **Bu turda öğrenilen (tekrarlanmasın):**

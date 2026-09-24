@@ -657,6 +657,7 @@ extension AccessPoint {
         case .highResolutionExport: AppLocalization.string("access.feature.export4K")
         case .highResolutionCapture: AppLocalization.string("access.feature.capture4K")
         case .suflorReport: AppLocalization.string("access.feature.suflorReport")
+        case .iCloudBackup: AppLocalization.string("access.feature.iCloudBackup")
         }
     }
 }
