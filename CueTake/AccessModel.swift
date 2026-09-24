@@ -1,3 +1,4 @@
+import Analytics
 import DesignSystem
 import Domain
 import Foundation
@@ -87,6 +88,7 @@ final class AccessModel {
         ledger = ledger.current()
         let decision = AccessPolicy.decide(point, plan: plan, ledger: ledger)
         guard decision.isAllowed else {
+            Analytics.track("feature_refused", ["feature": .text(point.analyticsName), "reason": .text(decision.analyticsName), "shown": .flag(!quietly)])
             if !quietly {
                 request = AccessRequest(point: point, decision: decision)
                 onRefused?(Self.message(for: decision))
@@ -95,6 +97,7 @@ final class AccessModel {
         }
         ledger.record(point)
         save()
+        Analytics.track("feature_used", ["feature": .text(point.analyticsName), "used_this_month": .int(ledger.used(point))])
         return true
     }
 

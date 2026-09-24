@@ -12,7 +12,7 @@ let ui: [SwiftSetting] = concurrency + [.defaultIsolation(MainActor.self)]
 
 let modules: [String] = [
     "Domain",
-    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "AccountEngine", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync",
+    "CaptureEngine", "SpeechEngine", "MediaEngine", "AIServices", "AccountEngine", "Persistence", "WorkflowEngine", "GenerationEngine", "TeamSync", "Analytics",
     "DesignSystem", "Teleprompter", "BumpKit",
     "OnboardingFeature", "LibraryFeature", "ScriptFeature", "StudioFeature", "EditorFeature", "WorkflowsFeature", "SettingsFeature", "AssistantFeature", "TeamFeature", "SuflorFeature",
 ]
@@ -32,6 +32,10 @@ let package = Package(
     products: [
         .library(name: "CueTakeKit", targets: modules),
     ],
+    dependencies: [
+        // Product analytics. Only the Analytics module sees it.
+        .package(url: "https://github.com/PostHog/posthog-ios.git", from: "3.0.0"),
+    ],
     targets: [
         // Pure models and pure logic. Foundation only.
         engine("Domain", []),
@@ -49,6 +53,8 @@ let package = Package(
         // Shared team projects through iCloud: no server of ours. Compiled always, started only
         // in builds that carry the iCloud entitlement.
         engine("TeamSync", ["Domain", "Persistence"]),
+        // Which features are used and where people stop. Nothing the person made leaves in it.
+        engine("Analytics", [.product(name: "PostHog", package: "posthog-ios")]),
 
         // Shared UI.
         uiModule("DesignSystem", []),

@@ -5224,6 +5224,52 @@
           }
         }
       }
+    },
+    "settings.analytics" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share anonymous usage"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anonim kullanım verisi paylaş"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartir uso anónimo"
+          }
+        }
+      }
+    },
+    "settings.analytics.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which features are used and where limits are reached, with a random id. Never your videos, scripts or captions."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hangi özelliklerin kullanıldığı ve limitlere nerede takılındığı, rastgele bir kimlikle. Videoların, metinlerin ve altyazıların asla gönderilmez."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué funciones se usan y dónde se alcanzan los límites, con un identificador aleatorio. Nunca tus vídeos, guiones ni subtítulos."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

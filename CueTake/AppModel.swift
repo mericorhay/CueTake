@@ -1,3 +1,4 @@
+import Analytics
 import DesignSystem
 import AIServices
 import AssistantFeature
@@ -639,6 +640,7 @@ final class AppModel {
             assembled = try await composer.compose(project: project, mediaDirectory: mediaDirectory)
         } catch {
             exportModel.fail(Self.composeFailureMessage(error), detail: String(describing: error))
+            Analytics.track("export_failed", ["stage": "compose"])
             return
         }
         exportModel.advance(to: 2)
@@ -652,6 +654,7 @@ final class AppModel {
             let detail: String
             if case VideoComposer.ComposeError.exportFailed(let reason) = error { detail = reason } else { detail = String(describing: error) }
             exportModel.fail(AppLocalization.string("export.failed.generic"), detail: detail)
+            Analytics.track("export_failed", ["stage": "write"])
             return
         }
         exportModel.advance(to: 3)
@@ -667,6 +670,14 @@ final class AppModel {
             delivered = project.format.matching(measured)
         }
         exportModel.succeed(url: written.url, destination: saved, format: delivered, droppedCaptions: written.droppedCaptions)
+        Analytics.track("export_finished", [
+            "resolution": .text(delivered.resolution == .uhd4K ? "4K" : "1080p"),
+            "fps": .int(delivered.frameRate),
+            "platform": .text(platform?.rawValue ?? "none"),
+            "segments": .int(project.segments.count),
+            "captions": .flag(burnCaptions),
+            "saved_to": .text(String(describing: saved)),
+        ])
         noteCertifiedExport(of: project)
     }
 
@@ -806,6 +817,7 @@ final class AppModel {
     }
 
     func completeOnboarding() {
+        Analytics.track("onboarding_completed")
         settingsModel.update(\.hasCompletedOnboarding, to: true)
         go(to: .home)
     }
@@ -818,6 +830,7 @@ final class AppModel {
             if self.screen == .editor, !editorModel.isAIDriving { adoptEditorEdits() }
             exportModel.reset()
         }
+        if screen != self.screen { Analytics.screen(screen.analyticsName) }
         self.screen = screen
     }
 
@@ -944,6 +957,7 @@ final class AppModel {
         let asset = AVURLAsset(url: capture.url)
         let measured = (try? await asset.load(.duration).seconds) ?? capture.duration
         guard measured > 0 else { return }
+        Analytics.track("take_recorded", ["seconds": .int(Int(measured.rounded())), "take": .int(project.segments.count)])
 
         // A take without sound while the microphone was allowed means listening got in the way of
         // recording on this phone. Listening is switched off for good; the sound matters more.

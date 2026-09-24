@@ -29,6 +29,8 @@ fastlane/test_output/
 
 # Assistant endpoint, written by CI from repository secrets
 CueTake/Resources/AssistantEndpoint.json
+# PostHog key, written by CI from repository secrets
+CueTake/Resources/Analytics.json
 
 # Wrangler local cache
 .wrangler/

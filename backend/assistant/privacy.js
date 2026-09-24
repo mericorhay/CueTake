@@ -5,7 +5,7 @@ const TR = `
 <p class="date">Son güncelleme: 24 Eylül 2026</p>
 
 <h2>Kısaca</h2>
-<p>Videoların, kayıtların ve projelerin telefonunda kalır. Sunucumuza yalnızca senin açtığın yapay zekâ özellikleri için gereken metin ve ses gider; reklam için takip yapmayız, verini satmayız.</p>
+<p>Videoların, kayıtların ve projelerin telefonunda kalır. Sunucumuza yalnızca senin açtığın yapay zekâ özellikleri için gereken metin ve ses gider; uygulamayı geliştirmek için anonim kullanım istatistikleri toplarız (kapatılabilir). Reklam için takip yapmayız, verini satmayız.</p>
 
 <h2>Telefonunda kalanlar</h2>
 <ul>
@@ -21,6 +21,15 @@ const TR = `
 <li><b>Stok B-roll:</b> konuşma metninden seçilen cümleler ve kısa İngilizce arama kelimeleri.</li>
 </ul>
 <p>Bu istekler sunucumuz (Cloudflare) üzerinden yapay zekâ ve stok görüntü sağlayıcılarına iletilir: Groq ve/veya Anthropic (metin ve konuşma tanıma), Pexels (stok video araması). İstekler yanıt üretmek için kullanılır; biz içeriklerini saklamayız. Sağlayıcıların kendi politikaları geçerlidir.</p>
+
+<h2>Kullanım istatistikleri</h2>
+<p>Uygulamayı geliştirmek için PostHog (AB sunucuları) üzerinden anonim kullanım olayları toplarız: hangi özelliğin kullanıldığı, aylık limitlere nerede takılındığı, dışa aktarmanın çözünürlüğü ve kare hızı, kaydın süresi, CueTake+ satın alma sonucu, uygulama sürümü, dili ve cihaz modeli. Bunlar telefonda üretilen rastgele bir kimlikle gönderilir; hesabına, Apple kimliğine ya da adına bağlanmaz. Videoların, kayıtların, senaryoların, altyazıların, proje adların ve ekran görüntüleri asla gönderilmez; ekran kaydı (session replay) kullanmayız. Reklam ya da takip için kullanılmaz, kimseyle paylaşılmaz. Ayarlar'daki "Anonim kullanım verisi paylaş" anahtarıyla istediğin an kapatabilirsin.</p>
+
+<h2>iCloud yedekleme (CueTake+)</h2>
+<p>Yedeklemeyi açarsan projelerin ve videoların kendi iCloud hesabındaki özel CloudKit alanına gönderilir. Bu veriyi yalnızca sen görebilirsin; bizim sunucumuzdan geçmez ve biz erişemeyiz.</p>
+
+<h2>Uzak ayarlar</h2>
+<p>Uygulama açılışta sunucumuzdan aylık limitleri ve özellik anahtarlarını okur. Bu istekte senin hakkında bir bilgi gönderilmez.</p>
 
 <h2>Hesap</h2>
 <p>Apple ile Giriş yaparsan Apple'ın verdiği kimlikten türetilen bir kimlik ve istersen adın saklanır. E-posta adresini almayız. Hesabını Ayarlar'dan istediğin an silebilirsin; silince hesabın ve oturumların sunucudan kalıcı olarak silinir.</p>
@@ -40,7 +49,7 @@ const EN = `
 <p class="date">Last updated: 24 September 2026</p>
 
 <h2>In short</h2>
-<p>Your videos, recordings and projects stay on your phone. Only the text and sound needed for the AI features you choose to use reach our server. We do not track you for advertising and we do not sell your data.</p>
+<p>Your videos, recordings and projects stay on your phone. Only the text and sound needed for the AI features you choose to use reach our server. We collect anonymous usage statistics to improve the app (you can turn this off). We do not track you for advertising and we do not sell your data.</p>
 
 <h2>What stays on your phone</h2>
 <ul>
@@ -56,6 +65,15 @@ const EN = `
 <li><b>Stock B-roll:</b> sentences chosen from the transcript and short English search terms.</li>
 </ul>
 <p>These requests pass through our server (Cloudflare) to AI and stock footage providers: Groq and/or Anthropic (text and speech recognition), Pexels (stock video search). They are used to produce the answer; we do not store their content. The providers' own policies apply.</p>
+
+<h2>Usage statistics</h2>
+<p>To improve the app we collect anonymous usage events through PostHog (EU servers): which features are used, where monthly limits are reached, an export's resolution and frame rate, a recording's length, the outcome of a CueTake+ purchase, the app version, language and device model. They are sent with a random identifier made on the phone and are never linked to your account, your Apple ID or your name. Your videos, recordings, scripts, captions, project names and screen contents are never sent, and we do not use session replay. The data is not used for advertising or tracking and is not shared with anyone. You can turn it off at any time with "Share anonymous usage" in Settings.</p>
+
+<h2>iCloud backup (CueTake+)</h2>
+<p>If you turn backup on, your projects and videos go to a private CloudKit area in your own iCloud account. Only you can see this data; it does not pass through our server and we cannot access it.</p>
+
+<h2>Remote settings</h2>
+<p>At launch the app reads monthly limits and feature switches from our server. Nothing about you is sent with that request.</p>
 
 <h2>Account</h2>
 <p>If you sign in with Apple, an identifier derived from Apple's and, if you choose, your name are stored. We do not receive your email address. You can delete your account at any time in Settings; your account and sessions are then permanently removed from the server.</p>

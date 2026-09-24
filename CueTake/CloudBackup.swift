@@ -1,3 +1,4 @@
+import Analytics
 import CloudKit
 import DesignSystem
 import Domain
@@ -125,8 +126,10 @@ final class CloudBackup {
             lastBackup = .now
             UserDefaults.standard.set(lastBackup, forKey: Self.lastKey)
             phase = .idle
+            Analytics.track("icloud_backup", ["ok": true, "files": .int(changed.count)])
         } catch {
             phase = .failed(Self.describe(error))
+            Analytics.track("icloud_backup", ["ok": false, "code": .int((error as? CKError)?.code.rawValue ?? -1)])
         }
     }
 
@@ -191,6 +194,7 @@ final class CloudBackup {
             for (path, file) in Self.localFiles() where manifest[path] == nil { manifest[path] = file.stamp }
             Self.saveManifest(manifest)
             phase = .idle
+            Analytics.track("icloud_restore", ["ok": true, "files": .int(restored)])
             return restored
         } catch {
             phase = .failed(Self.describe(error))

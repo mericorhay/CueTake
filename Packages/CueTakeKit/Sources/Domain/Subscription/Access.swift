@@ -100,8 +100,13 @@ public struct UsageLedger: Hashable, Sendable, Codable {
 
 /// The rules: what needs Pro, and how much of each metered feature a month buys.
 public enum AccessPolicy {
-    /// Styles anyone can use; the rest need Pro.
-    public static let freeStyles: Set<VideoStyle> = [.minimal, .vlog]
+    /// Styles anyone can use; the rest need Pro. The server's list wins when it sends one.
+    public static var freeStyles: Set<VideoStyle> {
+        guard let names = RemoteSettings.current.freeStyles else { return shippedFreeStyles }
+        return Set(names.compactMap(VideoStyle.init(rawValue:)))
+    }
+
+    public static let shippedFreeStyles: Set<VideoStyle> = [.minimal, .vlog]
 
     public static func isProOnly(_ point: AccessPoint) -> Bool {
         switch point {
@@ -112,8 +117,16 @@ public enum AccessPolicy {
         }
     }
 
-    /// Uses a month allows on `plan`; nil for no limit.
+    /// Uses a month allows on `plan`; nil for no limit. The server's number wins when it sends one.
     public static func monthlyLimit(_ point: AccessPoint, plan: Plan) -> Int? {
+        if let key = point.meterKey, let remote = RemoteSettings.current.limits?[key]?[plan.rawValue] {
+            return remote < 0 ? nil : remote
+        }
+        return shippedLimit(point, plan: plan)
+    }
+
+    /// The limits this build ships with.
+    public static func shippedLimit(_ point: AccessPoint, plan: Plan) -> Int? {
         switch (point, plan) {
         case (.aiEdit, .free): 5
         case (.aiEdit, .pro): 150

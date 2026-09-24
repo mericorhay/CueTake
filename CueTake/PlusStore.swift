@@ -1,3 +1,4 @@
+import Analytics
 import DesignSystem
 import Domain
 import Foundation
@@ -103,6 +104,7 @@ extension AppModel {
     func startPlusStore() {
         plusStore.onChange = { [weak self] active in
             self?.access.setPlan(active ? .pro : .free)
+            self?.rememberForAnalytics()
             if active { self?.suflorModel.reportLocked = false }
         }
         plusStore.start()
@@ -111,7 +113,9 @@ extension AppModel {
     /// The way into CueTake+: the App Store's own purchase sheet.
     func upgradeToPlus() {
         Task {
-            switch await plusStore.purchase() {
+            let outcome = await plusStore.purchase()
+            Analytics.track("plus_purchase", ["outcome": .text(String(describing: outcome))])
+            switch outcome {
             case .purchased: show(notice: AppLocalization.string("plus.welcome"))
             case .pending: show(notice: AppLocalization.string("plus.pending"))
             case .failed: show(notice: AppLocalization.string("plus.failed"))
@@ -123,6 +127,7 @@ extension AppModel {
     func restorePlus() {
         Task {
             let active = await plusStore.restore()
+            Analytics.track("plus_restore", ["found": .flag(active)])
             show(notice: AppLocalization.string(active ? "plus.restored" : "plus.nothingToRestore"))
         }
     }

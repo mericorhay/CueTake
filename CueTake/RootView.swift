@@ -1,4 +1,5 @@
 import AIServices
+import Analytics
 import AuthenticationServices
 import CaptureEngine
 import Combine
@@ -73,7 +74,7 @@ struct RootView: View {
         .overlay(alignment: .top) {
             StatusToasts(activity: model.activity, notice: model.notice)
         }
-        .task { model.startPlusStore() }
+        .task { model.startTelemetry(); model.startPlusStore() }
         .onChange(of: model.access.request?.id) { _, id in
             limitPresenter.hide()
             guard id != nil, let request = model.access.request else { return }
@@ -412,7 +413,9 @@ struct RootView: View {
                 onSuflorReports: { showsSuflorReports = true },
                 allowsHighResolution: { model.access.use(.highResolutionCapture) },
                 captureResolutions: CameraSession.supportedResolutions(for: model.settingsModel.settings.defaultCamera),
-                cloudBackup: model.cloudBackupRow
+                cloudBackup: model.cloudBackupRow,
+                shareAnalytics: Analytics.isConfigured
+                    ? Binding(get: { Analytics.isOn }, set: { Analytics.isOn = $0 }) : nil
             )
             .sheet(isPresented: $showsSuflorReports) {
                 SuflorReportsList(

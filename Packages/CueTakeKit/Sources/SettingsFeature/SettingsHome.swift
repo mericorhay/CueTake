@@ -18,6 +18,8 @@ public struct SettingsScreen: View {
     private let onVoiceProfile: (() -> Void)?
     /// TestFlight only: act as the free plan, to try the limits. Nil hides the row.
     private let testFreePlan: Binding<Bool>?
+    /// Anonymous usage statistics, on unless turned off. Nil hides the row.
+    private let shareAnalytics: Binding<Bool>?
     /// The plan and this month's use; nil hides the CueTake+ card.
     private let plus: PlusUsage?
     private let onUpgrade: (() -> Void)?
@@ -45,7 +47,8 @@ public struct SettingsScreen: View {
                 onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
                 allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil,
-                cloudBackup: CloudBackupRow? = nil) {
+                cloudBackup: CloudBackupRow? = nil, shareAnalytics: Binding<Bool>? = nil) {
+        self.shareAnalytics = shareAnalytics
         self.cloudBackup = cloudBackup
         self.captureResolutions = captureResolutions
         self.suflorReports = suflorReports
@@ -159,6 +162,10 @@ public struct SettingsScreen: View {
                             .buttonStyle(SettingsPressStyle())
                         }
                         .settingsEntrance(appeared, delay: 0.12, reduced: reduceMotion)
+                    }
+
+                    if let shareAnalytics {
+                        AnalyticsToggle(isOn: shareAnalytics)
                     }
 
                     if let testFreePlan {
@@ -568,5 +575,33 @@ extension View {
         opacity(appeared ? 1 : 0)
             .offset(y: appeared || reduced ? 0 : 14)
             .animation(reduced ? .easeOut(duration: 0.12) : DS.Motion.settle.delay(delay), value: appeared)
+    }
+}
+
+/// The anonymous statistics switch. Keeps its own state: the value lives outside anything SwiftUI
+/// watches, so without it the switch would not move when tapped.
+private struct AnalyticsToggle: View {
+    let isOn: Binding<Bool>
+    @State private var value: Bool
+
+    init(isOn: Binding<Bool>) {
+        self.isOn = isOn
+        _value = State(initialValue: isOn.wrappedValue)
+    }
+
+    var body: some View {
+        Toggle(isOn: $value) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("settings.analytics", bundle: .module)
+                    .font(DS.sans(.semibold, 15)).foregroundStyle(DS.Palette.ink)
+                Text("settings.analytics.detail", bundle: .module)
+                    .font(DS.sans(.regular, 12)).foregroundStyle(DS.Palette.ink(0.55))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(DS.Palette.accent)
+        .padding(18)
+        .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: 24))
+        .onChange(of: value) { _, new in isOn.wrappedValue = new }
     }
 }
