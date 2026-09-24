@@ -1,5 +1,6 @@
 import CloudKit
 import DesignSystem
+import Domain
 import SettingsFeature
 import SwiftUI
 import Foundation
