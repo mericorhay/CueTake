@@ -363,7 +363,7 @@ async function askAnthropic(env, messages, options = {}) {
 const GROQ_FALLBACKS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 
 async function askGroq(env, messages, options = {}) {
-  const models = [env.GROQ_MODEL || GROQ_MODEL, ...GROQ_FALLBACKS];
+  const models = options.models || [env.GROQ_MODEL || GROQ_MODEL, ...GROQ_FALLBACKS];
   let last = { error: true, status: 0 };
 
   for (const model of models) {
@@ -416,6 +416,36 @@ async function askGroq(env, messages, options = {}) {
   return last;
 }
 
+// Groq's on-demand tier takes 8 000 tokens a minute per model, prompt, document and answer together
+// (Qwen: 7 000 in, 1 000 out). A document that does not fit is refused outright with a 413, so it is
+// made smaller until it fits, least useful parts first. Tokens are estimated at 3.3 characters each,
+// which errs on the large side for this mix of JSON, numbers and text.
+const GROQ_MINUTE = 8000;
+const estimateTokens = (text) => Math.ceil(text.length / 3.3);
+
+function fitDocument(document, room) {
+  const doc = JSON.parse(JSON.stringify(document));
+  const size = () => estimateTokens(JSON.stringify(doc));
+  const steps = [
+    // Said again in words[]: the plain text is a convenience, the words are the timing.
+    () => { delete doc.transcript; },
+    () => { delete doc.history; delete doc.fonts; delete doc.animations; if (doc.style) delete doc.style.presets; },
+    // Captions repeat the words: keep their ids and times, drop the text when words are there.
+    () => { for (const c of doc.clips || []) if ((c.words || []).length) c.captions = (c.captions || []).map((k) => [k[0], "", k[2], k[3]]); },
+    () => { for (const c of doc.clips || []) delete c.takes; },
+    // Words to tenths of a second.
+    () => { for (const c of doc.clips || []) c.words = (c.words || []).map((w) => [w[0], Math.round(w[1] * 10) / 10, Math.round(w[2] * 10) / 10]); },
+    () => { delete doc.beats; },
+    // Last: a word's start is enough to place things on it.
+    () => { for (const c of doc.clips || []) c.words = (c.words || []).map((w) => [w[0], w[1]]); },
+  ];
+  for (const step of steps) {
+    if (size() <= room) break;
+    step();
+  }
+  return doc;
+}
+
 async function handleEdit(body, env) {
   const instruction = String(body.instruction || "").slice(0, 2000).trim();
   const document = body.document;
@@ -435,13 +465,25 @@ async function handleEdit(body, env) {
   const messages = [{ role: "user", content }];
 
   const provider = env.PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : "groq");
-  // As much room to answer as the minute allows: the free tier counts prompt, document and answer
-  // together against 8 000 tokens, at about 3.6 characters a token for this mix of JSON and text.
-  const used = Math.ceil((EDIT_PROMPT.length + content.length) / 3.6);
-  const maxTokens = Math.min(4500, Math.max(1500, 7600 - used));
-  const options = { system: EDIT_PROMPT, maxTokens, json: true, effort: "low" };
+  let options = { system: EDIT_PROMPT, maxTokens: 6000, json: true, effort: "low" };
+  let request = messages;
+  if (provider === "groq") {
+    // Room for an answer of at least 1 500 tokens, the rest for prompt and document.
+    const fixed = estimateTokens(EDIT_PROMPT) + estimateTokens(instruction) + 120;
+    const fitted = fitDocument(document, GROQ_MINUTE - 1600 - fixed);
+    const fittedText =
+      `<instruction>\n${instruction}\n</instruction>\n` +
+      `<locale>${String(body.locale || "").slice(0, 20)}</locale>\n` +
+      `<document>\n${JSON.stringify(fitted)}\n</document>`;
+    request = [{ role: "user", content: fittedText }];
+    const used = estimateTokens(EDIT_PROMPT) + estimateTokens(fittedText);
+    const maxTokens = Math.min(3000, Math.max(1200, GROQ_MINUTE - 150 - used));
+    // Qwen answers at most 1 000 tokens a minute here, too few for an edit plan: gpt-oss first.
+    options = { ...options, maxTokens, models: GROQ_FALLBACKS };
+    if (used + maxTokens > GROQ_MINUTE) console.log("edit still large", used, maxTokens);
+  }
   const answer =
-    provider === "groq" ? await askGroq(env, messages, options) : await askAnthropic(env, messages, options);
+    provider === "groq" ? await askGroq(env, request, options) : await askAnthropic(env, request, options);
   if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));
   return json({ plan: answer.reply, stop_reason: answer.stop_reason, model: answer.model });
 }
