@@ -72,6 +72,15 @@ public final class WorkflowStudioModel {
     public var clips: [StudioClip]
     /// A frame of the first clip, as JPEG, for the preview. Nil draws a stand-in scene.
     public var previewFrame: Data?
+    /// How long the open project's video is, when there is one: the scale of the preview's
+    /// timeline. Without it the sections' planned lengths stand in.
+    public var videoSeconds: Double?
+
+    /// The length the timeline shows: the real video, else the outline, else half a minute.
+    public var timelineSeconds: Double {
+        if let videoSeconds, videoSeconds > 0.5 { return videoSeconds }
+        return totalSeconds > 0.5 ? totalSeconds : 30
+    }
 
     public private(set) var stepStates: [WorkflowStep.ID: StudioStepState] = [:]
     public private(set) var isRunning = false
@@ -280,6 +289,16 @@ public final class WorkflowStudioModel {
 
     public func note(_ text: String?, for id: WorkflowStep.ID) {
         stepNotes[id] = text
+    }
+
+    /// The seconds a step works on; nil gives it the whole video again.
+    public func setRange(_ range: WorkflowTimeRange?, for id: WorkflowStep.ID) {
+        guard let index = definition.steps.firstIndex(where: { $0.id == id }),
+              definition.steps[index].kind.acceptsTimeRange,
+              definition.steps[index].range != range
+        else { return }
+        definition.steps[index].range = range
+        touch()
     }
 
     public func updateStep(_ id: WorkflowStep.ID, kind: WorkflowStepKind) {

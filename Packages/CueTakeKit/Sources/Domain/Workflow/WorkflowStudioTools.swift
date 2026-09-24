@@ -563,3 +563,87 @@ public enum WorkflowStudioPlanner {
         return moves
     }
 }
+
+extension WorkflowStepKind {
+    /// The tools that act on a span of time, and so can be given one ("only 19 s to 23 s").
+    public var acceptsTimeRange: Bool {
+        switch self {
+        case .filter, .background, .voiceEffect, .autoZoom, .transitions, .addTitle, .brandTemplate, .applyStyle: true
+        default: false
+        }
+    }
+}
+
+extension WorkflowStudioPlanner {
+    /// A studio tool's operations kept to one span of the finished video.
+    ///
+    /// Looks and sounds are cut to the span; camera moves and cuts outside it are dropped; a title
+    /// or a template starts where the span starts and lasts no longer than it.
+    public static func limit(_ operations: [EditPlan.Operation], to range: WorkflowTimeRange, in document: EditDocument) -> [EditPlan.Operation] {
+        let span = range.resolved(in: document.duration)
+        let clipSpans = Dictionary(document.clips.map { ($0.id, ($0.at, $0.at + $0.length)) }, uniquingKeysWith: { first, _ in first })
+
+        /// A request's own from/to, or its clip's, cut to the span. Nil when they do not meet.
+        func cut(clip: String?, from: Double?, to: Double?) -> (Double, Double)? {
+            var lower = from ?? 0
+            var upper = to ?? document.duration
+            if let clip, let whole = clipSpans[clip] {
+                lower = whole.0
+                upper = whole.1
+            }
+            lower = max(lower, span.lowerBound)
+            upper = min(upper, span.upperBound)
+            return upper - lower >= 0.2 ? (lower, upper) : nil
+        }
+
+        var limited: [EditPlan.Operation] = []
+        for operation in operations {
+            switch operation {
+            case .setFilter(var request):
+                guard let (from, to) = cut(clip: request.clip, from: request.from, to: request.to) else { continue }
+                request.clip = nil
+                request.from = from
+                request.to = to
+                limited.append(.setFilter(request))
+            case .setBackground(var request):
+                guard let (from, to) = cut(clip: request.clip, from: request.from, to: request.to) else { continue }
+                request.clip = nil
+                request.from = from
+                request.to = to
+                limited.append(.setBackground(request))
+            case .setSound(var request):
+                guard let (from, to) = cut(clip: request.clip, from: request.from, to: request.to) else { continue }
+                request.clip = nil
+                request.from = from
+                request.to = to
+                limited.append(.setSound(request))
+            case .cameraMove(var request):
+                guard let at = request.at, span.contains(at) else { continue }
+                request.to = min(request.to ?? span.upperBound, span.upperBound)
+                limited.append(.cameraMove(request))
+            case .transition(let clip, let kind, let seconds):
+                // A cut is where a clip ends. Every cut becomes its own, so only those in the span stay.
+                let cuts = clip.map { [$0] } ?? document.clips.dropLast().map(\.id)
+                for id in cuts {
+                    guard let end = clipSpans[id]?.1, span.contains(end) else { continue }
+                    limited.append(.transition(clip: id, kind: kind, seconds: seconds))
+                }
+            case .addText(var patch):
+                let length = min(patch.duration ?? 2.5, span.upperBound - span.lowerBound)
+                patch.start = span.lowerBound
+                patch.duration = length
+                patch.end = nil
+                limited.append(.addText(patch))
+            case .addTemplate(var request):
+                let length = min(request.duration ?? 3, span.upperBound - span.lowerBound)
+                request.start = span.lowerBound
+                request.duration = length
+                request.end = nil
+                limited.append(.addTemplate(request))
+            default:
+                limited.append(operation)
+            }
+        }
+        return limited
+    }
+}

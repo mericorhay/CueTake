@@ -69,8 +69,12 @@ Workflow object:
   "variables": { "name": "a JSON string, number, boolean or array" },
   "steps": [ { "type": "<type>", "parameters": { },
     "when": { "variable": "project.hasSpeech", "operation": "exists|truthy|equals|notEquals|greaterThan|lessThan|contains", "value": true },
-    "forEach": { "source": "nameOfAnArrayVariable", "itemVariable": "item" } } ]
+    "forEach": { "source": "nameOfAnArrayVariable", "itemVariable": "item" },
+    "range": { "start": 19, "end": 23 } } ]
 }
+"range" limits filter, background, voiceEffect, autoZoom, transitions, addTitle, brandTemplate and applyStyle
+to those seconds of the finished video ("black and white from 19 to 23 seconds"). Omit it for the whole video;
+"end" may be left out to run to the end. Other steps ignore it.
 
 Omit variables, when and forEach unless the user's request needs a decision or repetition. Runtime
 variables available to conditions are project.segmentCount, project.recordingCount, project.hasSpeech,

@@ -38,6 +38,9 @@ struct StudioPreview: View {
                 lookRow(filter.id, options: options)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
+            TimelineView(.periodic(from: .now, by: reduceMotion ? 3600 : 0.38)) { context in
+                StudioRangeLanes(model: model, playhead: playhead(at: context.date))
+            }
             Text("studio.preview.hint", bundle: .module)
                 .dsFont(.sans, .regular, 12)
                 .foregroundStyle(DS.Palette.ink(0.45))
@@ -95,7 +98,7 @@ struct StudioPreview: View {
                 ZStack {
                     scene(size: size, at: context.date)
                     if showsSafeZone { safeZone(size: size) }
-                    if let titleStep = step(of: "addTitle"), titleStep.isEnabled, case .addTitle(let options) = titleStep.kind {
+                    if let titleStep = step(of: "addTitle"), titleStep.isEnabled, isLive(titleStep, at: context.date), case .addTitle(let options) = titleStep.kind {
                         title(titleStep.id, options: options, size: size)
                     }
                     if let brand = step(of: "brandKit"), brand.isEnabled, case .brandKit(let options) = brand.kind, options.logo {
@@ -139,7 +142,7 @@ struct StudioPreview: View {
         }
         .scaleEffect(1 + zoom)
         .animation(reduceMotion ? nil : .easeInOut(duration: 1.1), value: zoom)
-        .modifier(LookModifier(look: activeLook, intensity: activeLookIntensity))
+        .modifier(LookModifier(look: activeLook(at: date), intensity: activeLookIntensity))
         .frame(width: size.width, height: size.height)
         .clipped()
     }
@@ -386,17 +389,32 @@ struct StudioPreview: View {
         .allowsHitTesting(false)
     }
 
+    /// How far through the video the sample is, 0…1. It goes round in twelve seconds whatever
+    /// the video's length, faster than real time, so every span shows up soon.
+    private func fraction(at date: Date) -> Double {
+        reduceMotion ? 0 : date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12) / 12
+    }
+
+    /// The sample's place in seconds of the video, for the timeline's lanes.
+    private func playhead(at date: Date) -> Double { fraction(at: date) * model.timelineSeconds }
+
+    /// Whether a step's span covers the sample's place now.
+    private func isLive(_ step: WorkflowStep, at date: Date) -> Bool {
+        if reduceMotion { return true }
+        let span = StudioRangeLanes.span(of: step, total: model.timelineSeconds, sections: model.definition.sections)
+        return span.contains(playhead(at: date))
+    }
+
     private func currentSection(at date: Date) -> (section: WorkflowSection?, progress: Double) {
         let sections = model.definition.sections
         guard !sections.isEmpty else { return (nil, 0) }
         let lengths = sections.map { max(1, $0.seconds) }
         let total = lengths.reduce(0, +)
-        // The sample runs the structure in a loop, faster than real time: a 40-second outline
-        // goes round in about ten.
-        let t = reduceMotion ? 0 : (date.timeIntervalSinceReferenceDate * total / 10).truncatingRemainder(dividingBy: total)
+        let progress = fraction(at: date)
+        let t = progress * total
         var start = 0.0
         for (index, length) in lengths.enumerated() {
-            if t < start + length { return (sections[index], t / total) }
+            if t < start + length { return (sections[index], progress) }
             start += length
         }
         return (sections.last, 1)
@@ -404,8 +422,8 @@ struct StudioPreview: View {
 
     // MARK: - Look
 
-    private var activeLook: String? {
-        guard let step = step(of: "filter"), step.isEnabled, case .filter(let options) = step.kind else { return nil }
+    private func activeLook(at date: Date) -> String? {
+        guard let step = step(of: "filter"), step.isEnabled, isLive(step, at: date), case .filter(let options) = step.kind else { return nil }
         return options.look
     }
 
@@ -416,7 +434,7 @@ struct StudioPreview: View {
 
     /// A zoom step pushes in and out on the sample's rhythm.
     private func zoomAmount(at date: Date) -> CGFloat {
-        guard !reduceMotion, let step = step(of: "autoZoom"), step.isEnabled, case .autoZoom(let options) = step.kind else { return 0 }
+        guard !reduceMotion, let step = step(of: "autoZoom"), step.isEnabled, isLive(step, at: date), case .autoZoom(let options) = step.kind else { return 0 }
         let beat = Int(date.timeIntervalSinceReferenceDate / 2.2) % 2
         return beat == 0 ? 0 : CGFloat(options.amount)
     }

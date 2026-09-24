@@ -378,8 +378,14 @@ struct StudioPipeline: View {
         case .running: return AppLocalization.string("studio.step.running", bundle: .module)
         case .skipped(let reason): return reason
         default:
-            let summary = StudioCatalog.summary(of: step.kind)
-            return summary.isEmpty ? AppLocalization.string(note, bundle: .module) : summary
+            var summary = StudioCatalog.summary(of: step.kind)
+            if summary.isEmpty { summary = AppLocalization.string(note, bundle: .module) }
+            // Its span, when it was given one on the preview's timeline.
+            if let range = step.range, step.kind.acceptsTimeRange {
+                let end = range.end.map(StudioRangeLanes.clock) ?? AppLocalization.string("studio.range.end", bundle: .module)
+                return StudioRangeLanes.clock(range.start) + "–" + end + " · " + summary
+            }
+            return summary
         }
     }
 

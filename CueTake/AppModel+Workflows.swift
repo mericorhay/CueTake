@@ -198,6 +198,8 @@ extension AppModel {
     /// A frame of the project's first clip behind the studio's preview, so the caption is placed
     /// over the real picture.
     func loadWorkflowPreviewFrame() {
+        // The timeline's scale: how long the video that will run through the workflow is now.
+        workflowStudio?.videoSeconds = project.segments.isEmpty ? nil : editorModel.duration
         guard let studio = workflowStudio, let recording = project.recordings.first else {
             workflowStudio?.previewFrame = nil
             return
@@ -480,6 +482,8 @@ extension AppModel {
     }
 
     private func perform(_ kind: WorkflowStepKind, step: WorkflowStep.ID, in definition: WorkflowDefinition) async -> StudioStepState {
+        // The seconds the step was given on the preview's timeline; nil is the whole video.
+        let range = definition.steps.first { $0.id == step }?.range
         switch kind {
         case .assembleSections:
             return assemble(definition.sections)
@@ -607,9 +611,16 @@ extension AppModel {
         case .applyStyle(let options):
             let styled = options.style.workflow(name: AppLocalization.string(String.LocalizationValue(stringLiteral: "style." + options.style.rawValue)))
             var anyDone = false
-            for inner in styled.steps where !inner.kind.isFinalExport {
+            // The style's own steps run under the outer step's span, when it has one.
+            var ranged = styled
+            if let range {
+                for index in ranged.steps.indices where ranged.steps[index].kind.acceptsTimeRange {
+                    ranged.steps[index].range = range
+                }
+            }
+            for inner in ranged.steps where !inner.kind.isFinalExport {
                 if Task.isCancelled { break }
-                if case .done = await perform(inner.kind, step: step, in: styled) { anyDone = true }
+                if case .done = await perform(inner.kind, step: inner.id, in: ranged) { anyDone = true }
             }
             return anyDone ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
 
@@ -636,19 +647,19 @@ extension AppModel {
             return laid > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
 
         case .addTitle(let options):
-            return await runStudioTool { WorkflowStudioPlanner.title(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.title(options, in: $0) }
 
         case .brandTemplate(let options):
-            return await runStudioTool { WorkflowStudioPlanner.template(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.template(options, in: $0) }
 
         case .filter(let options):
-            return await runStudioTool { WorkflowStudioPlanner.filter(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.filter(options, in: $0) }
 
         case .background(let options):
-            return await runStudioTool { WorkflowStudioPlanner.background(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.background(options, in: $0) }
 
         case .autoZoom(let options):
-            return await runStudioTool { WorkflowStudioPlanner.zoom(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.zoom(options, in: $0) }
 
         case .trackFace(let options):
             workflowStudio?.note(AppLocalization.string("workflow.trackFace.finding"), for: step)
@@ -656,10 +667,10 @@ extension AppModel {
             return await runStudioTool { _ in [.trackFace(clip: nil, closeness: min(max(options.closeness, 0.08), 0.2))] }
 
         case .transitions(let options):
-            return await runStudioTool { WorkflowStudioPlanner.transitions(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.transitions(options, in: $0) }
 
         case .voiceEffect(let options):
-            return await runStudioTool { WorkflowStudioPlanner.voiceEffect(options, in: $0) }
+            return await runStudioTool(range: range) { WorkflowStudioPlanner.voiceEffect(options, in: $0) }
 
         case .videoLayout(let options):
             guard !project.videoLayers.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.noVideos")) }
@@ -752,9 +763,11 @@ extension AppModel {
 
     /// Runs a studio tool the way the studio's AI does: the step's operations, worked out for the
     /// video as it is now, applied by the editor.
-    private func runStudioTool(_ build: (EditDocument) -> [EditPlan.Operation]) async -> StudioStepState {
+    private func runStudioTool(range: WorkflowTimeRange? = nil, _ build: (EditDocument) -> [EditPlan.Operation]) async -> StudioStepState {
         editorModel.project = project
-        let operations = build(editorModel.document())
+        let document = editorModel.document()
+        var operations = build(document)
+        if let range { operations = WorkflowStudioPlanner.limit(operations, to: range, in: document) }
         guard !operations.isEmpty else { return .skipped(AppLocalization.string("workflow.skip.nothingToDo")) }
         let outcome = await editorModel.applyAutomated(EditPlan(summary: "", operations: operations))
         project = editorModel.project

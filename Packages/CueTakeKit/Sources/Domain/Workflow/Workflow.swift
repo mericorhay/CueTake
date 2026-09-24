@@ -106,14 +106,19 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
     /// exact linear behaviour.
     public var when: WorkflowCondition?
     public var forEach: WorkflowForEach?
+    /// The seconds of the finished video the step works on, for the tools that act on a span of
+    /// time (`WorkflowStepKind.acceptsTimeRange`). Nil is the whole video.
+    public var range: WorkflowTimeRange?
 
     public init(
         id: UUID = UUID(),
         kind: WorkflowStepKind,
         isEnabled: Bool = true,
         when: WorkflowCondition? = nil,
-        forEach: WorkflowForEach? = nil
+        forEach: WorkflowForEach? = nil,
+        range: WorkflowTimeRange? = nil
     ) {
+        self.range = range
         self.id = id
         self.kind = kind
         self.isEnabled = isEnabled
@@ -122,7 +127,7 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, isEnabled, when, forEach
+        case id, kind, isEnabled, when, forEach, range
     }
 
     public init(from decoder: any Decoder) throws {
@@ -137,6 +142,26 @@ public struct WorkflowStep: Identifiable, Hashable, Sendable, Codable {
         isEnabled = (try? container.decodeIfPresent(Bool.self, forKey: .isEnabled)) ?? true
         when = try? container.decodeIfPresent(WorkflowCondition.self, forKey: .when)
         forEach = try? container.decodeIfPresent(WorkflowForEach.self, forKey: .forEach)
+        range = try? container.decodeIfPresent(WorkflowTimeRange.self, forKey: .range)
+    }
+}
+
+/// A span of the finished video in seconds: "from 19 s to 23 s". `end` nil runs to the end.
+public struct WorkflowTimeRange: Hashable, Sendable, Codable {
+    public var start: Double
+    public var end: Double?
+
+    public init(start: Double, end: Double? = nil) {
+        self.start = max(0, start)
+        self.end = end.map { max(self.start, $0) }
+    }
+
+    /// The span on a video `total` seconds long: inside it, never shorter than half a second.
+    public func resolved(in total: Double) -> ClosedRange<Double> {
+        let total = max(total, 0.5)
+        let from = min(max(0, start), total - 0.5)
+        let to = min(max(from + 0.5, end ?? total), total)
+        return from...to
     }
 }
 

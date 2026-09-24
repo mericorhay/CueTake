@@ -332,8 +332,10 @@ extension WorkflowDefinition {
       "sections": [ { "role": "hook|intro|point|example|cta", "title": "", "seconds": 5, "clip": 1 } ],
       "style": { "captions": true, "captionPreset": "pop|clean|karaoke|bold|boxed|minimal|neon|story", "captionPosition": "top|middle|bottom",
                  "aspect": "portrait9x16|landscape16x9|square1x1|portrait4x5", "resolution": "hd1080|uhd4K", "frameRate": 24|30|60|120 },
-      "steps": [ { "kind": { "type": "<type>", "parameters": { } } } ]
+      "steps": [ { "kind": { "type": "<type>", "parameters": { } }, "range": { "start": 19, "end": 23 } } ]
     }
+    "range" is optional: it keeps filter, background, voiceEffect, autoZoom, transitions, addTitle,
+    brandTemplate and applyStyle to those seconds of the finished video. Leave it out for the whole video.
     "clip" is which of the user's clips fills the section, counting from 1; leave it out if unknown.
     Use at most 60 fps with uhd4K. hd1080 may use 24, 30, 60 or 120 fps.
     Step types, in the order they usually run:
