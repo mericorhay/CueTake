@@ -11,6 +11,7 @@ extension AppModel {
     /// If the open project is among them, the newest one left is opened instead, or an empty one.
     func deleteProjects(ids: [Project.ID]) async {
         let store = dependencies.projectStore
+        if ids.contains(project.id) { cancelPendingSave() }
         for id in ids {
             try? await store.delete(id)
         }

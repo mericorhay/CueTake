@@ -239,6 +239,12 @@ struct PlusCard: View {
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(coral))
             }
             .buttonStyle(.dsPress(radius: 16))
+            Text("plus.autoRenew", bundle: .module)
+                .font(DS.sans(.regular, 10))
+                .foregroundStyle(ink.opacity(0.45))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
         }
     }
 

@@ -5912,6 +5912,75 @@
           }
         }
       }
+    },
+    "plus.autoRenew" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly auto-renewing subscription. It renews unless cancelled at least 24 hours before the period ends, and is charged to your Apple Account. Manage or cancel it in your App Store account settings."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık, otomatik yenilenen abonelik. Dönem bitmeden en az 24 saat önce iptal edilmezse yenilenir ve ücret Apple Hesabına yansıtılır. App Store hesap ayarlarından yönetebilir ya da iptal edebilirsin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suscripción mensual con renovación automática. Se renueva salvo que la canceles al menos 24 horas antes de que termine el periodo y se cobra en tu cuenta de Apple. Gestiónala o cancélala en los ajustes de tu cuenta del App Store."
+          }
+        }
+      }
+    },
+    "import.failed.all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of the videos could be imported. If they're in iCloud, wait for them to download in Photos and try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videolar içe aktarılamadı. iCloud'daysa Fotoğraflar'da inmelerini bekleyip tekrar dene."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo importar ningún vídeo. Si están en iCloud, espera a que se descarguen en Fotos y vuelve a intentarlo."
+          }
+        }
+      }
+    },
+    "import.failed.some %lld %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld couldn't be imported; the rest are in the project."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld videodan %1$lld tanesi içe aktarılamadı, diğerleri projede."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron importar %1$lld de %2$lld; el resto están en el proyecto."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

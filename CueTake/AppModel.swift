@@ -304,7 +304,11 @@ final class AppModel {
         settingsModel.settings.applyNewProjectDefaults(to: &fresh)
         try? await store.save(fresh)
 
-        guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else { return }
+        guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else {
+            importReturnsToWorkflow = false
+            show(notice: AppLocalization.string("import.failed.all"))
+            return
+        }
 
         // Three at a time rather than one after another. Most of an import is waiting on Photos
         // to hand over a file — often from iCloud — and those waits do not need to queue.
@@ -366,9 +370,16 @@ final class AppModel {
         }
 
         guard !fresh.segments.isEmpty else {
-            // Nothing came through — leaving an empty project behind would be litter.
+            // Nothing came through — leaving an empty project behind would be litter. Said out
+            // loud: a video still in iCloud or a format the phone cannot read used to end the
+            // import with no word at all.
             try? await store.delete(fresh.id)
+            importReturnsToWorkflow = false
+            show(notice: AppLocalization.string("import.failed.all"))
             return
+        }
+        if loaded.count < items.count {
+            show(notice: AppLocalization.string("import.failed.some \(items.count - loaded.count) \(items.count)"))
         }
 
         // Structure is part of the import result, not a best-effort screen effect. Doing this before
@@ -761,6 +772,14 @@ final class AppModel {
         }
     }
 
+    /// Drops a write still waiting to happen: the project it would write is being deleted, and a
+    /// save landing after the delete brought it back into the library without its videos.
+    func cancelPendingSave() {
+        saveTask?.cancel()
+        saveTask = nil
+        isSaving = false
+    }
+
     /// True while a write is pending or in flight.
     private(set) var isSaving = false
     /// True when the last disk write failed. A failed autosave must never be labelled as saved.
@@ -817,6 +836,16 @@ final class AppModel {
         studioModel = StudioModel(project: stored)
         editorModel = EditorModel(project: stored)
         await refreshLibrary()
+    }
+
+    /// Whether the phone must not dim and lock now. Nobody touches the screen while reading the
+    /// prompter to the camera, and auto-lock after 30 seconds ended the take; a long export or a
+    /// workflow run stopped the same way when the screen went dark.
+    var wantsScreenAwake: Bool {
+        switch screen {
+        case .studio, .retake, .suflor: return true
+        default: return exportModel.isRunning || workflowStudio?.isRunning == true || busy != nil
+        }
     }
 
     func completeOnboarding() {

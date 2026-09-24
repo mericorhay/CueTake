@@ -5270,6 +5270,29 @@
           }
         }
       }
+    },
+    "plus.autoRenew" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monthly auto-renewing subscription. It renews unless cancelled at least 24 hours before the period ends, and is charged to your Apple Account. Manage or cancel it in your App Store account settings."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aylık, otomatik yenilenen abonelik. Dönem bitmeden en az 24 saat önce iptal edilmezse yenilenir ve ücret Apple Hesabına yansıtılır. App Store hesap ayarlarından yönetebilir ya da iptal edebilirsin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suscripción mensual con renovación automática. Se renueva salvo que la canceles al menos 24 horas antes de que termine el periodo y se cobra en tu cuenta de Apple. Gestiónala o cancélala en los ajustes de tu cuenta del App Store."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

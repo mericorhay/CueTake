@@ -17,6 +17,7 @@ import SettingsFeature
 import StudioFeature
 import SuflorFeature
 import SwiftUI
+import UIKit
 import TeamFeature
 import WorkflowsFeature
 
@@ -160,6 +161,9 @@ struct RootView: View {
             await model.cleanStorageAfterLaunch()
         }
         .onChange(of: model.project) { model.scheduleSave() }
+        .onChange(of: model.wantsScreenAwake, initial: true) { _, awake in
+            UIApplication.shared.isIdleTimerDisabled = awake
+        }
         .task { await model.accountModel.refresh() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.accountModel.refresh() } }

@@ -35,6 +35,9 @@ public struct SettingsScreen: View {
     /// The qualities this phone's camera records; nil offers them all.
     private let captureResolutions: [VideoFormat.Resolution]?
     @State private var destination: SettingsDestination?
+    /// The TestFlight plan switch, shown after five taps on the version: out of sight for anyone
+    /// who is not testing, App Review included.
+    @AppStorage("cuetake.tester") private var isTester = false
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -168,7 +171,7 @@ public struct SettingsScreen: View {
                         AnalyticsToggle(isOn: shareAnalytics)
                     }
 
-                    if let testFreePlan {
+                    if let testFreePlan, isTester {
                         Toggle(isOn: testFreePlan) {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("settings.testFreePlan", bundle: .module)
@@ -186,6 +189,7 @@ public struct SettingsScreen: View {
                     VStack(spacing: 8) {
                         Text("CueTake").font(DS.archivo(.bold, 20)).tracking(-0.6)
                         Text(Self.version).font(DS.mono(11))
+                            .onTapGesture(count: 5) { if testFreePlan != nil { withAnimation(DS.Motion.settle) { isTester.toggle() } } }
                             .onLongPressGesture(minimumDuration: 2) { onPreviewLight?() }
                         Text("settings.footer", bundle: .module).font(DS.sans(.regular, 12))
                         HStack(spacing: 16) {

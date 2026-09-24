@@ -4,6 +4,8 @@
 <dict>
 	<key>CueTakeAppleSignInEnabled</key>
 	<string>$(CUETAKE_APPLE_SIGN_IN_ENABLED)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_cuetake-team._tcp</string>

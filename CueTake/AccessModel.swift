@@ -47,6 +47,11 @@ final class AccessModel {
         plan = Self.resolvedPlan(purchased: nil)
     }
 
+    /// On unless a tester turned it off.
+    private static var testsFreePlanStored: Bool {
+        UserDefaults.standard.object(forKey: testFreeKey) as? Bool ?? true
+    }
+
     /// TestFlight builds carry a sandbox receipt.
     static var isTestFlight: Bool {
         Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
@@ -54,8 +59,10 @@ final class AccessModel {
 
     private static func resolvedPlan(purchased: Plan?) -> Plan {
         if purchased == .pro { return .pro }
-        // TestFlight testers have no real subscription: Pro, unless they switched to the free plan.
-        if isTestFlight { return UserDefaults.standard.bool(forKey: testFreeKey) ? .free : .pro }
+        // TestFlight testers may switch to Pro without paying. The free plan until they do: App
+        // Review runs the build with the same sandbox receipt, and a reviewer who finds everything
+        // already unlocked cannot find the purchase and rejects the app.
+        if isTestFlight { return testsFreePlanStored ? .free : .pro }
         return purchased ?? .free
     }
 
@@ -66,7 +73,7 @@ final class AccessModel {
     }
 
     /// TestFlight only: behave as the free plan, to see the limits.
-    var testsFreePlan = UserDefaults.standard.bool(forKey: AccessModel.testFreeKey) {
+    var testsFreePlan = AccessModel.testsFreePlanStored {
         didSet {
             UserDefaults.standard.set(testsFreePlan, forKey: Self.testFreeKey)
             plan = Self.resolvedPlan(purchased: purchasedPlan)

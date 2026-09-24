@@ -320,6 +320,13 @@ struct LimitSheet: View {
                 .font(DS.mono(11))
                 .foregroundStyle(LimitColors.ink.opacity(0.55))
                 .frame(maxWidth: .infinity)
+                // What App Review asks every subscription screen to say before the purchase.
+                Text("plus.autoRenew")
+                    .font(DS.sans(.regular, 10))
+                    .foregroundStyle(LimitColors.ink.opacity(0.45))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
                 HStack(spacing: 14) {
                     Link(destination: PlusStore.termsURL) { Text("plus.terms") }
                     Link(destination: PlusStore.privacyURL) { Text("plus.privacy") }

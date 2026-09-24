@@ -1132,3 +1132,20 @@ Rakip bilgileri üçüncü taraf beyanıdır; bağımsız ölçüm değildir.
 - [YouTube API kota (Phyllo)](https://www.getphyllo.com/post/youtube-api-limits-how-to-calculate-api-usage-cost-and-fix-exceeded-api-quota)
 - [Meta içerik yayınlama](https://developers.facebook.com/docs/instagram-platform/content-publishing/)
 - [Seedance 2.5 (Replicate)](https://replicate.com/bytedance/seedance-2.5)
+
+## 12. Yayın hazırlığı (App Store)
+
+### Kodda yapılanlar (build 183)
+- Gizlilik manifesti `CueTake/PrivacyInfo.xcprivacy`: UserDefaults (CA92.1), dosya tarihi (C617.1), açılıştan beri geçen süre (35F9.1); toplanan veri: ürün etkileşimi (analitik, bağlı değil), ses ve kullanıcı içeriği (işlev, bağlı değil), kullanıcı kimliği ve ad (Apple ile giriş, bağlı). Takip yok.
+- `ITSAppUsesNonExemptEncryption = NO` (yalnızca HTTPS): her build'de şifreleme sorusu çıkmaz.
+- Sandbox (TestFlight ve App Review) artık ücretsiz planla açılır; test anahtarı Ayarlar'da sürüm yazısına 5 dokunuşla görünür.
+- Paywall ve Plus kartında otomatik yenileme açıklaması (3.1.2).
+- Çekim, dışa aktarma, workflow ve içe aktarma sırasında ekran kilitlenmez.
+
+### App Store Connect'te yapılacaklar
+- App Privacy cevapları manifestle aynı olmalı (yukarıdaki beş veri türü).
+- Açıklamanın sonuna Kullanım Koşulları (EULA) ve Gizlilik bağlantıları: https://mericorhay.github.io/CueTake/#terms ve #privacy.
+- Abonelik: grup ve ürün yerelleştirmesi (en/tr/es), inceleme ekran görüntüsü (paywall), inceleme notu.
+- App Review notu: giriş gerekmez; Plus ekranı Ayarlar › CueTake+ kartında ve her kilitli araçta; hesap silme Ayarlar › Hesap.
+- Ekran görüntüleri (6.9" ve 6.5"), destek URL'si, yaş derecelendirmesi, kategori (Fotoğraf ve Video).
+- `APPLE_AUTH_KEY_ID` ve `APPLE_AUTH_PRIVATE_KEY` Worker'da: hesap silmede Apple token iptali için.
