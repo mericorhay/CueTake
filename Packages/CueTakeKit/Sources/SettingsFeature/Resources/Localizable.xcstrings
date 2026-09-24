@@ -4702,19 +4702,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "TestFlight only. Turn it on to see the limits and locks free users get."
+            "value" : "TestFlight only. Turn it on to see the limits and locks of the plan without CueTake+."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sadece TestFlight'ta. Açınca ücretsiz kullanıcının gördüğü sınırları ve kilitleri görürsün."
+            "value" : "Sadece TestFlight'ta. Açınca CueTake+ olmayan kullanıcının gördüğü sınırları ve kilitleri görürsün."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Solo en TestFlight. Actívalo para ver los límites y bloqueos del plan gratuito."
+            "value" : "Solo en TestFlight. Actívalo para ver los límites y bloqueos del plan sin CueTake+."
           }
         }
       }

@@ -95,7 +95,7 @@ final class AppModel {
         // Skipping the intro for someone who has already seen it is the whole point of recording
         // that they did.
         self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
-        access.onRefused = { [weak self] message in self?.show(notice: message) }
+        // A refusal opens the limit card (`access.request`); nothing else needs saying.
         #if DEBUG
         // Deterministic simulator capture without altering the user's onboarding preference.
         if ProcessInfo.processInfo.arguments.contains("-settings-preview") { self.screen = .settings }

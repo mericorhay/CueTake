@@ -103,6 +103,14 @@ final class AccessModel {
         save()
     }
 
+    /// When this month's counts start again: the first of next month, in UTC like the ledger.
+    var resetsAt: Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        let start = calendar.dateInterval(of: .month, for: .now)?.end
+        return start ?? Date.now.addingTimeInterval(30 * 86_400)
+    }
+
     static func message(for decision: AccessDecision) -> String {
         switch decision {
         case .allowed: ""
@@ -114,5 +122,13 @@ final class AccessModel {
     private func save() {
         guard let data = try? JSONEncoder().encode(ledger), let text = String(data: data, encoding: .utf8) else { return }
         _ = keychain.save(text)
+    }
+}
+
+extension AppModel {
+    /// The way into CueTake+. The store is not connected yet, so for now it says so; the purchase
+    /// goes here once the products exist.
+    func upgradeToPlus() {
+        show(notice: AppLocalization.string("limit.upgrade.soon"))
     }
 }
