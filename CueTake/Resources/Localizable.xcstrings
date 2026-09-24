@@ -5866,6 +5866,29 @@
           }
         }
       }
+    },
+    "icloud.error.setup" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud backup is not set up on our side yet. It will work after the next update."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud yedekleme bizim tarafta henüz hazır değil. Bir sonraki güncellemeyle çalışacak."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La copia en iCloud aún no está lista por nuestra parte. Funcionará tras la próxima actualización."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

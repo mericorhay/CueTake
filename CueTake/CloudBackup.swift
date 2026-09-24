@@ -216,15 +216,27 @@ final class CloudBackup {
         try? data.write(to: manifestURL, options: .atomic)
     }
 
-    /// The reason in words people can act on.
+    /// The reason in words people can act on, with CloudKit's own code and words after it, so a
+    /// failure seen on a phone can be traced.
     private static func describe(_ error: Error) -> String {
-        switch (error as? CKError)?.code {
+        var error = error
+        // Several records at once come back as one partial failure; the first real reason is inside.
+        if let ck = error as? CKError, ck.code == .partialFailure,
+           let first = ck.partialErrorsByItemID?.values.first {
+            error = first
+        }
+        let ck = error as? CKError
+        let reason: String = switch ck?.code {
         case .notAuthenticated: AppLocalization.string("icloud.error.signedOut")
         case .zoneNotFound, .userDeletedZone: AppLocalization.string("icloud.error.noBackup")
         case .quotaExceeded: AppLocalization.string("icloud.error.full")
         case .networkUnavailable, .networkFailure: AppLocalization.string("icloud.error.offline")
+        // The record type is not in the production schema yet: nothing the user can do.
+        case .serverRejectedRequest, .invalidArguments, .unknownItem: AppLocalization.string("icloud.error.setup")
         default: AppLocalization.string("icloud.error.generic")
         }
+        let detail = (error as NSError).localizedDescription
+        return "\(reason) (\(ck.map { "CKError \($0.code.rawValue)" } ?? "error"): \(detail.prefix(120)))"
     }
 }
 
