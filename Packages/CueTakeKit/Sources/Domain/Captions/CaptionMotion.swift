@@ -157,6 +157,13 @@ public enum CaptionAnimator {
                     break
                 }
             }
+            if style.backgroundColor != nil {
+                // The plate is drawn around the words at rest; a word that jumps or grows past it
+                // spills over its top and bottom edge. On a plate words fade and light, and grow
+                // only a little.
+                word.offset = 0
+                word.scale = min(max(word.scale, 0.92), 1.06)
+            }
             frame.words[index] = word
         }
         return frame

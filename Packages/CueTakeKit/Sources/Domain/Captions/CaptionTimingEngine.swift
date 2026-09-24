@@ -6,7 +6,7 @@ import Foundation
 /// read, and yields before the next cue. This is also applied when an old project is opened, so
 /// projects created before adaptive timing do not keep stale early or lingering captions.
 public enum CaptionTimingEngine {
-    public static let minimumSeconds = 0.34
+    public static let minimumSeconds = 0.5
     public static let maximumSeconds = 2.2
     public static let charactersPerSecond = 15.0
     public static let spokenTailSeconds = 0.08
@@ -83,9 +83,10 @@ public enum CaptionTimingEngine {
         let readable = min(maximumSeconds, max(minimumSeconds, reading))
         let wanted = max(spoken + spokenTailSeconds, readable)
 
+        // With nothing after it, the cue has all the time it wants; the clip's end still caps it.
         let available = nextStart.map {
             max(0.05, $0 - start - handoffGapSeconds)
-        } ?? maximumSeconds
+        } ?? wanted
         let duration = min(wanted, available)
 
         return MediaTimeRange(

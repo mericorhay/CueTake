@@ -12,6 +12,10 @@ import Foundation
 ///   on a phone held at arm's length.
 /// - A gap longer than `silenceBreak` also breaks, because the speaker stopped, and holding the
 ///   previous words on screen through a pause makes the video look frozen.
+/// - A word that would make the cue wider than a phone line starts the next one: four long Turkish
+///   words do not fit where four short English ones do.
+/// - Said fast, a full cue would flash past before it can be read, so it takes up to two more words
+///   until it lasts `readableSeconds`, within the width.
 public enum CaptionBuilder {
     public static func cues(
         from transcript: Transcript,
@@ -22,6 +26,9 @@ public enum CaptionBuilder {
 
         var cues: [CaptionCue] = []
         var current: [TimedWord] = []
+        let maxCharacters = max(12, maxWordsPerCue * 8)
+        // One- and two-word styles are a deliberate look; only longer cues may grow.
+        let extraWords = maxWordsPerCue >= 3 ? 2 : 0
 
         func flush() {
             guard let first = current.first, let last = current.last else { return }
@@ -42,14 +49,21 @@ public enum CaptionBuilder {
                word.range.start.seconds - previous.range.end.seconds >= silenceBreak {
                 flush()
             }
+            let width = current.reduce(0) { $0 + $1.text.count + 1 } + word.text.count
+            if !current.isEmpty, width > maxCharacters {
+                flush()
+            }
 
             current.append(word)
 
             let endsSentence = word.text.hasSuffix(".") || word.text.hasSuffix("?")
                 || word.text.hasSuffix("!") || word.text.hasSuffix("…")
             let isLast = index == transcript.words.count - 1
+            let span = word.range.end.seconds - (current.first?.range.start.seconds ?? word.range.start.seconds)
+            let full = current.count >= maxWordsPerCue + extraWords
+                || (current.count >= maxWordsPerCue && span >= readableSeconds)
 
-            if endsSentence || current.count >= maxWordsPerCue || isLast {
+            if endsSentence || full || isLast {
                 flush()
             }
         }
@@ -74,4 +88,6 @@ public enum CaptionBuilder {
 
     /// The shortest a caption is shown for, when the next one does not start sooner.
     public static let minimumSeconds = CaptionTimingEngine.minimumSeconds
+    /// How long a full cue should last before the next one takes its place.
+    public static let readableSeconds = 0.8
 }

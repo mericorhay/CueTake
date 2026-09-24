@@ -435,6 +435,10 @@ extension Project {
     /// cannot drift apart. A caption system that computes its own idea of where a clip starts is
     /// a caption system that will one day be a frame out and no one will know why.
     public var captionCues: [PlacedCue] {
+        CaptionSchedule.settled(unsettledCaptionCues)
+    }
+
+    private var unsettledCaptionCues: [PlacedCue] {
         var cues: [PlacedCue] = []
         var cursor = 0.0
 

@@ -134,9 +134,10 @@ struct CaptionOverlay: View {
         Color(.sRGB, red: color.red, green: color.green, blue: color.blue, opacity: color.alpha)
     }
 
-    /// The arrival is drawn by `CaptionAnimator`; the view itself only fades in and out.
+    /// The arrival and the exit are drawn by `CaptionAnimator`. A view transition on top of it kept
+    /// the old caption fading out while the new one came in, two captions stacked on each other.
     static func transition(for style: CaptionStyle) -> AnyTransition {
-        .opacity
+        .identity
     }
 }
 
