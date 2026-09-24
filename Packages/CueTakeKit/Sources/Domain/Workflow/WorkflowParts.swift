@@ -120,7 +120,7 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
 
     public var position: CaptionPosition {
         if let captionY { return CaptionPosition(x: 0.5, y: captionY) }
-        switch captionPosition.lowercased() {
+        return switch captionPosition.lowercased() {
         case "top": CaptionPosition(x: 0.5, y: 0.2)
         case "middle", "center": .center
         default: .lowerThird

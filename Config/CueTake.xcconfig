@@ -15,7 +15,7 @@ CODE_SIGN_ENTITLEMENTS = CueTake/CueTake.entitlements
 // docs/CUETAKE_DARTBOARD.md. Then add: SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) CUETAKE_TEAMS
 
 MARKETING_VERSION = 0.5.0
-CURRENT_PROJECT_VERSION = 181
+CURRENT_PROJECT_VERSION = 182
 // Runtime gate for the native Apple credential flow. CI turns this on only
 // after validating that the distribution profile carries the SIWA entitlement.
 CUETAKE_APPLE_SIGN_IN_ENABLED = NO

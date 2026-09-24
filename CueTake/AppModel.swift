@@ -193,6 +193,9 @@ final class AppModel {
     var workflowRunTask: Task<Void, Never>?
     /// Where a workflow's export step sends the video, for the length of that step.
     var exportDestinationOverride: ExportDestination?
+    /// One visit to the export screen keeps the finished render instead of starting fresh: the
+    /// workflow result card opens it for the post kit.
+    var keepsExportResult = false
     /// What the last workflow run wrote and what its API answered.
     var workflowVideo: URL?
     var workflowDeliveryResult: StudioDeliveryResult?
@@ -826,10 +829,11 @@ final class AppModel {
         stopTimers()
         // The export screen opens ready to render. A finished or failed export from an earlier
         // visit used to stay on it, with its old file and no render button.
-        if screen == .export, self.screen != .export, !exportModel.isRunning {
+        if screen == .export, self.screen != .export, !exportModel.isRunning, !keepsExportResult {
             if self.screen == .editor, !editorModel.isAIDriving { adoptEditorEdits() }
             exportModel.reset()
         }
+        keepsExportResult = false
         if screen != self.screen { Analytics.screen(screen.analyticsName) }
         self.screen = screen
     }

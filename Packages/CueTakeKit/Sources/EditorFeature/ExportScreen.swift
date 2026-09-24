@@ -41,6 +41,17 @@ public final class ExportModel {
     public private(set) var finishedPlatforms: [SocialPlatform] = []
     public private(set) var batchFiles: [URL] = []
 
+    /// The post kit for the finished video: asked for from the finished screen.
+    public enum PostKitState: Equatable, Sendable {
+        case idle
+        case loading
+        case ready(PostKit)
+        case failed(String)
+    }
+    public var postKitState: PostKitState = .idle
+    /// Whether the cover image was saved, said under its button.
+    public var coverSaved: Bool?
+
     public init() {}
 
     public func togglePlatform(_ platform: SocialPlatform) {
@@ -81,6 +92,8 @@ public final class ExportModel {
     // whoever does the composing moves this along.
 
     public func begin() {
+        postKitState = .idle
+        coverSaved = nil
         failure = nil
         failureDetail = nil
         droppedCaptions = false
@@ -158,6 +171,11 @@ public struct ExportScreen: View {
     private let onRender: () -> Void
     private let onBack: () -> Void
     private let onDone: () -> Void
+    /// Makes the post kit; nil hides the button.
+    private let onPostKit: (() -> Void)?
+    /// Saves a cover image with this line on it to Photos.
+    private let onSaveCover: ((String) -> Void)?
+    @State private var showsPostKit = false
 
     public init(
         model: ExportModel,
@@ -166,8 +184,12 @@ public struct ExportScreen: View {
         warnings: @escaping (SocialPlatform) -> [SocialPlatform.Warning] = { _ in [] },
         onRender: @escaping () -> Void,
         onBack: @escaping () -> Void,
-        onDone: @escaping () -> Void
+        onDone: @escaping () -> Void,
+        onPostKit: (() -> Void)? = nil,
+        onSaveCover: ((String) -> Void)? = nil
     ) {
+        self.onPostKit = onPostKit
+        self.onSaveCover = onSaveCover
         self.model = model
         self._format = format
         self.captionStyleName = captionStyleName
@@ -286,6 +308,11 @@ public struct ExportScreen: View {
         .onAppear {
             let compatible = format.deliveryCompatible
             if compatible != format { format = compatible }
+        }
+        .sheet(isPresented: $showsPostKit) {
+            PostKitSheet(model: model, onRetry: { onPostKit?() }, onSaveCover: onSaveCover)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -620,6 +647,41 @@ public struct ExportScreen: View {
                 }
                 .buttonStyle(.dsPress(radius: DS.Radius.card))
                 .shadow(color: DS.Palette.accent(0.34), radius: 20, y: 14)
+            }
+
+            if onPostKit != nil {
+                Button {
+                    switch model.postKitState {
+                    case .idle, .failed: onPostKit?()
+                    case .loading, .ready: break
+                    }
+                    showsPostKit = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "text.bubble.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("export.postKit", bundle: .module)
+                            .dsFont(.sans, .semibold, 15)
+                        Spacer(minLength: 0)
+                        Text("export.postKit.detail", bundle: .module)
+                            .dsFont(.sans, .regular, 11)
+                            .foregroundStyle(DS.Palette.ink(0.5))
+                            .lineLimit(1)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(DS.Palette.ink(0.4))
+                    }
+                    .foregroundStyle(DS.Palette.ink)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 52)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous).fill(DS.Palette.lime(0.1)))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: DS.Radius.card, style: .continuous)
+                            .strokeBorder(DS.Palette.lime(0.35), lineWidth: 1)
+                    }
+                }
+                .buttonStyle(.dsPress(radius: DS.Radius.card))
+                .padding(.top, 10)
             }
 
             HStack(spacing: 9) {

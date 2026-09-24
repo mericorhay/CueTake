@@ -13,6 +13,8 @@ struct StudioRunResultCard: View {
     let onOpen: () -> Void
     let onResend: () -> Void
     let onDismiss: () -> Void
+    /// The post kit for the video the run wrote; nil hides the button.
+    var onPostKit: (() -> Void)? = nil
 
     @State private var shown = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -90,6 +92,17 @@ struct StudioRunResultCard: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 42)
                         .background(Capsule().fill(DS.Palette.hairline(0.1)))
+                }
+                .buttonStyle(.dsPress(radius: 21))
+            }
+            if summary.video != nil, let onPostKit {
+                Button(action: onPostKit) {
+                    Label(AppLocalization.string("studio.result.postKit", bundle: .module), systemImage: "text.bubble.fill")
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 42)
+                        .background(Capsule().fill(DS.Palette.lime))
                 }
                 .buttonStyle(.dsPress(radius: 21))
             }

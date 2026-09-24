@@ -9890,6 +9890,29 @@
           }
         }
       }
+    },
+    "studio.result.postKit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post kit: caption, hashtags, cover"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paylaşım kiti: açıklama, hashtag, kapak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kit de publicación: texto, hashtags, portada"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

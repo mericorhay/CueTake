@@ -21,8 +21,8 @@
       "translatedUnits": 5
     },
     "CueTake/Resources/Localizable.xcstrings": {
-      "sha256": "c7b3db5da9e10d1b38b35d41ade084a823698dcbc6b31fe6e6246ca1db45cab4",
-      "translatedUnits": 256
+      "sha256": "7bf81af375d6917f3a5b27674975760d3bd66542d31ad061ec7108fbc5aea77d",
+      "translatedUnits": 257
     },
     "Packages/CueTakeKit/Sources/AssistantFeature/Resources/Localizable.xcstrings": {
       "sha256": "e0dbf8b17ceac0d194a889525bce18445bfc992e6f97cd6a4ca7aeccf62aef15",
@@ -33,8 +33,8 @@
       "translatedUnits": 19
     },
     "Packages/CueTakeKit/Sources/EditorFeature/Resources/Localizable.xcstrings": {
-      "sha256": "57fe78014274e264571676ea75b1263c2a04f529c02ed3f41edc346035fbc2cf",
-      "translatedUnits": 917
+      "sha256": "4f82e32fa4d4ea3db49f4cdb882287c2022bbe96bf9c5aa085beacb3540002c6",
+      "translatedUnits": 933
     },
     "Packages/CueTakeKit/Sources/LibraryFeature/Resources/Localizable.xcstrings": {
       "sha256": "d29c086bfaad5c3ba074b2d4ce181d53a231cd836ec6003c1eef6107af39eca1",
@@ -69,8 +69,8 @@
       "translatedUnits": 43
     },
     "Packages/CueTakeKit/Sources/WorkflowsFeature/Resources/Localizable.xcstrings": {
-      "sha256": "bba47d5697333dbfa66054ee640bfe9932c2abf7bf0355fb8427fab3bf4eaf0f",
-      "translatedUnits": 430
+      "sha256": "fe46d3a25e6e9f3eacce3fcff69418047cc3012b5c7b1c61c44a97b82310f601",
+      "translatedUnits": 431
     }
   },
   "review": {

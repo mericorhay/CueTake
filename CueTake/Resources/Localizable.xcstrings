@@ -5889,6 +5889,29 @@
           }
         }
       }
+    },
+    "postKit.noSpeech" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There's no speech or script in this video to write the post from."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu videoda paylaşım metnini yazacak konuşma ya da senaryo yok."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este vídeo no tiene voz ni guion para escribir la publicación."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

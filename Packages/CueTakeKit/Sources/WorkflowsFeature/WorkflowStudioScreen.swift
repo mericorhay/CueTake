@@ -26,6 +26,7 @@ public struct WorkflowStudioScreen: View {
     private let onDelete: () -> Void
     private let onOpenResult: () -> Void
     private let onResend: () -> Void
+    private let onPostKit: (() -> Void)?
 
     @State private var showsJSON = false
     @State private var confirmsDelete = false
@@ -45,8 +46,10 @@ public struct WorkflowStudioScreen: View {
         onPickClips: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onOpenResult: @escaping () -> Void = {},
-        onResend: @escaping () -> Void = {}
+        onResend: @escaping () -> Void = {},
+        onPostKit: (() -> Void)? = nil
     ) {
+        self.onPostKit = onPostKit
         self.model = model
         self.onBack = onBack
         self.onSave = onSave
@@ -72,7 +75,8 @@ public struct WorkflowStudioScreen: View {
                             summary: summary,
                             onOpen: onOpenResult,
                             onResend: onResend,
-                            onDismiss: { withAnimation(DS.Motion.settle) { model.dismissRunSummary() } }
+                            onDismiss: { withAnimation(DS.Motion.settle) { model.dismissRunSummary() } },
+                            onPostKit: onPostKit
                         )
                         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))
                     }

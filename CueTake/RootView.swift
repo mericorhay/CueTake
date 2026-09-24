@@ -341,7 +341,9 @@ struct RootView: View {
                 warnings: { platform in platform.warnings(for: model.project, duration: model.editorModel.duration) },
                 onRender: { Task { await model.exportForPlatforms() } },
                 onBack: { model.openEditor() },
-                onDone: { model.finishExport() }
+                onDone: { model.finishExport() },
+                onPostKit: { model.makePostKit() },
+                onSaveCover: { model.saveCover($0) }
             )
 
         case .projects:
@@ -377,7 +379,8 @@ struct RootView: View {
                     onPickClips: { model.pickClipsForWorkflow() },
                     onDelete: { Task { await model.deleteWorkflow() } },
                     onOpenResult: { model.openWorkflowResult() },
-                    onResend: { model.resendWorkflowDelivery() }
+                    onResend: { model.resendWorkflowDelivery() },
+                    onPostKit: { model.openWorkflowPostKit() }
                 )
             }
 

@@ -833,6 +833,15 @@ extension AppModel {
     }
 
     /// The result card's "open in editor".
+    /// The export screen as the run left it, finished, with the post kit on its way.
+    func openWorkflowPostKit() {
+        flushWorkflowSave()
+        guard exportModel.outputURL != nil else { return openEditor() }
+        keepsExportResult = true
+        go(to: .export)
+        makePostKit()
+    }
+
     func openWorkflowResult() {
         flushWorkflowSave()
         openEditor()

@@ -16,7 +16,7 @@ const TR = `
 
 <h2>Sunucuya gidenler (yalnızca ilgili özelliği kullandığında)</h2>
 <ul>
-<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). Videonun kendisi gönderilmez.</li>
+<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi, paylaşım kiti:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). Videonun kendisi gönderilmez.</li>
 <li><b>Bulut altyazı (isteğe bağlı):</b> konuşmanın ses kaydı, daha doğru altyazı için yazıya dökülür.</li>
 <li><b>Stok B-roll:</b> konuşma metninden seçilen cümleler ve kısa İngilizce arama kelimeleri.</li>
 </ul>
@@ -60,7 +60,7 @@ const EN = `
 
 <h2>What is sent (only when you use that feature)</h2>
 <ul>
-<li><b>AI edit, AI assistant, script writing, caption translation:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). The video itself is not sent.</li>
+<li><b>AI edit, AI assistant, script writing, caption translation, post kit:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). The video itself is not sent.</li>
 <li><b>Cloud captions (optional):</b> the speech audio, transcribed for more accurate captions.</li>
 <li><b>Stock B-roll:</b> sentences chosen from the transcript and short English search terms.</li>
 </ul>
