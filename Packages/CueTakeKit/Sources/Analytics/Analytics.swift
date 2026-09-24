@@ -65,6 +65,13 @@ public enum Analytics {
         PostHogSDK.shared.register(properties.mapValues(\.raw))
     }
 
+    /// Sends what is waiting now, rather than at the next batch: called when the app leaves the
+    /// screen, so a short session is not lost.
+    public static func flush() {
+        guard isConfigured else { return }
+        PostHogSDK.shared.flush()
+    }
+
     /// A screen the person moved to, by our own name for it.
     public static func screen(_ name: String) {
         guard isConfigured else { return }

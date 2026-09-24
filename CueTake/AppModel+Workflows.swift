@@ -1,3 +1,4 @@
+import Analytics
 import AIServices
 import AVFoundation
 import DesignSystem
@@ -37,6 +38,11 @@ extension AppModel {
         let studio = WorkflowStudioModel(definition: workflow, clips: currentClips())
         workflowStudio = studio
         loadWorkflowPreviewFrame()
+        Analytics.track("workflow_opened", [
+            "origin": .text(String(describing: workflow.origin)),
+            "steps": .int(workflow.steps.count),
+            "clips": .int(project.recordings.count),
+        ])
         go(to: .workflowDetail)
         let projectID = project.id
         Task { [weak self, weak studio] in
@@ -337,6 +343,14 @@ extension AppModel {
         workflowRunID = job?.id
         defer { workflowRunID = nil }
         studio.beginRun(resumingAt: state.nextStepIndex)
+        let enabled = definition.steps.filter(\.isEnabled)
+        Analytics.track("workflow_run_started", [
+            "steps": .int(enabled.count),
+            "resumed": .flag(state.nextStepIndex > 0),
+            "origin": .text(String(describing: definition.origin)),
+            "types": .text(enabled.map(\.kind.typeName).joined(separator: ",")),
+            "ranged": .int(enabled.filter { $0.range != nil }.count),
+        ])
         var skippedForPlan = false
 
         // The whole run is one edit the editor can undo: assembling sections replaces the clips,
@@ -458,6 +472,15 @@ extension AppModel {
         scheduleSave()
         await refreshLibrary()
         studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
+        if let summary = studio.lastRunSummary {
+            Analytics.track("workflow_run_finished", [
+                "completed": .int(summary.completed),
+                "skipped": .int(summary.skipped),
+                "video": .flag(summary.video != nil),
+                "stopped": .flag(wasPaused),
+                "plan_skipped": .flag(skippedForPlan),
+            ])
+        }
         if skippedForPlan { show(notice: AppLocalization.string("access.workflowSkipped")) }
         if !wasPaused {
             if let queue, let job { try? await queue.complete(job.id, state: state) }
@@ -716,8 +739,11 @@ extension AppModel {
                 throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
             }
             do {
-                return try await client.translateCaptions(lines, from: self.project.localeIdentifier, to: target, progress: progress)
+                let translated = try await client.translateCaptions(lines, from: self.project.localeIdentifier, to: target, progress: progress)
+                Analytics.track("captions_translated", ["target": .text(target), "lines": .int(lines.count)])
+                return translated
             } catch {
+                Analytics.track("ai_failed", ["feature": "translation"])
                 throw DescribedError(message: Self.assistantFailureMessage(error))
             }
         }
@@ -759,6 +785,7 @@ extension AppModel {
         scheduleSave()
         await prepareEditorPlayback()
         show(notice: AppLocalization.string("style.applied \(name)"))
+        Analytics.track("video_style_applied", ["style": .text(style.rawValue)])
     }
 
     /// Runs a studio tool the way the studio's AI does: the step's operations, worked out for the

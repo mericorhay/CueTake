@@ -1,3 +1,4 @@
+import Analytics
 import AIServices
 import AVFoundation
 import Domain
@@ -17,6 +18,7 @@ extension AppModel {
     static let adProjectKey = "ad.project"
 
     func startSuflor(returning origin: Screen = .home) {
+        Analytics.track("suflor_opened", ["from": .text(origin.analyticsName)])
         let suflor = suflorModel
         suflor.localeIdentifier = project.localeIdentifier
         let client = dependencies.assistantClient

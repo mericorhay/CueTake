@@ -167,6 +167,7 @@ struct RootView: View {
         .task { await model.accountModel.refresh() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.accountModel.refresh() } }
+            if phase == .background { Analytics.flush() }
             // Leaving the app: the projects go to the creator's iCloud while iOS allows.
             if phase == .background, model.access.plan == .pro { model.cloudBackup.backUpInBackground() }
         }

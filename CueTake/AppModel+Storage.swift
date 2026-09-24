@@ -1,3 +1,4 @@
+import Analytics
 import DesignSystem
 import Domain
 import Foundation
@@ -12,6 +13,7 @@ extension AppModel {
     func deleteProjects(ids: [Project.ID]) async {
         let store = dependencies.projectStore
         if ids.contains(project.id) { cancelPendingSave() }
+        Analytics.track("project_deleted", ["count": .int(ids.count)])
         for id in ids {
             try? await store.delete(id)
         }

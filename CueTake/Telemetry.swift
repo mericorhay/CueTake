@@ -13,6 +13,16 @@ extension AppModel {
         RemoteSettingsLoader.applyCached()
         Analytics.start()
         rememberForAnalytics()
+        Analytics.track("app_launched", [
+            "projects": .int(library.count),
+            "signed_in": .flag(accountModel.account != nil),
+            "icloud_backup": .flag(cloudBackup.isOn),
+            "tester": .flag(AccessModel.isTestFlight),
+        ])
+        accountModel.onEvent = { [weak self] name in
+            Analytics.track(name)
+            self?.rememberForAnalytics()
+        }
         Task { await RemoteSettingsLoader.refresh() }
     }
 
@@ -22,6 +32,9 @@ extension AppModel {
             "plan": .text(access.plan.rawValue),
             "app_language": .text(AppLocalization.languageCode ?? Locale.current.language.languageCode?.identifier ?? "system"),
             "build": .text(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"),
+            "signed_in": .flag(accountModel.account != nil),
+            "icloud_backup": .flag(cloudBackup.isOn),
+            "ai_cloud": .flag(settingsModel.settings.aiProcessing == .allowCloud),
         ])
     }
 }

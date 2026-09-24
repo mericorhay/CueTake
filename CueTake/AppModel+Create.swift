@@ -1,3 +1,4 @@
+import Analytics
 import DesignSystem
 import AIServices
 import ScriptFeature
@@ -91,11 +92,13 @@ extension AppModel {
             adopt(fresh)
             await refreshLibrary()
             promptModel.finish()
+            Analytics.track("project_created", ["source": "script_ai", "segments": .int(fresh.segments.count), "seconds": .int(Int(brief.targetDuration.seconds))])
             scriptReturn = .blueprint
             go(to: .blueprint)
         } catch {
             access.refund(.scriptWriting)
             promptModel.fail(Self.assistantFailureMessage(error))
+            Analytics.track("ai_failed", ["feature": "script"])
         }
     }
 

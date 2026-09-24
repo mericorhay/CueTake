@@ -1,3 +1,4 @@
+import Analytics
 import AIServices
 import DesignSystem
 import Domain
@@ -36,6 +37,7 @@ extension AppModel {
                 throw DescribedError(message: Self.assistantFailureMessage(error))
             }
 
+            Analytics.track("stock_broll", ["shots": .int(shots.count), "asked": .int(count)])
             guard let media = try? await store.mediaDirectory(for: project.id) else { return [] }
             var found: [StockBroll] = []
             for shot in shots {

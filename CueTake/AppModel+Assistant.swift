@@ -1,3 +1,4 @@
+import Analytics
 import AIServices
 import AssistantFeature
 import DesignSystem
@@ -142,6 +143,7 @@ extension AppModel {
         isAssistantOpen = false
 
         workflowStudio = WorkflowStudioModel(definition: workflow, clips: currentClips())
+        Analytics.track("workflow_created", ["source": "ai", "steps": .int(workflow.steps.count), "run": .flag(run)])
         loadWorkflowPreviewFrame()
         workflows.removeAll { $0.id == workflow.id }
         workflows.insert(workflow, at: 0)
@@ -262,12 +264,15 @@ extension AppModel {
             throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
         }
         do {
-            return try await dependencies.assistantClient.editPlan(
+            let plan = try await dependencies.assistantClient.editPlan(
                 for: document,
                 instruction: instruction,
                 localeIdentifier: project.localeIdentifier
             )
+            Analytics.track("ai_edit", ["ok": true, "operations": .int(plan.operations.count), "clips": .int(document.clips.count)])
+            return plan
         } catch {
+            Analytics.track("ai_failed", ["feature": "ai_edit"])
             throw DescribedError(message: Self.assistantFailureMessage(error))
         }
     }

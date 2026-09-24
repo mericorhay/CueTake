@@ -288,6 +288,7 @@ final class AppModel {
     /// without knowing the footage was not shot here.
     func importFootage(_ items: [PhotosPickerItem]) async {
         guard !items.isEmpty else { return }
+        Analytics.track("import_started", ["items": .int(items.count)])
         busy = AppLocalization.string("busy.importing")
         defer { busy = nil }
 
@@ -378,6 +379,13 @@ final class AppModel {
             show(notice: AppLocalization.string("import.failed.all"))
             return
         }
+        Analytics.track("project_created", [
+            "source": "import",
+            "clips": .int(fresh.segments.count),
+            "failed": .int(items.count - loaded.count),
+            "seconds": .int(Int(fresh.recordings.reduce(0) { $0 + $1.duration.seconds })),
+            "workflow": .flag(importReturnsToWorkflow),
+        ])
         if loaded.count < items.count {
             show(notice: AppLocalization.string("import.failed.some \(items.count - loaded.count) \(items.count)"))
         }
@@ -417,6 +425,7 @@ final class AppModel {
         }
         guard let stored = try? await dependencies.projectStore.load(id) else { return }
         adopt(stored)
+        Analytics.track("project_opened", ["segments": .int(stored.segments.count)])
         // Reopening an older project must run the same role migration as the current project.
         // Otherwise clips imported before automatic roles existed keep their temporary 1/2 labels.
         openEditor()
@@ -625,6 +634,12 @@ final class AppModel {
         // 4K is Pro. Asked once per export: a batch has already been let through as a whole.
         if project.format.resolution == .uhd4K, !keepingEarlier, !access.use(.highResolutionExport) { return }
         exportModel.begin()
+        Analytics.track("export_started", [
+            "resolution": .text(project.format.resolution == .uhd4K ? "4K" : "1080p"),
+            "fps": .int(project.format.frameRate),
+            "platform": .text(platform?.rawValue ?? "none"),
+            "seconds": .int(Int(editorModel.duration.rounded())),
+        ])
 
         let store = dependencies.projectStore
         guard let mediaDirectory = try? await store.mediaDirectory(for: project.id) else {
@@ -974,6 +989,7 @@ final class AppModel {
             adopt(fresh)
             await refreshLibrary()
             promptModel.finish()
+            Analytics.track("project_created", ["source": "script_device", "segments": .int(fresh.segments.count)])
             go(to: .blueprint)
         } catch {
             promptModel.fail(AppLocalization.string("prompt.failed.generic"))
@@ -990,8 +1006,16 @@ final class AppModel {
               let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id)
         else {
             studio.failCapture("studio.capture.storage")
+            Analytics.track("recording_failed", ["reason": "storage"])
             return
         }
+        Analytics.track("recording_started", [
+            "camera": .text(studio.cameraPosition == .front ? "front" : "back"),
+            "resolution": .text(studio.project.format.resolution == .uhd4K ? "4K" : "1080p"),
+            "fps": .int(studio.project.format.frameRate),
+            "has_script": .flag(studio.hasScript),
+            "countdown": .int(studio.teleprompter.countdown),
+        ])
         let url = mediaDirectory.appending(
             path: "\(UUID().uuidString).mov",
             directoryHint: .notDirectory
@@ -1015,7 +1039,12 @@ final class AppModel {
         let asset = AVURLAsset(url: capture.url)
         let measured = (try? await asset.load(.duration).seconds) ?? capture.duration
         guard measured > 0 else { return }
-        Analytics.track("take_recorded", ["seconds": .int(Int(measured.rounded())), "take": .int(project.segments.count)])
+        Analytics.track("take_recorded", [
+            "seconds": .int(Int(measured.rounded())),
+            "segments": .int(project.segments.count),
+            "interrupted": .flag(studioModel.lastTakeWasInterrupted),
+            "has_script": .flag(studioModel.hasScript),
+        ])
 
         // A take without sound while the microphone was allowed means listening got in the way of
         // recording on this phone. Listening is switched off for good; the sound matters more.
@@ -1331,6 +1360,10 @@ final class AppModel {
 
     /// The editor keeps its playhead and inspector; it only needs the current project.
     func openEditor() {
+        Analytics.track("editor_opened", [
+            "segments": .int(project.segments.count),
+            "captions": .flag(project.segments.contains { !$0.captions.isEmpty }),
+        ])
         let changed = SegmentRoleAnalyzer.applyAutomatically(
             to: &project.segments,
             localeIdentifier: project.localeIdentifier

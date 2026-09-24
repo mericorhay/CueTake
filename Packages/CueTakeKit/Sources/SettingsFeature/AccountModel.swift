@@ -16,6 +16,10 @@ public final class AccountModel {
     public private(set) var verified = false
     public private(set) var isUnavailable = false
 
+    /// Told what happened to the account, by name, for analytics: `account_signed_in`,
+    /// `account_signed_out`, `account_deleted`.
+    public var onEvent: ((String) -> Void)?
+
     private let client: AccountClient
     private let appleSignInEnabled: Bool
     private let keychain = KeychainStore(account: "creator.account.session.v1")
@@ -101,6 +105,7 @@ public final class AccountModel {
             verified = true
             deletionPending = value.deletionPending ?? false
             message = nil
+            onEvent?("account_signed_in")
         } catch let error as ASAuthorizationError where error.code == .canceled {
             message = nil
         } catch { show(error) }
@@ -148,6 +153,7 @@ public final class AccountModel {
         do {
             try await client.end(token: saved.token, deleting: deleting)
             clear()
+            onEvent?(deleting ? "account_deleted" : "account_signed_out")
             if deleting { message = AppLocalization.string("account.delete.done", bundle: .module) }
         } catch AccountError.unauthorized {
             clear()

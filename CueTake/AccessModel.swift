@@ -97,6 +97,7 @@ final class AccessModel {
         guard decision.isAllowed else {
             Analytics.track("feature_refused", ["feature": .text(point.analyticsName), "reason": .text(decision.analyticsName), "shown": .flag(!quietly)])
             if !quietly {
+                Analytics.track("paywall_shown", ["feature": .text(point.analyticsName), "reason": .text(decision.analyticsName), "plan": .text(plan.rawValue)])
                 request = AccessRequest(point: point, decision: decision)
                 onRefused?(Self.message(for: decision))
             }
