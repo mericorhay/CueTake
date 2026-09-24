@@ -195,6 +195,7 @@ public final class CameraSession: @unchecked Sendable {
                     continuation.resume(returning: false)
                     return
                 }
+                recordingDelegate.beginTake()
                 recordingDelegate.onStart = { started in continuation.resume(returning: started) }
                 movieOutput.startRecording(to: url, recordingDelegate: recordingDelegate)
             }
@@ -203,12 +204,31 @@ public final class CameraSession: @unchecked Sendable {
 
     /// Stops and waits for the file to be closed. Reading a movie before the writer has finished
     /// is how a recording comes back with a zero duration.
+    ///
+    /// A take the system already ended — a phone call, the app leaving the screen, a full disk —
+    /// has its file handed back here too. It used to be dropped: the stop found nothing recording,
+    /// answered nil, and a take that was on disk was reported as lost.
     public func stopRecording() async -> URL? {
-        guard movieOutput.isRecording else { return nil }
-        return await withCheckedContinuation { continuation in
-            recordingDelegate.onFinish = { url in continuation.resume(returning: url) }
-            queue.async { [self] in movieOutput.stopRecording() }
+        await withCheckedContinuation { continuation in
+            if let finished = recordingDelegate.claimFinish({ url in continuation.resume(returning: url) }) {
+                continuation.resume(returning: finished)
+                return
+            }
+            queue.async { [self] in
+                if movieOutput.isRecording {
+                    movieOutput.stopRecording()
+                } else if let waiting = recordingDelegate.releaseIfNoTake() {
+                    // Nothing was ever recording, and nothing will finish: answer now.
+                    waiting(nil)
+                }
+            }
         }
+    }
+
+    /// Told when a take ends without a stop: the file as far as it got, or nil when nothing usable
+    /// was written. Called on a background queue.
+    public func setUnexpectedFinishHandler(_ handler: (@Sendable (URL?) -> Void)?) {
+        recordingDelegate.onUnexpectedFinish = handler
     }
 
     private func configure(camera: CameraPosition) {
@@ -398,6 +418,45 @@ private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDel
     private let lock = NSLock()
     private var startHandler: (@Sendable (Bool) -> Void)?
     private var finishHandler: (@Sendable (URL?) -> Void)?
+    private var unexpectedHandler: (@Sendable (URL?) -> Void)?
+    /// A take is between its start and its finish callback.
+    private var takeOpen = false
+    /// How the last take ended, when it ended with nobody waiting: `.some(nil)` for nothing usable.
+    private var unclaimed: URL??
+
+    var onUnexpectedFinish: (@Sendable (URL?) -> Void)? {
+        get { lock.withLock { unexpectedHandler } }
+        set { lock.withLock { unexpectedHandler = newValue } }
+    }
+
+    func beginTake() {
+        lock.withLock {
+            takeOpen = true
+            unclaimed = nil
+        }
+    }
+
+    /// The finished take if it already ended; otherwise `handler` is kept for when it does.
+    func claimFinish(_ handler: @escaping @Sendable (URL?) -> Void) -> URL?? {
+        lock.withLock {
+            if let finished = unclaimed {
+                unclaimed = nil
+                return .some(finished)
+            }
+            finishHandler = handler
+            return nil
+        }
+    }
+
+    /// The waiting stop, when no take is open and so no finish will ever come.
+    func releaseIfNoTake() -> (@Sendable (URL?) -> Void)? {
+        lock.withLock {
+            guard !takeOpen else { return nil }
+            let handler = finishHandler
+            finishHandler = nil
+            return handler
+        }
+    }
 
     var onStart: (@Sendable (Bool) -> Void)? {
         get { lock.withLock { startHandler } }
@@ -425,15 +484,27 @@ private final class RecordingDelegate: NSObject, AVCaptureFileOutputRecordingDel
         from connections: [AVCaptureConnection],
         error: (any Error)?
     ) {
+        let saved = error == nil || (error as NSError?)?.userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool == true
+        let result: URL? = saved ? outputFileURL : nil
         let handlers = lock.withLock {
-            let handlers = (startHandler, finishHandler)
+            let started = startHandler != nil
+            let handlers = (startHandler, finishHandler, unexpectedHandler)
             startHandler = nil
             finishHandler = nil
+            takeOpen = false
+            // Nobody stopped this take and it did start: keep it for the next stop to collect.
+            if handlers.1 == nil, !started { unclaimed = .some(result) }
             return handlers
         }
         // A failed start can finish without a didStart callback. Release the waiting shutter.
-        handlers.0?(false)
-        let saved = error == nil || (error as NSError?)?.userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool == true
-        handlers.1?(saved ? outputFileURL : nil)
+        if let start = handlers.0 {
+            start(false)
+            return
+        }
+        if let finish = handlers.1 {
+            finish(result)
+        } else {
+            handlers.2?(result)
+        }
     }
 }

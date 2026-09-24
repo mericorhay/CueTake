@@ -218,7 +218,34 @@ public final class StudioModel {
         }
         teleprompter.targetPace = SpeakingRate.wordsPerMinute(forLocaleIdentifier: project.localeIdentifier)
         updateTiming()
+        camera.setUnexpectedFinishHandler { [weak self] url in
+            Task { @MainActor in self?.takeEndedBySystem(url) }
+        }
     }
+
+    /// The system ended the take: a call came in, the app left the screen, the disk filled up.
+    /// What was recorded up to then is kept as the take, and the creator is told why it stopped.
+    private func takeEndedBySystem(_ url: URL?) {
+        guard phase == .recording else { return }
+        driver.stop(camera: camera)
+        clock?.cancel()
+        clock = nil
+        teleprompter.pace = nil
+        let duration = recordingStart.map { Date.now.timeIntervalSince($0) } ?? elapsed
+        let starts = segmentStarts
+        recordingURL = nil
+        recordingStart = nil
+        guard let url else {
+            failCapture("studio.capture.saveFailed")
+            return
+        }
+        lastCapture = (url, starts, duration)
+        lastTakeWasInterrupted = true
+        phase = .complete
+    }
+
+    /// The last take was ended by the system rather than by stop: said once the take is saved.
+    public private(set) var lastTakeWasInterrupted = false
 
     /// Words lit on the prompter: what a brand asked to hear in an ad. Empty for anything else.
     public func setHighlights(_ items: [String]) {
@@ -358,6 +385,7 @@ public final class StudioModel {
     }
 
     private func didStartRecording(to url: URL) {
+        lastTakeWasInterrupted = false
         phase = .recording
         segmentIndex = 0
         wordIndex = 0

@@ -632,6 +632,14 @@ final class AppModel {
             return
         }
 
+        // Room for the file before minutes of rendering, not a vague failure at the end of them.
+        if let needed = Self.exportSpaceShortfall(for: project.format, seconds: editorModel.duration) {
+            let size = ByteCountFormatter.string(fromByteCount: needed, countStyle: .file)
+            exportModel.fail(AppLocalization.string("export.failed.space \(size)"))
+            Analytics.track("export_failed", ["stage": "space"])
+            return
+        }
+
         let composer = VideoComposer()
         var project = project
         // A platform gets a fitted copy; the project itself keeps the shape it was edited in.
@@ -693,6 +701,19 @@ final class AppModel {
             "saved_to": .text(String(describing: saved)),
         ])
         noteCertifiedExport(of: project)
+    }
+
+    /// How many more bytes an export of this size needs than the phone has free, or nil when it
+    /// fits. Generous on purpose: a filtered video is written twice, once with its filters and
+    /// once with captions laid on, and iOS wants room of its own besides.
+    nonisolated static func exportSpaceShortfall(for format: VideoFormat, seconds: Double) -> Int64? {
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        guard let free = try? home.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+            .volumeAvailableCapacityForImportantUsage, free > 0 else { return nil }
+        let perSecond: Double = format.resolution == .uhd4K ? 5_000_000 : 1_500_000
+        let rate: Double = format.frameRate > 30 ? 1.5 : 1
+        let needed = Int64(max(seconds, 1) * perSecond * rate * 2) + 300_000_000
+        return free < needed ? needed - free : nil
     }
 
     /// "4K · 60 fps", for notices.
@@ -963,7 +984,11 @@ final class AppModel {
     func beginStudioCapture() async {
         let studio = studioModel
         guard await studio.prepareCapture() else { return }
-        guard let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id) else {
+        // A minute of the chosen quality and room to spare, before the countdown rather than a
+        // take that stops itself a few seconds in.
+        guard Self.exportSpaceShortfall(for: studio.project.format, seconds: 60) == nil,
+              let mediaDirectory = try? await dependencies.projectStore.mediaDirectory(for: project.id)
+        else {
             studio.failCapture("studio.capture.storage")
             return
         }
@@ -1090,6 +1115,9 @@ final class AppModel {
     func finishStudioCapture() async {
         await adoptStudioCapture()
         go(to: .complete)
+        if studioModel.lastTakeWasInterrupted {
+            show(notice: AppLocalization.string("studio.capture.interrupted"))
+        }
     }
 
     func beginRetakeCapture() async {

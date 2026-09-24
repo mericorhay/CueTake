@@ -5981,6 +5981,52 @@
           }
         }
       }
+    },
+    "studio.capture.interrupted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording was stopped by the phone (a call, leaving the app or full storage). Everything up to that moment was saved as the take."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıt telefon tarafından durduruldu (arama, uygulamadan çıkma ya da dolu depolama). O ana kadar çekilen kısım kaydedildi."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El teléfono detuvo la grabación (una llamada, salir de la app o almacenamiento lleno). Se guardó todo lo grabado hasta ese momento."
+          }
+        }
+      }
+    },
+    "export.failed.space %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough free space for this export. Free up about %@ and try again, or export in 1080p."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu dışa aktarma için yeterli boş alan yok. Yaklaşık %@ yer açıp tekrar dene ya da 1080p olarak dışa aktar."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay espacio libre suficiente para exportar. Libera unos %@ y vuelve a intentarlo, o exporta en 1080p."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
