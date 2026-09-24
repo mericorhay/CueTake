@@ -1,5 +1,6 @@
 import AIServices
 import AuthenticationServices
+import CaptureEngine
 import Combine
 import Foundation
 import AssistantFeature
@@ -404,7 +405,8 @@ struct RootView: View {
                 },
                 suflorReports: model.suflorReportCount > 0 ? "\(model.suflorReportCount)" : AppLocalization.string("suflorReports.none"),
                 onSuflorReports: { showsSuflorReports = true },
-                allowsHighResolution: { model.access.use(.highResolutionCapture) }
+                allowsHighResolution: { model.access.use(.highResolutionCapture) },
+                captureResolutions: CameraSession.supportedResolutions(for: model.settingsModel.settings.defaultCamera)
             )
             .sheet(isPresented: $showsSuflorReports) {
                 SuflorReportsList(

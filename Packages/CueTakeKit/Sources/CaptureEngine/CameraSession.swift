@@ -239,13 +239,14 @@ public final class CameraSession: @unchecked Sendable {
     /// the device's own format list. This is the difference between an app that records what the
     /// project asked for and one that records whatever the preset felt like.
     ///
-    /// Silent when the format does not exist rather than failing: the phone should still record
-    /// at the best compatible format it has.
+    /// When the camera does not have that format, the nearest one it has: the same resolution at
+    /// a lower frame rate, else 1080p. Left alone, the session kept its preset, which is 1080p30
+    /// whatever was asked. The recording is measured afterwards, so the project learns what it got.
     public func apply(_ format: VideoFormat) {
-        let format = format.deliveryCompatible
+        let wanted = format.deliveryCompatible
         queue.async { [self] in
             guard let device = videoDevice,
-                  let best = Self.bestFormat(on: device, for: format)
+                  let (best, format) = Self.nearestFormat(on: device, for: wanted)
             else { return }
 
             do {
@@ -284,6 +285,34 @@ public final class CameraSession: @unchecked Sendable {
             }
             return rates.isEmpty ? nil : (resolution, rates)
         }
+    }
+
+    /// The request if the camera has it, else the closest thing it has, with the format it answers.
+    static func nearestFormat(on device: AVCaptureDevice, for wanted: VideoFormat) -> (AVCaptureDevice.Format, VideoFormat)? {
+        if let exact = bestFormat(on: device, for: wanted) { return (exact, wanted) }
+        let resolutions: [VideoFormat.Resolution] = wanted.resolution == .uhd4K ? [.uhd4K, .hd1080] : [.hd1080]
+        for resolution in resolutions {
+            for rate in VideoFormat.frameRateChoices.sorted(by: >) where rate <= wanted.frameRate {
+                let candidate = VideoFormat(aspectRatio: wanted.aspectRatio, resolution: resolution, frameRate: rate)
+                if let found = bestFormat(on: device, for: candidate) { return (found, candidate) }
+            }
+        }
+        return nil
+    }
+
+    /// The resolutions a camera records at 30 frames a second, for the quality setting.
+    public static func supportedResolutions(for camera: CameraPosition) -> [VideoFormat.Resolution] {
+        // The device itself, not an input: listing formats needs no camera permission.
+        let position: AVCaptureDevice.Position = camera == .front ? .front : .back
+        let types: [AVCaptureDevice.DeviceType] = position == .back
+            ? [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera]
+            : [.builtInWideAngleCamera]
+        guard let device = types.lazy.compactMap({ AVCaptureDevice.default($0, for: .video, position: position) }).first
+        else { return [.hd1080] }
+        let found = VideoFormat.Resolution.allCases.filter { resolution in
+            bestFormat(on: device, for: VideoFormat(aspectRatio: .portrait9x16, resolution: resolution, frameRate: 30)) != nil
+        }
+        return found.isEmpty ? [.hd1080] : found
     }
 
     /// The narrowest format that satisfies the request.

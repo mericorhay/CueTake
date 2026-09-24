@@ -480,9 +480,16 @@ public struct VideoComposer: Sendable {
 
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = renderSize
+        // Never faster than the fastest footage in it: 60 frames a second from 30 fps footage is
+        // every frame twice, a file that says 60 and moves like 30.
+        let footageRates = project.segments.compactMap { segment -> Int? in
+            guard let take = segment.selectedTake else { return nil }
+            return recordings[take.recordingID]?.format.frameRate
+        }
+        let rate = footageRates.max().map { min(project.format.frameRate, max(24, $0)) } ?? project.format.frameRate
         videoComposition.frameDuration = CMTime(
             value: 1,
-            timescale: CMTimeScale(max(24, project.format.frameRate))
+            timescale: CMTimeScale(max(24, rate))
         )
         videoComposition.instructions = layered.instructions
         // Filters need a compositor of their own. Only then: every other project keeps the

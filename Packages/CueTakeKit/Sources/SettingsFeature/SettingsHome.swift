@@ -27,6 +27,8 @@ public struct SettingsScreen: View {
     private let onSuflorReports: (() -> Void)?
     /// Asked before 4K capture is chosen; false keeps the current quality.
     private let allowsHighResolution: (() -> Bool)?
+    /// The qualities this phone's camera records; nil offers them all.
+    private let captureResolutions: [VideoFormat.Resolution]?
     @State private var destination: SettingsDestination?
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -38,7 +40,8 @@ public struct SettingsScreen: View {
                 onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil,
                 plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
-                allowsHighResolution: (() -> Bool)? = nil) {
+                allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil) {
+        self.captureResolutions = captureResolutions
         self.suflorReports = suflorReports
         self.onSuflorReports = onSuflorReports
         self.allowsHighResolution = allowsHighResolution
@@ -197,7 +200,7 @@ public struct SettingsScreen: View {
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(32)
             } else {
-                SettingsPanel(destination: selected, model: model, storage: storage, onCleanStorage: onCleanStorage, allowsHighResolution: allowsHighResolution)
+                SettingsPanel(destination: selected, model: model, storage: storage, onCleanStorage: onCleanStorage, allowsHighResolution: allowsHighResolution, captureResolutions: captureResolutions)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(32)
@@ -266,6 +269,7 @@ struct SettingsPanel: View {
     let storage: String?
     let onCleanStorage: (() async -> (message: String, storage: String?))?
     var allowsHighResolution: (() -> Bool)? = nil
+    var captureResolutions: [VideoFormat.Resolution]? = nil
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsKeys = false
@@ -336,7 +340,7 @@ struct SettingsPanel: View {
         switch destination {
         case .capture:
             option("settings.camera", icon: "camera.rotate", options: CameraPosition.allCases, selected: model.settings.defaultCamera, label: \.label) { model.update(\.defaultCamera, to: $0) }
-            option("settings.quality", icon: "4k.tv", options: VideoFormat.Resolution.allCases, selected: model.settings.captureResolution, label: \.label) { value in
+            option("settings.quality", icon: "4k.tv", options: captureResolutions ?? VideoFormat.Resolution.allCases, selected: model.settings.captureResolution, label: \.label) { value in
                 if value == .uhd4K, !(allowsHighResolution?() ?? true) { return }
                 model.update(\.captureResolution, to: value)
             }

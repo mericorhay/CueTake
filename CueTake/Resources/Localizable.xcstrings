@@ -5406,6 +5406,29 @@
           }
         }
       }
+    },
+    "capture.formatFallback %@ %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This camera cannot record %1$@, so it recorded %2$@. The project now uses that."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu kamera %1$@ kaydedemiyor, %2$@ kaydetti. Proje buna göre ayarlandı."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cámara no puede grabar en %1$@, así que grabó en %2$@. El proyecto ya usa ese formato."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

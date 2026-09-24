@@ -657,8 +657,18 @@ final class AppModel {
         if (exportDestinationOverride ?? settingsModel.settings.exportDestination) == .photoLibrary {
             saved = ((try? await Self.saveToPhotoLibrary(written.url)) ?? false) ? .photos : .photosRefused
         }
-        exportModel.succeed(url: written.url, destination: saved, format: project.format, droppedCaptions: written.droppedCaptions)
+        // The written file's own numbers, not the project's: that is what the screen reports.
+        var delivered = project.format
+        if let measured = await VideoProbe.measure(written.url) {
+            delivered = project.format.matching(measured)
+        }
+        exportModel.succeed(url: written.url, destination: saved, format: delivered, droppedCaptions: written.droppedCaptions)
         noteCertifiedExport(of: project)
+    }
+
+    /// "4K · 60 fps", for notices.
+    static func formatLabel(_ format: VideoFormat) -> String {
+        "\(format.resolution == .uhd4K ? "4K" : "1080p") · \(format.frameRate) fps"
     }
 
     /// A file name people can read, from the project title.
@@ -939,9 +949,19 @@ final class AppModel {
             CameraSession.disableAudioTap()
         }
 
+        // What the camera actually recorded. Asked for 4K60 on a camera without it, it records
+        // less; the project follows the footage so the export is not a blown-up 1080p.
+        var recorded = project.format
+        if let measured = await VideoProbe.measure(capture.url) {
+            recorded = project.format.matching(measured)
+            if recorded.resolution != project.format.resolution || recorded.frameRate < project.format.frameRate {
+                show(notice: AppLocalization.string("capture.formatFallback \(Self.formatLabel(project.format)) \(Self.formatLabel(recorded))"))
+                if project.recordings.isEmpty { project.format = recorded }
+            }
+        }
         let recording = Recording(
             relativePath: "media/\(capture.url.lastPathComponent)",
-            format: project.format,
+            format: recorded,
             camera: settingsModel.settings.defaultCamera,
             duration: MediaTime(seconds: measured)
         )
