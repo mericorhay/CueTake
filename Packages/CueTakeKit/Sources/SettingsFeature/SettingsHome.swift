@@ -21,6 +21,7 @@ public struct SettingsScreen: View {
     /// The plan and this month's use; nil hides the CueTake+ card.
     private let plus: PlusUsage?
     private let onUpgrade: (() -> Void)?
+    private let onRestore: (() -> Void)?
     private let onManageSubscription: (() -> Void)?
     /// How many suflör reports are kept, and the way to them; nil hides the row.
     private let suflorReports: String?
@@ -38,7 +39,8 @@ public struct SettingsScreen: View {
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
                 onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil,
-                plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onManageSubscription: (() -> Void)? = nil,
+                plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onRestore: (() -> Void)? = nil,
+                onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
                 allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil) {
         self.captureResolutions = captureResolutions
@@ -48,6 +50,7 @@ public struct SettingsScreen: View {
         self.testFreePlan = testFreePlan
         self.plus = plus
         self.onUpgrade = onUpgrade
+        self.onRestore = onRestore
         self.onManageSubscription = onManageSubscription
         self._model = Bindable(wrappedValue: model); self.account = account; self.storage = storage
         self.onCleanStorage = onCleanStorage; self.onTeam = onTeam; self.onPreviewLight = onPreviewLight
@@ -101,7 +104,7 @@ public struct SettingsScreen: View {
                     .settingsEntrance(appeared, delay: 0.04, reduced: reduceMotion)
 
                     if let plus {
-                        PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription)
+                        PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription, onRestore: onRestore)
                             .settingsEntrance(appeared, delay: 0.06, reduced: reduceMotion)
                     }
 

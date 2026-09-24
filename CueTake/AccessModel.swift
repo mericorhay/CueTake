@@ -52,9 +52,10 @@ final class AccessModel {
     }
 
     private static func resolvedPlan(purchased: Plan?) -> Plan {
-        if let purchased { return purchased }
+        if purchased == .pro { return .pro }
+        // TestFlight testers have no real subscription: Pro, unless they switched to the free plan.
         if isTestFlight { return UserDefaults.standard.bool(forKey: testFreeKey) ? .free : .pro }
-        return .free
+        return purchased ?? .free
     }
 
     /// The store's answer: `.pro` while a subscription is active, `.free` when it has ended.
@@ -147,13 +148,8 @@ extension AppModel {
             isPlus: plan == .pro,
             rows: rows,
             plusTools: plan == .free ? plusOnly.map(\.title) : [],
-            resetsAt: access.resetsAt
+            resetsAt: access.resetsAt,
+            price: plusStore.price
         )
-    }
-
-    /// The way into CueTake+. The store is not connected yet, so for now it says so; the purchase
-    /// goes here once the products exist.
-    func upgradeToPlus() {
-        show(notice: AppLocalization.string("limit.upgrade.soon"))
     }
 }

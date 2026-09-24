@@ -27,12 +27,15 @@ public struct PlusUsage: Equatable, Sendable {
     /// Names of the tools only CueTake+ has, shown on the free plan.
     public var plusTools: [String]
     public var resetsAt: Date
+    /// The monthly price in the viewer's currency, once the App Store has answered.
+    public var price: String?
 
-    public init(isPlus: Bool, rows: [Row], plusTools: [String], resetsAt: Date) {
+    public init(isPlus: Bool, rows: [Row], plusTools: [String], resetsAt: Date, price: String? = nil) {
         self.isPlus = isPlus
         self.rows = rows
         self.plusTools = plusTools
         self.resetsAt = resetsAt
+        self.price = price
     }
 }
 
@@ -42,6 +45,7 @@ struct PlusCard: View {
     let usage: PlusUsage
     let onUpgrade: (() -> Void)?
     let onManage: (() -> Void)?
+    var onRestore: (() -> Void)? = nil
 
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -89,6 +93,21 @@ struct PlusCard: View {
                 .foregroundStyle(ink.opacity(0.5))
 
             action
+
+            HStack(spacing: 16) {
+                if let onRestore, !usage.isPlus {
+                    Button(action: onRestore) { Text("plus.restore", bundle: .module) }
+                }
+                Link(destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) {
+                    Text("plus.terms", bundle: .module)
+                }
+                Link(destination: URL(string: "https://cuetake-assistant.mericorhayy.workers.dev/privacy")!) {
+                    Text("plus.privacy", bundle: .module)
+                }
+            }
+            .font(DS.sans(.regular, 12))
+            .foregroundStyle(ink.opacity(0.55))
+            .frame(maxWidth: .infinity)
         }
         .padding(20)
         .background {
@@ -208,6 +227,9 @@ struct PlusCard: View {
             Button(action: onUpgrade) {
                 HStack(spacing: 10) {
                     Text("plus.upgrade", bundle: .module)
+                    if let price = usage.price {
+                        Text(verbatim: "· " + AppLocalization.string("plus.perMonth \(price)", bundle: .module))
+                    }
                     Image(systemName: "arrow.right").font(.system(size: 15, weight: .semibold))
                 }
                 .font(DS.sans(.semibold, 16))

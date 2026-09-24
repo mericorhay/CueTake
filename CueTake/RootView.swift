@@ -73,6 +73,7 @@ struct RootView: View {
         .overlay(alignment: .top) {
             StatusToasts(activity: model.activity, notice: model.notice)
         }
+        .task { model.startPlusStore() }
         .onChange(of: model.access.request?.id) { _, id in
             limitPresenter.hide()
             guard id != nil, let request = model.access.request else { return }
@@ -81,6 +82,7 @@ struct RootView: View {
                     request: request,
                     plan: model.access.plan,
                     resetsAt: model.access.resetsAt,
+                    price: model.plusStore.price,
                     onUpgrade: { model.upgradeToPlus() },
                     onClose: { model.access.request = nil }
                 )
@@ -400,6 +402,7 @@ struct RootView: View {
                     : nil,
                 plus: model.plusUsage,
                 onUpgrade: { model.upgradeToPlus() },
+                onRestore: { model.restorePlus() },
                 onManageSubscription: {
                     if let url = URL(string: "https://apps.apple.com/account/subscriptions") { openURL(url) }
                 },

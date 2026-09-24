@@ -74,6 +74,8 @@ final class AppModel {
     let accountModel = AccountModel()
     /// The plan and this month's use of everything paid.
     let access = AccessModel()
+    /// CueTake+ in the App Store.
+    let plusStore = PlusStore()
     /// How many suflör reports are kept, for Settings.
     var suflorReportCount = SuflorReportStore.count()
 

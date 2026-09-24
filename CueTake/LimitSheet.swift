@@ -18,6 +18,8 @@ struct LimitSheet: View {
     let plan: Plan
     /// When this month's allowance starts again.
     let resetsAt: Date
+    /// "4,99 $", once the App Store has answered.
+    var price: String? = nil
     let onUpgrade: () -> Void
     let onClose: () -> Void
 
@@ -308,10 +310,23 @@ struct LimitSheet: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 16, weight: .semibold))
                 }
-                Text("limit.cancelAnytime")
-                    .font(DS.mono(11))
-                    .foregroundStyle(LimitColors.ink.opacity(0.55))
-                    .frame(maxWidth: .infinity)
+                Group {
+                    if let price {
+                        Text("limit.pricePerMonth \(price)")
+                    } else {
+                        Text("limit.cancelAnytime")
+                    }
+                }
+                .font(DS.mono(11))
+                .foregroundStyle(LimitColors.ink.opacity(0.55))
+                .frame(maxWidth: .infinity)
+                HStack(spacing: 14) {
+                    Link(destination: PlusStore.termsURL) { Text("plus.terms") }
+                    Link(destination: PlusStore.privacyURL) { Text("plus.privacy") }
+                }
+                .font(DS.sans(.regular, 11))
+                .foregroundStyle(LimitColors.ink.opacity(0.5))
+                .frame(maxWidth: .infinity)
                 ghost(isLimit ? "limit.wait" : "limit.notNow", action: close)
             }
         }

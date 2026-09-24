@@ -1,4 +1,5 @@
 import { handleAuth } from "./auth.mjs";
+import { privacyPage } from "./privacy.js";
 
 // CueTake assistant proxy — a Cloudflare Worker.
 //
@@ -1044,6 +1045,7 @@ export default {
     const path = url.pathname.replace(/\/+$/, "");
     if (path.startsWith("/auth/")) return handleAuth(request, env, path);
     if (request.method === "GET" && path === "/health") return handleHealth(env, url);
+    if (request.method === "GET" && path === "/privacy") return privacyPage(url);
     // Public: anyone holding a certificate link can check it, with no app and no token.
     if (request.method === "GET" && path === "/verify") return handleVerify(url, env);
     if (request.method === "GET" && path === "/certificate-key") return handleCertificateKey(env);
