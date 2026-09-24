@@ -39,13 +39,15 @@ public final class AccountModel {
         } else { keychain.delete() }
     }
 
-    public func prepare() async {
+    /// Fetches a fresh challenge so the Apple button can be tapped. `keepingMessage` leaves a notice
+    /// on screen, such as the one after deleting the account.
+    public func prepare(keepingMessage: Bool = false) async {
         guard session == nil, !isBusy, !isPreparing else { return }
         guard appleSignInEnabled else { show(AccountError.notConfigured); return }
         isPreparing = true
         isUnavailable = false
         ready = false
-        message = nil
+        if !keepingMessage { message = nil }
         defer { isPreparing = false }
         do {
             let value = try await client.challenge()
@@ -146,6 +148,7 @@ public final class AccountModel {
         do {
             try await client.end(token: saved.token, deleting: deleting)
             clear()
+            if deleting { message = AppLocalization.string("account.delete.done", bundle: .module) }
         } catch AccountError.unauthorized {
             clear()
             if deleting { message = AppLocalization.string("account.delete.reauth", bundle: .module) }

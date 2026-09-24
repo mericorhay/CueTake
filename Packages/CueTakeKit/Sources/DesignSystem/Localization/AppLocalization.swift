@@ -103,8 +103,12 @@ nonisolated enum LanguageBundles {
 extension Bundle {
     /// Swapped with `localizedString(forKey:value:table:)`: calling this name runs the original.
     @objc nonisolated func cueTakeLocalizedString(forKey key: String, value: String?, table tableName: String?) -> String {
-        if let code = AppLocalization.languageCode, let folder = LanguageBundles.folder(in: self, code: code) {
-            return folder.cueTakeLocalizedString(forKey: key, value: value, table: tableName)
+        // Only the app's own bundles. Apple's frameworks keep their strings outside the `.lproj`
+        // folders, so reading them there gave raw keys: Sign in with Apple drew "CONTINUE_WITH_APPLE".
+        if let code = AppLocalization.languageCode, !bundlePath.hasPrefix("/System"),
+           let folder = LanguageBundles.folder(in: self, code: code) {
+            let found = folder.cueTakeLocalizedString(forKey: key, value: value, table: tableName)
+            if found != key || value == key { return found }
         }
         return cueTakeLocalizedString(forKey: key, value: value, table: tableName)
     }

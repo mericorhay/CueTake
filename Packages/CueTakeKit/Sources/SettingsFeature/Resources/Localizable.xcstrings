@@ -5201,6 +5201,29 @@
           }
         }
       }
+    },
+    "account.delete.done" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account is deleted. Your projects stay on this iPhone, and you can sign in again anytime."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hesabın silindi. Projelerin bu iPhone'da duruyor; istediğin zaman yeniden giriş yapabilirsin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu cuenta se eliminó. Tus proyectos siguen en este iPhone y puedes volver a iniciar sesión cuando quieras."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -80,7 +80,10 @@ struct AccountSheet: View {
             }
         }
         .confirmationDialog(settingsText("account.delete.title"), isPresented: $confirmsDeletion, titleVisibility: .visible) {
-            Button(settingsText("account.delete.action"), role: .destructive) { Task { await model.end(deleting: true) } }
+            Button(settingsText("account.delete.action"), role: .destructive) {
+                // Straight back to a working sign-in button, not a grey one that waits for "Try again".
+                Task { await model.end(deleting: true); await model.prepare(keepingMessage: true) }
+            }
             Button(settingsText("account.cancel"), role: .cancel) { }
         } message: { Text("account.delete.detail", bundle: .module) }
         .confirmationDialog(settingsText("account.logout.title"), isPresented: $confirmsLogout, titleVisibility: .visible) {
