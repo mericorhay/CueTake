@@ -450,6 +450,13 @@ extension Project {
 
             let spoken = segment.selectedTake?.transcript?.words ?? []
 
+            // A held frame plays no speech, and a clip run backwards plays it back to front: the
+            // words written forwards over either are wrong, so those clips show no captions.
+            if segment.playback.freeze != nil || segment.playback.isReversed {
+                cursor += length
+                continue
+            }
+
             for (cueIndex, cue) in segment.captions.enumerated() {
                 let nextCueStart = cueIndex + 1 < segment.captions.count
                     ? segment.captions[cueIndex + 1].range.start.seconds
