@@ -29,6 +29,9 @@ public enum AccessPoint: Hashable, Sendable {
     case brandTemplate
     case multiPlatformExport
     case highResolutionExport
+    case highResolutionCapture
+    /// Opening a suflör report. Every report is kept on either plan; reading it is CueTake+.
+    case suflorReport
 
     /// The name a month's count is kept under; nil for what is not counted.
     public var meterKey: String? {
@@ -103,7 +106,7 @@ public enum AccessPolicy {
         case .aiEdit, .assistantMessage, .scriptWriting, .captionTranslation, .workflowRun: false
         case .videoStyle(let style): !freeStyles.contains(style)
         case .stockBroll, .cloudListening, .soundDesign, .beatSync, .brandTemplate,
-             .multiPlatformExport, .highResolutionExport: true
+             .multiPlatformExport, .highResolutionExport, .highResolutionCapture, .suflorReport: true
         }
     }
 

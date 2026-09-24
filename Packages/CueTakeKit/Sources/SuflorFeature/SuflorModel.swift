@@ -86,6 +86,13 @@ public final class SuflorModel {
 
     /// Takes the cards to the studio, to be read on our own teleprompter. Set by the app.
     public var onRecord: ((SuflorPlan) -> Void)?
+    /// Keeps a finished report, whatever the plan, so it can be opened later. Set by the app.
+    @ObservationIgnored public var reportSaver: ((SuflorSession) -> Void)?
+    /// The report is kept but its page is closed: reading reports is CueTake+.
+    public var reportLocked = false
+    /// Asks to open a locked report; the app answers by unlocking it or showing CueTake+.
+    @ObservationIgnored public var onUnlockReport: (() -> Void)?
+
     /// Makes the report from a take recorded in the studio. Set by the app.
     public var reporter: (() async -> SuflorSession?)?
     /// The cards have been recorded in the studio, so a report can be made from the take.
@@ -393,6 +400,14 @@ public final class SuflorModel {
         isFloating = false
         UIApplication.shared.isIdleTimerDisabled = false
         stage = .report
+        if let session { reportSaver?(session) }
+    }
+
+    /// A report kept from an earlier stream, opened from Settings.
+    public func openSaved(_ saved: SuflorSession) {
+        reportSource = .stream
+        session = saved
+        stage = .report
     }
 
     /// Back to the cards, keeping them, for the next stream.
@@ -473,6 +488,7 @@ public final class SuflorModel {
         }
         made.creator = defaults.string(forKey: Keys.creator) ?? ""
         session = made
+        reportSaver?(made)
         if !made.plan.brief.mustSay.isEmpty, made.proofs.isEmpty {
             verifyError = AppLocalization.string("suflor.verify.none", bundle: .module)
         }
@@ -491,6 +507,7 @@ public final class SuflorModel {
             session = try await verifier(url, session)
             session.creator = creator
             self.session = session
+            reportSaver?(session)
             if session.allProofs.isEmpty {
                 verifyError = AppLocalization.string("suflor.verify.none", bundle: .module)
             }

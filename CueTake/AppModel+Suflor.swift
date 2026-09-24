@@ -55,6 +55,7 @@ extension AppModel {
         suflor.reporter = { [weak self] in await self?.adSession() }
         suflor.hasRecording = ownsAdProject && isAdProject && hasAdTake
         if suflor.stage == .report { suflor.leaveReport() }
+        connectSuflorReports()
         adReturn = origin
         go(to: .suflor)
     }

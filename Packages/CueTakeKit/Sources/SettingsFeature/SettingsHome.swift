@@ -18,6 +18,15 @@ public struct SettingsScreen: View {
     private let onVoiceProfile: (() -> Void)?
     /// TestFlight only: act as the free plan, to try the limits. Nil hides the row.
     private let testFreePlan: Binding<Bool>?
+    /// The plan and this month's use; nil hides the CueTake+ card.
+    private let plus: PlusUsage?
+    private let onUpgrade: (() -> Void)?
+    private let onManageSubscription: (() -> Void)?
+    /// How many suflör reports are kept, and the way to them; nil hides the row.
+    private let suflorReports: String?
+    private let onSuflorReports: (() -> Void)?
+    /// Asked before 4K capture is chosen; false keeps the current quality.
+    private let allowsHighResolution: (() -> Bool)?
     @State private var destination: SettingsDestination?
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,8 +35,17 @@ public struct SettingsScreen: View {
                 onCleanStorage: (() async -> (message: String, storage: String?))? = nil, onTeam: (() -> Void)? = nil,
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
-                onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil) {
+                onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil,
+                plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onManageSubscription: (() -> Void)? = nil,
+                suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
+                allowsHighResolution: (() -> Bool)? = nil) {
+        self.suflorReports = suflorReports
+        self.onSuflorReports = onSuflorReports
+        self.allowsHighResolution = allowsHighResolution
         self.testFreePlan = testFreePlan
+        self.plus = plus
+        self.onUpgrade = onUpgrade
+        self.onManageSubscription = onManageSubscription
         self._model = Bindable(wrappedValue: model); self.account = account; self.storage = storage
         self.onCleanStorage = onCleanStorage; self.onTeam = onTeam; self.onPreviewLight = onPreviewLight
         self.certificates = certificates; self.onCertificates = onCertificates
@@ -79,6 +97,11 @@ public struct SettingsScreen: View {
                     .buttonStyle(SettingsPressStyle())
                     .settingsEntrance(appeared, delay: 0.04, reduced: reduceMotion)
 
+                    if let plus {
+                        PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription)
+                            .settingsEntrance(appeared, delay: 0.06, reduced: reduceMotion)
+                    }
+
                     VStack(alignment: .leading, spacing: 12) {
                         sectionTitle("settings.section.workspace")
                         VStack(spacing: 8) {
@@ -90,7 +113,7 @@ public struct SettingsScreen: View {
                     }
                     .settingsEntrance(appeared, delay: 0.08, reduced: reduceMotion)
 
-                    if onVoiceProfile != nil || onCertificates != nil || onTeam != nil {
+                    if onVoiceProfile != nil || onCertificates != nil || onTeam != nil || onSuflorReports != nil {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("settings.section.creator")
                             VStack(spacing: 1) {
@@ -99,6 +122,11 @@ public struct SettingsScreen: View {
                                         SettingsRow(icon: "waveform", title: settingsText("settings.voice"),
                                                     detail: voiceProfile?.wordsPerMinute.map { "\(Int($0.rounded())) " + settingsText("settings.voice.pace") }
                                                         ?? settingsText("settings.voice.empty"))
+                                    }
+                                }
+                                if let onSuflorReports {
+                                    Button(action: onSuflorReports) {
+                                        SettingsRow(icon: "doc.text.magnifyingglass", title: settingsText("settings.suflorReports"), detail: suflorReports)
                                     }
                                 }
                                 if let onCertificates {
@@ -307,7 +335,10 @@ struct SettingsPanel: View {
         switch destination {
         case .capture:
             option("settings.camera", icon: "camera.rotate", options: CameraPosition.allCases, selected: model.settings.defaultCamera, label: \.label) { model.update(\.defaultCamera, to: $0) }
-            option("settings.quality", icon: "4k.tv", options: VideoFormat.Resolution.allCases, selected: model.settings.captureResolution, label: \.label) { model.update(\.captureResolution, to: $0) }
+            option("settings.quality", icon: "4k.tv", options: VideoFormat.Resolution.allCases, selected: model.settings.captureResolution, label: \.label) { value in
+                if value == .uhd4K, !(allowsHighResolution?() ?? true) { return }
+                model.update(\.captureResolution, to: value)
+            }
         case .editing:
             option("settings.captions", icon: "captions.bubble", options: CaptionPreference.allCases, selected: model.settings.captionPreset, label: \.label) { model.update(\.captionPreset, to: $0) }
             Toggle(isOn: Binding(get: { model.settings.remembersStyle }, set: { model.update(\.remembersStyle, to: $0) })) {

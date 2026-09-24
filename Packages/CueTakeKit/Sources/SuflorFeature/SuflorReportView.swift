@@ -46,8 +46,19 @@ struct SuflorReportView: View {
                 .padding(.horizontal, 22)
                 .padding(.top, 64)
                 .padding(.bottom, 40)
+                .blur(radius: model.reportLocked ? 16 : 0)
+                .allowsHitTesting(!model.reportLocked)
+                .accessibilityHidden(model.reportLocked)
             }
         }
+        .scrollDisabled(model.reportLocked && model.session != nil)
+        .overlay {
+            if model.reportLocked, model.session != nil {
+                ReportLock(onUnlock: { model.onUnlockReport?() }, onClose: onClose)
+                    .transition(.opacity)
+            }
+        }
+        .animation(DS.Motion.settle, value: model.reportLocked)
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(DS.Palette.screen)

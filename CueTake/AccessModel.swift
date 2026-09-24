@@ -3,6 +3,7 @@ import Domain
 import Foundation
 import Observation
 import Persistence
+import SettingsFeature
 
 /// A refused attempt, for the paywall to open on.
 struct AccessRequest: Identifiable, Hashable {
@@ -126,6 +127,30 @@ final class AccessModel {
 }
 
 extension AppModel {
+    /// Settings' CueTake+ card: the plan, each counted feature's use this month, and on the free
+    /// plan the tools only CueTake+ has.
+    var plusUsage: PlusUsage {
+        let ledger = access.ledger.current()
+        let plan = access.plan
+        let counted: [AccessPoint] = [.aiEdit, .assistantMessage, .scriptWriting, .captionTranslation, .workflowRun, .stockBroll, .cloudListening]
+        let rows = counted.map { point in
+            PlusUsage.Row(
+                id: point.meterKey ?? point.title,
+                title: point.title,
+                used: ledger.used(point),
+                limit: AccessPolicy.monthlyLimit(point, plan: plan),
+                locked: plan == .free && AccessPolicy.isProOnly(point)
+            )
+        }
+        let plusOnly: [AccessPoint] = [.suflorReport, .videoStyle(.energetic), .soundDesign, .beatSync, .brandTemplate, .multiPlatformExport, .highResolutionCapture, .highResolutionExport]
+        return PlusUsage(
+            isPlus: plan == .pro,
+            rows: rows,
+            plusTools: plan == .free ? plusOnly.map(\.title) : [],
+            resetsAt: access.resetsAt
+        )
+    }
+
     /// The way into CueTake+. The store is not connected yet, so for now it says so; the purchase
     /// goes here once the products exist.
     func upgradeToPlus() {

@@ -74,6 +74,8 @@ final class AppModel {
     let accountModel = AccountModel()
     /// The plan and this month's use of everything paid.
     let access = AccessModel()
+    /// How many suflör reports are kept, for Settings.
+    var suflorReportCount = SuflorReportStore.count()
 
     private(set) var studioModel: StudioModel
     private(set) var editorModel: EditorModel

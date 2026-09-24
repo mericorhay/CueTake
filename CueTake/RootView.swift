@@ -30,6 +30,8 @@ struct RootView: View {
     @State private var showsTeam = false
     /// The limit card's own window, above every sheet.
     @State private var limitPresenter = LimitPresenter()
+    @State private var showsSuflorReports = false
+    @Environment(\.openURL) private var openURL
     @State private var showsCertificates = false
     @State private var showsVoiceProfile = false
 
@@ -394,8 +396,27 @@ struct RootView: View {
                 onVoiceProfile: { showsVoiceProfile = true },
                 testFreePlan: AccessModel.isTestFlight
                     ? Binding(get: { model.access.testsFreePlan }, set: { model.access.testsFreePlan = $0 })
-                    : nil
+                    : nil,
+                plus: model.plusUsage,
+                onUpgrade: { model.upgradeToPlus() },
+                onManageSubscription: {
+                    if let url = URL(string: "https://apps.apple.com/account/subscriptions") { openURL(url) }
+                },
+                suflorReports: model.suflorReportCount > 0 ? "\(model.suflorReportCount)" : AppLocalization.string("suflorReports.none"),
+                onSuflorReports: { showsSuflorReports = true },
+                allowsHighResolution: { model.access.use(.highResolutionCapture) }
             )
+            .sheet(isPresented: $showsSuflorReports) {
+                SuflorReportsList(
+                    isLocked: model.access.plan != .pro,
+                    onOpen: { report in
+                        showsSuflorReports = false
+                        model.openSavedSuflorReport(report)
+                    },
+                    onClose: { showsSuflorReports = false }
+                )
+                .presentationDetents([.medium, .large])
+            }
             .task { await model.refreshStorage() }
             .fullScreenCover(isPresented: $showsVoiceProfile) {
                 VoiceProfileScreen(

@@ -640,6 +640,8 @@ extension AccessPoint {
         case .brandTemplate: AppLocalization.string("access.feature.templates")
         case .multiPlatformExport: AppLocalization.string("access.feature.multiExport")
         case .highResolutionExport: AppLocalization.string("access.feature.export4K")
+        case .highResolutionCapture: AppLocalization.string("access.feature.capture4K")
+        case .suflorReport: AppLocalization.string("access.feature.suflorReport")
         }
     }
 }
@@ -649,12 +651,15 @@ extension AccessPoint {
 @MainActor
 final class LimitPresenter {
     private var window: UIWindow?
+    /// The app's own window, given the keyboard back when the card goes.
+    private weak var previousKey: UIWindow?
 
     func show(_ card: some View) {
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first(where: { $0.activationState == .foregroundActive }) ?? UIApplication.shared.connectedScenes.first as? UIWindowScene
         else { return }
+        previousKey = scene.windows.first { $0.isKeyWindow }
         let host = UIHostingController(rootView: AnyView(card))
         host.view.backgroundColor = .clear
         let window = UIWindow(windowScene: scene)
@@ -668,5 +673,6 @@ final class LimitPresenter {
     func hide() {
         window?.isHidden = true
         window = nil
+        previousKey?.makeKey()
     }
 }
