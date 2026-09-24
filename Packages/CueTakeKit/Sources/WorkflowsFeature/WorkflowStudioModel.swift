@@ -70,6 +70,8 @@ enum StudioDrag {
 public final class WorkflowStudioModel {
     public var definition: WorkflowDefinition
     public var clips: [StudioClip]
+    /// A frame of the first clip, as JPEG, for the preview. Nil draws a stand-in scene.
+    public var previewFrame: Data?
 
     public private(set) var stepStates: [WorkflowStep.ID: StudioStepState] = [:]
     public private(set) var isRunning = false

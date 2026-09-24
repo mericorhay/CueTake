@@ -142,6 +142,7 @@ extension AppModel {
         isAssistantOpen = false
 
         workflowStudio = WorkflowStudioModel(definition: workflow, clips: currentClips())
+        loadWorkflowPreviewFrame()
         workflows.removeAll { $0.id == workflow.id }
         workflows.insert(workflow, at: 0)
         let store = dependencies.workflowStore

@@ -79,6 +79,7 @@ public struct WorkflowStudioScreen: View {
                     if !readiness.isEmpty, !model.isRunning {
                         readinessCard
                     }
+                    StudioPreview(model: model)
                     structure
                     StudioStyleCard(model: model)
                     StudioPipeline(model: model, onShowPalette: { showsPalette = true })

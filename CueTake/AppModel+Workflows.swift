@@ -1,4 +1,5 @@
 import AIServices
+import AVFoundation
 import DesignSystem
 import Domain
 import EditorFeature
@@ -35,6 +36,7 @@ extension AppModel {
     func openWorkflow(_ workflow: WorkflowDefinition) {
         let studio = WorkflowStudioModel(definition: workflow, clips: currentClips())
         workflowStudio = studio
+        loadWorkflowPreviewFrame()
         go(to: .workflowDetail)
         let projectID = project.id
         Task { [weak self, weak studio] in
@@ -190,6 +192,33 @@ extension AppModel {
 
     func refreshWorkflowClips() {
         workflowStudio?.clips = currentClips()
+        loadWorkflowPreviewFrame()
+    }
+
+    /// A frame of the project's first clip behind the studio's preview, so the caption is placed
+    /// over the real picture.
+    func loadWorkflowPreviewFrame() {
+        guard let studio = workflowStudio, let recording = project.recordings.first else {
+            workflowStudio?.previewFrame = nil
+            return
+        }
+        let projectID = project.id
+        let store = dependencies.projectStore
+        Task { [weak studio] in
+            guard let directory = try? await store.mediaDirectory(for: projectID) else { return }
+            let url = directory.deletingLastPathComponent().appending(path: recording.relativePath)
+            let frame = await Self.previewFrame(of: url)
+            studio?.previewFrame = frame
+        }
+    }
+
+    /// A frame a second in, big enough for a phone-width preview, as JPEG.
+    nonisolated static func previewFrame(of video: URL) async -> Data? {
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: video))
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 720, height: 720)
+        guard let (image, _) = try? await generator.image(at: CMTime(seconds: 1, preferredTimescale: 600)) else { return nil }
+        return UIImage(cgImage: image).jpegData(compressionQuality: 0.8)
     }
 
     func pickClipsForWorkflow() {
@@ -523,6 +552,12 @@ extension AppModel {
         case .applyCaptionStyle(let preset):
             guard definition.style.captions else { return .skipped(AppLocalization.string("workflow.skip.captionsOff")) }
             applyCaptionStyle(presetID: preset, position: definition.style.position)
+            // Pinched bigger or smaller on the workflow's preview.
+            if let scale = definition.style.captionScale {
+                project.captionStyle.relativeFontSize *= scale
+                editorModel.project = project
+                scheduleSave()
+            }
             return .done
 
         case .export(let preset):

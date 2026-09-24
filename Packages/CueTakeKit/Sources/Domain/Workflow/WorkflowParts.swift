@@ -65,6 +65,12 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
     public var captionPreset: String
     /// `top`, `middle` or `bottom`.
     public var captionPosition: String
+    /// Where the caption's centre sits, 0 top … 1 bottom, when it was placed by hand on the
+    /// preview. Wins over `captionPosition`, which is kept at the nearest of the three for anyone
+    /// reading the JSON.
+    public var captionY: Double?
+    /// The preset's size times this, from pinching the preview. Nil is the preset's own size.
+    public var captionScale: Double?
     public var aspect: VideoFormat.AspectRatio
     public var resolution: VideoFormat.Resolution
     public var frameRate: Int
@@ -75,8 +81,12 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
         captionPosition: String = "bottom",
         aspect: VideoFormat.AspectRatio = .portrait9x16,
         resolution: VideoFormat.Resolution = .hd1080,
-        frameRate: Int = 30
+        frameRate: Int = 30,
+        captionY: Double? = nil,
+        captionScale: Double? = nil
     ) {
+        self.captionY = captionY
+        self.captionScale = captionScale
         self.captions = captions
         self.captionPreset = captionPreset
         self.captionPosition = captionPosition
@@ -86,7 +96,7 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case captions, captionPreset, captionPosition, aspect, resolution, frameRate
+        case captions, captionPreset, captionPosition, captionY, captionScale, aspect, resolution, frameRate
     }
 
     public init(from decoder: any Decoder) throws {
@@ -95,6 +105,8 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
         captions = try c.decodeIfPresent(Bool.self, forKey: .captions) ?? fallback.captions
         captionPreset = try c.decodeIfPresent(String.self, forKey: .captionPreset) ?? fallback.captionPreset
         captionPosition = try c.decodeIfPresent(String.self, forKey: .captionPosition) ?? fallback.captionPosition
+        captionY = (try? c.decodeIfPresent(Double.self, forKey: .captionY)).flatMap { $0 }.map(Self.clampedY)
+        captionScale = (try? c.decodeIfPresent(Double.self, forKey: .captionScale)).flatMap { $0 }.map(Self.clampedScale)
         // `try?` on the enums: a model that writes "vertical" instead of "portrait9x16" should get
         // the default, not a failed document.
         aspect = (try? c.decodeIfPresent(VideoFormat.AspectRatio.self, forKey: .aspect)) ?? fallback.aspect
@@ -107,12 +119,31 @@ public struct WorkflowStyle: Hashable, Sendable, Codable {
     }
 
     public var position: CaptionPosition {
+        if let captionY { return CaptionPosition(x: 0.5, y: captionY) }
         switch captionPosition.lowercased() {
         case "top": CaptionPosition(x: 0.5, y: 0.2)
         case "middle", "center": .center
         default: .lowerThird
         }
     }
+
+    /// Places the caption by hand, and names the nearest of the three places for the JSON.
+    public mutating func placeCaption(y: Double) {
+        let y = Self.clampedY(y)
+        captionY = y
+        captionPosition = y < 0.35 ? "top" : y < 0.62 ? "middle" : "bottom"
+    }
+
+    /// Back to one of the three named places.
+    public mutating func placeCaption(named name: String) {
+        captionPosition = name
+        captionY = nil
+    }
+
+    public var captionFontScale: Double { captionScale ?? 1 }
+
+    public static func clampedY(_ y: Double) -> Double { min(0.92, max(0.08, y)) }
+    public static func clampedScale(_ scale: Double) -> Double { min(1.7, max(0.6, scale)) }
 }
 
 // MARK: - Step options

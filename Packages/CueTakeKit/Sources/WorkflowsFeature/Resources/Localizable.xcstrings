@@ -9752,6 +9752,144 @@
           }
         }
       }
+    },
+    "studio.preview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PREVIEW"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ÖNİZLEME"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VISTA PREVIA"
+          }
+        }
+      }
+    },
+    "studio.preview.safeZone" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App UI"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama alanı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interfaz"
+          }
+        }
+      }
+    },
+    "studio.preview.hint" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag the caption to place it for the whole workflow, pinch to resize. Drag the title too."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altyazıyı sürükleyerek tüm workflow için yerini seç, iki parmakla büyüt ya da küçült. Başlığı da sürükleyebilirsin."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra el subtítulo para colocarlo en todo el workflow y pellizca para cambiar su tamaño. El título también se arrastra."
+          }
+        }
+      }
+    },
+    "studio.preview.caption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Caption position"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altyazı konumu"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posición del subtítulo"
+          }
+        }
+      }
+    },
+    "studio.preview.hidden" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behind TikTok and Reels buttons"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TikTok ve Reels arayüzünün altında kalır"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Queda detrás de los botones de TikTok y Reels"
+          }
+        }
+      }
+    },
+    "studio.preview.sample" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In this video I'll show you 3 things and the last one will surprise you"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu videoda sana 3 şey göstereceğim ve sonuncusu seni şaşırtacak"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En este vídeo te enseño 3 cosas y la última te va a sorprender"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

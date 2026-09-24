@@ -42,7 +42,7 @@ struct StudioStyleCard: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
 
                 row("studio.style.position", options: ["top", "middle", "bottom"], selected: style.captionPosition) {
-                    model.definition.style.captionPosition = $0
+                    model.definition.style.placeCaption(named: $0)
                 } label: { Self.positionLabel($0) }
             }
 
