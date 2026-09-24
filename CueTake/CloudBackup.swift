@@ -102,35 +102,58 @@ final class CloudBackup {
     func backUp() async {
         guard !isBusy else { return }
         do {
-            try await ensureZone()
-            let files = Self.localFiles()
-            var manifest = Self.loadManifest()
-            let changed = files.filter { manifest[$0.key] != $0.value.stamp }.sorted { $0.key < $1.key }
-            phase = .backingUp(done: 0, of: changed.count)
-            // One file a request: a long video is a large asset, and a failure costs only that file.
-            for (index, item) in changed.enumerated() {
-                let (path, file) = item
-                let record = CKRecord(recordType: Self.recordType, recordID: Self.recordID(for: path))
-                record["path"] = path as CKRecordValue
-                record["project"] = String(path.prefix { $0 != "/" }) as CKRecordValue
-                record["size"] = file.stamp.size as CKRecordValue
-                record["modified"] = Date(timeIntervalSince1970: file.stamp.modified) as CKRecordValue
-                record["file"] = CKAsset(fileURL: file.url)
-                let result = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
-                // A refused record is reported inside the result, not thrown.
-                if case .failure(let error)? = result.saveResults[record.recordID] { throw error }
-                manifest[path] = file.stamp
-                Self.saveManifest(manifest)
-                phase = .backingUp(done: index + 1, of: changed.count)
+            let sent: Int
+            do {
+                sent = try await sendChanges()
+            } catch let error as CKError where Self.isMissingZone(error) {
+                // The zone this phone remembers making is gone: another environment, deleted in
+                // iCloud settings, or never really made. Make it again and send once more.
+                // Whatever the list says was sent went with the old zone, so everything goes again.
+                UserDefaults.standard.removeObject(forKey: Self.zoneKey)
+                try? FileManager.default.removeItem(at: Self.manifestURL)
+                sent = try await sendChanges()
             }
             lastBackup = .now
             UserDefaults.standard.set(lastBackup, forKey: Self.lastKey)
             phase = .idle
-            Analytics.track("icloud_backup", ["ok": true, "files": .int(changed.count)])
+            Analytics.track("icloud_backup", ["ok": true, "files": .int(sent)])
         } catch {
             phase = .failed(Self.describe(error))
             Analytics.track("icloud_backup", ["ok": false, "code": .int((error as? CKError)?.code.rawValue ?? -1)])
         }
+    }
+
+    /// Sends every file that changed since the last backup. Returns how many went.
+    private func sendChanges() async throws -> Int {
+        try await ensureZone()
+        let files = Self.localFiles()
+        var manifest = Self.loadManifest()
+        let changed = files.filter { manifest[$0.key] != $0.value.stamp }.sorted { $0.key < $1.key }
+        phase = .backingUp(done: 0, of: changed.count)
+        // One file a request: a long video is a large asset, and a failure costs only that file.
+        for (index, item) in changed.enumerated() {
+            let (path, file) = item
+            let record = CKRecord(recordType: Self.recordType, recordID: Self.recordID(for: path))
+            record["path"] = path as CKRecordValue
+            record["project"] = String(path.prefix { $0 != "/" }) as CKRecordValue
+            record["size"] = file.stamp.size as CKRecordValue
+            record["modified"] = Date(timeIntervalSince1970: file.stamp.modified) as CKRecordValue
+            record["file"] = CKAsset(fileURL: file.url)
+            let result = try await database.modifyRecords(saving: [record], deleting: [], savePolicy: .allKeys)
+            // A refused record is reported inside the result, not thrown.
+            if case .failure(let error)? = result.saveResults[record.recordID] { throw error }
+            manifest[path] = file.stamp
+            Self.saveManifest(manifest)
+            phase = .backingUp(done: index + 1, of: changed.count)
+        }
+        return changed.count
+    }
+
+    /// CloudKit's answer when the Backups zone does not exist, alone or inside a partial failure.
+    private static func isMissingZone(_ error: CKError) -> Bool {
+        if error.code == .zoneNotFound || error.code == .userDeletedZone { return true }
+        guard error.code == .partialFailure, let inner = error.partialErrorsByItemID?.values else { return false }
+        return inner.contains { ($0 as? CKError).map(isMissingZone) ?? false }
     }
 
     /// The automatic backup when the app goes to the background, given the time iOS allows.
@@ -148,9 +171,10 @@ final class CloudBackup {
 
     // MARK: - Restore
 
-    /// Writes back every backed-up file this phone does not have. Returns how many came back.
+    /// Writes back every backed-up file this phone does not have. Returns how many came back, or
+    /// nil when this iCloud has no CueTake backup at all.
     @discardableResult
-    func restore() async -> Int {
+    func restore() async -> Int? {
         guard !isBusy else { return 0 }
         do {
             // The list first, without the files; then only the missing ones are downloaded.
@@ -196,6 +220,10 @@ final class CloudBackup {
             phase = .idle
             Analytics.track("icloud_restore", ["ok": true, "files": .int(restored)])
             return restored
+        } catch let error as CKError where Self.isMissingZone(error) {
+            phase = .idle
+            Analytics.track("icloud_restore", ["ok": true, "files": 0, "empty": true])
+            return nil
         } catch {
             phase = .failed(Self.describe(error))
             return 0
@@ -204,10 +232,12 @@ final class CloudBackup {
 
     // MARK: - Parts
 
+    private static let zoneKey = "cuetake.icloud.backup.zone"
+
     private func ensureZone() async throws {
-        guard !UserDefaults.standard.bool(forKey: "cuetake.icloud.backup.zone") else { return }
+        guard !UserDefaults.standard.bool(forKey: Self.zoneKey) else { return }
         _ = try await database.modifyRecordZones(saving: [CKRecordZone(zoneID: Self.zoneID)], deleting: [])
-        UserDefaults.standard.set(true, forKey: "cuetake.icloud.backup.zone")
+        UserDefaults.standard.set(true, forKey: Self.zoneKey)
     }
 
     private static func loadManifest() -> [String: Stamp] {
@@ -284,6 +314,10 @@ extension AppModel {
                     let restored = await backup.restore()
                     await self?.refreshLibrary()
                     if case .failed = backup.phase { return }
+                    guard let restored else {
+                        self?.show(notice: AppLocalization.string("icloud.error.noBackup"))
+                        return
+                    }
                     self?.show(notice: AppLocalization.string("icloud.restored \(restored)"))
                 }
             }
