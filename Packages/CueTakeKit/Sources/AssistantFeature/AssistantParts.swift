@@ -47,48 +47,97 @@ struct AssistantAmbience: View {
     }
 }
 
-/// The assistant's face: a small living sphere.
+/// The assistant's face: a crisp four-point spark in a dark core, ringed by a slowly turning band of
+/// the app's colours.
 ///
-/// Breathes slowly at rest and turns faster while it thinks. A face rather than a sparkle icon,
-/// because a conversation needs someone on the other side of it, and a looping symbol is a
-/// loading spinner.
+/// At rest the spark breathes and a small twin twinkles beside it; while it thinks the ring runs
+/// fast and the spark turns. A tap spins the spark a quarter turn with a spring. Drawn, not a
+/// blurred blob: it has to read as a mark at 30 points and still hold up at 96.
 struct AssistantOrb: View {
     let isThinking: Bool
+    /// Bumped by the caller on a tap: the spark answers with a quarter turn.
+    var burst: Int = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
-            let rotation = Angle.degrees(t * (isThinking ? 160 : 24))
-            let breath = 1 + 0.04 * sin(t * (isThinking ? 5 : 1.4))
+            GeometryReader { proxy in
+                let d = min(proxy.size.width, proxy.size.height)
+                let rotation = Angle.degrees(t * (isThinking ? 220 : 40))
+                let breath = 1 + (isThinking ? 0.08 : 0.05) * sin(t * (isThinking ? 6 : 1.8))
+                let twinkle = 0.35 + 0.65 * max(0, sin(t * 2.3 + 1.2))
+                let band = AngularGradient(
+                    colors: [DS.Palette.lime, DS.Palette.accent, DS.Palette.accentWarm, DS.Palette.lime],
+                    center: .center,
+                    angle: rotation
+                )
 
-            ZStack {
-                Circle()
-                    .fill(
-                        AngularGradient(
-                            colors: [DS.Palette.lime, DS.Palette.accent, DS.Palette.accentWarm, DS.Palette.lime],
-                            center: .center,
-                            angle: rotation
+                ZStack {
+                    // The glow under the ring, soft; then the ring itself, sharp.
+                    Circle()
+                        .strokeBorder(band, lineWidth: d * 0.12)
+                        .blur(radius: d * 0.08)
+                        .opacity(isThinking ? 0.95 : 0.6)
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color(white: 0.2), Color(white: 0.05)],
+                                center: UnitPoint(x: 0.35, y: 0.3),
+                                startRadius: 0,
+                                endRadius: d * 0.6
+                            )
                         )
-                    )
-                    .blur(radius: 6)
+                        .padding(d * 0.05)
+                    Circle()
+                        .strokeBorder(band, lineWidth: max(1.5, d * 0.05))
 
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [.white.opacity(0.55), .clear],
-                            center: UnitPoint(x: 0.32, y: 0.28),
-                            startRadius: 0,
-                            endRadius: 40
+                    SparkShape()
+                        .fill(
+                            LinearGradient(
+                                colors: [.white, DS.Palette.lime],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .blendMode(.plusLighter)
+                        .frame(width: d * 0.46, height: d * 0.46)
+                        .shadow(color: DS.Palette.lime.opacity(0.6), radius: d * 0.06)
+                        .scaleEffect(breath)
+                        .rotationEffect(.degrees(isThinking ? t * 90 : 0))
+                        .rotationEffect(.degrees(Double(burst) * 90))
+                        .animation(.spring(response: 0.45, dampingFraction: 0.55), value: burst)
+
+                    SparkShape()
+                        .fill(.white)
+                        .frame(width: d * 0.16, height: d * 0.16)
+                        .opacity(twinkle)
+                        .scaleEffect(0.7 + 0.3 * twinkle)
+                        .offset(x: d * 0.2, y: -d * 0.2)
+                }
+                .frame(width: d, height: d)
+                .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
             }
-            .clipShape(Circle())
-            .scaleEffect(breath)
-            .shadow(color: DS.Palette.accent.opacity(isThinking ? 0.55 : 0.3), radius: isThinking ? 18 : 12)
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// A four-point star with softly curved sides, the classic "spark".
+struct SparkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let c = CGPoint(x: rect.midX, y: rect.midY)
+        // How far the sides bow out from the centre toward the corners; 0 is a needle-thin star.
+        let bow = 0.16
+        let dx = rect.width / 2 * bow
+        let dy = rect.height / 2 * bow
+        var path = Path()
+        path.move(to: CGPoint(x: c.x, y: rect.minY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: c.y), control: CGPoint(x: c.x + dx, y: c.y - dy))
+        path.addQuadCurve(to: CGPoint(x: c.x, y: rect.maxY), control: CGPoint(x: c.x + dx, y: c.y + dy))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: c.y), control: CGPoint(x: c.x - dx, y: c.y + dy))
+        path.addQuadCurve(to: CGPoint(x: c.x, y: rect.minY), control: CGPoint(x: c.x - dx, y: c.y - dy))
+        path.closeSubpath()
+        return path
     }
 }
 

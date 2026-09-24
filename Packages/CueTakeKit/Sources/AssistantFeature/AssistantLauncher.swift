@@ -27,8 +27,8 @@ public struct AssistantLauncherButton: View {
             pressed += 1
             action()
         } label: {
-            AssistantOrb(isThinking: false)
-                .frame(width: 30, height: 30)
+            AssistantOrb(isThinking: false, burst: pressed)
+                .frame(width: 38, height: 38)
                 .frame(width: 62, height: 62)
                 .contentShape(Circle())
         }
