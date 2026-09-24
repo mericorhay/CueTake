@@ -197,7 +197,7 @@ public struct SettingsScreen: View {
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(32)
             } else {
-                SettingsPanel(destination: selected, model: model, storage: storage, onCleanStorage: onCleanStorage)
+                SettingsPanel(destination: selected, model: model, storage: storage, onCleanStorage: onCleanStorage, allowsHighResolution: allowsHighResolution)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(32)
@@ -265,6 +265,7 @@ struct SettingsPanel: View {
     let model: SettingsModel
     let storage: String?
     let onCleanStorage: (() async -> (message: String, storage: String?))?
+    var allowsHighResolution: (() -> Bool)? = nil
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showsKeys = false
