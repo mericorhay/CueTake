@@ -97,6 +97,8 @@ public struct HomeScreen: View {
     private let onOpenProject: (LibraryItem) -> Void
     private let onOpenAllProjects: () -> Void
     private let onOpenWorkflow: () -> Void
+    private let workflows: [HomeWorkflow]
+    private let onRunWorkflow: (UUID) -> Void
     private let onTeleprompter: () -> Void
     private let onSuflor: () -> Void
 
@@ -106,9 +108,13 @@ public struct HomeScreen: View {
         onOpenProject: @escaping (LibraryItem) -> Void,
         onOpenAllProjects: @escaping () -> Void,
         onOpenWorkflow: @escaping () -> Void,
+        workflows: [HomeWorkflow] = [],
+        onRunWorkflow: @escaping (UUID) -> Void = { _ in },
         onTeleprompter: @escaping () -> Void = {},
         onSuflor: @escaping () -> Void = {}
     ) {
+        self.workflows = workflows
+        self.onRunWorkflow = onRunWorkflow
         self.onTeleprompter = onTeleprompter
         self.onSuflor = onSuflor
         self.recents = recents
@@ -382,45 +388,71 @@ public struct HomeScreen: View {
 
     // MARK: - Workflows
 
+    /// The creator's own workflows, or the ready-made recipes before they have any. This used to be
+    /// the design file's sample card, "Product Reel · 5 steps", on every phone whatever it held.
     private var workflowSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel(AppLocalization.string("home.section.workflows", bundle: .module))
-
-            Button(action: onOpenWorkflow) {
-                HStack(spacing: 13) {
-                    Text("PR")
-                        .accessibilityHidden(true)
-                        .dsFont(.archivo, .bold, 13)
-                        .foregroundStyle(DS.Palette.inkInverse)
-                        .frame(width: 34, height: 34)
-                        .background(
-                            RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous)
-                                .fill(DS.Palette.lime)
-                        )
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("home.workflow.name", bundle: .module)
-                            .dsFont(.sans, .semibold, 14)
-                            .foregroundStyle(DS.Palette.ink)
-                        Text("home.workflow.meta", bundle: .module)
-                            .dsFont(.mono, .medium, 11)
-                            .foregroundStyle(DS.Palette.ink(0.56))
-                    }
-
-                    Spacer(minLength: 0)
-
-                    Text("›")
-                        .font(.system(size: 17))
-                        .foregroundStyle(DS.Palette.ink(0.52))
-                        .accessibilityHidden(true)
+            HStack {
+                sectionLabel(AppLocalization.string("home.section.workflows", bundle: .module))
+                Spacer(minLength: 0)
+                Button(action: onOpenWorkflow) {
+                    Text("home.workflow.all", bundle: .module)
+                        .dsFont(.sans, .semibold, 13)
+                        .foregroundStyle(DS.Palette.ink(0.7))
                 }
-                .padding(15)
-                .dsCard(radius: 18)
+                .buttonStyle(.dsPress)
             }
-            .buttonStyle(.dsPress)
+
+            if workflows.isEmpty {
+                Button(action: onOpenWorkflow) { workflowRow(initials: "WF", name: AppLocalization.string("home.section.workflows", bundle: .module), meta: nil) }
+                    .buttonStyle(.dsPress)
+            } else {
+                ForEach(workflows) { workflow in
+                    Button { onRunWorkflow(workflow.id) } label: {
+                        workflowRow(initials: workflow.initials, name: workflow.name, meta: workflow.meta)
+                    }
+                    .buttonStyle(.dsPress)
+                }
+            }
         }
         .padding(.horizontal, 22)
         .padding(.top, 30)
+    }
+
+    private func workflowRow(initials: String, name: String, meta: String?) -> some View {
+        HStack(spacing: 13) {
+            Text(verbatim: initials)
+                .accessibilityHidden(true)
+                .dsFont(.archivo, .bold, 13)
+                .foregroundStyle(DS.Palette.inkInverse)
+                .frame(width: 34, height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.s, style: .continuous)
+                        .fill(DS.Palette.lime)
+                )
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: name)
+                    .dsFont(.sans, .semibold, 14)
+                    .foregroundStyle(DS.Palette.ink)
+                    .lineLimit(1)
+                if let meta {
+                    Text(verbatim: meta)
+                        .dsFont(.mono, .medium, 11)
+                        .foregroundStyle(DS.Palette.ink(0.56))
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Text("›")
+                .font(.system(size: 17))
+                .foregroundStyle(DS.Palette.ink(0.52))
+                .accessibilityHidden(true)
+        }
+        .padding(15)
+        .dsCard(radius: 18)
     }
 
     private func sectionLabel(_ text: String) -> some View {

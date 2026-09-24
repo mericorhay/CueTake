@@ -74,6 +74,10 @@ extension AppModel {
             promptModel.fail(Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
             return
         }
+        guard access.use(.scriptWriting) else {
+            promptModel.fail(AccessModel.message(for: access.decision(.scriptWriting)))
+            return
+        }
         do {
             let written = try await dependencies.assistantClient.writeScript(brief, localeIdentifier: localeIdentifier)
             let draft = ScriptBudget.fit(written, seconds: brief.targetDuration.seconds, localeIdentifier: localeIdentifier)
@@ -90,6 +94,7 @@ extension AppModel {
             scriptReturn = .blueprint
             go(to: .blueprint)
         } catch {
+            access.refund(.scriptWriting)
             promptModel.fail(Self.assistantFailureMessage(error))
         }
     }
@@ -135,6 +140,9 @@ extension AppModel {
         guard settingsModel.settings.aiProcessing == .allowCloud else {
             throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
         }
+        guard access.use(.scriptWriting) else {
+            throw DescribedError(message: AccessModel.message(for: access.decision(.scriptWriting)))
+        }
         do {
             return try await dependencies.assistantClient.rewrite(
                 text,
@@ -144,6 +152,7 @@ extension AppModel {
                 localeIdentifier: localeIdentifier
             )
         } catch {
+            access.refund(.scriptWriting)
             throw DescribedError(message: Self.assistantFailureMessage(error))
         }
     }

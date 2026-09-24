@@ -25,6 +25,7 @@ extension EditorModel {
         guard let captionTranslator, translationProgress == nil else { return false }
         let lines = project.captionLines.filter { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty }
         guard !lines.isEmpty else { return false }
+        guard allows(.captionTranslation) else { return false }
         translationFailure = nil
         translationProgress = 0
         defer { translationProgress = nil }
@@ -37,6 +38,7 @@ extension EditorModel {
             project.updatedAt = .now
             return true
         } catch {
+            accessRefund?(.captionTranslation)
             translationFailure = (error as? LocalizedError)?.errorDescription
                 ?? AppLocalization.string("lyrics.translate.failed", bundle: .module)
             return false

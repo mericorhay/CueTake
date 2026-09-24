@@ -188,6 +188,8 @@ struct RootView: View {
                 onOpenProject: { item in Task { await model.openProject(id: item.id) } },
                 onOpenAllProjects: { model.go(to: .projects) },
                 onOpenWorkflow: { model.go(to: .workflows) },
+                workflows: model.homeWorkflows,
+                onRunWorkflow: { id in model.openHomeWorkflow(id) },
                 onTeleprompter: { model.startTeleprompter() },
                 onSuflor: { model.startSuflor() }
             )
@@ -374,7 +376,10 @@ struct RootView: View {
                 certificates: model.certificationSummary,
                 onCertificates: { showsCertificates = true },
                 voiceProfile: model.voiceProfile,
-                onVoiceProfile: { showsVoiceProfile = true }
+                onVoiceProfile: { showsVoiceProfile = true },
+                testFreePlan: AccessModel.isTestFlight
+                    ? Binding(get: { model.access.testsFreePlan }, set: { model.access.testsFreePlan = $0 })
+                    : nil
             )
             .task { await model.refreshStorage() }
             .fullScreenCover(isPresented: $showsVoiceProfile) {

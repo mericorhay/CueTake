@@ -28,7 +28,13 @@ extension AppModel {
                   self.settingsModel.settings.aiProcessing == .allowCloud
             else { throw AssistantClient.AssistantError.declined }
             let locale = self.project.localeIdentifier
-            return try await client.reply(to: session, localeIdentifier: locale)
+            guard self.access.use(.assistantMessage) else { throw AssistantClient.AssistantError.declined }
+            do {
+                return try await client.reply(to: session, localeIdentifier: locale)
+            } catch {
+                self.access.refund(.assistantMessage)
+                throw error
+            }
         }
         assistant.save = { session in
             Task { try? await store?.save(session) }

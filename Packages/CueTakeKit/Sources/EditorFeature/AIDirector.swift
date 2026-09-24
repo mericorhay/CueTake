@@ -152,6 +152,7 @@ extension EditorModel {
     public func askAI(_ instruction: String, using request: @escaping AIRequester) {
         let text = instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !isAIDriving else { return }
+        guard allows(.aiEdit) else { return }
         aiRequester = request
         pause()
         // Nothing stays open under the AI: a panel would show values it is about to change.
@@ -187,6 +188,7 @@ extension EditorModel {
                 self.rememberAIRun(text)
             } catch {
                 guard let self, !Task.isCancelled else { return }
+                self.accessRefund?(.aiEdit)
                 withAnimation(.snappy(duration: 0.3)) {
                     self.aiSession?.phase = .failed(
                         AppLocalization.string("editor.ai.failed \(error.localizedDescription)", bundle: .module)

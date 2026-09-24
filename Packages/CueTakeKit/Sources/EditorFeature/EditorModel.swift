@@ -186,6 +186,11 @@ public final class EditorModel {
     @ObservationIgnored public var speechRelistener: ((String) async -> Void)?
     /// True while the footage is being heard again.
     public var relistening = false
+    /// Asks whether a paid feature may run now, counting it when it may and saying why when it may
+    /// not. Set by the app, which knows the plan; nil allows everything.
+    @ObservationIgnored public var access: ((AccessPoint) -> Bool)?
+    /// Gives a use back when a paid feature failed on the way (offline, the server down).
+    @ObservationIgnored public var accessRefund: ((AccessPoint) -> Void)?
     /// What each take's footage shows, read once and kept, for the AI editor.
     @ObservationIgnored var sceneNotes: [Take.ID: String] = [:]
     /// Finds, fetches and imports stock B-roll for the video, `count` shots at most. Set by the

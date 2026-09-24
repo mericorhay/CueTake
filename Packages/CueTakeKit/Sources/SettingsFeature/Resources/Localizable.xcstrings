@@ -4672,6 +4672,52 @@
           }
         }
       }
+    },
+    "settings.testFreePlan" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test the free plan"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ücretsiz planı test et"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probar el plan gratuito"
+          }
+        }
+      }
+    },
+    "settings.testFreePlan.detail" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TestFlight only. Turn it on to see the limits and locks free users get."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sadece TestFlight'ta. Açınca ücretsiz kullanıcının gördüğü sınırları ve kilitleri görürsün."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo en TestFlight. Actívalo para ver los límites y bloqueos del plan gratuito."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

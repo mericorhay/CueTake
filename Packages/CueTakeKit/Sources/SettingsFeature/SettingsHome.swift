@@ -16,6 +16,8 @@ public struct SettingsScreen: View {
     private let onCertificates: (() -> Void)?
     private let voiceProfile: CreatorVoiceProfile?
     private let onVoiceProfile: (() -> Void)?
+    /// TestFlight only: act as the free plan, to try the limits. Nil hides the row.
+    private let testFreePlan: Binding<Bool>?
     @State private var destination: SettingsDestination?
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -24,7 +26,8 @@ public struct SettingsScreen: View {
                 onCleanStorage: (() async -> (message: String, storage: String?))? = nil, onTeam: (() -> Void)? = nil,
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
-                onVoiceProfile: (() -> Void)? = nil) {
+                onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil) {
+        self.testFreePlan = testFreePlan
         self._model = Bindable(wrappedValue: model); self.account = account; self.storage = storage
         self.onCleanStorage = onCleanStorage; self.onTeam = onTeam; self.onPreviewLight = onPreviewLight
         self.certificates = certificates; self.onCertificates = onCertificates
@@ -113,6 +116,21 @@ public struct SettingsScreen: View {
                             .buttonStyle(SettingsPressStyle())
                         }
                         .settingsEntrance(appeared, delay: 0.12, reduced: reduceMotion)
+                    }
+
+                    if let testFreePlan {
+                        Toggle(isOn: testFreePlan) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("settings.testFreePlan", bundle: .module)
+                                    .font(DS.sans(.semibold, 15)).foregroundStyle(DS.Palette.ink)
+                                Text("settings.testFreePlan.detail", bundle: .module)
+                                    .font(DS.sans(.regular, 12)).foregroundStyle(DS.Palette.ink(0.55))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .tint(DS.Palette.accent)
+                        .padding(18)
+                        .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: 24))
                     }
 
                     VStack(spacing: 8) {

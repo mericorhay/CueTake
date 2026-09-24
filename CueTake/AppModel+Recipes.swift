@@ -1,6 +1,7 @@
 import DesignSystem
 import Domain
 import Foundation
+import LibraryFeature
 import SettingsFeature
 
 /// Ready-made recipes: a workflow packaged as a result — "a UGC ad", "my reel", "clean this up" —
@@ -150,6 +151,29 @@ extension AppModel {
             return
         }
         Task { await runWorkflow() }
+    }
+
+    /// What the home screen lists: the creator's newest workflows, or the recipes before they have any.
+    var homeWorkflows: [HomeWorkflow] {
+        let own = workflows.sorted { $0.updatedAt > $1.updatedAt }
+        let shown = own.isEmpty ? recipes : own
+        return shown.prefix(3).map { workflow in
+            let summary = (workflow.summary ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return HomeWorkflow(
+                id: workflow.id,
+                name: workflow.name,
+                meta: summary.isEmpty ? AppLocalization.string("home.workflow.steps \(workflow.steps.count)") : summary
+            )
+        }
+    }
+
+    /// Opens a workflow from the home screen, one of the creator's or a recipe.
+    func openHomeWorkflow(_ id: UUID) {
+        guard let workflow = (workflows + recipes).first(where: { $0.id == id }) else {
+            go(to: .workflows)
+            return
+        }
+        openWorkflow(workflow)
     }
 
     /// Clean → captions → export, in one tap, for the take just recorded.

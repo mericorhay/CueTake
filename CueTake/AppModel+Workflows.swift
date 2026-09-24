@@ -298,9 +298,15 @@ extension AppModel {
         // Runtime facts may have changed while a recovered job was waiting. User-authored values
         // stay intact; facts owned by the open project are refreshed.
         state.variables.merge(workflowRuntimeVariables()) { _, runtime in runtime }
+        // A run is counted when it starts, not when a paused one is picked up again.
+        if state.nextStepIndex == 0, !access.use(.workflowRun) {
+            if let queue, let job { try? await queue.cancel(job.id) }
+            return
+        }
         workflowRunID = job?.id
         defer { workflowRunID = nil }
         studio.beginRun(resumingAt: state.nextStepIndex)
+        var skippedForPlan = false
 
         // The whole run is one edit the editor can undo: assembling sections replaces the clips,
         // and a workflow run on a project someone had already edited used to lose that work.
@@ -337,6 +343,17 @@ extension AppModel {
                 state = state.advanced()
                 if let queue, let job {
                     _ = try? await queue.checkpoint(job.id, state: state, kind: .stepSkipped, step: step, message: "conditionFalse")
+                }
+                continue
+            }
+
+            // A step the plan does not include is passed over, and the run goes on without it.
+            if let point = step.kind.accessPoint, !access.use(point, quietly: true) {
+                studio.mark(step.id, .skipped(AccessModel.message(for: access.decision(point))))
+                skippedForPlan = true
+                state = state.advanced()
+                if let queue, let job {
+                    _ = try? await queue.checkpoint(job.id, state: state, kind: .stepSkipped, step: step, message: "plan")
                 }
                 continue
             }
@@ -410,6 +427,7 @@ extension AppModel {
         scheduleSave()
         await refreshLibrary()
         studio.finishRun(video: workflowVideo, delivery: workflowDeliveryResult)
+        if skippedForPlan { show(notice: AppLocalization.string("access.workflowSkipped")) }
         if !wasPaused {
             if let queue, let job { try? await queue.complete(job.id, state: state) }
             noteCertifiedWorkflowRun()
@@ -667,6 +685,7 @@ extension AppModel {
     /// Runs a whole style on the open video as one undoable edit, reporting how far it has got.
     func applyVideoStyle(_ style: VideoStyle) async {
         guard editorModel.applyingStyle == nil, !project.segments.isEmpty else { return }
+        guard access.use(.videoStyle(style)) else { return }
         editorModel.applyingStyle = style
         editorModel.styleProgress = 0
         defer {

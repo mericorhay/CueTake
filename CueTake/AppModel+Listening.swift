@@ -28,6 +28,7 @@ extension AppModel {
         let prompt = SpeechHints.whisperPrompt(script: script, terms: hints, localeIdentifier: localeIdentifier)
         async let deviceResult = Self.deviceTranscript(of: url, speech: speech, localeIdentifier: localeIdentifier, hints: hints)
         let allowsCloud = settingsModel.settings.aiProcessing == .allowCloud
+            && access.use(.cloudListening, quietly: true)
         async let cloudResult: [TimedWord]? = allowsCloud
             ? Self.cloudWords(of: url, client: client, localeIdentifier: localeIdentifier, prompt: prompt)
             : nil
@@ -67,6 +68,12 @@ extension AppModel {
         return versions
     }
 
+    /// The editor asks the plan before anything paid runs.
+    func connectAccess() {
+        editorModel.access = { [weak self] point in self?.access.use(point) ?? true }
+        editorModel.accessRefund = { [weak self] point in self?.access.refund(point) }
+    }
+
     /// Lets the editor hear the footage again in the language the user says it is in.
     func connectRelistening() {
         editorModel.speechRelistener = { [weak self] code in
@@ -103,7 +110,7 @@ extension AppModel {
     /// neither can tell.
     func spokenLanguage(in url: URL, current: String) async -> String {
         let client = dependencies.assistantClient
-        if settingsModel.settings.aiProcessing == .allowCloud, client.isConfigured,
+        if settingsModel.settings.aiProcessing == .allowCloud, client.isConfigured, access.plan == .pro,
            let compact = try? await SpeechAudio.compact(url, maximumSeconds: 40) {
             let code = try? await client.spokenLanguage(of: compact)
             try? FileManager.default.removeItem(at: compact)

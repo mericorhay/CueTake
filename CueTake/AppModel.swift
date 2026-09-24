@@ -72,6 +72,8 @@ final class AppModel {
     let suflorModel = SuflorModel()
     let settingsModel: SettingsModel
     let accountModel = AccountModel()
+    /// The plan and this month's use of everything paid.
+    let access = AccessModel()
 
     private(set) var studioModel: StudioModel
     private(set) var editorModel: EditorModel
@@ -93,6 +95,7 @@ final class AppModel {
         // Skipping the intro for someone who has already seen it is the whole point of recording
         // that they did.
         self.screen = settingsModel.settings.hasCompletedOnboarding ? .home : .onboarding
+        access.onRefused = { [weak self] message in self?.show(notice: message) }
         #if DEBUG
         // Deterministic simulator capture without altering the user's onboarding preference.
         if ProcessInfo.processInfo.arguments.contains("-settings-preview") { self.screen = .settings }
@@ -500,6 +503,7 @@ final class AppModel {
         connectStyles()
         connectCaptionTranslation()
         connectRelistening()
+        connectAccess()
         connectStockBroll()
         connectBeats()
         connectEditorShorts()
@@ -583,6 +587,8 @@ final class AppModel {
             await exportProject()
             return
         }
+        // One platform is an ordinary export; several at once is Pro.
+        if platforms.count > 1, !access.use(.multiPlatformExport) { return }
         exportModel.startBatch()
         defer { exportModel.endBatch() }
         for (index, platform) in platforms.enumerated() {
@@ -595,6 +601,8 @@ final class AppModel {
 
     func exportProject(burnCaptions: Bool = true, platform: SocialPlatform? = nil, keepingEarlier: Bool = false) async {
         guard !exportModel.isRunning else { return }
+        // 4K is Pro. Asked once per export: a batch has already been let through as a whole.
+        if project.format.resolution == .uhd4K, !keepingEarlier, !access.use(.highResolutionExport) { return }
         exportModel.begin()
 
         let store = dependencies.projectStore

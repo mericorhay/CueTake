@@ -479,7 +479,7 @@ struct ToolDock: View {
 
             HStack(spacing: 8) {
                 Button {
-                    guard !designingSound else { return }
+                    guard !designingSound, model.allows(.soundDesign) else { return }
                     designingSound = true
                     let options = SoundDesignOptions(intensity: sfxIntensity)
                     Task {
@@ -553,7 +553,13 @@ struct ToolDock: View {
 
             Button {
                 let count = brollCount
-                Task { await model.addStockBroll(count: count) }
+                guard model.allows(.stockBroll) else { return }
+                Task {
+                    // Nothing laid in because the search failed: the use is given back.
+                    if await model.addStockBroll(count: count) == 0, model.brollFailure != nil {
+                        model.accessRefund?(.stockBroll)
+                    }
+                }
             } label: {
                 HStack(spacing: 7) {
                     if model.brollSearching {
@@ -604,6 +610,7 @@ struct ToolDock: View {
 
             if model.canSyncToBeat {
                 Button {
+                    guard model.allows(.beatSync) else { return }
                     Task { await model.syncToBeat(BeatSyncOptions()) }
                 } label: {
                     HStack(spacing: 7) {

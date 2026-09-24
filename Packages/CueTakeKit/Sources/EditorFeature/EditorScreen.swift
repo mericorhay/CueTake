@@ -403,7 +403,7 @@ public struct EditorScreen: View {
                     showsTemplates = false
                     if let id = templateTarget {
                         model.replaceTemplateImage(id, with: data, template: template)
-                    } else {
+                    } else if model.allows(.brandTemplate) {
                         withAnimation(DS.Motion.bloom) { addTemplate(data, style: style, template: template, landscape: landscape) }
                     }
                     templateTarget = nil

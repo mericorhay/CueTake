@@ -714,6 +714,29 @@
         }
       },
       "comment" : "A warm invitation to start creating. Translate idiomatically; do not repeat the word ready."
+    },
+    "home.workflow.all" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See all"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tümü"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver todo"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
