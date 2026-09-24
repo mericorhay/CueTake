@@ -119,8 +119,7 @@ main{max-width:1080px;margin:0 auto;padding:12px 20px 80px}
 footer{border-top:1px solid var(--line);margin-top:72px}
 .foot{max-width:1080px;margin:0 auto;padding:28px 20px 48px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--faint);font:500 12px/1.6 var(--mono);letter-spacing:.06em}
 
-[data-lang]{display:none}
-html[lang="tr"] [data-lang="tr"],html[lang="en"] [data-lang="en"]{display:revert}
+html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{display:none!important}
 
 @media (max-width:820px){
   .hero{grid-template-columns:1fr;padding-top:44px;gap:28px}
@@ -140,7 +139,7 @@ html[lang="tr"] [data-lang="tr"],html[lang="en"] [data-lang="en"]{display:revert
 
 <header class="bar">
   <div class="bar-in">
-    <a class="brand" href="#top" aria-label="CueTake"><span class="rec" aria-hidden="true"></span>CueTake<span class="plus">+</span></a>
+    <a class="brand" href="#top" aria-label="CueTake"><span class="rec" aria-hidden="true"></span><span>CueTake<span class="plus">+</span></span></a>
     <nav class="toc" aria-label="İçindekiler">
       <a href="#privacy" data-lang="tr">Gizlilik</a><a href="#terms" data-lang="tr">Kullanım Koşulları</a><a href="#subscription" data-lang="tr">Abonelik</a>
       <a href="#privacy" data-lang="en">Privacy</a><a href="#terms" data-lang="en">Terms</a><a href="#subscription" data-lang="en">Subscription</a>
