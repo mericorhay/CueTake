@@ -94,8 +94,8 @@ final class PlusStore {
         return isActive
     }
 
-    static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    static let privacyURL = URL(string: "https://cuetake-assistant.mericorhayy.workers.dev/privacy")!
+    static let termsURL = URL(string: "https://mericorhay.github.io/CueTake/#terms")!
+    static let privacyURL = URL(string: "https://mericorhay.github.io/CueTake/#privacy")!
 }
 
 extension AppModel {

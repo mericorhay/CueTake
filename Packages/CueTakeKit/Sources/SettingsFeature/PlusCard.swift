@@ -98,10 +98,10 @@ struct PlusCard: View {
                 if let onRestore, !usage.isPlus {
                     Button(action: onRestore) { Text("plus.restore", bundle: .module) }
                 }
-                Link(destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!) {
+                Link(destination: URL(string: "https://mericorhay.github.io/CueTake/#terms")!) {
                     Text("plus.terms", bundle: .module)
                 }
-                Link(destination: URL(string: "https://cuetake-assistant.mericorhayy.workers.dev/privacy")!) {
+                Link(destination: URL(string: "https://mericorhay.github.io/CueTake/#privacy")!) {
                     Text("plus.privacy", bundle: .module)
                 }
             }
