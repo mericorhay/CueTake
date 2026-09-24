@@ -1,0 +1,70 @@
+# Screenshots of the app on the iPhone Duo simulator, for checking layouts without a Mac or a Duo.
+#
+# Needs Xcode 27.1 (the first with the iPhone Duo simulator). Until the runner image has it, the run
+# lists the Xcodes and device types it does have and stops, so it doubles as the "is it there yet"
+# check. Started by hand only.
+name: Duo preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  duo:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find Xcode 27.1
+        id: xcode
+        run: |
+          echo "Xcodes on this runner:"
+          ls -d /Applications/Xcode*.app || true
+          found=$(ls -d /Applications/Xcode_27.1*.app /Applications/Xcode-27.1*.app 2>/dev/null | sort -V | tail -1 || true)
+          if [ -z "$found" ]; then
+            echo "::warning::Xcode 27.1 is not on this runner yet; nothing to screenshot."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using $found"
+            sudo xcode-select -s "$found/Contents/Developer"
+            xcodebuild -version
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Device types with Duo in the name:"
+          xcrun simctl list devicetypes | grep -i duo || echo "(none)"
+
+      - name: Build for the simulator
+        if: steps.xcode.outputs.ready == 'true'
+        run: |
+          xcodebuild -project CueTake.xcodeproj -scheme CueTake -configuration Debug \
+            -sdk iphonesimulator -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build | tail -20
+
+      - name: Screenshots
+        if: steps.xcode.outputs.ready == 'true'
+        run: |
+          set -e
+          type=$(xcrun simctl list devicetypes | grep -i "iphone duo" | head -1 | sed -E 's/.*\((com\.apple[^)]*)\).*/\1/')
+          runtime=$(xcrun simctl list runtimes | grep -i "iOS 27" | tail -1 | sed -E 's/.* - (com\.apple[^ ]*).*/\1/')
+          udid=$(xcrun simctl create "Duo" "$type" "$runtime")
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          app=$(find build/Build/Products -name "CueTake.app" -maxdepth 3 | head -1)
+          xcrun simctl install "$udid" "$app"
+          mkdir -p shots
+          shoot() {
+            xcrun simctl terminate "$udid" com.orhay.cuetake || true
+            xcrun simctl launch "$udid" com.orhay.cuetake $2
+            sleep 6
+            xcrun simctl io "$udid" screenshot "shots/$1.png"
+          }
+          shoot onboarding ""
+          shoot settings "-settings-preview"
+          shoot capture "-capture-preview"
+          shoot account "-account-preview"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.xcode.outputs.ready == 'true'
+        with:
+          name: duo-screenshots
+          path: shots
