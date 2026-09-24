@@ -76,6 +76,15 @@ public struct OnboardingScreen: View {
                     }
                 }
             }
+
+            // The terms and the privacy policy, one tap away before anything is used.
+            Text("onboarding.legal", bundle: .module)
+                .dsFont(.sans, .regular, 12, lineHeight: 1.45)
+                .foregroundStyle(DS.Palette.ink(0.45))
+                .tint(DS.Palette.lime)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 14)
         }
         .padding(.horizontal, 26)
         .padding(.top, 78)

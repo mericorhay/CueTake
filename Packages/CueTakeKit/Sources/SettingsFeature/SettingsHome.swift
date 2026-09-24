@@ -172,6 +172,13 @@ public struct SettingsScreen: View {
                         Text(Self.version).font(DS.mono(11))
                             .onLongPressGesture(minimumDuration: 2) { onPreviewLight?() }
                         Text("settings.footer", bundle: .module).font(DS.sans(.regular, 12))
+                        HStack(spacing: 16) {
+                            Link(settingsText("settings.terms"), destination: URL(string: "https://mericorhay.github.io/CueTake/#terms")!)
+                            Link(settingsText("settings.privacy"), destination: URL(string: "https://mericorhay.github.io/CueTake/#privacy")!)
+                        }
+                        .font(DS.sans(.medium, 12))
+                        .tint(DS.Palette.accent)
+                        .padding(.top, 4)
                     }
                     .foregroundStyle(DS.Palette.ink(0.4))
                     .frame(maxWidth: .infinity).padding(.vertical, 12)

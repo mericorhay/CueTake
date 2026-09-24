@@ -348,6 +348,29 @@
           }
         }
       }
+    },
+    "onboarding.legal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "By continuing you accept the [Terms of Use](https://mericorhay.github.io/CueTake/?lang=en#terms) and the [Privacy Policy](https://mericorhay.github.io/CueTake/?lang=en#privacy)."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devam ederek [Kullanım Koşulları](https://mericorhay.github.io/CueTake/?lang=tr#terms)'nı ve [Gizlilik Politikası](https://mericorhay.github.io/CueTake/?lang=tr#privacy)'nı kabul etmiş olursun."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Al continuar, aceptas las [Condiciones de uso](https://mericorhay.github.io/CueTake/?lang=en#terms) y la [Política de privacidad](https://mericorhay.github.io/CueTake/?lang=en#privacy)."
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
