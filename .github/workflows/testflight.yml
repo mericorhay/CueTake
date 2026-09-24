@@ -131,14 +131,14 @@ jobs:
           fi
 
       # PostHog's project key, written into the bundle like the assistant endpoint. Without it the
-      # app sends no analytics at all. POSTHOG_HOST is optional (EU cloud by default).
+      # app sends no analytics at all. POSTHOG_HOST is optional (US cloud by default).
       - name: Analytics key
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
         run: |
           if [ -n "$POSTHOG_API_KEY" ]; then
-            python3 -c 'import json,os; json.dump({"apiKey": os.environ["POSTHOG_API_KEY"], "host": os.environ.get("POSTHOG_HOST") or "https://eu.i.posthog.com"}, open("CueTake/Resources/Analytics.json","w"))'
+            python3 -c 'import json,os; json.dump({"apiKey": os.environ["POSTHOG_API_KEY"], "host": os.environ.get("POSTHOG_HOST") or "https://us.i.posthog.com"}, open("CueTake/Resources/Analytics.json","w"))'
             echo "Analytics key written."
           else
             echo "::warning::POSTHOG_API_KEY not set; this build sends no analytics."

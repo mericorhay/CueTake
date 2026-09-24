@@ -34,7 +34,7 @@ public enum Analytics {
         }
         guard first else { return }
 
-        let settings = PostHogConfig(apiKey: config.apiKey, host: config.host ?? "https://eu.i.posthog.com")
+        let settings = PostHogConfig(apiKey: config.apiKey, host: config.host ?? "https://us.i.posthog.com")
         settings.captureApplicationLifecycleEvents = true
         settings.captureScreenViews = false
         PostHogSDK.shared.setup(settings)
