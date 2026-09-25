@@ -24,7 +24,7 @@ struct VoiceSplicesTests {
         }
         #expect(from == 0)
         #expect(to == 0.5)
-        #expect(abs(end - 6.02) < 0.0001)
+        #expect(abs(end - 6.008) < 0.0001)
     }
 
     @Test func joinsCloseTogetherStillDoNotOverlap() {

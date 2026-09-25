@@ -13,7 +13,11 @@ enum VoiceSplices {
     }
 
     /// `levels` are the gains from each join onwards, in seconds on the finished video.
-    static func envelope(levels: [(time: Double, gain: Double)], fade: Double = 0.02) -> [Step] {
+    ///
+    /// Eight milliseconds each side: long enough that a cut through a waveform does not click,
+    /// short enough not to swallow speech. At twenty, every cut dropped forty milliseconds of the
+    /// words either side of it, and a run of short clips of talking stuttered at each join.
+    static func envelope(levels: [(time: Double, gain: Double)], fade: Double = 0.008) -> [Step] {
         // One gain per moment, the last one given winning.
         var points: [(time: Double, gain: Double)] = []
         for level in levels.sorted(by: { $0.time < $1.time }) {
