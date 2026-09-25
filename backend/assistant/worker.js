@@ -181,6 +181,9 @@ Footage: cut{clip,from,to} removeWords{clip,words:[index]} trimPauses{clip|null,
   splitClip{clip,at} duplicateClip{clip} reorder{clips:[ids]} setSpeed{clip,speed 0.25-4} reverse{clip,on}
 Captions: setCaptionText{caption,text} captionTiming{caption,start,end} splitCaption{caption} mergeCaption{caption} removeCaption{caption}
   shiftCaptions{clip|null,by} captionWindow{from|null,to|null} useTranscript{clip|null,source device|cloud} (only when twoListeners)
+  CAPTION TEXT IS THE CREATOR'S: never send setCaptionText, captionTiming, splitCaption, mergeCaption, removeCaption or
+  shiftCaptions unless the instruction explicitly asks about captions, subtitles or the words on screen ("fix the caption
+  typo", "altyazıyı düzelt"). A general request ("make it better", "more energetic", "cut the pauses") never changes caption words.
   captionStyle{preset (pop clean karaoke bold boxed minimal neon story punch beast spotlight typewriter bounce podcast subtle news comic emoji glow focus: punch/beast/bounce/comic/emoji are loud short-video looks, subtle/podcast/news/clean read like subtitles, typewriter reveals words as said),size 0.018-0.075,maxWords 1-8,textCase natural|uppercase|lowercase,textColor "#RRGGBB",highlightColor "#RRGGBB"|"none",backgroundColor "#RRGGBBAA"|"none",font,position 0.08-0.92}
 Text: addText{text,start,duration,x,y,scale,rotation,color,background,font,animation none|fade|pop|slideUp,behind true|false}
   (behind: the person stands in front of the text, the magazine-cover look; best big, bold and high in the frame)

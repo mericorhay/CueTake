@@ -175,11 +175,12 @@ extension EditorModel {
                 guard let self else { return }
                 var document = await self.seenDocument(of: project)
                 document.videoModel = self.aiVideoModel
-                var plan = try await request(document, text)
+                // The captions' words are the creator's: changed only when the request is about them.
+                var plan = try await request(document, text).keepingCaptions(unlessAskedIn: text)
                 guard !Task.isCancelled else { return }
                 // A plan that would change nothing gets one more try, told why.
                 if let problem = self.problem(with: plan) {
-                    let second = try await request(document, text + "\n\n" + problem)
+                    let second = try await request(document, text + "\n\n" + problem).keepingCaptions(unlessAskedIn: text)
                     guard !Task.isCancelled else { return }
                     if self.problem(with: second) == nil { plan = second }
                 }
@@ -217,10 +218,11 @@ extension EditorModel {
         let note = """
 
         [Second pass. You already made these changes: \(plan.summary) The document now shows the video after them, with new ids. \
-        Check it against the request and add only what is still missing or clearly better: exact timing against the words, captions, \
-        titles, looks, sound, rhythm. Do not repeat or undo what is done. If nothing is left, return an empty operations list.]
+        Check it against the request and add only what is still missing or clearly better: exact timing against the words, \
+        titles, looks, sound, rhythm. Leave the captions' words alone unless the request is about them. Do not repeat or undo what is \
+        done. If nothing is left, return an empty operations list.]
         """
-        guard let second = try? await request(document, instruction + note), !Task.isCancelled else {
+        guard let second = try? await request(document, instruction + note).keepingCaptions(unlessAskedIn: instruction), !Task.isCancelled else {
             withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
             return
         }
