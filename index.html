@@ -67,7 +67,7 @@ h1 .serif{font:italic 400 1.08em/1 var(--serif);letter-spacing:-.01em;color:var(
 .reading{position:absolute;left:18px;right:18px;top:50%;height:44px;margin-top:-22px;border-radius:12px;background:rgba(232,255,79,.08);border:1px solid rgba(232,255,79,.35);z-index:1}
 .reading::before{content:"";position:absolute;left:-7px;top:50%;margin-top:-5px;border:5px solid transparent;border-left-color:var(--lime)}
 .scroll{position:absolute;left:0;right:0;top:0;padding:0 34px;animation:scrollUp 22s linear infinite}
-.scroll p{font:600 22px/44px var(--body);margin:0;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scroll p{font:600 22px/1.45 var(--body);margin:0;padding:7px 0;color:var(--faint);text-wrap:balance}
 .scroll p.key{color:var(--ink)}
 .scroll p .hl{color:var(--lime)}
 @keyframes scrollUp{from{transform:translateY(158px)}to{transform:translateY(-50%)}}
@@ -124,6 +124,7 @@ html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{di
 @media (max-width:820px){
   .hero{grid-template-columns:1fr;padding-top:44px;gap:28px}
   .prompter{height:280px}
+  .scroll p{font-size:18px}
   .clauses{grid-template-columns:1fr}
   .toc{display:none}
   .lang{margin-left:auto}
@@ -414,14 +415,91 @@ html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{di
 
   // The prompter's script.
   const lines = {
-    tr: ['Selam, bugün sana', 'CueTake\'in kurallarını', '<span class="hl">açık açık</span> anlatacağım.', 'Videon telefonunda kalır.', 'Yapay zekâ yalnızca', 'sen açınca çalışır.', 'Veri satmayız,', '<span class="hl">takip etmeyiz.</span>', 'Aboneliği istediğin an', 'iptal edebilirsin.'],
-    en: ['Hi, today I\'ll walk you', 'through CueTake\'s rules', '<span class="hl">in plain words.</span>', 'Your video stays on your phone.', 'AI only runs', 'when you turn it on.', 'We don\'t sell data,', '<span class="hl">we don\'t track you.</span>', 'Cancel the subscription', 'whenever you like.']
+    tr: [
+      'Selam. Evet, sen.',
+      'Bu sayfayı kimse okumaz.',
+      'Ama sen okuyorsun.',
+      '<span class="hl">Saygı duydum, cidden.</span>',
+      'Ben bir teleprompter\'ım.',
+      'Şu an kendimi okuyorum.',
+      'Dördüncü duvar mı? Yıktık.',
+      'Neyse. Kurallar geliyor.',
+      'Videon <span class="hl">telefonunda</span> kalır.',
+      'Sunucumuz onu görmez.',
+      'Görmek de istemez, merak etme.',
+      'Yapay zekâ sadece',
+      'sen isteyince çalışır.',
+      'Gece gizlice senaryo yazmaz.',
+      'Seni izlemez. Ürkütücü olurdu.',
+      '<span class="hl">Verini satmayız.</span>',
+      'Satsak kim alır ki zaten?',
+      'Kestiğimiz tek şey',
+      '"ııı" dediğin yerler.',
+      'Rica ederiz.',
+      'Reklam takibi yok.',
+      'Çerez yok. Kurabiye bile yok.',
+      'Anonim istatistik tutarız,',
+      'kapatırsan küsmeyiz.',
+      'Biraz küseriz. Geçer.',
+      'Abonelik mi?',
+      '<span class="hl">İstediğin an iptal.</span>',
+      'Ağlamayız. Sadece içimize atarız.',
+      'Hesabını silersen',
+      'gerçekten sileriz.',
+      'Hayalet mod değil, bildiğin silme.',
+      'Yedeğin kendi iCloud\'unda.',
+      'Biz anahtarını bile görmeyiz.',
+      'Tamam, sıkıcı kısım bitti.',
+      'Şimdi git video çek.',
+      'Kamera seni bekliyor.',
+      '<span class="hl">Işık, kamera, CueTake.</span>'
+    ],
+    en: [
+      'Hi. Yes, you.',
+      'Nobody reads this page.',
+      'And yet here you are.',
+      '<span class="hl">Respect. Genuinely.</span>',
+      'I\'m a teleprompter.',
+      'Right now I\'m reading myself.',
+      'Fourth wall? Gone.',
+      'Anyway. Rules incoming.',
+      'Your video stays <span class="hl">on your phone.</span>',
+      'Our server never sees it.',
+      'It doesn\'t want to. Relax.',
+      'The AI only runs',
+      'when you ask it to.',
+      'No secret scripts at 3 a.m.',
+      'No watching you. That\'d be weird.',
+      '<span class="hl">We don\'t sell your data.</span>',
+      'Who would even buy it?',
+      'The only thing we cut',
+      'is every "umm" you say.',
+      'You\'re welcome.',
+      'No ad tracking.',
+      'No cookies. Not even snacks.',
+      'Anonymous stats, sure,',
+      'switch them off, no hard feelings.',
+      'Okay, a few hard feelings. We\'ll live.',
+      'The subscription?',
+      '<span class="hl">Cancel whenever you like.</span>',
+      'We won\'t cry. Not in front of you.',
+      'Delete your account',
+      'and it\'s actually deleted.',
+      'Not "hidden". Deleted deleted.',
+      'Backups live in your own iCloud.',
+      'We never even see the key.',
+      'Right, the boring part\'s over.',
+      'Go shoot something.',
+      'The camera\'s waiting.',
+      '<span class="hl">Lights, camera, CueTake.</span>'
+    ]
   };
   const scroll = document.getElementById('scroll');
   function fillScript() {
     const set = lines[root.lang] || lines.tr;
     const all = set.concat(set);
-    scroll.innerHTML = all.map((l, i) => `<p class="${i % 3 === 2 ? 'key' : ''}">${l}</p>`).join('');
+    scroll.innerHTML = all.map((l) => `<p class="${l.includes('hl') ? 'key' : ''}">${l}</p>`).join('');
+    scroll.style.animationDuration = (set.length * 2.2) + 's';
   }
   fillScript();
   new MutationObserver(fillScript).observe(root, { attributes: true, attributeFilter: ['lang'] });
