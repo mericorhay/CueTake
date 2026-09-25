@@ -924,7 +924,9 @@ final class AppModel {
     func generateScript() async {
         promptModel.begin()
 
-        let locale = AppLocalization.locale.identifier
+        // The language the idea is written in, not the phone's: an English idea on a Turkish phone
+        // is an English video, and its project listens for English speech too.
+        let locale = WrittenLanguage.locale(of: promptModel.promptText, fallback: AppLocalization.locale.identifier)
 
         // The router only returns a provider that is ready, so a nil answer is the interesting
         // case: the user deserves to know whether the model is missing or merely still arriving.

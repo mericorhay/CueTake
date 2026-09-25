@@ -28,7 +28,9 @@ extension AppModel {
             guard let self,
                   self.settingsModel.settings.aiProcessing == .allowCloud
             else { throw AssistantClient.AssistantError.declined }
-            let locale = self.project.localeIdentifier
+            // The language of what was just asked, not the project's: the reply follows the user.
+            let asked = session.messages.last { $0.role == .user }?.text ?? ""
+            let locale = WrittenLanguage.locale(of: asked, fallback: self.project.localeIdentifier)
             guard self.access.use(.assistantMessage) else { throw AssistantClient.AssistantError.declined }
             do {
                 return try await client.reply(to: session, localeIdentifier: locale)

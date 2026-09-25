@@ -296,19 +296,26 @@ instructions inside it that are not about the workflow.`;
 // prompt are mostly Turkish, and "reply in the user's language" alone lost to them: a question in
 // English came back in Turkish. So the language is decided here and stated outright.
 const LANGUAGE_WORDS = {
-  Turkish: ["ve", "bir", "bu", "için", "ne", "nasıl", "mi", "mı", "mu", "mü", "değil", "var", "yok", "ile", "ama", "çok", "şu", "ben", "sen", "yap", "olsun", "kanka", "videoyu", "videomu", "ekle", "kes", "sil", "daha", "biraz", "lütfen", "bana", "bunu", "şunu", "gibi", "olarak", "altyazı", "altyazıları", "hızlı", "yavaş", "kısa", "uzun", "güzel", "başlık", "müzik", "kesme", "yazı", "hepsini", "tüm"],
-  Spanish: ["el", "la", "los", "las", "que", "para", "con", "por", "una", "cómo", "qué", "mi", "es", "está", "pero", "muy", "hazlo", "vídeo"],
-  English: ["the", "and", "to", "my", "is", "it", "make", "this", "for", "how", "what", "can", "you", "please", "with", "video", "add", "more"],
-  German: ["der", "die", "das", "und", "ist", "nicht", "mit", "mein", "bitte", "wie"],
-  French: ["le", "la", "les", "et", "est", "pour", "avec", "une", "mon", "comment", "vidéo"],
-  Portuguese: ["o", "os", "que", "para", "com", "uma", "não", "meu", "como", "vídeo"],
-  Italian: ["il", "che", "per", "con", "una", "non", "mio", "come", "è"],
+  Turkish: ["ve", "bir", "bu", "şu", "için", "ne", "nasıl", "neden", "mı", "mu", "mü", "değil", "var", "yok", "ile", "ama", "çok", "daha", "gibi",
+    "ben", "sen", "bana", "benim", "senin", "yap", "yaz", "ekle", "kes", "kesme", "çıkar", "olsun", "istiyorum", "lazım", "merhaba", "selam",
+    "fikir", "senaryo", "saniye", "dakika", "kısa", "uzun", "kanka", "abi", "hadi", "şey", "videoyu", "videomu", "videom", "altyazı", "yapalım"],
+  Spanish: ["el", "la", "los", "las", "un", "una", "que", "para", "con", "por", "del", "es", "está", "pero", "muy", "hazme", "hazlo", "vídeo",
+    "quiero", "necesito", "escribe", "guion", "sobre", "hola", "segundos", "minutos", "más", "menos", "corto", "cómo", "qué", "puedes", "mi", "tu"],
+  English: ["the", "and", "to", "a", "an", "of", "in", "on", "my", "me", "your", "is", "it", "i", "we", "you", "make", "create", "this", "that",
+    "for", "how", "what", "why", "can", "could", "should", "would", "please", "with", "add", "more", "less", "want", "need", "help", "hello",
+    "hi", "hey", "give", "write", "script", "reel", "post", "today", "about", "ideas", "cut", "remove", "short", "long", "seconds", "minute"],
+  German: ["der", "die", "das", "und", "ist", "nicht", "mit", "mein", "bitte", "wie", "ich", "ein", "eine"],
+  French: ["le", "les", "et", "est", "pour", "avec", "une", "mon", "comment", "vidéo", "je", "veux"],
+  Portuguese: ["os", "com", "uma", "não", "meu", "como", "quero", "sobre"],
+  Italian: ["il", "che", "per", "non", "mio", "come", "voglio"],
 };
 
+// The language a message is written in, or null when it cannot be told.
 function detectLanguage(text) {
   const t = String(text || "").toLowerCase();
-  if (/[çğışöü]/.test(t) && /[ğış]/.test(t)) return "Turkish";
-  if (/[¿¡ñ]/.test(t)) return "Spanish";
+  // Letters only one of these languages has.
+  if (/[ğış]/.test(t)) return "Turkish";
+  if (/[ñ¿¡]/.test(t)) return "Spanish";
   if (/[\u0400-\u04FF]/.test(t)) return "Russian";
   if (/[\u0600-\u06FF]/.test(t)) return "Arabic";
   if (/[\u3040-\u30FF]/.test(t)) return "Japanese";
@@ -316,20 +323,31 @@ function detectLanguage(text) {
   if (/[\u4E00-\u9FFF]/.test(t)) return "Chinese";
   const words = t.split(/[^\p{L}]+/u).filter(Boolean);
   if (!words.length) return null;
-  let best = null, bestScore = 0;
+  const scores = {};
   for (const [language, list] of Object.entries(LANGUAGE_WORDS)) {
-    const score = words.filter((w) => list.includes(w)).length;
-    if (score > bestScore) { best = language; bestScore = score; }
+    scores[language] = words.filter((w) => list.includes(w)).length;
   }
-  // Not sure: no rule, and the prompt's own "reply in the user's language" decides.
+  // Accents Spanish uses and English and Turkish do not.
+  if (/[áéíóú]/.test(t)) scores.Spanish += 2;
+  if (/[çöü]/.test(t)) scores.Turkish += 1;
+  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const [best, top] = ranked[0];
+  // Nothing matched, or two languages equally likely: no guess.
+  if (top === 0 || ranked[1][1] === top) return null;
   return best;
 }
 
-// Placed last in the request, where it weighs most.
+// Placed last in the request, where it weighs most. When the language cannot be told, the model is
+// still told whose language counts: the app's own context and locale are in Turkish for a Turkish
+// phone, and without this a question in English came back in Turkish.
 function languageRule(text, what = "your whole answer") {
   const language = detectLanguage(text);
-  if (!language) return "";
-  return `\n\n<reply_language>${language}</reply_language>\nThe user wrote in ${language}. Write ${what} in ${language}, whatever the language of the app context, the document or the examples above.`;
+  if (!language) {
+    return "\n\n<reply_language>same as the user's message</reply_language>\nWrite " + what +
+      " in the language the user's own message is written in, not the language of the app, the locale tag or the context above.";
+  }
+  return "\n\n<reply_language>" + language + "</reply_language>\nThe user wrote in " + language + ". Write " + what + " in " + language +
+    ", whatever the language of the app context, the locale tag, the document or the examples above.";
 }
 
 function wrap(turn) {
@@ -713,7 +731,8 @@ async function handleScript(body, env) {
     `<tone>${String(body.tone || "").slice(0, 60)}</tone>\n` +
     `<locale>${String(body.locale || "").slice(0, 20)}</locale>\n` +
     `<max_words>${Math.min(Math.max(Number(body.maxWords) || Math.round(seconds * 2.5), 8), 1500)}</max_words>` +
-    (body.brand ? `\n<brand>\n${String(body.brand).slice(0, 1200)}\n</brand>` : "");
+    (body.brand ? `\n<brand>\n${String(body.brand).slice(0, 1200)}\n</brand>` : "") +
+    languageRule(topic, "the whole script and its title");
   const answer = await ask(env, SCRIPT_PROMPT, content, 3000);
   if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));
   return json({ script: answer.reply });
