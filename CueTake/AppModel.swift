@@ -19,6 +19,7 @@ import StudioFeature
 import SuflorFeature
 import SwiftUI
 import TeamSync
+import Teleprompter
 import UniformTypeIdentifiers
 import WorkflowsFeature
 
