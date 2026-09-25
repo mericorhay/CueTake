@@ -3,6 +3,7 @@ import Analytics
 import DesignSystem
 import Domain
 import Foundation
+import SettingsFeature
 
 /// Analytics and the server's settings, started together at launch.
 ///
