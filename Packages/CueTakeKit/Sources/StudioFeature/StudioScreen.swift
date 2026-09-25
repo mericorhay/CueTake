@@ -582,17 +582,25 @@ public struct StudioScreen: View {
 
     /// Only while it is not 1x. A zoom indicator that is always on screen is one more thing to
     /// read; one that appears when you have changed something is information.
+    /// A tap on it goes back to 1×, the way the Camera app's zoom button does.
     private var zoomReadout: some View {
-        Text(String(format: "%.1f×", model.zoom))
-            .dsFont(.mono, .medium, 11)
-            .foregroundStyle(DS.Palette.ink)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .dsGlass(in: Capsule())
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .padding(.bottom, model.isLandscape ? 24 : 150)
-            .allowsHitTesting(false)
-            .transition(.opacity)
+        Button {
+            model.setZoom(1)
+        } label: {
+            Text(String(format: "%.1f×", model.zoom))
+                .dsFont(.mono, .medium, 11)
+                .foregroundStyle(DS.Palette.ink)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
+                .dsGlass(in: Capsule())
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.dsPressIcon)
+        .accessibilityLabel(Text(String(format: "%.1f×", model.zoom)))
+        .accessibilityHint(Text("studio.zoom.reset", bundle: .module))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, model.isLandscape ? 24 : 150)
+        .transition(.opacity)
     }
 
     /// Covers the frame while the count runs. Tapping anywhere cancels, because the moment you

@@ -89,11 +89,13 @@ public final class TeleprompterModel {
     /// the floor for comfortable reading-to-camera around 36 — the old ceiling was below the point
     /// where the feature starts working. Pinching the panel drives this directly.
     public static let textSizeRange: ClosedRange<Double> = 14...64
-    public var textSize: Double = 26
+    /// 30: readable at arm's length with the phone on a tripod, still four lines in the panel.
+    public var textSize: Double = 30
     /// Panel opacity, 10–100. The panel fill is `opacity / 145`, as in the design.
     public var opacity: Double = 78
-    /// Scroll speed, 0–100, displayed as 0.6×–1.6×.
-    public var speed: Double = 50
+    /// Scroll speed, 0–100, displayed as 0.6×–1.6×. Starts at 1.0×, a natural speaking pace; it
+    /// used to start at 1.1×, and a new reader was chasing the text from the first line.
+    public var speed: Double = 40
     /// Words highlighted ahead of the current one, 0–4.
     public var lookAhead: Int = 1
     public var mode: HighlightMode = .word

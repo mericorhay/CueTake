@@ -1350,6 +1350,29 @@
           }
         }
       }
+    },
+    "studio.zoom.reset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to go back to 1×"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1×'e dönmek için dokun"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toca para volver a 1×"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
