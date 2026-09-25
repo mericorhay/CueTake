@@ -219,6 +219,9 @@ public final class EditorModel {
     public internal(set) var aiScan: AIScanMark?
     @ObservationIgnored var aiTask: Task<Void, Never>?
     @ObservationIgnored var aiRequester: AIRequester?
+    /// The AI editor that works in rounds, looking at the video and checking its own changes. Set
+    /// by the app; nil, or a server without it, edits the old way. See `AIAgent`.
+    @ObservationIgnored public var aiAgent: AIAgentRequester?
 
     private var task: Task<Void, Never>?
 
@@ -246,6 +249,13 @@ public final class EditorModel {
     /// What the current player was built from. A request to build the same thing again is ignored:
     /// replacing a working player with an identical one only blinks the picture.
     @ObservationIgnored private var builtSignature: [String]?
+    /// The edit the player's picture shows, whether or not its voice is the cleaned one yet.
+    @ObservationIgnored private var pictureSignature: [String]?
+
+    /// True when the player shows the edit as it is now.
+    var isPictureCurrent: Bool {
+        player != nil && pictureSignature == compositionSignature
+    }
     /// 0…1 while clips' backgrounds are being replaced, nil otherwise.
     public internal(set) var backgroundProgress: Double?
     /// Background replacements that have been written, by file name.
@@ -363,6 +373,7 @@ public final class EditorModel {
         }
         // A preview with the raw voice is not the finished build: the next call makes it again.
         builtSignature = cleanVoiceNow ? signature : nil
+        pictureSignature = signature
         // The new item starts where the playhead is, not at zero, and keeps playing if it was.
         playhead = min(playhead, duration)
         player.seek(to: CMTime(seconds: playhead, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { _ in }
@@ -408,6 +419,7 @@ public final class EditorModel {
         case .failed:
             let failed = builtSignature
             builtSignature = nil
+            pictureSignature = nil
             // Stop here. Playing on made every failure a loop: rebuild, seek back to the playhead,
             // play, fail at the same frame, rebuild — the play button seemed to jump back each time.
             pause()
@@ -487,6 +499,7 @@ public final class EditorModel {
 
     private func teardownPlayer() {
         builtSignature = nil
+        pictureSignature = nil
         itemStatus = nil
         if let timeObserver { player?.removeTimeObserver(timeObserver) }
         timeObserver = nil

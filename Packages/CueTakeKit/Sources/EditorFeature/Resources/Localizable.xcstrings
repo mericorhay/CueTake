@@ -1985,19 +1985,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cloud AI sends your video's words and edit structure, and its sound for better captions, to our server. You can turn it off again in Settings."
+            "value" : "Cloud AI sends your video's words and edit structure, a few small pictures of it for AI edit, and its sound for better captions, to our server. You can turn it off again in Settings."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bulut AI; videonun sözlerini ve kurgu yapısını, daha iyi altyazı için de sesini sunucumuza gönderir. İzni Ayarlar'dan tekrar kapatabilirsin."
+            "value" : "Bulut AI; videonun sözlerini ve kurgu yapısını, AI kurgu için birkaç küçük karesini, daha iyi altyazı için de sesini sunucumuza gönderir. İzni Ayarlar'dan tekrar kapatabilirsin."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El AI en la nube envía las palabras y la estructura de edición de tu video, y su sonido para mejores subtítulos, a nuestro servidor. Puedes desactivarlo nuevamente en Configuración."
+            "value" : "El AI en la nube envía las palabras y la estructura de edición de tu video, algunas imágenes pequeñas para la edición con AI y su sonido para mejores subtítulos, a nuestro servidor. Puedes desactivarlo nuevamente en Configuración."
           }
         }
       }
@@ -21460,6 +21460,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copiado"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.looking" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The AI is looking at your video"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI videona bakıyor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La IA está mirando tu video"
+          }
+        }
+      }
+    },
+    "editor.ai.hud.planning" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checking what it did, planning the next step"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yaptığını kontrol ediyor, sonraki adımı planlıyor"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revisando lo que hizo y planeando el siguiente paso"
           }
         }
       }

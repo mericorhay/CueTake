@@ -16,11 +16,11 @@ const TR = `
 
 <h2>Sunucuya gidenler (yalnızca ilgili özelliği kullandığında)</h2>
 <ul>
-<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi, paylaşım kiti:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). Videonun kendisi gönderilmez.</li>
+<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi, paylaşım kiti:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). AI kurguda ayrıca, başlıkları ve efektleri doğru yere koyabilmesi için kurgulanmış videodan birkaç küçük, düşük çözünürlüklü kare gönderilir. Video dosyası ve sesi gönderilmez.</li>
 <li><b>Bulut altyazı (isteğe bağlı):</b> konuşmanın ses kaydı, daha doğru altyazı için yazıya dökülür.</li>
 <li><b>Stok B-roll:</b> konuşma metninden seçilen cümleler ve kısa İngilizce arama kelimeleri.</li>
 </ul>
-<p>Bu istekler sunucumuz (Cloudflare) üzerinden yapay zekâ ve stok görüntü sağlayıcılarına iletilir: Groq ve/veya Anthropic (metin ve konuşma tanıma), Pexels (stok video araması). İstekler yanıt üretmek için kullanılır; biz içeriklerini saklamayız. Sağlayıcıların kendi politikaları geçerlidir.</p>
+<p>Bu istekler sunucumuz (Cloudflare) üzerinden yapay zekâ ve stok görüntü sağlayıcılarına iletilir: OpenAI, Groq ve/veya Anthropic (metin, resim ve konuşma tanıma), Pexels (stok video araması). İstekler yanıt üretmek için kullanılır; biz içeriklerini saklamayız. Sağlayıcıların kendi politikaları geçerlidir.</p>
 
 <h2>Kullanım istatistikleri</h2>
 <p>Uygulamayı geliştirmek için PostHog (ABD sunucuları) üzerinden anonim kullanım olayları toplarız: hangi özelliğin kullanıldığı, aylık limitlere nerede takılındığı, dışa aktarmanın çözünürlüğü ve kare hızı, kaydın süresi, CueTake+ satın alma sonucu, uygulama sürümü, dili ve cihaz modeli. Bunlar telefonda üretilen rastgele bir kimlikle gönderilir; hesabına, Apple kimliğine ya da adına bağlanmaz. Videoların, kayıtların, senaryoların, altyazıların, proje adların ve ekran görüntüleri asla gönderilmez; ekran kaydı (session replay) kullanmayız. Reklam ya da takip için kullanılmaz, kimseyle paylaşılmaz. Ayarlar'daki "Anonim kullanım verisi paylaş" anahtarıyla istediğin an kapatabilirsin.</p>
@@ -60,11 +60,11 @@ const EN = `
 
 <h2>What is sent (only when you use that feature)</h2>
 <ul>
-<li><b>AI edit, AI assistant, script writing, caption translation, post kit:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). The video itself is not sent.</li>
+<li><b>AI edit, AI assistant, script writing, caption translation, post kit:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). For AI edit, a few small, low-resolution pictures of the edited video are also sent, so the AI can put titles and effects in the right place. The video file and its sound are not sent.</li>
 <li><b>Cloud captions (optional):</b> the speech audio, transcribed for more accurate captions.</li>
 <li><b>Stock B-roll:</b> sentences chosen from the transcript and short English search terms.</li>
 </ul>
-<p>These requests pass through our server (Cloudflare) to AI and stock footage providers: Groq and/or Anthropic (text and speech recognition), Pexels (stock video search). They are used to produce the answer; we do not store their content. The providers' own policies apply.</p>
+<p>These requests pass through our server (Cloudflare) to AI and stock footage providers: OpenAI, Groq and/or Anthropic (text, picture and speech recognition), Pexels (stock video search). They are used to produce the answer; we do not store their content. The providers' own policies apply.</p>
 
 <h2>Usage statistics</h2>
 <p>To improve the app we collect anonymous usage events through PostHog (US servers): which features are used, where monthly limits are reached, an export's resolution and frame rate, a recording's length, the outcome of a CueTake+ purchase, the app version, language and device model. They are sent with a random identifier made on the phone and are never linked to your account, your Apple ID or your name. Your videos, recordings, scripts, captions, project names and screen contents are never sent, and we do not use session replay. The data is not used for advertising or tracking and is not shared with anyone. You can turn it off at any time with "Share anonymous usage" in Settings.</p>

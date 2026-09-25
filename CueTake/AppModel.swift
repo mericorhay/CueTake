@@ -535,6 +535,7 @@ final class AppModel {
         connectCaptionTranslation()
         connectRelistening()
         connectAccess()
+        connectAIAgent()
         connectStockBroll()
         connectBeats()
         connectEditorShorts()

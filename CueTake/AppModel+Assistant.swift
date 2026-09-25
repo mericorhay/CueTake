@@ -280,6 +280,36 @@ extension AppModel {
     }
 }
 
+extension AppModel {
+    /// The AI editor that looks at the video and checks its own changes, round by round.
+    func connectAIAgent() {
+        editorModel.aiAgent = { [weak self] request in
+            guard let self else { throw CancellationError() }
+            return try await self.agentRound(request)
+        }
+    }
+
+    /// One round of it. Any failure hands back to the editor, which edits the old way when nothing
+    /// has changed yet.
+    func agentRound(_ request: AgentRequest) async throws -> AgentReply {
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            throw DescribedError(message: Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+        }
+        do {
+            let reply = try await dependencies.assistantClient.agentRound(request, localeIdentifier: project.localeIdentifier)
+            Analytics.track("ai_agent_round", [
+                "round": .int(request.turns.count / 2 + 1),
+                "tools": .text(reply.calls.map(\.name).joined(separator: ",")),
+                "pictures": .int(request.turns.last?.images?.count ?? 0),
+            ])
+            return reply
+        } catch {
+            Analytics.track("ai_failed", ["feature": "ai_agent"])
+            throw DescribedError(message: Self.assistantFailureMessage(error))
+        }
+    }
+}
+
 /// An error whose description is already written for people.
 struct DescribedError: LocalizedError {
     let message: String

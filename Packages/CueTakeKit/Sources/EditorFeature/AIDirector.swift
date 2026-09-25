@@ -29,6 +29,15 @@ public struct AISession: Equatable {
     public var words: Int
     /// 1 while the plan is made and carried out, 2 while the result is checked and finished off.
     public var pass = 1
+    /// What the AI editor is doing between its changes, when it works in rounds.
+    public var activity: AIActivity?
+}
+
+public enum AIActivity: Equatable, Sendable {
+    /// Looking at pictures of the video.
+    case looking
+    /// Deciding what to do next, after a change or a look.
+    case planning
 }
 
 public struct AIStepInfo: Identifiable, Equatable {
@@ -173,6 +182,12 @@ extension EditorModel {
             do {
                 // Written off the main thread: on a long video it is enough work to drop frames.
                 guard let self else { return }
+                // The editor that looks and checks its own work, when the server has it. It hands
+                // back only when it could not start: then the old way below does the edit.
+                if let agent = self.aiAgent, await self.runAgent(text, using: agent) == .done {
+                    self.rememberAIRun(text)
+                    return
+                }
                 var document = await self.seenDocument(of: project)
                 document.videoModel = self.aiVideoModel
                 // The captions' words are the creator's: changed only when the request is about them.
@@ -285,10 +300,10 @@ extension EditorModel {
     /// Writes what this run did into the project's AI memory.
     func rememberAIRun(_ instruction: String) {
         guard let session = aiSession else { return }
-        // Both passes of this run are the newest change sets, under the same request.
+        // Every pass or round of this run is among the newest change sets, under the same request.
         let changed = session.changeSetID == nil
             ? []
-            : aiChanges.prefix(2).filter { $0.instruction == instruction }.reversed().flatMap { $0.items.map(\.text) }
+            : aiChanges.prefix(while: { $0.instruction == instruction }).prefix(12).reversed().flatMap { $0.items.map(\.text) }
         let summary: String
         switch session.phase {
         case .failed(let reason): summary = reason

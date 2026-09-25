@@ -76,7 +76,7 @@ struct AIDirectorHUD: View {
         HStack(spacing: 12) {
             AIOrb(fast: false)
             VStack(alignment: .leading, spacing: 3) {
-                Text(session.pass > 1 ? "editor.ai.hud.reviewing" : "editor.ai.hud.reading", bundle: .module)
+                Text(thinkingTitle(session), bundle: .module)
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
                 Text(verbatim: "“\(session.instruction)”")
@@ -91,6 +91,14 @@ struct AIDirectorHUD: View {
             stopButton
         }
         .transition(.opacity)
+    }
+
+    private func thinkingTitle(_ session: AISession) -> LocalizedStringKey {
+        switch session.activity {
+        case .looking: "editor.ai.hud.looking"
+        case .planning: "editor.ai.hud.planning"
+        case nil: session.pass > 1 ? "editor.ai.hud.reviewing" : "editor.ai.hud.reading"
+        }
     }
 
     private func applying(_ session: AISession) -> some View {

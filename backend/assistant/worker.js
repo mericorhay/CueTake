@@ -578,6 +578,205 @@ function fitDocument(document, room) {
   return doc;
 }
 
+// The AI editor in rounds (POST /agent). The app runs the tools on the real editor and keeps the
+// conversation; this only adds the prompt and the key, translates to the provider's format and
+// returns the model's next move. Only the main model does this: without it the answer is 503 and
+// the app edits the old way (/edit), which also has the Groq fallback. AGENT=off turns it off.
+const AGENT_RULES = `You work in rounds with three tools instead of one answer:
+- look {"at":[seconds,…]}: pictures of the finished video at those moments (up to 6), as a viewer sees it: the picture after cuts, looks and camera moves, the text and pictures over it, and the captions drawn plainly. Look before putting text where a face, hands, a product or writing might be, and when the contact sheet and sees leave you unsure what a moment shows.
+- apply {"summary":"what these changes do, one short sentence in the user's language","operations":[...]}: the app carries the operations out live. It answers with what landed, what was refused and why, problems it found (text on the captions, text at the edge of the frame, two texts in one place), pictures of what changed, and the new document. Ids and times in the newest document replace the old ones: always use the newest.
+- finish {"summary":"1-2 short sentences in the user's language about what you changed"}: ends the edit. If no operation can do what the user asked, finish and say which tool is missing.
+The first message has the document and, when there is footage, a contact sheet: pictures spread through the video, each labelled with its time.
+
+How to work in rounds:
+1. Read the transcript and the contact sheet. Look closer only where it helps.
+2. Apply in one to three rounds. Cuts and pauses first, because they move every later moment; then titles, looks, captions, camera and sound, placed on the times of the newest document.
+3. Read what comes back and look at its pictures. Fix real problems (a title over a face or over the captions, text cut off, a warning) with another apply. Never redo what worked and never add the same thing twice.
+4. finish. At most 6 rounds of tools; every round makes the user wait, so do not look or apply without a reason.`;
+
+const EDIT_ANSWER_LINE = `Answer with ONE JSON object only: {"summary":"1-2 short sentences in the user's language about what you changed","operations":[...]}`;
+const AGENT_PROMPT = EDIT_PROMPT.includes(EDIT_ANSWER_LINE)
+  ? EDIT_PROMPT.replace(EDIT_ANSWER_LINE, AGENT_RULES)
+  : EDIT_PROMPT + "\n\n" + AGENT_RULES;
+
+const AGENT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "look",
+      description: "Pictures of the finished video at these moments, as a viewer sees them. Up to 6.",
+      parameters: {
+        type: "object",
+        properties: { at: { type: "array", items: { type: "number" }, description: "Seconds of the finished video." } },
+        required: ["at"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "apply",
+      description:
+        "Carries out edit operations live, in the operations format of the instructions. Answers with what landed, problems found, pictures of what changed and the new document.",
+      parameters: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "What these changes do, one short sentence in the user's language." },
+          operations: {
+            type: "array",
+            items: { type: "object", properties: { op: { type: "string" } }, required: ["op"], additionalProperties: true },
+          },
+        },
+        required: ["summary", "operations"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "finish",
+      description: "Ends the edit.",
+      parameters: {
+        type: "object",
+        properties: { summary: { type: "string", description: "1-2 short sentences in the user's language about what you changed." } },
+        required: ["summary"],
+      },
+    },
+  },
+];
+
+const AGENT_MAX_TURNS = 40;
+const agentPicture = (jpeg, detail) => ({ type: "image_url", image_url: { url: "data:image/jpeg;base64," + jpeg, detail } });
+const seconds = (list) => (Array.isArray(list) ? list : []).map(Number).filter(Number.isFinite).map((t) => t.toFixed(1));
+
+// The same conversation with every picture replaced by a line saying so, for a model that cannot
+// take pictures.
+function withoutPictures(messages) {
+  return messages.map((message) =>
+    Array.isArray(message.content)
+      ? {
+          ...message,
+          content: message.content.map((part) =>
+            part.type === "image_url" ? { type: "text", text: "[picture left out: work from the document and clips[].sees]" } : part
+          ),
+        }
+      : message
+  );
+}
+
+async function askAgentModel(env, messages) {
+  const model = env.OPENAI_MODEL || OPENAI_MODEL;
+  const call = (conversation) =>
+    fetchUpstream(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${env.OPENAI_API_KEY}` },
+        body: JSON.stringify({
+          model,
+          max_completion_tokens: 14000,
+          messages: [{ role: "system", content: AGENT_PROMPT }, ...conversation],
+          tools: AGENT_TOOLS,
+          tool_choice: "auto",
+          parallel_tool_calls: true,
+        }),
+      },
+      120_000
+    );
+  let upstream = await call(messages);
+  if (upstream.status === 400) {
+    const detail = await upstream.text();
+    console.log("agent 400:", detail.slice(0, 400));
+    if (!/image/i.test(detail)) return { error: true, status: 400 };
+    upstream = await call(withoutPictures(messages));
+  }
+  if (!upstream.ok) {
+    console.log("agent error", upstream.status, (await upstream.text()).slice(0, 400));
+    return { error: true, status: upstream.status };
+  }
+  const result = await upstream.json();
+  const message = ((result.choices || [])[0] || {}).message || {};
+  const calls = (message.tool_calls || [])
+    .filter((c) => c.type === "function" && c.function && c.function.name)
+    .map((c) => ({ id: c.id, name: c.function.name, input: c.function.arguments || "{}" }));
+  const usage = result.usage || {};
+  console.log("agent", model, "in", usage.prompt_tokens, "cached", (usage.prompt_tokens_details || {}).cached_tokens, "out", usage.completion_tokens, "calls", calls.map((c) => c.name).join(","));
+  return { text: message.content || "", calls, model };
+}
+
+async function handleAgent(body, env) {
+  if (env.AGENT === "off" || providerOf(env) !== "openai" || !env.OPENAI_API_KEY) {
+    return json({ error: "agent unavailable" }, 503);
+  }
+  const instruction = String(body.instruction || "").slice(0, 2000).trim();
+  const document = body.document;
+  const turns = Array.isArray(body.turns) ? body.turns : [];
+  if (!instruction || !document || typeof document !== "object") {
+    return json({ error: "instruction and document are required" }, 400);
+  }
+  if (turns.length > AGENT_MAX_TURNS) return json({ error: "too many rounds" }, 400);
+
+  const replyRule = languageRule(instruction, "every summary (titles and captions stay in the video's language)");
+  const opening = [
+    {
+      type: "text",
+      text:
+        `<instruction>\n${instruction}\n</instruction>\n` +
+        `<locale>${String(body.locale || "").slice(0, 20)}</locale>\n` +
+        `<document>\n${JSON.stringify(document)}\n</document>` + replyRule,
+    },
+  ];
+  const sheet = body.sheet;
+  if (sheet && typeof sheet.jpeg === "string" && sheet.jpeg.length < 2_000_000) {
+    const times = seconds(sheet.at);
+    opening.push({
+      type: "text",
+      text: `Contact sheet of the finished video as it is now: ${times.length} pictures, left to right then top to bottom, at ${times.join(", ")} s, each labelled with its time.`,
+    });
+    opening.push(agentPicture(sheet.jpeg, "high"));
+  }
+  const messages = [{ role: "user", content: opening }];
+  for (const turn of turns) {
+    if (turn.role === "assistant") {
+      const calls = (Array.isArray(turn.calls) ? turn.calls : []).slice(0, 8);
+      messages.push({
+        role: "assistant",
+        content: turn.text ? String(turn.text).slice(0, 4000) : null,
+        ...(calls.length
+          ? {
+              tool_calls: calls.map((c) => ({
+                id: String(c.id),
+                type: "function",
+                function: { name: String(c.name), arguments: String(c.input || "{}") },
+              })),
+            }
+          : {}),
+      });
+    } else if (turn.role === "tool") {
+      for (const result of Array.isArray(turn.results) ? turn.results : []) {
+        const newest = result.document ? `\n<document>\n${JSON.stringify(result.document)}\n</document>` : "";
+        messages.push({ role: "tool", tool_call_id: String(result.id), content: String(result.text || "").slice(0, 4000) + newest });
+      }
+      const pictures = (Array.isArray(turn.images) ? turn.images : [])
+        .filter((p) => p && typeof p.jpeg === "string" && p.jpeg.length < 1_000_000)
+        .slice(0, 8);
+      if (pictures.length) {
+        messages.push({
+          role: "user",
+          content: [
+            { type: "text", text: `Pictures from the tools above, in order, at ${pictures.map((p) => seconds(p.at).join("/")).join(", ")} s.` },
+            ...pictures.map((p) => agentPicture(p.jpeg, "low")),
+          ],
+        });
+      }
+    }
+  }
+
+  const answer = await askAgentModel(env, messages);
+  if (answer.error) return json({ error: "upstream", status: answer.status }, upstreamStatus(answer.status));
+  return json({ text: answer.text, calls: answer.calls, model: answer.model });
+}
+
 async function handleEdit(body, env) {
   const instruction = String(body.instruction || "").slice(0, 2000).trim();
   const document = body.document;
@@ -1244,6 +1443,7 @@ async function handleHealth(env, url) {
     provider,
     providerStatus: status,
     appTokenConfigured: Boolean(env.APP_TOKEN),
+    agent: env.AGENT === "off" || provider !== "openai" ? "off" : "on",
     // Whether the OpenAI key is there and looks like one; never the key itself.
     openaiKey: !env.OPENAI_API_KEY ? "missing" : /^sk-/.test(env.OPENAI_API_KEY.trim()) ? "set" : "set, not starting with sk-",
   });
@@ -1277,12 +1477,14 @@ export default {
     // Audio, not JSON.
     if (path === "/transcribe") return handleTranscribe(request, env, url);
 
+    // An AI editor round carries pictures of the video: a few megabytes at most.
+    const maxBody = path === "/agent" ? 8_000_000 : 1_000_000;
     const declaredJSONSize = Number(request.headers.get("content-length") || 0);
-    if (declaredJSONSize > 1_000_000) return json({ error: "too large" }, 413);
+    if (declaredJSONSize > maxBody) return json({ error: "too large" }, 413);
     let body;
     try {
       const raw = await request.text();
-      if (raw.length > 1_000_000) return json({ error: "too large" }, 413);
+      if (raw.length > maxBody) return json({ error: "too large" }, 413);
       body = JSON.parse(raw);
     } catch {
       return json({ error: "bad json" }, 400);
@@ -1304,6 +1506,7 @@ export default {
       const result = await handleCertify(body, env, url.origin);
       return json(result.body, result.status);
     }
+    if (path === "/agent") return handleAgent(body, env);
     if (path === "/edit") return handleEdit(body, env);
     if (path === "/workflow") return handleWorkflow(body, env);
     if (path === "/translate") return handleTranslate(body, env);
