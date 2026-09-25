@@ -145,7 +145,7 @@ struct EditorTimeline: View {
         // Playing, seeking from a button, or zooming: the timeline comes to the playhead. Watched
         // by a view of its own: read here, the playhead made the whole timeline, every thumbnail
         // and caption bar of a long video, draw again thirty times a second while playing.
-        .background { PlayheadWatcher(model: model) { if !model.isAdjustingTimeline { follow() } } }
+        .background { TimelinePlayheadFollower(model: model) { if !model.isAdjustingTimeline { follow() } } }
         // Once the finger lets go, the timeline comes to where the edge was left.
         .onChange(of: model.isAdjustingTimeline) { _, adjusting in
             if !adjusting {
@@ -805,7 +805,7 @@ struct ClipHoldGesture: UIGestureRecognizerRepresentable {
 
 /// Calls `action` whenever the playhead moves. The only view that reads the playhead, so nothing
 /// around it is drawn again with it.
-struct PlayheadWatcher: View {
+struct TimelinePlayheadFollower: View {
     let model: EditorModel
     let action: () -> Void
 
