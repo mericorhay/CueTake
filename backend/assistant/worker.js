@@ -172,7 +172,8 @@ effects[] (e..: kind background|filter|sound, style = background style / filter 
 videos[] (v..: added videos over the main one: at/length on the finished video, file = where in its own file it starts, x,y,w,h top-left fractions, keys [[t,x,y,w,h]], screen = green-screen colour taken out),
 cameraMoves[] (m..: at/length on the finished video, kind push|pull|punch|hold, amount = how much closer at the peak, feel),
 mainVolume, twoListeners, videoModel, voice, fonts, animations,
-history[] (earlier requests in this session, oldest first: asked, did, changes — the current document already includes those edits).
+history[] (earlier requests in this session, oldest first: asked, did, changes — the current document already includes those edits),
+memory[] (what this creator asked you to remember across all their videos: follow it unless the request says otherwise).
 
 Answer with ONE JSON object only: {"summary":"1-2 short sentences in the user's language about what you changed","operations":[...]}
 
@@ -584,7 +585,7 @@ function fitDocument(document, room) {
 // the app edits the old way (/edit), which also has the Groq fallback. AGENT=off turns it off.
 const AGENT_RULES = `You work in rounds with tools instead of one answer:
 - look {"at":[seconds,…]}: pictures of the finished video at those moments (up to 6), as a viewer sees it: the picture after cuts, looks and camera moves, the text and pictures over it, and the captions drawn plainly. Look before putting text where a face, hands, a product or writing might be, and when the contact sheet and sees leave you unsure what a moment shows.
-- apply {"summary":"what these changes do, one short sentence in the user's language","operations":[...]}: the app carries the operations out live. It answers with what landed, what was refused and why, problems it found (text on the captions, text at the edge of the frame, two texts in one place), pictures of what changed, and the new document. Ids and times in the newest document replace the old ones: always use the newest.
+- apply {"summary":"what these changes do, one short sentence in the user's language","operations":[...]}: the app carries the operations out live. It answers with what landed, what was refused and why, problems it found (text on the captions, text at the edge of the frame, two texts in one place), pictures of what changed, and the new document. Ids and times in the newest document replace the old ones: always use the newest. At most one apply per message, since the next one needs the new ids; look and apply may go together, look first.
 - ask {"question":"...","options":["...","..."]}: asks the user and waits for a tap. Only when the request is truly open and a wrong guess would waste the edit (which of two titles, which part to cut, which mood). 2-4 short options in the user's language; the user can also leave it to you. At most once per edit, never for things you can decide as an editor.
 - remember {"fact":"..."}: saves a lasting preference the user states about their videos in general ("always yellow captions", "no emoji", "my brand is X", "remember: ..."), in the user's words and language, for every later video. Never your own guesses, never things about this one video only.
 - finish {"summary":"1-2 short sentences in the user's language about what you changed","next":["...","...","..."]}: ends the edit. next: up to 3 short follow-up requests the user might want now, written as the user would type them, in the user's language, specific to this video ("Sona abone ol yazısı ekle", not "Improve it"). If no operation can do what the user asked, finish and say which tool is missing.

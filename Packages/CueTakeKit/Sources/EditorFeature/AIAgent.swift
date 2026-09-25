@@ -58,7 +58,15 @@ extension EditorModel {
             } catch {
                 guard !Task.isCancelled else { return .done }
                 // Nothing changed yet: the old way takes over. Otherwise what landed stays.
-                if counts.applied == 0 { return .unavailable }
+                if counts.applied == 0 {
+                    withAnimation(.snappy(duration: 0.3)) {
+                        aiSession?.activity = nil
+                        aiSession?.note = nil
+                        aiSession?.question = nil
+                        aiSession?.suggestions = []
+                    }
+                    return .unavailable
+                }
                 break rounds
             }
             guard !Task.isCancelled else { return .done }
@@ -76,6 +84,7 @@ extension EditorModel {
             var results: [AgentResult] = []
             var images: [AgentImage] = []
             var finished = false
+            var appliedThisRound = false
             for call in reply.calls {
                 guard !Task.isCancelled else { return .done }
                 switch call.name {
@@ -83,7 +92,11 @@ extension EditorModel {
                     let (result, pictures) = await agentLook(call)
                     results.append(result)
                     images += pictures
+                case "apply" where appliedThisRound:
+                    // Written against the document before the first apply, whose ids that one changed.
+                    results.append(AgentResult(id: call.id, text: "Not done: only one apply per round, because ids and times change after each. Send it again with the newest document's ids."))
                 case "apply":
+                    appliedThisRound = true
                     let (result, pictures, total) = await agentApply(call, instruction: instruction, carrying: counts)
                     results.append(result)
                     images += pictures
@@ -111,7 +124,7 @@ extension EditorModel {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.72)) {
             aiSession?.activity = nil
             aiSession?.note = nil
-            if counts.applied > 0 {
+            if counts.applied > 0 || aiSession?.remembered.isEmpty == false {
                 if !summary.isEmpty { aiSession?.summary = summary }
                 aiSession?.phase = .finished(applied: counts.applied, skipped: counts.skipped)
             } else {
@@ -183,9 +196,10 @@ extension EditorModel {
         if case .finished(let applied, let skippedCount)? = aiSession?.phase {
             total = (applied, skippedCount)
         }
+        // Stopped during the run: it ended itself, showing what landed.
+        guard !Task.isCancelled else { return (AgentResult(id: call.id, text: "Stopped."), [], total) }
         // Between rounds the AI is thinking again; the change set of this round is kept.
         withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = .thinking }
-        guard !Task.isCancelled else { return (AgentResult(id: call.id, text: "Stopped."), [], total) }
 
         setAgentActivity(.looking)
         let pictures = await agentPictures(ofChangesSince: before)
@@ -259,8 +273,16 @@ extension EditorModel {
     /// preview while the AI works, so the AI rebuilds it for itself before it looks.
     private func agentPlayerItem() async -> AVPlayerItem? {
         guard let mediaDirectory else { return nil }
+        // Looks, people-behind titles and keyed videos are read live by the compositor.
+        syncLiveFilters()
+        syncLiveBehind()
+        syncLiveKeys()
         if !isPictureCurrent {
             await loadPlayback(mediaDirectory: mediaDirectory, cleanVoiceNow: false)
+        }
+        // Another build may have been under way and taken over: wait for it, a few seconds at most.
+        for _ in 0..<15 where !isPictureCurrent && !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(200))
         }
         return player?.currentItem
     }

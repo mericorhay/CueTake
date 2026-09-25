@@ -18,7 +18,7 @@ struct LimitSheet: View {
     let plan: Plan
     /// When this month's allowance starts again.
     let resetsAt: Date
-    /// "4,99 $", once the App Store has answered.
+    /// "7,49 $", once the App Store has answered.
     var price: String? = nil
     /// "7 days free", when the App Store has a trial this account can take.
     var trial: String? = nil

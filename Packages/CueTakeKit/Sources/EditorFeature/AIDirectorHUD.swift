@@ -38,7 +38,7 @@ struct AIDirectorHUD: View {
 
     private var finishedID: UUID? {
         guard case .finished = model.aiSession?.phase else { return nil }
-        return model.aiSession?.changeSetID
+        return model.aiSession?.changeSetID ?? model.aiSession?.id
     }
 
     private func card(_ session: AISession) -> some View {
@@ -245,7 +245,8 @@ struct AIDirectorHUD: View {
                     .foregroundStyle(AIPalette.linear)
                     .symbolEffect(.bounce, value: applied)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("editor.ai.hud.done \(applied)", bundle: .module)
+                    // Nothing changed but something was remembered: a note taken, not a failure.
+                    Text(applied == 0 ? "editor.ai.hud.noted" : "editor.ai.hud.done \(applied)", bundle: .module)
                         .dsFont(.sans, .semibold, 14)
                         .foregroundStyle(DS.Palette.ink)
                     if skipped > 0 {
@@ -303,10 +304,10 @@ struct AIDirectorHUD: View {
                     .scrollIndicators(.hidden)
                 }
             }
+            if !session.changeSetIDs.isEmpty {
             HStack(spacing: 8) {
                 Button {
-                    guard let id = session.changeSetID else { return }
-                    withAnimation(DS.Motion.settle) { model.revertAIChangeSet(id) }
+                    withAnimation(DS.Motion.settle) { model.revertAIRun(session) }
                     model.dismissAISession()
                 } label: {
                     Label {
@@ -335,6 +336,7 @@ struct AIDirectorHUD: View {
                     .background(Capsule().fill(AIPalette.linear))
                 }
                 .buttonStyle(.dsPress(radius: 20))
+            }
             }
         }
         .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)))

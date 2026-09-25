@@ -49,6 +49,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var history: [Turn]?
     /// Everything said, in order, as plain text: what the video is about, in one read.
     public var transcript: String?
+    /// What the creator asked the AI to remember across videos (`AIMemory`).
+    public var memory: [String]?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.

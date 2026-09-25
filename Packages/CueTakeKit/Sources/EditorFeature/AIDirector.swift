@@ -18,6 +18,7 @@ public struct AISession: Equatable {
         case failed(String)
     }
 
+    public let id = UUID()
     public var instruction: String
     public var summary = ""
     public var phase: Phase = .thinking
@@ -39,6 +40,8 @@ public struct AISession: Equatable {
     public var suggestions: [String] = []
     /// Preferences the AI saved in this run, for all later videos (`AIMemory`).
     public var remembered: [String] = []
+    /// Every change set this run made: one per pass or round. Taking the run back takes all of them.
+    public var changeSetIDs: [UUID] = []
 }
 
 /// A question from the AI editor, when a wrong guess would waste the edit.
@@ -204,6 +207,7 @@ extension EditorModel {
                 }
                 var document = await self.seenDocument(of: project)
                 document.videoModel = self.aiVideoModel
+                document.memory = AIMemory.facts.isEmpty ? nil : AIMemory.facts
                 // The captions' words are the creator's: changed only when the request is about them.
                 var plan = self.withoutRepeats(try await request(document, text).keepingCaptions(unlessAskedIn: text))
                 guard !Task.isCancelled else { return }
@@ -447,6 +451,7 @@ extension EditorModel {
         aiChanges.insert(set, at: 0)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.72)) {
             aiSession?.changeSetID = set.id
+            aiSession?.changeSetIDs.append(set.id)
             aiSession?.phase = .finished(applied: applied + earlier.applied, skipped: skippedCount + earlier.skipped)
         }
     }
@@ -560,6 +565,11 @@ extension EditorModel {
 
     public func reapplyAIChange(_ itemID: Int, in setID: UUID) {
         setAIChanges([itemID], in: setID, reverted: false)
+    }
+
+    /// Takes back everything a run changed, newest round first.
+    public func revertAIRun(_ session: AISession) {
+        for id in session.changeSetIDs.reversed() { revertAIChangeSet(id) }
     }
 
     public func revertAIChangeSet(_ setID: UUID) {

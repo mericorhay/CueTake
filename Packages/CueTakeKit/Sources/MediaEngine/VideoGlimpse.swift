@@ -34,8 +34,8 @@ public enum VideoGlimpse {
         var frames: [Frame] = []
         for seconds in times {
             guard let image = await picture(from: generator, at: seconds) else { continue }
-            let picture = compose(image, at: seconds, project: project, mediaDirectory: mediaDirectory)
-            if let jpeg = picture.jpegData(compressionQuality: 0.62) {
+            let composed = compose(image, at: seconds, project: project, mediaDirectory: mediaDirectory)
+            if let jpeg = composed.jpegData(compressionQuality: 0.62) {
                 frames.append(Frame(seconds: seconds, jpeg: jpeg))
             }
         }

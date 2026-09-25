@@ -24,7 +24,7 @@ final class PlusStore {
     @ObservationIgnored var onChange: ((Bool) -> Void)?
     @ObservationIgnored private var updates: Task<Void, Never>?
 
-    /// "4,99 $" in the viewer's currency and format; nil until the product has loaded.
+    /// "7,49 $" in the viewer's currency and format; nil until the product has loaded.
     var price: String? { product?.displayPrice }
 
     /// "7 days free", when App Store Connect has a free trial and this Apple Account can still
