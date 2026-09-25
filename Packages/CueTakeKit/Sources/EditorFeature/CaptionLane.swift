@@ -21,11 +21,12 @@ struct CaptionLane: View {
     static let height: CGFloat = 26
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The caption on screen. Kept here and changed only when a different one lights up: read from
+    /// the playhead in this body, every bar of a long video was drawn again thirty times a second.
+    @State private var active: PlacedCue.ID?
 
     var body: some View {
         let cues = model.project.captionCues
-        let now = MediaTime(seconds: model.playhead)
-        let active = cues.first { $0.range.contains(now) }?.id
 
         ZStack(alignment: .topLeading) {
             ForEach(cues) { cue in
@@ -72,11 +73,32 @@ struct CaptionLane: View {
             }
         }
         .frame(height: Self.height, alignment: .topLeading)
+        .background { LitCaptionWatcher(model: model, cues: cues, active: $active) }
         .coordinateSpace(.named(Self.space))
         .animation(reduceMotion ? nil : DS.Motion.snap, value: active)
         .aiGlow(
             model.glowToken(.captionStyle) + model.glowToken(.captionWindow),
             in: RoundedRectangle(cornerRadius: 7, style: .continuous)
         )
+    }
+}
+
+/// Finds the caption under the playhead and says so only when it changes.
+private struct LitCaptionWatcher: View {
+    let model: EditorModel
+    let cues: [PlacedCue]
+    @Binding var active: PlacedCue.ID?
+
+    private var lit: PlacedCue.ID? {
+        let now = MediaTime(seconds: model.playhead)
+        return cues.first { $0.range.contains(now) }?.id
+    }
+
+    var body: some View {
+        Color.clear
+            .onChange(of: lit, initial: true) { _, id in
+                if active != id { active = id }
+            }
+            .accessibilityHidden(true)
     }
 }

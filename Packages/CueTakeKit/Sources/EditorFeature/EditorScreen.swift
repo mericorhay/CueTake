@@ -724,37 +724,16 @@ public struct EditorScreen: View {
             GeometryReader { box in
                 let frame = OverlayCanvas.videoRect(in: box.size, render: model.project.format.renderSize)
                 ZStack {
-            if let cue = model.project.caption(at: model.playhead) {
-                CaptionOverlay(
-                    cue: cue,
-                    style: model.project.captionStyle,
-                    locale: model.project.locale,
-                    time: model.playhead,
-                    position: model.project.captionPosition(for: cue),
-                    glowToken: model.captionGlowToken,
-                    isEditing: editingCaption == cue.id,
-                    onTap: {
-                        // A caption opens every caption: the lyrics, on this line. Its look and
-                        // place are still one tap away on the timeline's caption lane.
-                        guard !model.isAIDriving else { return }
-                        model.pause()
-                        editingCaption = nil
-                        dockPanel = nil
-                        lyricsFocus = cue.id
-                        showsLyrics = true
-                    },
-                    onMove: { y in
-                        model.updateCaptionStyle(coalescing: "caption-move") { style in
-                            // Settles on the usual places — top, middle, lower third, bottom — when close.
-                            let marks = [0.12, 0.5, 0.72, 0.86]
-                            let near = marks.first { abs($0 - y) < 0.025 }
-                            style.position = CaptionPosition(x: style.position.x, y: near ?? y)
-                        }
-                    }
-                )
-                .matchedTransitionSource(id: "lyrics", in: lyricsSpace)
-                .id(cue.id)
-                .transition(CaptionOverlay.transition(for: model.project.captionStyle))
+            // Its own view: it is the part that moves with the playhead, and read here the playhead
+            // made the whole editor screen work itself out again thirty times a second.
+            StageCaption(model: model, editing: editingCaption, lyricsSpace: lyricsSpace) { id in
+                // A caption opens every caption: the lyrics, on this line. Its look and
+                // place are still one tap away on the timeline's caption lane.
+                model.pause()
+                editingCaption = nil
+                dockPanel = nil
+                lyricsFocus = id
+                showsLyrics = true
             }
                 }
                 .frame(width: frame.width, height: frame.height)
@@ -854,34 +833,8 @@ public struct EditorScreen: View {
 
             Spacer(minLength: 8)
 
-            if model.isScrubbing {
-                // While the finger is on the timeline: the time to the hundredth and the frame.
-                HStack(spacing: 6) {
-                    Text(verbatim: ScrubLens.preciseLabel(model.playhead))
-                        .dsFont(.mono, .semibold, 12)
-                        .foregroundStyle(DS.Palette.ink)
-                    Text(verbatim: ScrubLens.frameLabel(for: model))
-                        .dsFont(.mono, .medium, 10)
-                        .foregroundStyle(DS.Palette.ink(0.5))
-                }
-                .monospacedDigit()
-                .lineLimit(1)
-                .fixedSize()
-                .padding(.horizontal, 10)
-                .frame(height: 26)
-                .background(Capsule().fill(DS.Palette.hairline(0.1)))
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            } else {
-                ViewThatFits(in: .horizontal) {
-                    Text(verbatim: "\(model.playheadLabel) / \(model.durationLabel)")
-                    Text(model.playheadLabel)
-                }
-                .dsFont(.mono, .medium, 10)
-                .foregroundStyle(DS.Palette.ink(0.56))
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .lineLimit(1)
-            }
+            // The clock in a view of its own, so only it redraws as the playhead moves.
+            TimeReadout(model: model)
 
             Button(action: model.skipToStart) {
                 Image(systemName: "backward.end.fill")
@@ -1454,5 +1407,78 @@ private struct LanesScroll: ViewModifier {
             .scrollIndicators(.visible, axes: .vertical)
             .scrollIndicatorsFlash(trigger: height)
             .scrollIndicatorsFlash(onAppear: true)
+    }
+}
+
+/// The caption over the preview at the playhead's moment.
+private struct StageCaption: View {
+    let model: EditorModel
+    let editing: CaptionCue.ID?
+    let lyricsSpace: Namespace.ID
+    let onOpenLyrics: (CaptionCue.ID) -> Void
+
+    var body: some View {
+        if let cue = model.project.caption(at: model.playhead) {
+            CaptionOverlay(
+                cue: cue,
+                style: model.project.captionStyle,
+                locale: model.project.locale,
+                time: model.playhead,
+                position: model.project.captionPosition(for: cue),
+                glowToken: model.captionGlowToken,
+                isEditing: editing == cue.id,
+                onTap: {
+                    guard !model.isAIDriving else { return }
+                    onOpenLyrics(cue.id)
+                },
+                onMove: { y in
+                    model.updateCaptionStyle(coalescing: "caption-move") { style in
+                        // Settles on the usual places — top, middle, lower third, bottom — when close.
+                        let marks = [0.12, 0.5, 0.72, 0.86]
+                        let near = marks.first { abs($0 - y) < 0.025 }
+                        style.position = CaptionPosition(x: style.position.x, y: near ?? y)
+                    }
+                }
+            )
+            .matchedTransitionSource(id: "lyrics", in: lyricsSpace)
+            .id(cue.id)
+            .transition(CaptionOverlay.transition(for: model.project.captionStyle))
+        }
+    }
+}
+
+/// The time under the playhead: to the frame while scrubbing, "0:17.0 / 2:57" otherwise.
+private struct TimeReadout: View {
+    let model: EditorModel
+
+    var body: some View {
+        if model.isScrubbing {
+            // While the finger is on the timeline: the time to the hundredth and the frame.
+            HStack(spacing: 6) {
+                Text(verbatim: ScrubLens.preciseLabel(model.playhead))
+                    .dsFont(.mono, .semibold, 12)
+                    .foregroundStyle(DS.Palette.ink)
+                Text(verbatim: ScrubLens.frameLabel(for: model))
+                    .dsFont(.mono, .medium, 10)
+                    .foregroundStyle(DS.Palette.ink(0.5))
+            }
+            .monospacedDigit()
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 10)
+            .frame(height: 26)
+            .background(Capsule().fill(DS.Palette.hairline(0.1)))
+            .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        } else {
+            ViewThatFits(in: .horizontal) {
+                Text(verbatim: "\(model.playheadLabel) / \(model.durationLabel)")
+                Text(model.playheadLabel)
+            }
+            .dsFont(.mono, .medium, 10)
+            .foregroundStyle(DS.Palette.ink(0.56))
+            .monospacedDigit()
+            .contentTransition(.numericText())
+            .lineLimit(1)
+        }
     }
 }

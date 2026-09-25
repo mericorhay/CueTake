@@ -67,16 +67,26 @@ struct ToolDock: View {
     }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    /// The clip under the playhead, changed only when the playhead crosses into another clip.
+    /// Read straight from the playhead, it made the whole dock work itself out again thirty times
+    /// a second while the video played.
+    @State private var clipAtPlayhead: Int?
+
     /// The clip the tools act on: the one being inspected, or the one under the playhead.
     private var index: Int? {
         if let inspected = model.inspectedSegment,
            let found = model.project.segments.firstIndex(where: { $0.id == inspected }) {
             return found
         }
-        return model.segmentAtPlayhead?.index
+        return clipAtPlayhead
     }
 
     var body: some View {
+        dock
+            .background { ClipAtPlayheadWatcher(model: model, clip: $clipAtPlayhead) }
+    }
+
+    private var dock: some View {
         VStack(alignment: .leading, spacing: 10) {
             row
 
@@ -1302,5 +1312,19 @@ struct ToolDock: View {
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
         .animation(DS.Motion.snap, value: isOn)
+    }
+}
+
+/// Says which clip is under the playhead, only when that changes.
+private struct ClipAtPlayheadWatcher: View {
+    let model: EditorModel
+    @Binding var clip: Int?
+
+    var body: some View {
+        Color.clear
+            .onChange(of: model.segmentAtPlayhead?.index, initial: true) { _, index in
+                if clip != index { clip = index }
+            }
+            .accessibilityHidden(true)
     }
 }
