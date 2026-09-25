@@ -308,6 +308,8 @@ struct SettingsPanel: View {
     @State private var showsKeys = false
     @State private var showsConverter = false
     @State private var showsLanguage = false
+    @State private var showsMemory = false
+    @State private var memoryCount = AIMemory.facts.count
     @State private var confirmsCleaning = false
     @State private var keyCount = APIKeySheet.connectedCount
     @State private var isCleaning = false
@@ -344,6 +346,12 @@ struct SettingsPanel: View {
         }
         .sheet(isPresented: $showsConverter) {
             ConverterSheet { showsConverter = false }.presentationDetents([.large]).presentationDragIndicator(.visible).presentationCornerRadius(32)
+        }
+        .sheet(isPresented: $showsMemory, onDismiss: { memoryCount = AIMemory.facts.count }) {
+            AIMemorySheet { showsMemory = false }
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(32)
         }
         .sheet(isPresented: $showsLanguage) {
             LanguageSheet(model: model) { showsLanguage = false }
@@ -413,6 +421,10 @@ struct SettingsPanel: View {
             Button { showsKeys = true } label: {
                 SettingsRow(icon: "key.horizontal", title: settingsText("settings.apiKey"),
                             detail: keyCount == 0 ? settingsText("settings.apiKey.none") : AppLocalization.string("settings.apiKey.connected \(keyCount)", bundle: .module))
+            }.buttonStyle(SettingsPressStyle())
+            Button { showsMemory = true } label: {
+                SettingsRow(icon: "brain.head.profile", title: settingsText("settings.aiMemory"),
+                            detail: memoryCount == 0 ? settingsText("settings.aiMemory.none") : AppLocalization.string("settings.aiMemory.value \(memoryCount)", bundle: .module))
             }.buttonStyle(SettingsPressStyle())
         case .device:
             Button { showsLanguage = true } label: {

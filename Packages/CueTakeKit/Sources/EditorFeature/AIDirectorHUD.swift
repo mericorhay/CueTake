@@ -29,7 +29,8 @@ struct AIDirectorHUD: View {
         .task(id: finishedID) {
             // A finished run tidies itself away; failures wait to be read.
             guard finishedID != nil else { return }
-            try? await Task.sleep(for: .seconds(7))
+            // Longer when there is something to tap next.
+            try? await Task.sleep(for: .seconds(model.aiSession?.suggestions.isEmpty == false ? 20 : 7))
             guard !Task.isCancelled else { return }
             model.dismissAISession()
         }
@@ -44,7 +45,12 @@ struct AIDirectorHUD: View {
         let shape = RoundedRectangle(cornerRadius: 26, style: .continuous)
         return VStack(alignment: .leading, spacing: 11) {
             switch session.phase {
-            case .thinking: thinking(session)
+            case .thinking:
+                if let question = session.question {
+                    asking(question)
+                } else {
+                    thinking(session)
+                }
             case .applying: applying(session)
             case .finished(let applied, let skipped): finished(session, applied: applied, skipped: skipped)
             case .failed(let message): failed(message)
@@ -79,10 +85,20 @@ struct AIDirectorHUD: View {
                 Text(thinkingTitle(session), bundle: .module)
                     .dsFont(.sans, .semibold, 14)
                     .foregroundStyle(DS.Palette.ink)
-                Text(verbatim: "“\(session.instruction)”")
-                    .dsFont(.sans, .regular, 11)
-                    .foregroundStyle(DS.Palette.ink(0.6))
-                    .lineLimit(1)
+                if let note = session.note {
+                    // What the AI says it is doing, as it goes.
+                    Text(verbatim: note)
+                        .dsFont(.sans, .regular, 11)
+                        .foregroundStyle(DS.Palette.ink(0.72))
+                        .lineLimit(2)
+                        .id(note)
+                        .transition(reduceMotion ? .opacity : .push(from: .bottom).combined(with: .opacity))
+                } else {
+                    Text(verbatim: "“\(session.instruction)”")
+                        .dsFont(.sans, .regular, 11)
+                        .foregroundStyle(DS.Palette.ink(0.6))
+                        .lineLimit(1)
+                }
                 Text("editor.ai.hud.stats \(session.clips) \(session.words)", bundle: .module)
                     .dsFont(.mono, .medium, 10)
                     .foregroundStyle(AIPalette.linear)
@@ -99,6 +115,51 @@ struct AIDirectorHUD: View {
         case .planning: "editor.ai.hud.planning"
         case nil: session.pass > 1 ? "editor.ai.hud.reviewing" : "editor.ai.hud.reading"
         }
+    }
+
+    /// The AI's question, with its answers and "you decide" to tap.
+    private func asking(_ question: AIQuestion) -> some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(alignment: .top, spacing: 12) {
+                AIOrb(fast: false)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("editor.ai.hud.question", bundle: .module)
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(AIPalette.linear)
+                    Text(verbatim: question.text)
+                        .dsFont(.sans, .semibold, 14)
+                        .foregroundStyle(DS.Palette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                stopButton
+            }
+            ScrollView(.horizontal) {
+                HStack(spacing: 8) {
+                    ForEach(question.options, id: \.self) { option in
+                        chip(option, filled: true) { model.answerAIQuestion(option) }
+                    }
+                    chip(AppLocalization.string("editor.ai.hud.question.decide", bundle: .module), filled: false) {
+                        model.answerAIQuestion(nil)
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+    }
+
+    private func chip(_ text: String, filled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(verbatim: text)
+                .dsFont(.sans, .semibold, 12)
+                .foregroundStyle(filled ? DS.Palette.inkInverse : DS.Palette.ink)
+                .lineLimit(1)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .background(Capsule().fill(filled ? AnyShapeStyle(AIPalette.linear) : AnyShapeStyle(DS.Palette.hairline(0.1))))
+        }
+        .buttonStyle(.dsPress(radius: 20))
     }
 
     private func applying(_ session: AISession) -> some View {
@@ -201,6 +262,46 @@ struct AIDirectorHUD: View {
                     .dsFont(.sans, .regular, 12, lineHeight: 1.35)
                     .foregroundStyle(DS.Palette.ink(0.7))
                     .lineLimit(3)
+            }
+            ForEach(session.remembered, id: \.self) { fact in
+                Label {
+                    Text("editor.ai.hud.remembered \(fact)", bundle: .module)
+                        .lineLimit(2)
+                } icon: {
+                    Image(systemName: "brain.head.profile")
+                }
+                .dsFont(.sans, .medium, 11)
+                .foregroundStyle(DS.Palette.ink(0.62))
+            }
+            if !session.suggestions.isEmpty {
+                // What to ask next, one tap each.
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("editor.ai.hud.next", bundle: .module)
+                        .dsFont(.mono, .medium, 10)
+                        .foregroundStyle(DS.Palette.ink(0.5))
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 8) {
+                            ForEach(session.suggestions, id: \.self) { suggestion in
+                                Button {
+                                    model.askAIFollowUp(suggestion)
+                                } label: {
+                                    Label {
+                                        Text(verbatim: suggestion).lineLimit(1)
+                                    } icon: {
+                                        Image(systemName: "sparkles")
+                                    }
+                                    .dsFont(.sans, .semibold, 12)
+                                    .foregroundStyle(DS.Palette.ink)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Capsule().strokeBorder(AIPalette.linear, lineWidth: 1.2))
+                                }
+                                .buttonStyle(.dsPress(radius: 20))
+                            }
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                }
             }
             HStack(spacing: 8) {
                 Button {

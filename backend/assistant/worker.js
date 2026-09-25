@@ -582,11 +582,15 @@ function fitDocument(document, room) {
 // conversation; this only adds the prompt and the key, translates to the provider's format and
 // returns the model's next move. Only the main model does this: without it the answer is 503 and
 // the app edits the old way (/edit), which also has the Groq fallback. AGENT=off turns it off.
-const AGENT_RULES = `You work in rounds with three tools instead of one answer:
+const AGENT_RULES = `You work in rounds with tools instead of one answer:
 - look {"at":[seconds,…]}: pictures of the finished video at those moments (up to 6), as a viewer sees it: the picture after cuts, looks and camera moves, the text and pictures over it, and the captions drawn plainly. Look before putting text where a face, hands, a product or writing might be, and when the contact sheet and sees leave you unsure what a moment shows.
 - apply {"summary":"what these changes do, one short sentence in the user's language","operations":[...]}: the app carries the operations out live. It answers with what landed, what was refused and why, problems it found (text on the captions, text at the edge of the frame, two texts in one place), pictures of what changed, and the new document. Ids and times in the newest document replace the old ones: always use the newest.
-- finish {"summary":"1-2 short sentences in the user's language about what you changed"}: ends the edit. If no operation can do what the user asked, finish and say which tool is missing.
+- ask {"question":"...","options":["...","..."]}: asks the user and waits for a tap. Only when the request is truly open and a wrong guess would waste the edit (which of two titles, which part to cut, which mood). 2-4 short options in the user's language; the user can also leave it to you. At most once per edit, never for things you can decide as an editor.
+- remember {"fact":"..."}: saves a lasting preference the user states about their videos in general ("always yellow captions", "no emoji", "my brand is X", "remember: ..."), in the user's words and language, for every later video. Never your own guesses, never things about this one video only.
+- finish {"summary":"1-2 short sentences in the user's language about what you changed","next":["...","...","..."]}: ends the edit. next: up to 3 short follow-up requests the user might want now, written as the user would type them, in the user's language, specific to this video ("Sona abone ol yazısı ekle", not "Improve it"). If no operation can do what the user asked, finish and say which tool is missing.
+With every tool call, write in the message text one short sentence (at most 12 words) in the user's language saying what you are doing and why, like a director talking while working ("Kancada yüzün ortada, başlığı üste alıyorum."). The user sees it live.
 The first message has the document and, when there is footage, a contact sheet: pictures spread through the video, each labelled with its time.
+<creator_memory>, when present, lists what this creator asked you to remember across videos: follow it unless this request says otherwise.
 
 How to work in rounds:
 1. Read the transcript and the contact sheet. Look closer only where it helps.
@@ -634,11 +638,41 @@ const AGENT_TOOLS = [
   {
     type: "function",
     function: {
+      name: "ask",
+      description: "Asks the user one short question and waits for a tap. Only when a wrong guess would waste the edit; at most once.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string", description: "Short, in the user's language." },
+          options: { type: "array", items: { type: "string" }, description: "2-4 short answers to tap." },
+        },
+        required: ["question", "options"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remember",
+      description: "Saves a lasting preference the user stated about their videos in general, for every later video.",
+      parameters: {
+        type: "object",
+        properties: { fact: { type: "string", description: "The preference in the user's words and language, one short line." } },
+        required: ["fact"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "finish",
       description: "Ends the edit.",
       parameters: {
         type: "object",
-        properties: { summary: { type: "string", description: "1-2 short sentences in the user's language about what you changed." } },
+        properties: {
+          summary: { type: "string", description: "1-2 short sentences in the user's language about what you changed." },
+          next: { type: "array", items: { type: "string" }, description: "Up to 3 short follow-up requests for this video, as the user would type them." },
+        },
         required: ["summary"],
       },
     },
@@ -716,13 +750,16 @@ async function handleAgent(body, env) {
   }
   if (turns.length > AGENT_MAX_TURNS) return json({ error: "too many rounds" }, 400);
 
-  const replyRule = languageRule(instruction, "every summary (titles and captions stay in the video's language)");
+  const replyRule = languageRule(instruction, "every summary, note, question and suggestion (titles and captions stay in the video's language)");
+  const memory = (Array.isArray(body.memory) ? body.memory : []).map((m) => String(m).slice(0, 200)).filter(Boolean).slice(0, 20);
+  const remembered = memory.length ? `<creator_memory>\n${memory.map((m) => "- " + m).join("\n")}\n</creator_memory>\n` : "";
   const opening = [
     {
       type: "text",
       text:
         `<instruction>\n${instruction}\n</instruction>\n` +
         `<locale>${String(body.locale || "").slice(0, 20)}</locale>\n` +
+        remembered +
         `<document>\n${JSON.stringify(document)}\n</document>` + replyRule,
     },
   ];

@@ -33,7 +33,7 @@ public enum VideoGlimpse {
         let generator = makeGenerator(asset, videoComposition, longSide: longSide)
         var frames: [Frame] = []
         for seconds in times {
-            guard let image = try? await generator.image(at: CMTime(seconds: seconds, preferredTimescale: 600)).image else { continue }
+            guard let image = await picture(from: generator, at: seconds) else { continue }
             let picture = compose(image, at: seconds, project: project, mediaDirectory: mediaDirectory)
             if let jpeg = picture.jpegData(compressionQuality: 0.62) {
                 frames.append(Frame(seconds: seconds, jpeg: jpeg))
@@ -59,7 +59,7 @@ public enum VideoGlimpse {
         let times = (0..<count).map { ((Double($0) + 0.5) / Double(count) * duration * 100).rounded() / 100 }
         var cells: [(seconds: Double, image: UIImage)] = []
         for seconds in times {
-            guard let image = try? await generator.image(at: CMTime(seconds: seconds, preferredTimescale: 600)).image else { continue }
+            guard let image = await picture(from: generator, at: seconds) else { continue }
             cells.append((seconds, compose(image, at: seconds, project: project, mediaDirectory: mediaDirectory)))
         }
         guard let first = cells.first?.image else { return nil }
@@ -95,6 +95,16 @@ public enum VideoGlimpse {
     public nonisolated static func clock(_ seconds: Double) -> String {
         let tenths = Int((max(0, seconds) * 10).rounded())
         return String(format: "%d:%02d.%d", tenths / 600, (tenths / 10) % 60, tenths % 10)
+    }
+
+    /// One frame. The callback form keeps the generator on this actor: handing it to the async
+    /// form from here is a data race as far as Swift 6 is concerned.
+    private static func picture(from generator: AVAssetImageGenerator, at seconds: Double) async -> CGImage? {
+        await withCheckedContinuation { continuation in
+            generator.generateCGImageAsynchronously(for: CMTime(seconds: seconds, preferredTimescale: 600)) { image, _, _ in
+                continuation.resume(returning: image)
+            }
+        }
     }
 
     private static func makeGenerator(_ asset: AVAsset, _ videoComposition: AVVideoComposition?, longSide: CGFloat) -> AVAssetImageGenerator {

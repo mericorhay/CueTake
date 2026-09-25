@@ -222,6 +222,8 @@ public final class EditorModel {
     /// The AI editor that works in rounds, looking at the video and checking its own changes. Set
     /// by the app; nil, or a server without it, edits the old way. See `AIAgent`.
     @ObservationIgnored public var aiAgent: AIAgentRequester?
+    /// Waiting for the user to answer the AI's question.
+    @ObservationIgnored var aiQuestionReply: CheckedContinuation<String?, Never>?
 
     private var task: Task<Void, Never>?
 

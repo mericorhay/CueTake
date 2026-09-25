@@ -31,6 +31,20 @@ public struct AISession: Equatable {
     public var pass = 1
     /// What the AI editor is doing between its changes, when it works in rounds.
     public var activity: AIActivity?
+    /// What the AI says it is doing now, in a sentence, when it works in rounds.
+    public var note: String?
+    /// A question the AI is waiting on, with the answers to tap.
+    public var question: AIQuestion?
+    /// What the user could ask next, offered when the AI is finished; one tap asks it.
+    public var suggestions: [String] = []
+    /// Preferences the AI saved in this run, for all later videos (`AIMemory`).
+    public var remembered: [String] = []
+}
+
+/// A question from the AI editor, when a wrong guess would waste the edit.
+public struct AIQuestion: Equatable, Sendable {
+    public var text: String
+    public var options: [String]
 }
 
 public enum AIActivity: Equatable, Sendable {
@@ -267,6 +281,7 @@ extension EditorModel {
 
     /// Stops asking, or stops between two changes. What already landed stays, and stays reversible.
     public func stopAI() {
+        answerAIQuestion(nil)
         if case .thinking = aiSession?.phase {
             aiTask?.cancel()
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { aiSession = nil }
@@ -279,6 +294,13 @@ extension EditorModel {
         guard let session = aiSession, let request = aiRequester, !isAIDriving else { return }
         aiSession = nil
         askAI(session.instruction, using: request)
+    }
+
+    /// Asks one of the AI's own suggestions for what to do next.
+    public func askAIFollowUp(_ text: String) {
+        guard let request = aiRequester, !isAIDriving else { return }
+        aiSession = nil
+        askAI(text, using: request)
     }
 
     public func dismissAISession() {

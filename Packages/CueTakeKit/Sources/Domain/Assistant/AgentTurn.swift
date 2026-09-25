@@ -14,12 +14,15 @@ public struct AgentRequest: Codable, Sendable {
     public var sheet: AgentImage?
     /// Everything after the opening: the model's calls and the app's answers, in order.
     public var turns: [AgentTurn]
+    /// What the creator asked the AI to remember, across videos (`AIMemory`).
+    public var memory: [String]?
 
-    public init(instruction: String, document: EditDocument, sheet: AgentImage?, turns: [AgentTurn]) {
+    public init(instruction: String, document: EditDocument, sheet: AgentImage?, turns: [AgentTurn], memory: [String]? = nil) {
         self.instruction = instruction
         self.document = document
         self.sheet = sheet
         self.turns = turns
+        self.memory = memory
     }
 }
 

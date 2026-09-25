@@ -17,6 +17,10 @@ public typealias AIAgentRequester = (AgentRequest) async throws -> AgentReply
 /// captions, two texts on top of each other — with pictures of what it changed and the video as it
 /// now is. It fixes what it sees and says when it is finished.
 ///
+/// On the way it says in a sentence what it is doing, asks the user when a wrong guess would waste
+/// the edit, saves preferences the user states for every later video (`AIMemory`), and ends with
+/// what the user might ask next, one tap each.
+///
 /// Every tool runs here, on the editor, with the live run the user already knows: the timeline
 /// travels, the change lands and lights up, and each round's changes can be taken back like any
 /// other AI change. The server only holds the key and the prompt.
@@ -47,7 +51,10 @@ extension EditorModel {
             if round > 0 { setAgentActivity(.planning) }
             let reply: AgentReply
             do {
-                reply = try await agent(AgentRequest(instruction: instruction, document: document, sheet: sheet, turns: turns))
+                reply = try await agent(AgentRequest(
+                    instruction: instruction, document: document, sheet: sheet, turns: turns,
+                    memory: AIMemory.facts.isEmpty ? nil : AIMemory.facts
+                ))
             } catch {
                 guard !Task.isCancelled else { return .done }
                 // Nothing changed yet: the old way takes over. Otherwise what landed stays.
@@ -62,6 +69,9 @@ extension EditorModel {
                 break rounds
             }
 
+            if let note = reply.text?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
+                withAnimation(.snappy(duration: 0.3)) { aiSession?.note = String(note.prefix(160)) }
+            }
             turns.append(.assistant(reply.text, calls: reply.calls))
             var results: [AgentResult] = []
             var images: [AgentImage] = []
@@ -78,12 +88,18 @@ extension EditorModel {
                     results.append(result)
                     images += pictures
                     counts = total
+                case "ask":
+                    results.append(AgentResult(id: call.id, text: await agentAsk(call)))
+                case "remember":
+                    results.append(AgentResult(id: call.id, text: agentRemember(call)))
                 case "finish":
-                    summary = Self.agentSummary(of: call) ?? summary
+                    let ending = Self.agentEnding(of: call)
+                    summary = ending.summary ?? summary
+                    withAnimation(.snappy(duration: 0.3)) { aiSession?.suggestions = ending.next }
                     finished = true
                     results.append(AgentResult(id: call.id, text: "Finished."))
                 default:
-                    results.append(AgentResult(id: call.id, text: "There is no tool called \(call.name). The tools are look, apply and finish."))
+                    results.append(AgentResult(id: call.id, text: "There is no tool called \(call.name). The tools are look, apply, ask, remember and finish."))
                 }
             }
             turns = Self.agentTrimmed(turns, keepingDocument: !results.contains { $0.document != nil }, keepingImages: images.isEmpty)
@@ -94,6 +110,7 @@ extension EditorModel {
 
         withAnimation(.spring(response: 0.5, dampingFraction: 0.72)) {
             aiSession?.activity = nil
+            aiSession?.note = nil
             if counts.applied > 0 {
                 if !summary.isEmpty { aiSession?.summary = summary }
                 aiSession?.phase = .finished(applied: counts.applied, skipped: counts.skipped)
@@ -183,6 +200,57 @@ extension EditorModel {
         }
         text.append("The video now is the document below: its ids and times replace the earlier ones.")
         return (AgentResult(id: call.id, text: text.joined(separator: " "), document: document), pictures, total)
+    }
+
+    /// Shows the AI's question and waits for a tap. Stopping the AI answers it with nothing.
+    private func agentAsk(_ call: AgentCall) async -> String {
+        struct Input: Decodable {
+            var question: String?
+            var options: [String]?
+        }
+        let input = try? JSONDecoder().decode(Input.self, from: Data(call.input.utf8))
+        let text = input?.question?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let options = (input?.options ?? [])
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)) }
+            .filter { !$0.isEmpty }
+            .prefix(4)
+        guard !text.isEmpty else { return "No question given. Decide yourself." }
+        setAgentActivity(nil)
+        withAnimation(.snappy(duration: 0.3)) {
+            aiSession?.question = AIQuestion(text: String(text.prefix(200)), options: Array(options))
+        }
+        let answer: String? = await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                if Task.isCancelled {
+                    continuation.resume(returning: nil)
+                } else {
+                    aiQuestionReply = continuation
+                }
+            }
+        } onCancel: {
+            Task { @MainActor [weak self] in self?.answerAIQuestion(nil) }
+        }
+        withAnimation(.snappy(duration: 0.3)) { aiSession?.question = nil }
+        guard let answer, !answer.isEmpty else {
+            return "The user left it to you: decide yourself and do not ask again."
+        }
+        return "The user answered: \(answer)"
+    }
+
+    /// Answers the AI's question; nil leaves the choice to the AI.
+    public func answerAIQuestion(_ answer: String?) {
+        guard let reply = aiQuestionReply else { return }
+        aiQuestionReply = nil
+        reply.resume(returning: answer)
+    }
+
+    private func agentRemember(_ call: AgentCall) -> String {
+        struct Input: Decodable { var fact: String? }
+        guard let fact = (try? JSONDecoder().decode(Input.self, from: Data(call.input.utf8)))?.fact,
+              let kept = AIMemory.remember(fact)
+        else { return "Nothing to remember was given." }
+        withAnimation(.snappy(duration: 0.3)) { aiSession?.remembered.append(kept) }
+        return "Saved for this creator's later videos."
     }
 
     // MARK: - Pictures
@@ -302,11 +370,18 @@ extension EditorModel {
         }
     }
 
-    static func agentSummary(of call: AgentCall) -> String? {
-        struct Input: Decodable { var summary: String? }
-        let summary = (try? JSONDecoder().decode(Input.self, from: Data(call.input.utf8)))?.summary?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return summary?.isEmpty == false ? summary : nil
+    /// The summary `finish` gave, and up to three things to ask next.
+    static func agentEnding(of call: AgentCall) -> (summary: String?, next: [String]) {
+        struct Input: Decodable {
+            var summary: String?
+            var next: [String]?
+        }
+        let input = try? JSONDecoder().decode(Input.self, from: Data(call.input.utf8))
+        let summary = input?.summary?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let next = (input?.next ?? [])
+            .map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(80)) }
+            .filter { !$0.isEmpty }
+        return (summary?.isEmpty == false ? summary : nil, Array(next.prefix(3)))
     }
 
     static func agentNumber(_ value: Double) -> String {
