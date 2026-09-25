@@ -33,7 +33,7 @@ struct WorkflowStudioToolsTests {
         """
         let workflow = try WorkflowDefinition.decode(json: json)
         let kinds = workflow.steps.map(\.kind)
-        #expect(kinds[0] == .autoZoom(ZoomStepOptions(style: .punch, amount: 0.14, spacing: 5)))
+        #expect(kinds[0] == .autoZoom(ZoomStepOptions(style: .punch, amount: 0.12, spacing: 4)))
         #expect(kinds[1] == .filter(FilterStepOptions()))
         #expect(kinds[2] == .brandTemplate(TemplateStepOptions(style: "coupon", lines: ["code": "CUE20"], moment: .cta)))
         #expect(kinds[3] == .bestTakes)

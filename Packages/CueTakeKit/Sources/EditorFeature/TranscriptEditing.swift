@@ -179,7 +179,7 @@ extension EditorModel {
     ///
     /// Reported before they are removed, so the button can say how many there are. "Trim 6 pauses"
     /// is a decision; "Trim pauses" is a leap.
-    public func silenceGaps(at index: Int, threshold: Double = 0.6) -> [ClosedRange<Double>] {
+    public func silenceGaps(at index: Int, threshold: Double = 0.5) -> [ClosedRange<Double>] {
         let words = spokenWords(at: index)
         guard words.count > 1 else { return [] }
 
@@ -198,7 +198,7 @@ extension EditorModel {
     /// The padding is not politeness, it is the difference between an edit and a machine gun:
     /// speech cut hard against its own first consonant sounds clipped, and a tenth of a second
     /// either side is enough for the ear to hear a pause rather than a splice.
-    public func tightenSilences(at index: Int, threshold: Double = 0.6, pad: Double = 0.12) {
+    public func tightenSilences(at index: Int, threshold: Double = 0.5, pad: Double = 0.1) {
         let words = spokenWords(at: index)
         guard words.count > 1,
               let take = project.segments[index].selectedTake

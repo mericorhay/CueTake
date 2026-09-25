@@ -154,7 +154,7 @@ public struct TrimSilencesOptions: Hashable, Sendable, Codable {
     /// Air kept either side of every phrase, in seconds.
     public var padding: Double
 
-    public init(minPause: Double = 0.6, padding: Double = 0.12) {
+    public init(minPause: Double = 0.5, padding: Double = 0.1) {
         self.minPause = minPause
         self.padding = padding
     }
@@ -163,8 +163,8 @@ public struct TrimSilencesOptions: Hashable, Sendable, Codable {
 
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        minPause = try c.decodeIfPresent(Double.self, forKey: .minPause) ?? 0.6
-        padding = try c.decodeIfPresent(Double.self, forKey: .padding) ?? 0.12
+        minPause = try c.decodeIfPresent(Double.self, forKey: .minPause) ?? 0.5
+        padding = try c.decodeIfPresent(Double.self, forKey: .padding) ?? 0.1
     }
 }
 
@@ -172,7 +172,7 @@ public struct CutWordsOptions: Hashable, Sendable, Codable {
     /// Words removed wherever they are said on their own. Compared case- and accent-insensitively.
     public var words: [String]
 
-    public init(words: [String] = ["ee", "eee", "ıı", "ııı", "hmm", "um", "uh", "yani"]) {
+    public init(words: [String] = ["ee", "eee", "ıı", "ııı", "hmm", "hm", "mm", "mmm", "um", "umm", "uh", "uhh", "erm", "ehm", "eh", "ehh", "yani"]) {
         self.words = words
     }
 
@@ -230,7 +230,7 @@ public struct MusicBedOptions: Hashable, Sendable, Codable {
     public var fadeIn: Double
     public var fadeOut: Double
 
-    public init(levelDB: Double = -12, ducking: Bool = true, fadeIn: Double = 0.5, fadeOut: Double = 1.2) {
+    public init(levelDB: Double = -18, ducking: Bool = true, fadeIn: Double = 0.3, fadeOut: Double = 1.5) {
         self.levelDB = levelDB
         self.ducking = ducking
         self.fadeIn = fadeIn
@@ -241,10 +241,10 @@ public struct MusicBedOptions: Hashable, Sendable, Codable {
 
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        levelDB = try c.decodeIfPresent(Double.self, forKey: .levelDB) ?? -12
+        levelDB = try c.decodeIfPresent(Double.self, forKey: .levelDB) ?? -18
         ducking = try c.decodeIfPresent(Bool.self, forKey: .ducking) ?? true
-        fadeIn = try c.decodeIfPresent(Double.self, forKey: .fadeIn) ?? 0.5
-        fadeOut = try c.decodeIfPresent(Double.self, forKey: .fadeOut) ?? 1.2
+        fadeIn = try c.decodeIfPresent(Double.self, forKey: .fadeIn) ?? 0.3
+        fadeOut = try c.decodeIfPresent(Double.self, forKey: .fadeOut) ?? 1.5
     }
 }
 
@@ -341,7 +341,7 @@ extension WorkflowDefinition {
     Step types, in the order they usually run:
     - assembleSections: put the clips into the sections.
     - analyzeSpeech: transcribe what is said. Needed before trimSilences, cutWords and captions.
-    - trimSilences: { "minPause": 0.6, "padding": 0.12 } cut pauses longer than minPause seconds.
+    - trimSilences: { "minPause": 0.5, "padding": 0.1 } cut pauses longer than minPause seconds.
     - cutWords: { "words": ["um", "uh"] } remove filler words.
     - setSpeed: { "target": "all|hook|intro|point|example|cta", "speed": 1.1 } between 0.25 and 4.
     - cleanAudio: { "denoise": true, "enhanceVoice": true, "removeRumble": true }

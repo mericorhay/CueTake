@@ -139,14 +139,14 @@ struct CleanupTests {
         let pauses = offered.items.filter { $0.kind == .pause }
         // Between one and two, and the tail after three.
         #expect(pauses.count == 2)
-        #expect(abs(pauses[0].start - 0.62) < 0.001)
-        #expect(abs(pauses[0].end - 2.38) < 0.001)
+        #expect(abs(pauses[0].start - 0.60) < 0.001)
+        #expect(abs(pauses[0].end - 2.40) < 0.001)
         #expect(abs(pauses[1].end - 5) < 0.001)
 
         let kept = offered.kept(offered.defaultSelection)
         #expect(kept.count == 2)
         #expect(abs(kept[0].lowerBound) < 0.001)
-        #expect(abs(offered.saved(offered.defaultSelection) - (1.76 + 1.48)) < 0.01)
+        #expect(abs(offered.saved(offered.defaultSelection) - (1.80 + 1.50)) < 0.01)
         #expect(offered.kept([]) == [0...5])
 
         // A longer threshold offers fewer.

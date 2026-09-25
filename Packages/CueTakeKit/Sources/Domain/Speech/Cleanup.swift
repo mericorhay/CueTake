@@ -95,7 +95,7 @@ public struct CleanupOptions: Hashable, Sendable {
     /// Air left each side of a cut, so it sounds like a breath rather than a splice.
     public var pad: Double
 
-    public init(pause: Double = 0.6, pad: Double = 0.12) {
+    public init(pause: Double = 0.5, pad: Double = 0.1) {
         self.pause = pause
         self.pad = pad
     }

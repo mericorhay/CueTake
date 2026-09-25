@@ -104,7 +104,7 @@ public struct TitleStepOptions: Hashable, Sendable, Codable {
     public var behind: Bool
 
     public init(
-        text: String = "", moment: WorkflowMoment = .start, seconds: Double = 0, duration: Double = 2.5,
+        text: String = "", moment: WorkflowMoment = .start, seconds: Double = 0, duration: Double = 3,
         y: Double = 0.22, scale: Double = 1.7, animation: String = "pop", behind: Bool = false
     ) {
         self.text = text
@@ -124,7 +124,7 @@ public struct TitleStepOptions: Hashable, Sendable, Codable {
         text = c.value(.text, or: "")
         moment = c.value(.moment, or: .start)
         seconds = c.value(.seconds, or: 0)
-        duration = c.value(.duration, or: 2.5)
+        duration = c.value(.duration, or: 3)
         y = c.value(.y, or: 0.22)
         scale = c.value(.scale, or: 1.7)
         animation = c.value(.animation, or: "pop")
@@ -209,7 +209,7 @@ public struct FilterStepOptions: Hashable, Sendable, Codable {
     /// `all`, or a section role.
     public var target: String
 
-    public init(look: String = "cinematic", intensity: Double = 0.7, target: String = "all") {
+    public init(look: String = "cinematic", intensity: Double = 0.55, target: String = "all") {
         self.look = look
         self.intensity = intensity
         self.target = target
@@ -220,7 +220,7 @@ public struct FilterStepOptions: Hashable, Sendable, Codable {
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         look = c.value(.look, or: "cinematic")
-        intensity = c.value(.intensity, or: 0.7)
+        intensity = c.value(.intensity, or: 0.55)
         target = c.value(.target, or: "all")
     }
 }
@@ -237,7 +237,7 @@ public struct TransitionStepOptions: Hashable, Sendable, Codable {
     public var seconds: Double
     public var placement: Placement
 
-    public init(kind: String = "crossfade", seconds: Double = 0.5, placement: Placement = .sections) {
+    public init(kind: String = "crossfade", seconds: Double = 0.3, placement: Placement = .sections) {
         self.kind = kind
         self.seconds = seconds
         self.placement = placement
@@ -248,7 +248,7 @@ public struct TransitionStepOptions: Hashable, Sendable, Codable {
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         kind = c.value(.kind, or: "crossfade")
-        seconds = c.value(.seconds, or: 0.5)
+        seconds = c.value(.seconds, or: 0.3)
         placement = c.value(.placement, or: .sections)
     }
 }
@@ -269,7 +269,7 @@ public struct ZoomStepOptions: Hashable, Sendable, Codable {
     /// The least time between two moves, in seconds.
     public var spacing: Double
 
-    public init(style: Style = .mixed, amount: Double = 0.14, spacing: Double = 5) {
+    public init(style: Style = .mixed, amount: Double = 0.12, spacing: Double = 4) {
         self.style = style
         self.amount = amount
         self.spacing = spacing
@@ -280,8 +280,8 @@ public struct ZoomStepOptions: Hashable, Sendable, Codable {
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         style = c.value(.style, or: .mixed)
-        amount = c.value(.amount, or: 0.14)
-        spacing = c.value(.spacing, or: 5)
+        amount = c.value(.amount, or: 0.12)
+        spacing = c.value(.spacing, or: 4)
     }
 }
 
@@ -333,7 +333,7 @@ public struct VoiceEffectOptions: Hashable, Sendable, Codable {
     public var amount: Double
     public var target: String
 
-    public init(preset: String = "room", amount: Double = 0.4, target: String = "all") {
+    public init(preset: String = "room", amount: Double = 0.3, target: String = "all") {
         self.preset = preset
         self.amount = amount
         self.target = target
@@ -344,7 +344,7 @@ public struct VoiceEffectOptions: Hashable, Sendable, Codable {
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         preset = c.value(.preset, or: "room")
-        amount = c.value(.amount, or: 0.4)
+        amount = c.value(.amount, or: 0.3)
         target = c.value(.target, or: "all")
     }
 }
