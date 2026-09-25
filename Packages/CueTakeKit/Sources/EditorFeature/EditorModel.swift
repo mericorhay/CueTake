@@ -321,6 +321,14 @@ public final class EditorModel {
         playbackProblem = nil
 
         let wasPlaying = isPlaying
+        // The preview at 30 frames a second at most, whatever the export will be. Every frame of a
+        // filtered or keyed video is drawn by our own compositor, one at a time; at 60 it fell
+        // behind, the player dropped frames, and the picture stood still while the time, the
+        // sound and the captions ran on.
+        let thirty = CMTime(value: 1, timescale: 30)
+        if CMTimeCompare(assembled.videoComposition.frameDuration, thirty) < 0 {
+            assembled.videoComposition.frameDuration = thirty
+        }
         let item = AVPlayerItem(asset: assembled.composition)
         // Levels, fades and ducking in the preview too. An editor whose preview plays the music at
         // full volume and whose export ducks it is not previewing anything.
