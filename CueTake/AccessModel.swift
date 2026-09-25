@@ -160,7 +160,9 @@ extension AppModel {
             rows: rows,
             plusTools: plan == .free ? plusOnly.map(\.title) : [],
             resetsAt: access.resetsAt,
-            price: plusStore.price
+            price: plusStore.price,
+            trial: plusStore.trial,
+            renewal: plusRenewalLine
         )
     }
 }

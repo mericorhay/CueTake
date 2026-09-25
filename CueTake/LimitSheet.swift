@@ -20,6 +20,8 @@ struct LimitSheet: View {
     let resetsAt: Date
     /// "4,99 $", once the App Store has answered.
     var price: String? = nil
+    /// "7 days free", when the App Store has a trial this account can take.
+    var trial: String? = nil
     let onUpgrade: () -> Void
     let onClose: () -> Void
 
@@ -311,7 +313,9 @@ struct LimitSheet: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 Group {
-                    if let price {
+                    if let trial, let price {
+                        Text("limit.trialThen \(trial) \(price)")
+                    } else if let price {
                         Text("limit.pricePerMonth \(price)")
                     } else {
                         Text("limit.cancelAnytime")

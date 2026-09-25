@@ -85,6 +85,7 @@ struct RootView: View {
                     plan: model.access.plan,
                     resetsAt: model.access.resetsAt,
                     price: model.plusStore.price,
+                    trial: model.plusStore.trial,
                     onUpgrade: { model.upgradeToPlus() },
                     onClose: { model.access.request = nil }
                 )
@@ -423,7 +424,8 @@ struct RootView: View {
                 captureResolutions: CameraSession.supportedResolutions(for: model.settingsModel.settings.defaultCamera),
                 cloudBackup: model.cloudBackupRow,
                 shareAnalytics: Analytics.isConfigured
-                    ? Binding(get: { Analytics.isOn }, set: { Analytics.isOn = $0 }) : nil
+                    ? Binding(get: { Analytics.isOn }, set: { Analytics.isOn = $0 }) : nil,
+                onRedeemCode: { model.redeemPlusCode() }
             )
             .sheet(isPresented: $showsSuflorReports) {
                 SuflorReportsList(

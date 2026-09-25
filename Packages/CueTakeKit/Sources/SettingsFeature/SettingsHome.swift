@@ -27,6 +27,7 @@ public struct SettingsScreen: View {
     /// The iCloud backup section; nil hides it.
     private let cloudBackup: CloudBackupRow?
     private let onManageSubscription: (() -> Void)?
+    private let onRedeemCode: (() -> Void)?
     /// How many suflör reports are kept, and the way to them; nil hides the row.
     private let suflorReports: String?
     private let onSuflorReports: (() -> Void)?
@@ -50,7 +51,9 @@ public struct SettingsScreen: View {
                 onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
                 allowsHighResolution: (() -> Bool)? = nil, captureResolutions: [VideoFormat.Resolution]? = nil,
-                cloudBackup: CloudBackupRow? = nil, shareAnalytics: Binding<Bool>? = nil) {
+                cloudBackup: CloudBackupRow? = nil, shareAnalytics: Binding<Bool>? = nil,
+                onRedeemCode: (() -> Void)? = nil) {
+        self.onRedeemCode = onRedeemCode
         self.shareAnalytics = shareAnalytics
         self.cloudBackup = cloudBackup
         self.captureResolutions = captureResolutions
@@ -114,7 +117,7 @@ public struct SettingsScreen: View {
                     .settingsEntrance(appeared, delay: 0.04, reduced: reduceMotion)
 
                     if let plus {
-                        PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription, onRestore: onRestore)
+                        PlusCard(usage: plus, onUpgrade: onUpgrade, onManage: onManageSubscription, onRestore: onRestore, onRedeem: onRedeemCode)
                             .settingsEntrance(appeared, delay: 0.06, reduced: reduceMotion)
                     }
 

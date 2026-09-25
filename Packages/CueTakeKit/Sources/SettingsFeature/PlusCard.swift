@@ -29,8 +29,15 @@ public struct PlusUsage: Equatable, Sendable {
     public var resetsAt: Date
     /// The monthly price in the viewer's currency, once the App Store has answered.
     public var price: String?
+    /// "7 days free", when there is a trial this account can still take.
+    public var trial: String?
+    /// "Renews 25 October" or "Ends 25 October", on CueTake+.
+    public var renewal: String?
 
-    public init(isPlus: Bool, rows: [Row], plusTools: [String], resetsAt: Date, price: String? = nil) {
+    public init(isPlus: Bool, rows: [Row], plusTools: [String], resetsAt: Date, price: String? = nil,
+                trial: String? = nil, renewal: String? = nil) {
+        self.trial = trial
+        self.renewal = renewal
         self.isPlus = isPlus
         self.rows = rows
         self.plusTools = plusTools
@@ -46,6 +53,8 @@ struct PlusCard: View {
     let onUpgrade: (() -> Void)?
     let onManage: (() -> Void)?
     var onRestore: (() -> Void)? = nil
+    /// Apple's offer-code sheet; nil hides the link.
+    var onRedeem: (() -> Void)? = nil
 
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -92,11 +101,20 @@ struct PlusCard: View {
                 .font(DS.mono(11))
                 .foregroundStyle(ink.opacity(0.5))
 
+            if usage.isPlus, let renewal = usage.renewal {
+                Text(verbatim: renewal)
+                    .font(DS.mono(11))
+                    .foregroundStyle(lime.opacity(0.8))
+            }
+
             action
 
             HStack(spacing: 16) {
                 if let onRestore, !usage.isPlus {
                     Button(action: onRestore) { Text("plus.restore", bundle: .module) }
+                }
+                if let onRedeem, !usage.isPlus {
+                    Button(action: onRedeem) { Text("plus.redeem", bundle: .module) }
                 }
                 Link(destination: URL(string: "https://mericorhay.github.io/CueTake/#terms")!) {
                     Text("plus.terms", bundle: .module)
@@ -226,9 +244,13 @@ struct PlusCard: View {
         } else if let onUpgrade {
             Button(action: onUpgrade) {
                 HStack(spacing: 10) {
-                    Text("plus.upgrade", bundle: .module)
-                    if let price = usage.price {
-                        Text(verbatim: "· " + AppLocalization.string("plus.perMonth \(price)", bundle: .module))
+                    if let trial = usage.trial {
+                        Text(verbatim: trial)
+                    } else {
+                        Text("plus.upgrade", bundle: .module)
+                        if let price = usage.price {
+                            Text(verbatim: "· " + AppLocalization.string("plus.perMonth \(price)", bundle: .module))
+                        }
                     }
                     Image(systemName: "arrow.right").font(.system(size: 15, weight: .semibold))
                 }
@@ -239,6 +261,12 @@ struct PlusCard: View {
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(coral))
             }
             .buttonStyle(.dsPress(radius: 16))
+            if usage.trial != nil, let price = usage.price {
+                Text(verbatim: AppLocalization.string("plus.thenPrice \(price)", bundle: .module))
+                    .font(DS.mono(11))
+                    .foregroundStyle(ink.opacity(0.6))
+                    .frame(maxWidth: .infinity)
+            }
             Text("plus.autoRenew", bundle: .module)
                 .font(DS.sans(.regular, 10))
                 .foregroundStyle(ink.opacity(0.45))

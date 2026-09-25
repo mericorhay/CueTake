@@ -1,3 +1,4 @@
+import UIKit
 import Analytics
 import DesignSystem
 import Domain
@@ -26,6 +27,18 @@ final class PlusStore {
     /// "4,99 $" in the viewer's currency and format; nil until the product has loaded.
     var price: String? { product?.displayPrice }
 
+    /// "7 days free", when App Store Connect has a free trial and this Apple Account can still
+    /// take it. Nil otherwise: the paywall then shows the price alone.
+    private(set) var trial: String?
+
+    /// When the current period ends, and whether it renews then or stops. Nil on the free plan.
+    private(set) var renewal: (date: Date, renews: Bool)?
+
+    /// The last answer, for the next launch: a subscriber is Plus from the first frame, not after
+    /// the store has been asked, and an offline start does not look like a lapsed subscription.
+    private static let activeKey = "cuetake.plus.active"
+    static var wasActive: Bool { UserDefaults.standard.bool(forKey: activeKey) }
+
     func start() {
         guard updates == nil else { return }
         updates = Task { [weak self] in
@@ -43,6 +56,27 @@ final class PlusStore {
     func loadProduct() async {
         guard product == nil else { return }
         product = try? await Product.products(for: [Self.monthlyID]).first
+        await readTrial()
+    }
+
+    /// The introductory free trial, worded for the paywall, when there is one to take.
+    private func readTrial() async {
+        guard let subscription = product?.subscription,
+              let offer = subscription.introductoryOffer,
+              offer.paymentMode == .freeTrial,
+              await subscription.isEligibleForIntroOffer
+        else {
+            trial = nil
+            return
+        }
+        let count = offer.period.value
+        trial = switch offer.period.unit {
+        case .day: AppLocalization.string("plus.trial.days \(count)")
+        case .week: AppLocalization.string("plus.trial.weeks \(count)")
+        case .month: AppLocalization.string("plus.trial.months \(count)")
+        case .year: AppLocalization.string("plus.trial.years \(count)")
+        @unknown default: nil
+        }
     }
 
     /// Whether a verified, unrevoked CueTake+ transaction is current.
@@ -57,7 +91,40 @@ final class PlusStore {
             active = true
         }
         isActive = active
+        UserDefaults.standard.set(active, forKey: Self.activeKey)
+        await readRenewal(active: active)
+        // Taking the trial uses it up: the paywall stops offering it.
+        if active { trial = nil }
         onChange?(active)
+    }
+
+    /// The period's end and whether it renews, from the subscription's status.
+    private func readRenewal(active: Bool) async {
+        guard active else {
+            renewal = nil
+            return
+        }
+        if product == nil { await loadProduct() }
+        guard let statuses = try? await product?.subscription?.status else { return }
+        for status in statuses {
+            guard case .verified(let info) = status.renewalInfo,
+                  case .verified(let transaction) = status.transaction,
+                  transaction.productID == Self.monthlyID,
+                  let end = transaction.expirationDate
+            else { continue }
+            renewal = (end, info.willAutoRenew)
+            return
+        }
+    }
+
+    /// Apple's own sheet for an offer code: the codes handed out to creators and in campaigns.
+    func redeemOfferCode() async {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive })
+        else { return }
+        try? await AppStore.presentOfferCodeRedeemSheet(in: scene)
+        await refresh()
     }
 
     enum Outcome {
@@ -102,6 +169,8 @@ final class PlusStore {
 extension AppModel {
     /// Starts following the subscription, and lets the store decide the plan from now on.
     func startPlusStore() {
+        // What the store said last time, until it answers again.
+        if PlusStore.wasActive { access.setPlan(.pro) }
         plusStore.onChange = { [weak self] active in
             self?.access.setPlan(active ? .pro : .free)
             self?.rememberForAnalytics()
@@ -122,6 +191,23 @@ extension AppModel {
             case .cancelled: break
             }
         }
+    }
+
+    func redeemPlusCode() {
+        Task {
+            await plusStore.redeemOfferCode()
+            Analytics.track("plus_offer_code", ["active": .flag(plusStore.isActive)])
+            if plusStore.isActive { show(notice: AppLocalization.string("plus.welcome")) }
+        }
+    }
+
+    /// "Renews 25 October" or "Ends 25 October", for the CueTake+ card.
+    var plusRenewalLine: String? {
+        guard let renewal = plusStore.renewal else { return nil }
+        let date = renewal.date.formatted(.dateTime.day().month(.wide).locale(AppLocalization.locale))
+        return renewal.renews
+            ? AppLocalization.string("plus.renews \(date)")
+            : AppLocalization.string("plus.ends \(date)")
     }
 
     func restorePlus() {
