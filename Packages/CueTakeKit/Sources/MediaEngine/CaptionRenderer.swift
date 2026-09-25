@@ -81,10 +81,14 @@ enum CaptionRenderer {
         let widths = display.words.map {
             Double(width(of: attributed($0, style: style, font: font, fontSize: fontSize, color: style.textColor)))
         }
-        let space = Double(width(of: attributed(" ", style: style, font: font, fontSize: fontSize, color: style.textColor)))
+        // The same gap the preview leaves, never less than the font's own space.
+        let space = max(
+            Double(width(of: attributed(" ", style: style, font: font, fontSize: fontSize, color: style.textColor))),
+            style.wordSpacing(fontSize: Double(fontSize))
+        )
         let maxWidth = Double(renderSize.width * 0.86 - inset.width * 2)
         let lines = CaptionLineBreaker.lines(widths: widths, space: space, maxWidth: maxWidth)
-        let lineHeight = (CTFontGetAscent(font) + CTFontGetDescent(font)) * 1.14
+        let lineHeight = CTFontGetAscent(font) + CTFontGetDescent(font) + CGFloat(style.lineSpacing(fontSize: Double(fontSize)))
         let lineWidths = lines.map { line in
             line.map { widths[$0] }.reduce(0, +) + space * Double(max(0, line.count - 1))
         }

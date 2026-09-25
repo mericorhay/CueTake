@@ -36,9 +36,22 @@ extension CaptionStyle {
         emphasis ?? (highlightColor == nil ? CaptionEmphasis.none : .color)
     }
 
-    /// The outline, as a fraction of the font size. Plated styles need none.
+    /// The outline, as a fraction of the font size. Plated styles need none. Thin enough that the
+    /// letters keep their own shapes: at 0.14 they ran into each other and read as a smudge.
     public var resolvedStrokeWeight: Double {
-        strokeWeight ?? (backgroundColor == nil ? 0.14 : 0)
+        strokeWeight ?? (backgroundColor == nil ? 0.1 : 0)
+    }
+
+    /// The gap between two words, in points, for text `fontSize` tall. Wider than a typed space:
+    /// captions are read at a glance over a moving picture, and a word that grows while it is said
+    /// needs room on both sides not to touch its neighbours. The preview and the export both use it.
+    public func wordSpacing(fontSize: Double) -> Double {
+        fontSize * (resolvedEmphasis == .scale ? 0.42 : 0.34)
+    }
+
+    /// The gap between two lines, in points.
+    public func lineSpacing(fontSize: Double) -> Double {
+        fontSize * 0.16
     }
 
     public var resolvedStrokeColor: RGBAColor {
@@ -150,7 +163,7 @@ public enum CaptionAnimator {
                 word.isActive = index == active
                 switch style.resolvedEmphasis {
                 case .scale where index == active:
-                    word.scale *= 1 + 0.18 * min(1, since / 0.08)
+                    word.scale *= 1 + 0.1 * min(1, since / 0.08)
                 case .box where index == active:
                     word.box = min(1, since / 0.05)
                 default:

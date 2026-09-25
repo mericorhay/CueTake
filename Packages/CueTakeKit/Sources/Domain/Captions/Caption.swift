@@ -408,15 +408,19 @@ extension CaptionStyle {
                 entrance: .pop, emphasis: .scale, keywordColor: coral
             )
         default:
-            // Loud: extra-bold, outlined, three words at a time — the look short video is known for.
+            // The everyday caption: bold, outlined, three words at a time, fading in. It used to be
+            // extra-bold, bigger and springing in from small, which was the loudest look in the app
+            // and the one every new video started with; the loud ones are a choice now.
             CaptionStyle(
                 presetID: "pop",
-                fontName: "Archivo-ExtraBold",
-                relativeFontSize: 0.042,
+                fontName: "Archivo-Bold",
+                relativeFontSize: 0.036,
                 textCase: .natural,
                 textColor: .white,
                 maxWordsPerCue: 3,
-                position: position
+                position: position,
+                entrance: .fade,
+                shadow: true
             )
         }
     }

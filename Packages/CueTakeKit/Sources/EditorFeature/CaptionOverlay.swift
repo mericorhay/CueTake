@@ -38,7 +38,7 @@ struct CaptionOverlay: View {
             let frame = CaptionAnimator.frame(for: cue, wordCount: display.words.count, style: style, at: time)
             let plated = style.backgroundColor != nil
 
-            CaptionFlow(spacing: size * 0.26, lineSpacing: size * 0.1) {
+            CaptionFlow(spacing: CGFloat(style.wordSpacing(fontSize: Double(size))), lineSpacing: CGFloat(style.lineSpacing(fontSize: Double(size)))) {
                 ForEach(Array(display.words.enumerated()), id: \.offset) { index, word in
                     wordView(word, index: index, display: display, frame: frame, size: size)
                 }

@@ -37,9 +37,9 @@ struct CaptionMotionTests {
         #expect(CaptionAnimator.frame(for: c, wordCount: 2, style: style, at: 2).opacity == 1)
     }
 
-    @Test func popSpringsInAndSettles() {
+    @Test func boldSpringsInAndSettles() {
         let c = cue([("hello", 1)])
-        let style = CaptionStyle.preset("pop")
+        let style = CaptionStyle.preset("bold")
         #expect(CaptionAnimator.frame(for: c, wordCount: 1, style: style, at: 1).scale < 0.8)
         #expect(abs(CaptionAnimator.frame(for: c, wordCount: 1, style: style, at: 2).scale - 1) < 0.001)
     }
