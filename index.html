@@ -499,7 +499,7 @@ html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{di
     const set = lines[root.lang] || lines.tr;
     const all = set.concat(set);
     scroll.innerHTML = all.map((l) => `<p class="${l.includes('hl') ? 'key' : ''}">${l}</p>`).join('');
-    scroll.style.animationDuration = (set.length * 2.2) + 's';
+    scroll.style.animationDuration = (set.length * 1.3) + 's';
   }
   fillScript();
   new MutationObserver(fillScript).observe(root, { attributes: true, attributeFilter: ['lang'] });
