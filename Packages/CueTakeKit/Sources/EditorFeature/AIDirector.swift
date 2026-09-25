@@ -176,11 +176,11 @@ extension EditorModel {
                 var document = await self.seenDocument(of: project)
                 document.videoModel = self.aiVideoModel
                 // The captions' words are the creator's: changed only when the request is about them.
-                var plan = try await request(document, text).keepingCaptions(unlessAskedIn: text)
+                var plan = self.withoutRepeats(try await request(document, text).keepingCaptions(unlessAskedIn: text))
                 guard !Task.isCancelled else { return }
                 // A plan that would change nothing gets one more try, told why.
                 if let problem = self.problem(with: plan) {
-                    let second = try await request(document, text + "\n\n" + problem).keepingCaptions(unlessAskedIn: text)
+                    let second = self.withoutRepeats(try await request(document, text + "\n\n" + problem).keepingCaptions(unlessAskedIn: text))
                     guard !Task.isCancelled else { return }
                     if self.problem(with: second) == nil { plan = second }
                 }
@@ -226,12 +226,14 @@ extension EditorModel {
             withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
             return
         }
-        let resolved = second.resolvingReferences(in: project)
+        // What the first pass already put there is not put there again.
+        let fresh = withoutRepeats(second)
+        let resolved = fresh.resolvingReferences(in: project)
         guard !aiSteps(for: resolved).steps.isEmpty else {
             withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
             return
         }
-        await drive(second, carrying: (applied, skipped))
+        await drive(fresh, carrying: (applied, skipped))
     }
 
     /// Why a plan would change nothing, written for the model; nil when it would change something.
