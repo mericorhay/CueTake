@@ -38,7 +38,7 @@ struct MediaJanitorTests {
 
         for name in [
             "used.mov", "orphan.mov", "cover.jpg", "overlay-1.png", "overlay-old.png",
-            "used-speech.m4a", "\(used.id.uuidString)-voice.m4a", "\(used.id.uuidString)-voice-nv.m4a",
+            "used-speech.m4a", "\(used.id.uuidString)-voice.m4a", "\(used.id.uuidString)-voice-nv2.m4a",
         ] {
             touch(name, in: media)
         }
@@ -107,11 +107,11 @@ struct MediaJanitorTests {
         project.voiceEffects = AudioEffects(noiseReduction: true, voiceEnhance: true)
 
         let id = recording.id.uuidString
-        for name in ["a.mov", "a-speech.m4a", "\(id)-voice.m4a", "\(id)-voice-nv.m4a", "\(id)-voice-r.m4a"] {
+        for name in ["a.mov", "a-speech.m4a", "\(id)-voice.m4a", "\(id)-voice-nv2.m4a", "\(id)-voice-r2.m4a"] {
             touch(name, in: media)
         }
         _ = MediaJanitor.clean(project: project, mediaDirectory: media, keepOriginals: false)
         // Not transcribed yet, so its extracted sound stays; the old switch combination goes.
-        #expect(names(in: media) == ["a.mov", "a-speech.m4a", "\(id)-voice.m4a", "\(id)-voice-nv.m4a"])
+        #expect(names(in: media) == ["a.mov", "a-speech.m4a", "\(id)-voice.m4a", "\(id)-voice-nv2.m4a"])
     }
 }

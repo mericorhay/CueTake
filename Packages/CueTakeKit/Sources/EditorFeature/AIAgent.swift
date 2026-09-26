@@ -179,7 +179,7 @@ extension EditorModel {
         }
         let plan = withoutRepeats(guarded)
         if plan.operations.count < guarded.operations.count {
-            notes.append("\(guarded.operations.count - plan.operations.count) operation(s) left out: the same title or look is already there.")
+            notes.append("\(guarded.operations.count - plan.operations.count) operation(s) left out: the same title or look is already there, or the text repeats what the captions already show.")
         }
         let (steps, skipped) = aiSteps(for: plan.resolvingReferences(in: project))
         if !skipped.isEmpty {

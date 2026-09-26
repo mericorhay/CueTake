@@ -51,7 +51,9 @@ public struct AudioEffectRenderer: Sendable {
         flags += effects.noiseReduction ? "n" : ""
         flags += effects.voiceEnhance ? "v" : ""
         flags += effects.deRumble ? "r" : ""
-        return flags.isEmpty ? "dry" : flags
+        // "2": the renders since the limiter and lossless output. Older ones clipped, and must
+        // not be picked up from the cache again.
+        return flags.isEmpty ? "dry" : flags + "2"
     }
 
     enum RenderError: Error {
@@ -74,6 +76,7 @@ public struct AudioEffectRenderer: Sendable {
         let player = AVAudioPlayerNode()
         let eq = AVAudioUnitEQ(numberOfBands: 4)
         configure(eq, with: effects)
+        let limiter = Self.limiter()
 
         // Manual rendering first, then the graph. Connecting to the main mixer while the engine is
         // still bound to the hardware output makes the connection in the hardware's format, and a
@@ -83,22 +86,25 @@ public struct AudioEffectRenderer: Sendable {
 
         engine.attach(player)
         engine.attach(eq)
+        engine.attach(limiter)
         engine.connect(player, to: eq, format: format)
-        engine.connect(eq, to: engine.mainMixerNode, format: format)
+        engine.connect(eq, to: limiter, format: format)
+        engine.connect(limiter, to: engine.mainMixerNode, format: format)
 
         player.scheduleFile(file, at: nil)
         try engine.start()
         player.play()
 
-        // AAC in an m4a rather than the source's own format: the source may be an mp3, and nothing
-        // on the system writes those. Compressed because an eight minute uncompressed cache entry
-        // is a hundred megabytes of someone's phone for no gain anyone can hear.
+        // Apple Lossless in an m4a. The source is usually AAC already; AAC again on top of it was
+        // a second generation of compression, heard as a smeared, broken-up voice. Lossless is
+        // about half of uncompressed: a two minute voice is around ten megabytes.
         let output = try AVAudioFile(
             forWriting: partial,
             settings: [
-                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVFormatIDKey: kAudioFormatAppleLossless,
                 AVSampleRateKey: format.sampleRate,
                 AVNumberOfChannelsKey: format.channelCount,
+                AVEncoderBitDepthHintKey: 24,
             ]
         )
 
@@ -164,16 +170,28 @@ public struct AudioEffectRenderer: Sendable {
         bands[2].bypass = !effects.noiseReduction
 
         // Consonants. This is the band that decides whether a voice is understood on a phone
-        // speaker in a noisy room, which is where this video is going to be watched.
+        // speaker in a noisy room, which is where this video is going to be watched. A gentle lift:
+        // at +4 dB it turned harsh on voices that were already bright.
         bands[3].filterType = .parametric
         bands[3].frequency = 3200
         bands[3].bandwidth = 1.1
-        bands[3].gain = 4
+        bands[3].gain = 2.5
         bands[3].bypass = !effects.voiceEnhance
 
-        // Filtering takes energy out; without this, "clean it up" also means "make it quieter",
-        // and people read quieter as worse.
-        eq.globalGain = effects.noiseReduction ? 2 : 0
+        // No gain on top. Phone recordings sit close to full scale; the +2 dB that used to be here,
+        // with the consonant lift, pushed peaks over it and the voice cracked and clipped.
+        eq.globalGain = 0
+    }
+
+    /// Apple's peak limiter after the EQ: whatever the lift adds, nothing goes over full scale.
+    static func limiter() -> AVAudioUnitEffect {
+        AVAudioUnitEffect(audioComponentDescription: AudioComponentDescription(
+            componentType: kAudioUnitType_Effect,
+            componentSubType: kAudioUnitSubType_PeakLimiter,
+            componentManufacturer: kAudioUnitManufacturer_Apple,
+            componentFlags: 0,
+            componentFlagsMask: 0
+        ))
     }
 }
 
