@@ -1,9 +1,11 @@
 import UIKit
+import AIServices
 import Analytics
 import DesignSystem
 import Domain
 import Foundation
 import Observation
+import SettingsFeature
 import StoreKit
 import SuflorFeature
 
@@ -208,6 +210,22 @@ extension AppModel {
         return renewal.renews
             ? AppLocalization.string("plus.renews \(date)")
             : AppLocalization.string("plus.ends \(date)")
+    }
+
+    /// Signs in the test account: our server checks the name and password, and on a match every
+    /// CueTake+ tool opens on this phone without a purchase.
+    func signInForReview(username: String, password: String) async -> ReviewAccess.Result {
+        do {
+            guard try await dependencies.assistantClient.reviewSignIn(username: username, password: password) else {
+                Analytics.track("review_sign_in", ["ok": false])
+                return .wrongCredentials
+            }
+            access.hasReviewAccess = true
+            Analytics.track("review_sign_in", ["ok": true])
+            return .signedIn
+        } catch {
+            return .unavailable
+        }
     }
 
     func restorePlus() {

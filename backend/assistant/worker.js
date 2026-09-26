@@ -815,6 +815,32 @@ async function handleAgent(body, env) {
   return json({ text: answer.text, calls: answer.calls, model: answer.model });
 }
 
+// The one test account (App Review, our own testing). It lives as two secrets, REVIEW_USERNAME and
+// REVIEW_PASSWORD (wrangler secret put), so nothing in the app can reveal it. Without them it is
+// off. Compared as digests, in constant time; AUTH_LIMITER slows guessing.
+async function handleReviewSignIn(body, env, request) {
+  if (!env.REVIEW_USERNAME || !env.REVIEW_PASSWORD) return json({ error: "off" }, 503);
+  if (env.AUTH_LIMITER) {
+    const { success } = await env.AUTH_LIMITER.limit({ key: "review:" + (request.headers.get(RATE_KEY_HEADER) || "unknown") });
+    if (!success) return json({ error: "slow down" }, 429);
+  }
+  const hash = async (value) =>
+    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value || ""))));
+  const same = (a, b) => {
+    let difference = 0;
+    for (let i = 0; i < a.length; i++) difference |= a[i] ^ b[i];
+    return difference === 0;
+  };
+  const nameMatches = same(await hash(String(body.username || "").trim().toLowerCase()), await hash(env.REVIEW_USERNAME.trim().toLowerCase()));
+  const passwordMatches = same(await hash(body.password), await hash(env.REVIEW_PASSWORD));
+  if (!(nameMatches && passwordMatches)) {
+    console.log("review sign-in refused");
+    return json({ ok: false }, 401);
+  }
+  console.log("review sign-in");
+  return json({ ok: true });
+}
+
 async function handleEdit(body, env) {
   const instruction = String(body.instruction || "").slice(0, 2000).trim();
   const document = body.document;
@@ -1482,6 +1508,7 @@ async function handleHealth(env, url) {
     providerStatus: status,
     appTokenConfigured: Boolean(env.APP_TOKEN),
     agent: env.AGENT === "off" || provider !== "openai" ? "off" : "on",
+    reviewAccount: env.REVIEW_USERNAME && env.REVIEW_PASSWORD ? "set" : "missing",
     // Whether the OpenAI key is there and looks like one; never the key itself.
     openaiKey: !env.OPENAI_API_KEY ? "missing" : /^sk-/.test(env.OPENAI_API_KEY.trim()) ? "set" : "set, not starting with sk-",
   });
@@ -1544,6 +1571,7 @@ export default {
       const result = await handleCertify(body, env, url.origin);
       return json(result.body, result.status);
     }
+    if (path === "/review-sign-in") return handleReviewSignIn(body, env, request);
     if (path === "/agent") return handleAgent(body, env);
     if (path === "/edit") return handleEdit(body, env);
     if (path === "/workflow") return handleWorkflow(body, env);

@@ -32,7 +32,8 @@ final class AccessModel {
     /// Set when the store confirms a subscription; nil until then.
     private var purchasedPlan: Plan?
     private let keychain = KeychainStore(account: "cuetake.usage.v1")
-    static let testFreeKey = "cuetake.plan.testFree"
+    /// Set while the test account is signed in (see `AppModel.signInForReview`).
+    static let reviewKey = "cuetake.review.access"
 
     /// Runs on a refusal the user caused, with the words to show until there is a paywall.
     var onRefused: ((String) -> Void)?
@@ -47,11 +48,6 @@ final class AccessModel {
         plan = Self.resolvedPlan(purchased: nil)
     }
 
-    /// On unless a tester turned it off.
-    private static var testsFreePlanStored: Bool {
-        UserDefaults.standard.object(forKey: testFreeKey) as? Bool ?? true
-    }
-
     /// TestFlight builds carry a sandbox receipt.
     static var isTestFlight: Bool {
         Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
@@ -59,10 +55,9 @@ final class AccessModel {
 
     private static func resolvedPlan(purchased: Plan?) -> Plan {
         if purchased == .pro { return .pro }
-        // TestFlight testers may switch to Pro without paying. The free plan until they do: App
-        // Review runs the build with the same sandbox receipt, and a reviewer who finds everything
-        // already unlocked cannot find the purchase and rejects the app.
-        if isTestFlight { return testsFreePlanStored ? .free : .pro }
+        // The test account opens everything; anyone else, App Review included, starts on the free
+        // plan and can find the purchase.
+        if UserDefaults.standard.bool(forKey: reviewKey) { return .pro }
         return purchased ?? .free
     }
 
@@ -72,10 +67,10 @@ final class AccessModel {
         self.plan = Self.resolvedPlan(purchased: plan)
     }
 
-    /// TestFlight only: behave as the free plan, to see the limits.
-    var testsFreePlan = AccessModel.testsFreePlanStored {
+    /// The test account is signed in: every CueTake+ tool is open.
+    var hasReviewAccess = UserDefaults.standard.bool(forKey: AccessModel.reviewKey) {
         didSet {
-            UserDefaults.standard.set(testsFreePlan, forKey: Self.testFreeKey)
+            UserDefaults.standard.set(hasReviewAccess, forKey: Self.reviewKey)
             plan = Self.resolvedPlan(purchased: purchasedPlan)
         }
     }

@@ -16,8 +16,8 @@ public struct SettingsScreen: View {
     private let onCertificates: (() -> Void)?
     private let voiceProfile: CreatorVoiceProfile?
     private let onVoiceProfile: (() -> Void)?
-    /// TestFlight only: act as the free plan, to try the limits. Nil hides the row.
-    private let testFreePlan: Binding<Bool>?
+    /// The test account, signed in with five taps on the version. Nil turns the taps off.
+    private let reviewAccess: ReviewAccess?
     /// Anonymous usage statistics, on unless turned off. Nil hides the row.
     private let shareAnalytics: Binding<Bool>?
     /// The plan and this month's use; nil hides the CueTake+ card.
@@ -36,9 +36,7 @@ public struct SettingsScreen: View {
     /// The qualities this phone's camera records; nil offers them all.
     private let captureResolutions: [VideoFormat.Resolution]?
     @State private var destination: SettingsDestination?
-    /// The TestFlight plan switch, shown after five taps on the version: out of sight for anyone
-    /// who is not testing, App Review included.
-    @AppStorage("cuetake.tester") private var isTester = false
+    @State private var showsReviewLogin = false
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -46,7 +44,7 @@ public struct SettingsScreen: View {
                 onCleanStorage: (() async -> (message: String, storage: String?))? = nil, onTeam: (() -> Void)? = nil,
                 onPreviewLight: (() -> Void)? = nil, certificates: String? = nil,
                 onCertificates: (() -> Void)? = nil, voiceProfile: CreatorVoiceProfile? = nil,
-                onVoiceProfile: (() -> Void)? = nil, testFreePlan: Binding<Bool>? = nil,
+                onVoiceProfile: (() -> Void)? = nil, reviewAccess: ReviewAccess? = nil,
                 plus: PlusUsage? = nil, onUpgrade: (() -> Void)? = nil, onRestore: (() -> Void)? = nil,
                 onManageSubscription: (() -> Void)? = nil,
                 suflorReports: String? = nil, onSuflorReports: (() -> Void)? = nil,
@@ -60,7 +58,7 @@ public struct SettingsScreen: View {
         self.suflorReports = suflorReports
         self.onSuflorReports = onSuflorReports
         self.allowsHighResolution = allowsHighResolution
-        self.testFreePlan = testFreePlan
+        self.reviewAccess = reviewAccess
         self.plus = plus
         self.onUpgrade = onUpgrade
         self.onRestore = onRestore
@@ -174,25 +172,19 @@ public struct SettingsScreen: View {
                         AnalyticsToggle(isOn: shareAnalytics)
                     }
 
-                    if let testFreePlan, isTester {
-                        Toggle(isOn: testFreePlan) {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("settings.testFreePlan", bundle: .module)
-                                    .font(DS.sans(.semibold, 15)).foregroundStyle(DS.Palette.ink)
-                                Text("settings.testFreePlan.detail", bundle: .module)
-                                    .font(DS.sans(.regular, 12)).foregroundStyle(DS.Palette.ink(0.55))
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                    if reviewAccess?.isOn == true {
+                        Button { showsReviewLogin = true } label: {
+                            SettingsRow(icon: "person.badge.key", title: settingsText("settings.review.title"),
+                                        detail: settingsText("settings.review.active"))
                         }
-                        .tint(DS.Palette.accent)
-                        .padding(18)
+                        .buttonStyle(SettingsPressStyle())
                         .background(DS.Palette.surface, in: RoundedRectangle(cornerRadius: 24))
                     }
 
                     VStack(spacing: 8) {
                         Text("CueTake").font(DS.archivo(.bold, 20)).tracking(-0.6)
                         Text(Self.version).font(DS.mono(11))
-                            .onTapGesture(count: 5) { if testFreePlan != nil { withAnimation(DS.Motion.settle) { isTester.toggle() } } }
+                            .onTapGesture(count: 5) { if reviewAccess != nil { showsReviewLogin = true } }
                             .onLongPressGesture(minimumDuration: 2) { onPreviewLight?() }
                         Text("settings.footer", bundle: .module).font(DS.sans(.regular, 12))
                         HStack(spacing: 16) {
@@ -225,6 +217,14 @@ public struct SettingsScreen: View {
             if ProcessInfo.processInfo.arguments.contains("-privacy-preview") { destination = .device }
             if ProcessInfo.processInfo.arguments.contains("-language-preview") { destination = .device }
             #endif
+        }
+        .sheet(isPresented: $showsReviewLogin) {
+            if let reviewAccess {
+                ReviewLoginSheet(access: reviewAccess) { showsReviewLogin = false }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(32)
+            }
         }
         .sheet(item: $destination) { selected in
             if selected == .account {

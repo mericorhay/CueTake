@@ -16,7 +16,7 @@ const TR = `
 
 <h2>Sunucuya gidenler (yalnızca ilgili özelliği kullandığında)</h2>
 <ul>
-<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi, paylaşım kiti:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). AI kurguda ayrıca, başlıkları ve efektleri doğru yere koyabilmesi için kurgulanmış videodan birkaç küçük, düşük çözünürlüklü kare gönderilir. Video dosyası ve sesi gönderilmez.</li>
+<li><b>AI kurgu, AI asistan, senaryo yazma, altyazı çevirisi, paylaşım kiti:</b> videonun konuşma metni, altyazılar, düzenleme bilgisi ve kareler üzerinden telefonda çıkarılmış kısa görüntü notları (ör. "mutfak, 1 yüz"). AI kurguda ayrıca, başlıkları ve efektleri doğru yere koyabilmesi için kurgulanmış videodan birkaç küçük, düşük çözünürlüklü kare gönderilir. Video dosyası ve sesi gönderilmez. AI'a hatırlamasını söylediğin tercihler (AI hafızası) telefonda saklanır ve AI kurgu isteğiyle birlikte gönderilir; Ayarlar'dan silinebilir.</li>
 <li><b>Bulut altyazı (isteğe bağlı):</b> konuşmanın ses kaydı, daha doğru altyazı için yazıya dökülür.</li>
 <li><b>Stok B-roll:</b> konuşma metninden seçilen cümleler ve kısa İngilizce arama kelimeleri.</li>
 </ul>
@@ -60,7 +60,7 @@ const EN = `
 
 <h2>What is sent (only when you use that feature)</h2>
 <ul>
-<li><b>AI edit, AI assistant, script writing, caption translation, post kit:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). For AI edit, a few small, low-resolution pictures of the edited video are also sent, so the AI can put titles and effects in the right place. The video file and its sound are not sent.</li>
+<li><b>AI edit, AI assistant, script writing, caption translation, post kit:</b> the video's transcript, captions, editing details and short scene notes read from frames on the phone (e.g. "kitchen, 1 face"). For AI edit, a few small, low-resolution pictures of the edited video are also sent, so the AI can put titles and effects in the right place. The video file and its sound are not sent. Preferences you ask the AI to remember (AI memory) are kept on the phone and sent with AI edit requests; they can be deleted in Settings.</li>
 <li><b>Cloud captions (optional):</b> the speech audio, transcribed for more accurate captions.</li>
 <li><b>Stock B-roll:</b> sentences chosen from the transcript and short English search terms.</li>
 </ul>

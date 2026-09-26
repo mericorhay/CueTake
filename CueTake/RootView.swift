@@ -409,9 +409,11 @@ struct RootView: View {
                 onCertificates: { showsCertificates = true },
                 voiceProfile: model.voiceProfile,
                 onVoiceProfile: { showsVoiceProfile = true },
-                testFreePlan: AccessModel.isTestFlight
-                    ? Binding(get: { model.access.testsFreePlan }, set: { model.access.testsFreePlan = $0 })
-                    : nil,
+                reviewAccess: ReviewAccess(
+                    isOn: model.access.hasReviewAccess,
+                    signIn: { await model.signInForReview(username: $0, password: $1) },
+                    signOut: { model.access.hasReviewAccess = false }
+                ),
                 plus: model.plusUsage,
                 onUpgrade: { model.upgradeToPlus() },
                 onRestore: { model.restorePlus() },
