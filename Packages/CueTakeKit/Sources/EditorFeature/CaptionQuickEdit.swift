@@ -37,7 +37,7 @@ extension EditorModel {
     /// Moves every caption, as one edit per gesture. Captions that were moved on their own come
     /// along: a video cut into many short captions is placed once, not one caption at a time.
     public func placeAllCaptions(at position: CaptionPosition) {
-        updateCaptionStyle(coalescing: "caption-move") { $0.position = position }
+        updateCaptionStyle(coalescing: "caption-place") { $0.position = position }
         guard project.segments.contains(where: { $0.captions.contains { $0.position != nil } }) else { return }
         for s in project.segments.indices {
             for c in project.segments[s].captions.indices where project.segments[s].captions[c].position != nil {
@@ -48,7 +48,19 @@ extension EditorModel {
 
     /// Sizes every caption, as one edit per gesture: text height as a share of the frame.
     public func sizeAllCaptions(_ size: Double) {
-        updateCaptionStyle(coalescing: "caption-size") { $0.relativeFontSize = size }
+        updateCaptionStyle(coalescing: "caption-place") { $0.relativeFontSize = size }
+    }
+
+    /// One caption moved or sized on its own, the rest left as they are. `scale` is against the
+    /// style's size.
+    public func placeCaption(_ id: CaptionCue.ID, at position: CaptionPosition?, scale: Double?) {
+        guard let s = segmentIndex(ofCaption: id),
+              let c = project.segments[s].captions.firstIndex(where: { $0.id == id })
+        else { return }
+        record("editor.change.caption", symbol: "text.bubble")
+        if let position { project.segments[s].captions[c].position = position }
+        if let scale { project.segments[s].captions[c].scale = min(max(scale, 0.4), 2.5) }
+        project.updatedAt = .now
     }
 
     public func removeCaption(_ id: CaptionCue.ID) {

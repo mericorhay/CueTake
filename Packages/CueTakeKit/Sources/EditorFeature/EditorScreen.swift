@@ -1417,7 +1417,73 @@ private struct StageCaption: View {
     let lyricsSpace: Namespace.ID
     let onOpenLyrics: (CaptionCue.ID) -> Void
 
+    /// The last drag or pinch, applied to every caption; "Only this caption" takes it back and
+    /// gives it to the one that was held.
+    private struct Placement: Equatable {
+        let id: CaptionCue.ID
+        let styleSize: Double
+        var position: CaptionPosition?
+        var size: Double?
+        var token = UUID()
+    }
+    @State private var placement: Placement?
+    @State private var offersOnlyThis = false
+
     var body: some View {
+        ZStack(alignment: .bottom) {
+            caption
+            if offersOnlyThis, let placement {
+                Button {
+                    onlyThis(placement)
+                } label: {
+                    Label {
+                        Text("editor.captions.onlyThis", bundle: .module)
+                    } icon: {
+                        Image(systemName: "text.cursor")
+                    }
+                    .dsFont(.sans, .semibold, 12)
+                    .foregroundStyle(DS.Palette.inkInverse)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(DS.Palette.lime))
+                }
+                .buttonStyle(.dsPress(radius: 20))
+                .padding(.bottom, 14)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(DS.Motion.snap, value: offersOnlyThis)
+        .task(id: placement?.token) {
+            guard offersOnlyThis else { return }
+            try? await Task.sleep(for: .seconds(5))
+            guard !Task.isCancelled else { return }
+            offersOnlyThis = false
+        }
+    }
+
+    private func onlyThis(_ placement: Placement) {
+        offersOnlyThis = false
+        // The drag or pinch went to every caption as one step: taken back, then given to this one.
+        model.undo()
+        model.placeCaption(
+            placement.id,
+            at: placement.position,
+            scale: placement.size.map { $0 / max(0.001, placement.styleSize) }
+        )
+        self.placement = nil
+    }
+
+    private func note(_ id: CaptionCue.ID, position: CaptionPosition? = nil, size: Double? = nil) {
+        if placement?.id != id || offersOnlyThis {
+            placement = Placement(id: id, styleSize: model.project.captionStyle.relativeFontSize)
+            offersOnlyThis = false
+        }
+        if let position { placement?.position = position }
+        if let size { placement?.size = size }
+    }
+
+    @ViewBuilder
+    private var caption: some View {
         if let cue = model.project.caption(at: model.playhead) {
             CaptionOverlay(
                 cue: cue,
@@ -1434,11 +1500,18 @@ private struct StageCaption: View {
                 // Dragged or pinched, every caption moves and sizes together.
                 onMove: { position in
                     guard !model.isAIDriving else { return }
+                    note(cue.id, position: position)
                     model.placeAllCaptions(at: position)
                 },
                 onResize: { size in
                     guard !model.isAIDriving else { return }
+                    note(cue.id, size: size)
                     model.sizeAllCaptions(size)
+                },
+                onGestureEnd: {
+                    guard placement != nil else { return }
+                    placement?.token = UUID()
+                    offersOnlyThis = true
                 }
             )
             .matchedTransitionSource(id: "lyrics", in: lyricsSpace)

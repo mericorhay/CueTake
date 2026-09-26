@@ -44,12 +44,14 @@ enum CaptionRenderer {
         let fontSize = max(12, renderSize.height * style.relativeFontSize)
         let font = makeFont(style, size: fontSize)
         for cue in cues {
+            // A caption sized on its own gets its own font; the rest share one.
+            let cueSize = cue.scale.map { fontSize * CGFloat($0) } ?? fontSize
             if let layer = cueLayer(
                 cue,
                 style: style,
                 locale: locale,
-                font: font,
-                fontSize: fontSize,
+                font: cue.scale == nil ? font : makeFont(style, size: cueSize),
+                fontSize: cueSize,
                 renderSize: renderSize,
                 position: positions[cue.id] ?? cue.position ?? style.position
             ) {

@@ -865,7 +865,7 @@ public final class EditorModel {
         // footage, not another copy of it.
         // Same words at the same times, under new identities so the two copies can be edited apart.
         copy.captions = copy.captions.map {
-            CaptionCue(text: $0.text, range: $0.range, styleOverride: $0.styleOverride, position: $0.position, isUserEdited: $0.isUserEdited)
+            CaptionCue(text: $0.text, range: $0.range, styleOverride: $0.styleOverride, position: $0.position, isUserEdited: $0.isUserEdited, scale: $0.scale)
         }
         project.segments.insert(copy, at: index + 1)
         project.updatedAt = .now

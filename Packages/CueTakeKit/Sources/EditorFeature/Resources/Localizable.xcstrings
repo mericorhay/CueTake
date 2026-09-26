@@ -21647,6 +21647,29 @@
           }
         }
       }
+    },
+    "editor.captions.onlyThis" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only this caption"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sadece bu altyazı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo este subtítulo"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

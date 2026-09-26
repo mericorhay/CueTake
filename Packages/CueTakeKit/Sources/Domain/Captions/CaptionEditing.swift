@@ -89,7 +89,8 @@ extension Segment {
             range: MediaTimeRange(start: MediaTime(seconds: split), duration: MediaTime(seconds: end - split)),
             styleOverride: cue.styleOverride,
             position: cue.position,
-            isUserEdited: true
+            isUserEdited: true,
+            scale: cue.scale
         )
 
         captions[index] = first

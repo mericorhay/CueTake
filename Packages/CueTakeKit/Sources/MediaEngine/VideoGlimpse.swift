@@ -145,7 +145,7 @@ public enum VideoGlimpse {
     private static func caption(_ cue: PlacedCue, style: CaptionStyle, locale: Locale, in size: CGSize) {
         let text = style.textCase.apply(to: cue.text, locale: locale)
         guard !text.isEmpty else { return }
-        let fontSize = max(8, size.height * CGFloat(style.relativeFontSize))
+        let fontSize = max(8, size.height * CGFloat(style.relativeFontSize) * CGFloat(cue.scale ?? 1))
         let font = CaptionRenderer.makeFont(style, size: fontSize) as UIFont
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center

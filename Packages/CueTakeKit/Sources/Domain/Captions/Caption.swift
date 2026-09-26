@@ -9,6 +9,8 @@ public struct CaptionCue: Identifiable, Hashable, Sendable, Codable {
     public var styleOverride: CaptionStyle?
     /// Nil uses the style's position.
     public var position: CaptionPosition?
+    /// This caption's size against the style's, when the user sized it on its own. Nil is 1.
+    public var scale: Double?
     /// Set when the user edits the cue by hand.
     public var isUserEdited: Bool
     /// The line in other languages, by language code ("en", "es"…). Nil until translated.
@@ -23,13 +25,15 @@ public struct CaptionCue: Identifiable, Hashable, Sendable, Codable {
         styleOverride: CaptionStyle? = nil,
         position: CaptionPosition? = nil,
         isUserEdited: Bool = false,
-        translations: [String: String]? = nil
+        translations: [String: String]? = nil,
+        scale: Double? = nil
     ) {
         self.id = id
         self.text = text
         self.range = range
         self.styleOverride = styleOverride
         self.position = position
+        self.scale = scale
         self.isUserEdited = isUserEdited
         self.translations = translations
     }
@@ -174,19 +178,22 @@ public struct PlacedCue: Identifiable, Hashable, Sendable {
     public var words: [PlacedWord]
     /// The cue's own position, when the user moved it. Nil follows the style.
     public var position: CaptionPosition?
+    /// The cue's own size against the style's, when the user sized it. Nil is 1.
+    public var scale: Double?
     /// The language the text is in, when it is not the project's: a translation. Upper-casing
     /// follows it, so an English line under a Turkish project does not get a dotted İ.
     public var localeIdentifier: String?
 
     public init(
         id: UUID, text: String, range: MediaTimeRange, words: [PlacedWord] = [], position: CaptionPosition? = nil,
-        localeIdentifier: String? = nil
+        localeIdentifier: String? = nil, scale: Double? = nil
     ) {
         self.id = id
         self.text = text
         self.range = range
         self.words = words
         self.position = position
+        self.scale = scale
         self.localeIdentifier = localeIdentifier
     }
 
@@ -507,7 +514,8 @@ extension Project {
                         range: range,
                         words: CaptionTranslation.spread(translated, over: range),
                         position: cue.position,
-                        localeIdentifier: language
+                        localeIdentifier: language,
+                        scale: cue.scale
                     ))
                     continue
                 }
@@ -517,7 +525,8 @@ extension Project {
                         text: cue.text,
                         range: range,
                         words: words,
-                        position: cue.position
+                        position: cue.position,
+                        scale: cue.scale
                     )
                 )
             }

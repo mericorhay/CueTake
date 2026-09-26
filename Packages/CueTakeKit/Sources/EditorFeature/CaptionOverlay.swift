@@ -30,6 +30,8 @@ struct CaptionOverlay: View {
     var onMove: ((CaptionPosition) -> Void)? = nil
     /// The size every caption takes while this one is pinched, as the style's text height.
     var onResize: ((Double) -> Void)? = nil
+    /// A drag or pinch has ended.
+    var onGestureEnd: (() -> Void)? = nil
 
     @State private var dragging = false
     @State private var pinching = false
@@ -40,7 +42,7 @@ struct CaptionOverlay: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let size = max(11, proxy.size.height * style.relativeFontSize)
+            let size = max(11, proxy.size.height * style.relativeFontSize * (cue.scale ?? 1))
             let place = position ?? style.position
             let display = CaptionWords(cue: cue, style: style, locale: locale)
             let frame = CaptionAnimator.frame(for: cue, wordCount: display.words.count, style: style, at: time)
@@ -105,6 +107,7 @@ struct CaptionOverlay: View {
                     .onEnded { _ in
                         dragging = false
                         centred = false
+                        onGestureEnd?()
                     },
                 including: onMove == nil ? .none : .all
             )
@@ -119,6 +122,7 @@ struct CaptionOverlay: View {
                     .onEnded { _ in
                         pinching = false
                         pinchBase = nil
+                        onGestureEnd?()
                     },
                 including: onResize == nil ? .none : .all
             )
