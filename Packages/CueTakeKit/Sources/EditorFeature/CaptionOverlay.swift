@@ -22,13 +22,21 @@ struct CaptionOverlay: View {
     var position: CaptionPosition? = nil
     /// Moves when the AI changes these captions or their look.
     var glowToken: Int = 0
-    /// Set in the editor: the caption can be tapped to edit and dragged up or down.
+    /// Set in the editor: the caption is outlined while it is being edited.
     var isEditing: Bool = false
     var onTap: (() -> Void)? = nil
-    /// The new height of the caption, 0 top … 1 bottom, while it is dragged.
-    var onMove: ((Double) -> Void)? = nil
+    /// Where every caption goes while this one is dragged: anywhere in the frame, settling on the
+    /// centre line and the usual heights when close.
+    var onMove: ((CaptionPosition) -> Void)? = nil
+    /// The size every caption takes while this one is pinched, as the style's text height.
+    var onResize: ((Double) -> Void)? = nil
 
     @State private var dragging = false
+    @State private var pinching = false
+    /// The text height when the pinch began.
+    @State private var pinchBase: Double?
+    /// On the centre line while dragged.
+    @State private var centred = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -65,20 +73,58 @@ struct CaptionOverlay: View {
             }
             .scaleEffect(dragging ? 1.04 : 1)
             .animation(DS.Motion.snap, value: dragging)
-            .contentShape(Rectangle().inset(by: -10))
+            // Every caption changes, whichever one is held: said while it happens.
+            .overlay(alignment: .top) {
+                if dragging || pinching {
+                    Text("editor.captions.allCaptions", bundle: .module)
+                        .dsFont(.sans, .semibold, 11)
+                        .foregroundStyle(DS.Palette.inkInverse)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(DS.Palette.lime))
+                        .fixedSize()
+                        .offset(y: -size * 1.1 - 14)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
+            .contentShape(Rectangle().inset(by: -18))
             .onTapGesture { onTap?() }
             .gesture(
-                DragGesture(minimumDistance: 4, coordinateSpace: .named("captionFrame"))
+                DragGesture(minimumDistance: 6, coordinateSpace: .named("captionFrame"))
                     .onChanged { value in
                         dragging = true
-                        onMove?(Double(value.location.y / max(1, proxy.size.height)))
+                        var x = Double(value.location.x / max(1, proxy.size.width))
+                        var y = Double(value.location.y / max(1, proxy.size.height))
+                        centred = abs(x - 0.5) < 0.04
+                        if centred { x = 0.5 }
+                        // The usual heights: top, middle, lower third, bottom.
+                        if let near = [0.12, 0.5, 0.72, 0.84].first(where: { abs($0 - y) < 0.025 }) { y = near }
+                        onMove?(CaptionPosition(x: min(max(x, 0.15), 0.85), y: min(max(y, 0.08), 0.84)))
                     }
-                    .onEnded { _ in dragging = false },
-                including: isEditing ? .all : .none
+                    .onEnded { _ in
+                        dragging = false
+                        centred = false
+                    },
+                including: onMove == nil ? .none : .all
+            )
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { value in
+                        pinching = true
+                        let base = pinchBase ?? style.relativeFontSize
+                        pinchBase = base
+                        onResize?(base * Double(value.magnification))
+                    }
+                    .onEnded { _ in
+                        pinching = false
+                        pinchBase = nil
+                    },
+                including: onResize == nil ? .none : .all
             )
             .frame(maxWidth: proxy.size.width * 0.86)
             .position(x: proxy.size.width * place.x, y: proxy.size.height * place.y)
-            // The height the caption sits at, while it is moved.
+            // Where the caption sits, while it is moved: its height, and the centre line when on it.
             .overlay(alignment: .topLeading) {
                 if dragging {
                     Rectangle()
@@ -86,8 +132,16 @@ struct CaptionOverlay: View {
                         .frame(width: proxy.size.width, height: 1)
                         .offset(y: proxy.size.height * place.y)
                         .allowsHitTesting(false)
+                    if centred {
+                        Rectangle()
+                            .fill(DS.Palette.lime.opacity(0.7))
+                            .frame(width: 1, height: proxy.size.height)
+                            .offset(x: proxy.size.width * 0.5)
+                            .allowsHitTesting(false)
+                    }
                 }
             }
+            .sensoryFeedback(.selection, trigger: centred)
         }
         .coordinateSpace(.named("captionFrame"))
         .allowsHitTesting(onTap != nil)

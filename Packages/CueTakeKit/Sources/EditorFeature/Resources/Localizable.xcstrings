@@ -21624,6 +21624,29 @@
           }
         }
       }
+    },
+    "editor.captions.allCaptions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All captions"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm altyazılar"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todos los subtítulos"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

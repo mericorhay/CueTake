@@ -21,7 +21,7 @@ extension EditorModel {
         change(&style)
         style.relativeFontSize = min(max(style.relativeFontSize, 0.018), 0.075)
         style.maxWordsPerCue = min(max(style.maxWordsPerCue, 1), 8)
-        style.position = CaptionPosition(x: style.position.x, y: min(max(style.position.y, 0.08), 0.92))
+        style.position = CaptionPosition(x: min(max(style.position.x, 0.15), 0.85), y: min(max(style.position.y, 0.08), 0.92))
         project.captionStyle = style
         if previousWords != style.maxWordsPerCue {
             for index in project.segments.indices {
@@ -32,6 +32,23 @@ extension EditorModel {
             }
         }
         project.updatedAt = .now
+    }
+
+    /// Moves every caption, as one edit per gesture. Captions that were moved on their own come
+    /// along: a video cut into many short captions is placed once, not one caption at a time.
+    public func placeAllCaptions(at position: CaptionPosition) {
+        updateCaptionStyle(coalescing: "caption-move") { $0.position = position }
+        guard project.segments.contains(where: { $0.captions.contains { $0.position != nil } }) else { return }
+        for s in project.segments.indices {
+            for c in project.segments[s].captions.indices where project.segments[s].captions[c].position != nil {
+                project.segments[s].captions[c].position = nil
+            }
+        }
+    }
+
+    /// Sizes every caption, as one edit per gesture: text height as a share of the frame.
+    public func sizeAllCaptions(_ size: Double) {
+        updateCaptionStyle(coalescing: "caption-size") { $0.relativeFontSize = size }
     }
 
     public func removeCaption(_ id: CaptionCue.ID) {

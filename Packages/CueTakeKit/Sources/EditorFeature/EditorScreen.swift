@@ -1431,13 +1431,14 @@ private struct StageCaption: View {
                     guard !model.isAIDriving else { return }
                     onOpenLyrics(cue.id)
                 },
-                onMove: { y in
-                    model.updateCaptionStyle(coalescing: "caption-move") { style in
-                        // Settles on the usual places — top, middle, lower third, bottom — when close.
-                        let marks = [0.12, 0.5, 0.72, 0.86]
-                        let near = marks.first { abs($0 - y) < 0.025 }
-                        style.position = CaptionPosition(x: style.position.x, y: near ?? y)
-                    }
+                // Dragged or pinched, every caption moves and sizes together.
+                onMove: { position in
+                    guard !model.isAIDriving else { return }
+                    model.placeAllCaptions(at: position)
+                },
+                onResize: { size in
+                    guard !model.isAIDriving else { return }
+                    model.sizeAllCaptions(size)
                 }
             )
             .matchedTransitionSource(id: "lyrics", in: lyricsSpace)
