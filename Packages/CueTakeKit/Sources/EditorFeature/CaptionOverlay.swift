@@ -92,7 +92,8 @@ struct CaptionOverlay: View {
             }
             .contentShape(Rectangle().inset(by: -18))
             .onTapGesture { onTap?() }
-            .gesture(
+            // High priority: nothing around the picture may take a drag that starts on a caption.
+            .highPriorityGesture(
                 DragGesture(minimumDistance: 6, coordinateSpace: .named("captionFrame"))
                     .onChanged { value in
                         dragging = true
