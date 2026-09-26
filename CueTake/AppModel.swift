@@ -304,6 +304,8 @@ final class AppModel {
         )
         // Your look, not the default one, if you have one.
         settingsModel.settings.applyNewProjectDefaults(to: &fresh)
+        // No captions until asked for: the words are heard, the video is left as it was shot.
+        fresh.captionsHidden = true
         try? await store.save(fresh)
 
         guard let mediaDirectory = try? await store.mediaDirectory(for: fresh.id) else {

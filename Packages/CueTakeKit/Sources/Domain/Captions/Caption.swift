@@ -446,7 +446,14 @@ extension Project {
     /// cannot drift apart. A caption system that computes its own idea of where a clip starts is
     /// a caption system that will one day be a frame out and no one will know why.
     public var captionCues: [PlacedCue] {
-        CaptionSchedule.settled(unsettledCaptionCues)
+        // Off: none on the preview, the timeline or the export, while the words are kept.
+        guard captionsHidden != true else { return [] }
+        return CaptionSchedule.settled(unsettledCaptionCues)
+    }
+
+    /// Turns the captions on, when they were off.
+    public mutating func showCaptions() {
+        if captionsHidden == true { captionsHidden = nil }
     }
 
     private var unsettledCaptionCues: [PlacedCue] {

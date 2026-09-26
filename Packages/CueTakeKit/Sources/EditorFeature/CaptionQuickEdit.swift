@@ -23,6 +23,7 @@ extension EditorModel {
         style.maxWordsPerCue = min(max(style.maxWordsPerCue, 1), 8)
         style.position = CaptionPosition(x: min(max(style.position.x, 0.15), 0.85), y: min(max(style.position.y, 0.08), 0.92))
         project.captionStyle = style
+        project.showCaptions()
         if previousWords != style.maxWordsPerCue {
             for index in project.segments.indices {
                 project.segments[index].refreshCaptions(

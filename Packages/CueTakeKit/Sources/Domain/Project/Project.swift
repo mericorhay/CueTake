@@ -42,6 +42,10 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
     /// The language the captions are shown in on the video: a translation's code, or nil for
     /// the language that was spoken.
     public var captionLanguage: String? = nil
+    /// True while the captions are off: the words are heard and kept (the AI and the lyrics read
+    /// them) but nothing is shown on the video. An imported video starts this way; asking for
+    /// captions in any way turns them on. Nil, as every project before it, shows them.
+    public var captionsHidden: Bool? = nil
 
     public init(
         id: UUID = UUID(),
@@ -106,6 +110,7 @@ public struct Project: Identifiable, Hashable, Sendable, Codable {
         aiConversations = (try? container.decodeIfPresent([AIConversation].self, forKey: .aiConversations)) ?? []
         transitions = (try? container.decodeIfPresent([ClipTransition].self, forKey: .transitions)) ?? []
         captionLanguage = try? container.decodeIfPresent(String.self, forKey: .captionLanguage)
+        captionsHidden = try? container.decodeIfPresent(Bool.self, forKey: .captionsHidden)
         // Backgrounds used to be a setting of the whole clip.
         adoptClipBackgrounds()
         // Freeze is gone from the app: held frames it made are removed, frozen clips play.

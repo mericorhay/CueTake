@@ -108,9 +108,11 @@ public struct CaptionsScreen: View {
         VStack(spacing: 0) {
             header
                 .padding(.horizontal, 18)
+                // Opening the captions is asking for them.
+                .onAppear { project.showCaptions() }
 
             preview
-                .frame(maxHeight: focusedCue != nil ? 150 : (showsTuning ? 210 : 330))
+                .frame(maxHeight: focusedCue != nil ? 150 : 330)
                 .padding(.top, 12)
                 .padding(.horizontal, 18)
 
@@ -443,21 +445,61 @@ public struct CaptionsScreen: View {
             }
             .buttonStyle(.dsPress(radius: 14))
 
-            if showsTuning {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        CaptionTuningPanel(look: $look, onCommit: report)
-                        CaptionWindowControl(
-                            window: $project.captionWindow,
-                            duration: project.segments.reduce(0) { $0 + $1.barWeight }
-                        )
-                    }
-                }
-                .frame(maxHeight: 300)
-                .scrollIndicators(.hidden)
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
         }
+        // Its own sheet: opened inline under the style list it was squeezed into a strip showing
+        // one row. Half height by default, so the captions on the picture above change as it is used.
+        .sheet(isPresented: $showsTuning) { tuningSheet }
+    }
+
+    private var tuningSheet: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(DS.Palette.lime)
+                Text("captions.tune", bundle: .module)
+                    .dsFont(.sans, .semibold, 16)
+                    .foregroundStyle(DS.Palette.ink)
+                Spacer(minLength: 0)
+                Text("captions.tune.allClips", bundle: .module)
+                    .dsFont(.sans, .regular, 11)
+                    .foregroundStyle(DS.Palette.ink(0.56))
+                Button {
+                    showsTuning = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(DS.Palette.ink(0.75))
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(DS.Palette.hairline(0.1)))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.dsPressIcon)
+                .accessibilityLabel(Text("editor.panel.close", bundle: .module))
+            }
+            .padding(.leading, 20)
+            .padding(.trailing, 10)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+
+            ScrollView {
+                VStack(spacing: 12) {
+                    CaptionTuningPanel(look: $look, onCommit: report)
+                    CaptionWindowControl(
+                        window: $project.captionWindow,
+                        duration: project.segments.reduce(0) { $0 + $1.barWeight }
+                    )
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+        .presentationCornerRadius(28)
     }
 
     private func quickPositionButton(_ point: Double, symbol: String) -> some View {

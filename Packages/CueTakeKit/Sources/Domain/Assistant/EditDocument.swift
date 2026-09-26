@@ -51,6 +51,8 @@ public struct EditDocument: Codable, Sendable, Equatable {
     public var transcript: String?
     /// What the creator asked the AI to remember across videos (`AIMemory`).
     public var memory: [String]?
+    /// True while the captions are off: clips still carry their words, but none are on screen.
+    public var captionsOff: Bool?
 
     public struct Clip: Codable, Sendable, Equatable {
         /// `c1`, `c2`… in timeline order.
@@ -535,6 +537,7 @@ extension EditDocument {
             beats: beats
         )
         history = Self.history(of: project)
+        captionsOff = project.captionsHidden == true ? true : nil
         let said = clips.flatMap { $0.words.map(\.text) }.joined(separator: " ")
         transcript = said.isEmpty ? nil : String(said.prefix(1600))
         let moves = Self.cameraMoves(in: project)

@@ -59,6 +59,8 @@ struct CaptionLyricsView: View {
         .background { PlayheadWatcher(model: model, rows: rows, active: $activeID) }
         .preferredColorScheme(.dark)
         .onAppear {
+            // Opening the lyrics is asking for the captions.
+            model.project.showCaptions()
             rebuild()
             language = model.project.captionLanguage ?? model.project.translationLanguages.first
             if let focus, let row = rows.first(where: { $0.id == focus }) {

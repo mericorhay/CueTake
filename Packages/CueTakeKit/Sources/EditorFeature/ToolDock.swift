@@ -42,7 +42,7 @@ struct ToolDock: View {
     var panelScrolls = false
 
     enum Item: String, CaseIterable, Identifiable {
-        case ai, style, generate, broll, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, captions, lyrics, audio, delete, more
+        case ai, captions, style, generate, broll, shorts, split, transition, reframe, zoom, trim, speed, background, filter, sound, sfx, text, image, template, video, lyrics, audio, delete, more
         var id: String { rawValue }
 
         /// Whether the tool opens a panel rather than acting at once.

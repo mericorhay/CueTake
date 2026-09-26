@@ -20,8 +20,18 @@ extension EditorModel {
             return Self.repeatsSpeech(existing.text, from: overlay.start.seconds, length: overlay.duration.seconds, cues: cues)
         }.count
         let quoteLimit = max(1, Int(duration / 15))
+        // Captions that are off stay off unless the request is about captions: a caption look in
+        // a "make it viral" plan would turn them on without anyone asking.
+        let captionsStayOff = project.captionsHidden == true
+            && !EditPlan.asksAboutCaptions(aiSession?.instruction ?? "")
         kept.operations = plan.operations.filter { operation in
             if repeatsWhatIsThere(operation) { return false }
+            if captionsStayOff {
+                switch operation {
+                case .captionStyle, .captionLook, .captionWindow: return false
+                default: break
+                }
+            }
             if case .addText(let patch) = operation, let text = patch.text {
                 let start = patch.start ?? 0
                 let length = patch.duration ?? max(0.5, (patch.end ?? start + 2) - start)

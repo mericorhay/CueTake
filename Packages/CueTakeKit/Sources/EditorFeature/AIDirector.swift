@@ -1647,6 +1647,8 @@ extension EditorModel {
 
     /// Applies a look change and reads captions again if the words per caption changed.
     private func applyCaptionLook(_ look: EditPlan.CaptionLook) -> [AITarget]? {
+        // The AI was asked for a caption look: that is asking for captions.
+        project.showCaptions()
         var style = project.captionStyle
         if let preset = look.preset {
             guard CaptionStyle.presetIDs.contains(preset) else { return nil }

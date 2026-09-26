@@ -174,6 +174,8 @@ cameraMoves[] (m..: at/length on the finished video, kind push|pull|punch|hold, 
 mainVolume, twoListeners, videoModel, voice, fonts, animations,
 history[] (earlier requests in this session, oldest first: asked, did, changes — the current document already includes those edits),
 memory[] (what this creator asked you to remember across all their videos: follow it unless the request says otherwise).
+captionsOff (true: the captions are off and nothing shows on the video; clips still carry their words. A caption look turns them on,
+  so send captionStyle/captionLook only when the user asks for captions.)
 
 Answer with ONE JSON object only: {"summary":"1-2 short sentences in the user's language about what you changed","operations":[...]}
 

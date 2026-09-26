@@ -571,6 +571,7 @@ extension AppModel {
         case .generateCaptions:
             guard definition.style.captions else { return .skipped(AppLocalization.string("workflow.skip.captionsOff")) }
             if !hasTranscripts { await transcribeNewTakes() }
+            project.showCaptions()
             rebuildCaptions()
             return project.segments.contains { !$0.captions.isEmpty }
                 ? .done
