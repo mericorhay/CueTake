@@ -209,11 +209,11 @@ extension EditorModel {
                 document.videoModel = self.aiVideoModel
                 document.memory = AIMemory.facts.isEmpty ? nil : AIMemory.facts
                 // The captions' words are the creator's: changed only when the request is about them.
-                var plan = self.withoutRepeats(try await request(document, text).keepingCaptions(unlessAskedIn: text))
+                var plan = self.withoutRepeats(try await request(document, text).keepingCaptions(unlessAskedIn: text).keepingFootage(unlessAskedIn: text))
                 guard !Task.isCancelled else { return }
                 // A plan that would change nothing gets one more try, told why.
                 if let problem = self.problem(with: plan) {
-                    let second = self.withoutRepeats(try await request(document, text + "\n\n" + problem).keepingCaptions(unlessAskedIn: text))
+                    let second = self.withoutRepeats(try await request(document, text + "\n\n" + problem).keepingCaptions(unlessAskedIn: text).keepingFootage(unlessAskedIn: text))
                     guard !Task.isCancelled else { return }
                     if self.problem(with: second) == nil { plan = second }
                 }
@@ -255,7 +255,7 @@ extension EditorModel {
         titles, looks, sound, rhythm. Leave the captions' words alone unless the request is about them. Do not repeat or undo what is \
         done. If nothing is left, return an empty operations list.]
         """
-        guard let second = try? await request(document, instruction + note).keepingCaptions(unlessAskedIn: instruction), !Task.isCancelled else {
+        guard let second = try? await request(document, instruction + note).keepingCaptions(unlessAskedIn: instruction).keepingFootage(unlessAskedIn: instruction), !Task.isCancelled else {
             withAnimation(.snappy(duration: 0.3)) { aiSession?.phase = finished }
             return
         }

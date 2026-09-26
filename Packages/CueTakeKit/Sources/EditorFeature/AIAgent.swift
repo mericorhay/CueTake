@@ -177,9 +177,13 @@ extension EditorModel {
         if guarded.operations.count < raw.operations.count {
             notes.append("\(raw.operations.count - guarded.operations.count) caption operation(s) refused: the user did not ask about the captions' words.")
         }
-        let plan = withoutRepeats(guarded)
-        if plan.operations.count < guarded.operations.count {
-            notes.append("\(guarded.operations.count - plan.operations.count) operation(s) left out: the same title or look is already there, or the text repeats what the captions already show.")
+        let uncut = guarded.keepingFootage(unlessAskedIn: instruction)
+        if uncut.operations.count < guarded.operations.count {
+            notes.append("\(guarded.operations.count - uncut.operations.count) cut(s) refused: the user did not ask to cut or shorten, so no footage may be removed.")
+        }
+        let plan = withoutRepeats(uncut)
+        if plan.operations.count < uncut.operations.count {
+            notes.append("\(uncut.operations.count - plan.operations.count) operation(s) left out: the same title or look is already there, or the text repeats what the captions already show.")
         }
         let (steps, skipped) = aiSteps(for: plan.resolvingReferences(in: project))
         if !skipped.isEmpty {

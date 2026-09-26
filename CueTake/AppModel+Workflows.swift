@@ -708,7 +708,7 @@ extension AppModel {
             do {
                 let plan = try await requestEditPlan(editorModel.document(), instruction)
                 if Task.isCancelled { return .skipped(AppLocalization.string("workflow.skip.stopped")) }
-                let outcome = await editorModel.applyAutomated(plan.keepingCaptions(unlessAskedIn: instruction))
+                let outcome = await editorModel.applyAutomated(plan.keepingCaptions(unlessAskedIn: instruction).keepingFootage(unlessAskedIn: instruction))
                 project = editorModel.project
                 return outcome.applied > 0 ? .done : .skipped(AppLocalization.string("workflow.skip.nothingToDo"))
             } catch {
