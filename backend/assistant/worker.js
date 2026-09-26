@@ -441,6 +441,28 @@ const GROQ_FALLBACKS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b"];
 // One million tokens of context, so a long video's document goes in whole, with no fitting.
 const OPENAI_MODEL = "gpt-6-luna";
 
+// One row per model call in D1 (migrations/0002_ai_rounds.sql): numbers only, never content.
+// wrangler tail cannot be relied on to watch the AI; this keeps its history. Never fails a request.
+async function recordRound(env, row) {
+  if (!env.AUTH_DB) return;
+  try {
+    await env.AUTH_DB.prepare(
+      "INSERT INTO ai_rounds (at, kind, model, ok, status, input_tokens, cached_tokens, output_tokens, pictures, pictures_refused, calls) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    )
+      .bind(
+        Date.now(), row.kind, row.model || "", row.ok ? 1 : 0, row.status || 200,
+        row.usage?.prompt_tokens || 0, row.usage?.prompt_tokens_details?.cached_tokens || 0,
+        row.usage?.completion_tokens || 0, row.pictures || 0, row.picturesRefused ? 1 : 0, row.calls || ""
+      )
+      .run();
+  } catch (error) {
+    console.log("record round failed", String(error));
+  }
+}
+
+const countPictures = (messages) =>
+  messages.reduce((n, m) => n + (Array.isArray(m.content) ? m.content.filter((p) => p.type === "image_url").length : 0), 0);
+
 async function askOpenAI(env, messages, options = {}) {
   const model = env.OPENAI_MODEL || OPENAI_MODEL;
   const call = (json) =>
@@ -469,9 +491,11 @@ async function askOpenAI(env, messages, options = {}) {
   }
   if (!upstream.ok) {
     console.log("openai error", upstream.status, (await upstream.text()).slice(0, 400));
+    await recordRound(env, { kind: "openai", model, ok: false, status: upstream.status });
     return { error: true, status: upstream.status };
   }
   const result = await upstream.json();
+  await recordRound(env, { kind: "openai", model, ok: true, usage: result.usage });
   const choice = (result.choices || [])[0] || {};
   const reply = (choice.message && choice.message.content) || "";
   if (!reply.trim()) {
@@ -540,6 +564,7 @@ async function askGroq(env, messages, options = {}) {
     }
     if (upstream.ok) {
       const result = await upstream.json();
+      await recordRound(env, { kind: "groq", model, ok: true, usage: result.usage });
       const choice = (result.choices || [])[0] || {};
       const reply = (choice.message && choice.message.content) || "";
       if (reply.trim()) return { reply, stop_reason: choice.finish_reason, model };
@@ -549,6 +574,7 @@ async function askGroq(env, messages, options = {}) {
     }
     const text = (await upstream.text()).slice(0, 400);
     console.log(model, "error", upstream.status, text);
+    await recordRound(env, { kind: "groq", model, ok: false, status: upstream.status });
     last = { error: true, status: upstream.status };
     // A bad key will not get better on another model.
     if (upstream.status === 401 || upstream.status === 403) break;
@@ -725,15 +751,22 @@ async function askAgentModel(env, messages) {
       },
       120_000
     );
+  const pictures = countPictures(messages);
+  let picturesRefused = false;
   let upstream = await call(messages);
   if (upstream.status === 400) {
     const detail = await upstream.text();
     console.log("agent 400:", detail.slice(0, 400));
-    if (!/image/i.test(detail)) return { error: true, status: 400 };
+    if (!/image/i.test(detail)) {
+      await recordRound(env, { kind: "agent", model, ok: false, status: 400, pictures });
+      return { error: true, status: 400 };
+    }
+    picturesRefused = true;
     upstream = await call(withoutPictures(messages));
   }
   if (!upstream.ok) {
     console.log("agent error", upstream.status, (await upstream.text()).slice(0, 400));
+    await recordRound(env, { kind: "agent", model, ok: false, status: upstream.status, pictures, picturesRefused });
     return { error: true, status: upstream.status };
   }
   const result = await upstream.json();
@@ -742,6 +775,9 @@ async function askAgentModel(env, messages) {
     .filter((c) => c.type === "function" && c.function && c.function.name)
     .map((c) => ({ id: c.id, name: c.function.name, input: c.function.arguments || "{}" }));
   const usage = result.usage || {};
+  await recordRound(env, {
+    kind: "agent", model, ok: true, usage, pictures, picturesRefused, calls: calls.map((c) => c.name).join(","),
+  });
   console.log("agent", model, "in", usage.prompt_tokens, "cached", (usage.prompt_tokens_details || {}).cached_tokens, "out", usage.completion_tokens, "calls", calls.map((c) => c.name).join(","));
   return { text: message.content || "", calls, model };
 }
