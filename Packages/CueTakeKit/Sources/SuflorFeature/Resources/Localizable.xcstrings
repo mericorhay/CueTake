@@ -4492,19 +4492,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Turn on cloud AI and write"
+            "value" : "Allow sharing and write"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bulut yapay zekâyı aç ve yaz"
+            "value" : "Paylaşmaya izin ver ve yaz"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activa la IA en la nube y escribe"
+            "value" : "Permitir compartir y escribir"
           }
         }
       }
@@ -4515,19 +4515,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Writing the flow uses cloud AI, which is off in Settings."
+            "value" : "To write with cloud AI, your brief and voice draft are sent through Cloudflare to OpenAI, Groq or Anthropic. Tap Allow sharing and write to give permission."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Akışı yazmak bulut yapay zekâyı kullanıyor; Ayarlar'da kapalı."
+            "value" : "Bulut AI ile yazmak için özetin ve sesli taslağın Cloudflare üzerinden OpenAI, Groq veya Anthropic ile paylaşılır. İzin vermek için Paylaşmaya izin ver ve yaz’a dokun."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escribir el flujo usa IA en la nube, que está desactivada en Configuración."
+            "value" : "Para escribir con IA en la nube, tu resumen y borrador de voz se envían a OpenAI, Groq o Anthropic a través de Cloudflare. Toca Permitir compartir y escribir para dar permiso."
           }
         }
       }

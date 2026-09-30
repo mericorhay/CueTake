@@ -1985,19 +1985,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cloud AI sends your video's words and edit structure, a few small pictures of it for AI edit, and its sound for better captions, to our server. You can turn it off again in Settings."
+            "value" : "With your permission, AI edit sends your transcript, captions, edit details, scene notes (including face counts), and a few small video frames that may show faces through Cloudflare to OpenAI, Groq, or Anthropic. Cloud captions also send speech audio. Choose Allow to share this data; you can turn cloud AI off in Settings."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bulut AI; videonun sözlerini ve kurgu yapısını, AI kurgu için birkaç küçük karesini, daha iyi altyazı için de sesini sunucumuza gönderir. İzni Ayarlar'dan tekrar kapatabilirsin."
+            "value" : "İzin verirsen AI kurgu; konuşma metnini, altyazıları, kurgu bilgilerini, yüz sayısı dahil sahne notlarını ve yüzleri gösterebilen birkaç küçük video karesini Cloudflare üzerinden OpenAI, Groq veya Anthropic ile paylaşır. Bulut altyazı ayrıca konuşma sesini gönderir. Paylaşmak için İzin ver’e dokun; Ayarlar’dan kapatabilirsin."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El AI en la nube envía las palabras y la estructura de edición de tu video, algunas imágenes pequeñas para la edición con AI y su sonido para mejores subtítulos, a nuestro servidor. Puedes desactivarlo nuevamente en Configuración."
+            "value" : "Con tu permiso, la edición con IA envía la transcripción, subtítulos, detalles de edición, notas de escena (incluido el número de rostros) y algunos fotogramas pequeños que pueden mostrar rostros a OpenAI, Groq o Anthropic a través de Cloudflare. Los subtítulos en la nube también envían audio. Toca Permitir para compartir; puedes desactivarlo en Ajustes."
           }
         }
       }

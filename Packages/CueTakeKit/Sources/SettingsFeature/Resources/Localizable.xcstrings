@@ -3756,19 +3756,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow cloud assistance. Requests may include your text, edit context or audio when using cloud transcription."
+            "value" : "Allow sharing with OpenAI, Groq or Anthropic through Cloudflare: your text, transcript, captions, edit details, scene notes (including face counts), small video frames that may show faces, and speech audio for cloud captions. Sent only when you use a cloud feature. Tap to give permission."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bulut asistanına izin ver. İstekler metnini, kurgu bağlamını veya bulut konuşma tanımada sesini içerebilir."
+            "value" : "Cloudflare üzerinden OpenAI, Groq veya Anthropic ile paylaşmaya izin ver: metin, konuşma metni, altyazı, kurgu bilgisi, yüz sayısı dahil sahne notları, yüz gösterebilen küçük video kareleri ve bulut altyazı için konuşma sesi. Yalnızca bulut özelliğini kullandığında gönderilir. İzin vermek için dokun."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Permite la asistencia en la nube. Las solicitudes pueden incluir tu texto, contexto de edición o audio al usar transcripción en la nube."
+            "value" : "Permite compartir con OpenAI, Groq o Anthropic a través de Cloudflare: texto, transcripción, subtítulos, detalles de edición, notas de escena (incluido el número de rostros), fotogramas pequeños que pueden mostrar rostros y audio para subtítulos en la nube. Solo se envía al usar una función en la nube. Toca para dar permiso."
           }
         }
       }
