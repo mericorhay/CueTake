@@ -17,6 +17,10 @@ extension AppModel {
             exportModel.postKitState = .failed(AppLocalization.string("postKit.noSpeech"))
             return
         }
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            exportModel.postKitState = .failed(Self.assistantFailureMessage(AssistantClient.AssistantError.declined))
+            return
+        }
         guard access.use(.scriptWriting) else {
             exportModel.postKitState = .failed(AccessModel.message(for: access.decision(.scriptWriting)))
             return
