@@ -6,6 +6,7 @@ import Domain
 import EditorFeature
 import Foundation
 import Photos
+import SettingsFeature
 import UIKit
 
 /// After the export: the words to post it with, and a cover image.
