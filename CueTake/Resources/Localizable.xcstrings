@@ -944,6 +944,29 @@
         }
       }
     },
+    "cert.error.cloudOff" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The review is done by cloud AI. Allow cloud AI in Settings → Privacy & AI to send this project for review."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İnceleme bulut AI ile yapılıyor. Bu projeyi incelemeye göndermek için Ayarlar → Gizlilik ve AI bölümünde bulut AI'a izin ver."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La revisión la hace la IA en la nube. Activa IA en la nube en Configuración → Privacidad & IA para enviar este proyecto a revisión."
+          }
+        }
+      }
+    },
     "cert.error.device" : {
       "extractionState" : "manual",
       "localizations" : {

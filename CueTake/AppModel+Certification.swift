@@ -121,6 +121,10 @@ extension AppModel {
 
     /// Sends a finished project to the reviewer. Nil when a verdict came back; otherwise what to say.
     func requestReview(of id: Project.ID) async -> String? {
+        // The reviewer is an AI model, so the project goes to a cloud AI provider.
+        guard settingsModel.settings.aiProcessing == .allowCloud else {
+            return AppLocalization.string("cert.error.cloudOff")
+        }
         do {
             let project = try await dependencies.projectStore.load(id)
             var request = try AssistantClient.ReviewRequest(installID: certification.installID, project: project)
