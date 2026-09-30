@@ -189,7 +189,7 @@ html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{di
       <div class="kicker"><span class="tick"></span>01</div>
       <h2 id="privacy-title"><span data-lang="tr">Gizlilik <em>politikası</em></span><span data-lang="en">Privacy <em>policy</em></span></h2>
     </div>
-    <div class="updated"><span class="rec"></span><span data-lang="tr">Son güncelleme · 26 Eylül 2026</span><span data-lang="en">Last updated · 26 September 2026</span></div>
+    <div class="updated"><span class="rec"></span><span data-lang="tr">Son güncelleme · 30 Eylül 2026</span><span data-lang="en">Last updated · 30 September 2026</span></div>
   </div>
 
   <div class="summary">
@@ -237,6 +237,15 @@ html:not([lang="tr"]) [data-lang="tr"],html:not([lang="en"]) [data-lang="en"]{di
       <h3 data-lang="tr">Kimler işler</h3><h3 data-lang="en">Who processes it</h3>
       <p data-lang="tr">Yapay zekâyı bodrumda kendimiz eğitmiyoruz, itiraf edelim. İstekler sunucumuz (Cloudflare) üzerinden yapay zekâ ve stok görüntü sağlayıcılarına iletilir: <b>OpenAI</b>, <b>Groq</b> ve/veya <b>Anthropic</b> (metin, resim ve konuşma tanıma), <b>Pexels</b> (stok video araması). Yalnızca yanıt üretmek için kullanılır; içeriklerini biz saklamayız. Sağlayıcıların kendi politikaları geçerlidir. Onlarınki bu kadar komik değil, önceden söyleyelim.</p>
       <p data-lang="en">We don't train the AI in a basement ourselves, let's be honest. Requests pass through our server (Cloudflare) to AI and stock footage providers: <b>OpenAI</b>, <b>Groq</b> and/or <b>Anthropic</b> (text, picture and speech recognition), <b>Pexels</b> (stock video search). They are used only to produce the answer; we do not store their content. The providers' own policies apply. Theirs aren't this funny, fair warning.</p>
+    </article>
+
+    <article class="clause" id="face-data">
+      <div class="num">1.3a</div>
+      <h3 data-lang="tr">Yüz verisi</h3><h3 data-lang="en">Face data</h3>
+      <p data-lang="tr">Yüz takibi için Apple Vision, seçtiğin videonun karelerinde yüzleri cihazında algılar. Uygulama yüz sayısı ve yüzün kare içindeki konumu için koordinatlar üretir. Yüz kimliği, yüz şablonu veya biyometrik tanıma verisi oluşturmaz. Koordinatlar yalnızca videoyu kırpmak ve yüzü kadrajda tutmak için proje dosyasında cihazında saklanır; projeyi silene kadar kalır ve proje silindiğinde silinir. iCloud yedeklemeyi ayrıca açarsan proje dosyası özel CloudKit alanında sen silene kadar saklanır. Bu koordinatlar sunucumuza veya yapay zekâ sağlayıcılarına gönderilmez.</p>
+      <p data-lang="en">For face tracking, Apple Vision detects faces in frames of the video you select on your device. The app generates a face count and coordinates for each face's position in the frame. It does not create a face identity, face template, or biometric recognition data. Coordinates are stored only in the project file on your device to crop the video and keep a face in frame. They remain until you delete the project and are deleted with it. If you separately enable iCloud backup, the project file is stored in your private CloudKit area until you delete it. These coordinates are not sent to our server or AI providers.</p>
+      <p data-lang="tr">Bulut AI'ya izin verip AI kurguyu kullandığında, sahne notları içindeki yüz sayısı ve kişilerin yüzlerini gösterebilen birkaç küçük, düşük çözünürlüklü video karesi Cloudflare üzerinden OpenAI, Groq veya Anthropic'e yanıt üretmek için gönderilebilir. Yüz görüntüsü içeren kareler yalnızca bu işlem için gönderilir; bunları sunucumuzda saklamayız. Sağlayıcıların kendi saklama politikaları geçerlidir. Bulut AI'ya izin vermezsen bu veriler onlarla paylaşılmaz.</p>
+      <p data-lang="en">If you permit cloud AI and use AI edit, the face count in scene notes and a few small, low-resolution video frames that may show people's faces may be sent through Cloudflare to OpenAI, Groq, or Anthropic to produce an answer. Frames containing faces are sent only for that request; we do not retain them on our server. Providers' own retention policies apply. If you do not permit cloud AI, this data is not shared with them.</p>
     </article>
 
     <article class="clause">
