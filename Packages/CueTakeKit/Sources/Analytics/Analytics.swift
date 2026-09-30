@@ -18,11 +18,12 @@ public enum Analytics {
         var host: String?
     }
 
-    private static let optOutKey = "cuetake.analytics.optOut"
+    private static let optInKey = "cuetake.analytics.optIn"
     private static let started = Mutex(false)
 
     /// Starts PostHog once, when the build has a key and the person has not turned it off.
     public static func start(bundle: Bundle = .main) {
+        guard isOn else { return }
         guard let url = bundle.url(forResource: "Analytics", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let config = try? JSONDecoder().decode(Config.self, from: data),
@@ -38,43 +39,46 @@ public enum Analytics {
         settings.captureApplicationLifecycleEvents = true
         settings.captureScreenViews = false
         PostHogSDK.shared.setup(settings)
-        if !isOn { PostHogSDK.shared.optOut() }
     }
 
-    public static var isConfigured: Bool { started.withLock { $0 } }
+    public static var isConfigured: Bool { Bundle.main.url(forResource: "Analytics", withExtension: "json") != nil }
 
-    /// The Settings switch. On unless the person turned it off.
+    /// The Settings switch. Off until the person explicitly opts in.
     public static var isOn: Bool {
-        get { !UserDefaults.standard.bool(forKey: optOutKey) }
+        get { UserDefaults.standard.bool(forKey: optInKey) }
         set {
-            UserDefaults.standard.set(!newValue, forKey: optOutKey)
-            guard isConfigured else { return }
-            if newValue { PostHogSDK.shared.optIn() } else { PostHogSDK.shared.optOut() }
+            UserDefaults.standard.set(newValue, forKey: optInKey)
+            if newValue {
+                start()
+                if started.withLock({ $0 }) { PostHogSDK.shared.optIn() }
+            } else if started.withLock({ $0 }) {
+                PostHogSDK.shared.optOut()
+            }
         }
     }
 
     /// One thing that happened, with its plain properties.
     public static func track(_ event: String, _ properties: [String: AnalyticsValue] = [:]) {
-        guard isConfigured else { return }
+        guard isOn, started.withLock({ $0 }) else { return }
         PostHogSDK.shared.capture(event, properties: properties.mapValues(\.raw))
     }
 
     /// Sent with every event from now on: the plan, the app's language.
     public static func remember(_ properties: [String: AnalyticsValue]) {
-        guard isConfigured else { return }
+        guard isOn, started.withLock({ $0 }) else { return }
         PostHogSDK.shared.register(properties.mapValues(\.raw))
     }
 
     /// Sends what is waiting now, rather than at the next batch: called when the app leaves the
     /// screen, so a short session is not lost.
     public static func flush() {
-        guard isConfigured else { return }
+        guard isOn, started.withLock({ $0 }) else { return }
         PostHogSDK.shared.flush()
     }
 
     /// A screen the person moved to, by our own name for it.
     public static func screen(_ name: String) {
-        guard isConfigured else { return }
+        guard isOn, started.withLock({ $0 }) else { return }
         PostHogSDK.shared.screen(name)
     }
 }

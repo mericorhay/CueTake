@@ -5,7 +5,7 @@ const TR = `
 <p class="date">Son güncelleme: 30 Eylül 2026</p>
 
 <h2>Kısaca</h2>
-<p>Videoların, kayıtların ve projelerin telefonunda kalır. Sunucumuza yalnızca senin açtığın yapay zekâ özellikleri için gereken metin ve ses gider; uygulamayı geliştirmek için anonim kullanım istatistikleri toplarız (kapatılabilir). Reklam için takip yapmayız, verini satmayız.</p>
+<p>Videoların, kayıtların ve projelerin telefonunda kalır. Sunucumuza yalnızca senin açtığın yapay zekâ özellikleri için gereken metin ve ses gider; yalnızca izin verirsen uygulamayı geliştirmek için anonim kullanım istatistikleri toplarız (istediğin an kapatabilirsin). Reklam için takip yapmayız, verini satmayız.</p>
 
 <h2>Telefonunda kalanlar</h2>
 <ul>
@@ -26,7 +26,7 @@ const TR = `
 <p>Yüz takibi Apple Vision ile cihazda yapılır. Yüz sayısı ve yüzün karedeki konumu için koordinatlar çıkarılır; yüz kimliği, şablonu veya biyometrik tanıma verisi oluşturulmaz. Koordinatlar projede cihazında, projeyi silene kadar saklanır ve projeyle silinir. iCloud yedeklemeyi ayrıca açarsan özel CloudKit alanında proje silinene kadar saklanır. Bu koordinatlar sunucumuza veya AI sağlayıcılarına gönderilmez. Bulut AI'ya izin verip AI kurguyu kullandığında, yüz sayısı içeren sahne notları ve yüzleri gösterebilen birkaç küçük kare Cloudflare üzerinden OpenAI, Groq veya Anthropic'e gönderilebilir. Bu kareleri sunucumuzda saklamayız; sağlayıcıların kendi saklama politikaları geçerlidir.</p>
 
 <h2>Kullanım istatistikleri</h2>
-<p>Uygulamayı geliştirmek için PostHog (ABD sunucuları) üzerinden anonim kullanım olayları toplarız: hangi özelliğin kullanıldığı, aylık limitlere nerede takılındığı, dışa aktarmanın çözünürlüğü ve kare hızı, kaydın süresi, CueTake+ satın alma sonucu, uygulama sürümü, dili ve cihaz modeli. Bunlar telefonda üretilen rastgele bir kimlikle gönderilir; hesabına, Apple kimliğine ya da adına bağlanmaz. Videoların, kayıtların, senaryoların, altyazıların, proje adların ve ekran görüntüleri asla gönderilmez; ekran kaydı (session replay) kullanmayız. Reklam ya da takip için kullanılmaz, kimseyle paylaşılmaz. Ayarlar'daki "Anonim kullanım verisi paylaş" anahtarıyla istediğin an kapatabilirsin.</p>
+<p>Yalnızca Ayarlar’da izin verirsen, uygulamayı geliştirmek için PostHog (ABD sunucuları) üzerinden anonim kullanım olayları toplarız: hangi özelliğin kullanıldığı, aylık limitlere nerede takılındığı, dışa aktarmanın çözünürlüğü ve kare hızı, kaydın süresi, CueTake+ satın alma sonucu, uygulama sürümü, dili ve cihaz modeli. Bunlar telefonda üretilen rastgele bir kimlikle gönderilir; hesabına, Apple kimliğine ya da adına bağlanmaz. Videoların, kayıtların, senaryoların, altyazıların, proje adların ve ekran görüntüleri asla gönderilmez; ekran kaydı (session replay) kullanmayız. Reklam ya da takip için kullanılmaz, kimseyle paylaşılmaz. Ayarlar'daki "Anonim kullanım verisi paylaş" anahtarıyla istediğin an kapatabilirsin.</p>
 
 <h2>iCloud yedekleme (CueTake+)</h2>
 <p>Yedeklemeyi açarsan projelerin ve videoların kendi iCloud hesabındaki özel CloudKit alanına gönderilir. Bu veriyi yalnızca sen görebilirsin; bizim sunucumuzdan geçmez ve biz erişemeyiz.</p>
@@ -52,7 +52,7 @@ const EN = `
 <p class="date">Last updated: 30 September 2026</p>
 
 <h2>In short</h2>
-<p>Your videos, recordings and projects stay on your phone. Only the text and sound needed for the AI features you choose to use reach our server. We collect anonymous usage statistics to improve the app (you can turn this off). We do not track you for advertising and we do not sell your data.</p>
+<p>Your videos, recordings and projects stay on your phone. Only the text and sound needed for the AI features you choose to use reach our server. We collect anonymous usage statistics to improve the app only if you opt in (you can turn this off at any time). We do not track you for advertising and we do not sell your data.</p>
 
 <h2>What stays on your phone</h2>
 <ul>
@@ -73,7 +73,7 @@ const EN = `
 <p>Face tracking uses Apple Vision on the device. The app derives a face count and coordinates for positions in each frame; it does not create a face identity, template, or biometric recognition data. Coordinates remain in the project on your device until you delete the project and are deleted with it. If you separately enable iCloud backup, the project is kept in your private CloudKit area until deletion. Coordinates are not sent to our server or AI providers. If you permit cloud AI and use AI edit, scene notes containing face counts and a few small frames that may show faces may be sent through Cloudflare to OpenAI, Groq, or Anthropic. We do not retain these frames on our server; providers' own retention policies apply.</p>
 
 <h2>Usage statistics</h2>
-<p>To improve the app we collect anonymous usage events through PostHog (US servers): which features are used, where monthly limits are reached, an export's resolution and frame rate, a recording's length, the outcome of a CueTake+ purchase, the app version, language and device model. They are sent with a random identifier made on the phone and are never linked to your account, your Apple ID or your name. Your videos, recordings, scripts, captions, project names and screen contents are never sent, and we do not use session replay. The data is not used for advertising or tracking and is not shared with anyone. You can turn it off at any time with "Share anonymous usage" in Settings.</p>
+<p>Only if you opt in in Settings, we collect usage events to improve the app through PostHog (US servers): which features are used, where monthly limits are reached, an export's resolution and frame rate, a recording's length, the outcome of a CueTake+ purchase, the app version, language and device model. They are sent with a random identifier made on the phone and are never linked to your account, your Apple ID or your name. Your videos, recordings, scripts, captions, project names and screen contents are never sent, and we do not use session replay. The data is not used for advertising or tracking and is not shared with anyone. You can turn it off at any time with "Share anonymous usage" in Settings.</p>
 
 <h2>iCloud backup (CueTake+)</h2>
 <p>If you turn backup on, your projects and videos go to a private CloudKit area in your own iCloud account. Only you can see this data; it does not pass through our server and we cannot access it.</p>
