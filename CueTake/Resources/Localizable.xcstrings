@@ -6188,6 +6188,328 @@
           }
         }
       }
+    },
+    "access.left %@ %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld left this month"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: bu ay %2$lld hakkın kaldı"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: usos restantes este mes: %2$lld"
+          }
+        }
+      }
+    },
+    "access.noneLeft %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: none left this month. Far more with CueTake+."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: bu ayki hakkın bitti. CueTake+ ile çok daha fazlası var."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: no quedan usos este mes. Muchos más con CueTake+."
+          }
+        }
+      }
+    },
+    "offer.ai" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI EDITS A MONTH"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AYLIK YAPAY ZEKÂ DÜZENLEMESİ"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EDICIONES CON IA AL MES"
+          }
+        }
+      }
+    },
+    "offer.body.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nice work. CueTake+ makes the next one look produced: 4K, styles, sound design and far more AI."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eline sağlık. CueTake+ bir sonrakini stüdyodan çıkmış gibi gösterir: 4K, stiller, ses tasarımı ve çok daha fazla yapay zekâ."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buen trabajo. CueTake+ hace que el siguiente parezca de estudio: 4K, estilos, diseño de sonido y mucha más IA."
+          }
+        }
+      }
+    },
+    "offer.body.welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording, the prompter, captions and export stay free. CueTake+ adds the finishing tools and far more AI, whenever you want it."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kayıt, prompter, altyazı ve dışa aktarma hep ücretsiz. CueTake+ bitiriş araçlarını ve çok daha fazla yapay zekâyı ekler; ne zaman istersen."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabar, el prompter, los subtítulos y exportar son gratis siempre. CueTake+ añade las herramientas de acabado y mucha más IA, cuando tú quieras."
+          }
+        }
+      }
+    },
+    "offer.cta.trial" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try CueTake+ free"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueTake+'ı ücretsiz dene"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba CueTake+ gratis"
+          }
+        }
+      }
+    },
+    "offer.kicker.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VIDEO · EXPORTED"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VİDEO · DIŞA AKTARILDI"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VÍDEO · EXPORTADO"
+          }
+        }
+      }
+    },
+    "offer.kicker.welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ · OPTIONAL"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ · İSTEĞE BAĞLI"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ · OPCIONAL"
+          }
+        }
+      }
+    },
+    "offer.startFree" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start free"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ücretsiz başla"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empezar gratis"
+          }
+        }
+      }
+    },
+    "offer.title.export.1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your video"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Videon"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu vídeo"
+          }
+        }
+      }
+    },
+    "offer.title.export.2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "is out."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hazır."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "está listo."
+          }
+        }
+      }
+    },
+    "offer.title.welcome.1" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The essentials"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Temel her şey"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo esencial"
+          }
+        }
+      }
+    },
+    "offer.title.welcome.2" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "are free."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ücretsiz."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "es gratis."
+          }
+        }
+      }
+    },
+    "offer.tools" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ OPENS"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ İLE AÇILIR"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CUETAKE+ DESBLOQUEA"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -33,6 +33,8 @@ struct RootView: View {
     @State private var showsTeam = false
     /// The limit card's own window, above every sheet.
     @State private var limitPresenter = LimitPresenter()
+    /// The CueTake+ offer's window: the same card, at a good moment instead of a refusal.
+    @State private var offerPresenter = LimitPresenter()
     @State private var showsSuflorReports = false
     @Environment(\.openURL) private var openURL
     @State private var showsCertificates = false
@@ -88,6 +90,19 @@ struct RootView: View {
                     trial: model.plusStore.trial,
                     onUpgrade: { model.upgradeToPlus() },
                     onClose: { model.access.request = nil }
+                )
+            )
+        }
+        .onChange(of: model.plusOffer) { _, offer in
+            offerPresenter.hide()
+            guard let offer else { return }
+            offerPresenter.show(
+                PlusOfferSheet(
+                    offer: offer,
+                    price: model.plusStore.price,
+                    trial: model.plusStore.trial,
+                    onUpgrade: { model.upgradeToPlus() },
+                    onClose: { model.plusOffer = nil }
                 )
             )
         }

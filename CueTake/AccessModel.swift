@@ -38,6 +38,10 @@ final class AccessModel {
     /// Runs on a refusal the user caused, with the words to show until there is a paywall.
     var onRefused: ((String) -> Void)?
 
+    /// Runs when a use on the free plan leaves three or fewer for the month, with the words to
+    /// show ("AI edit: 2 left this month"), so the limit card is never the first they hear of it.
+    var onLow: ((String) -> Void)?
+
     init() {
         if let text = keychain.read(), let data = text.data(using: .utf8),
            let saved = try? JSONDecoder().decode(UsageLedger.self, from: data) {
@@ -101,6 +105,11 @@ final class AccessModel {
         ledger.record(point)
         save()
         Analytics.track("feature_used", ["feature": .text(point.analyticsName), "used_this_month": .int(ledger.used(point))])
+        if !quietly, plan == .free, let left = AccessPolicy.remaining(point, plan: plan, ledger: ledger), left <= 3 {
+            onLow?(left == 0
+                ? AppLocalization.string("access.noneLeft \(point.title)")
+                : AppLocalization.string("access.left \(point.title) \(left)"))
+        }
         return true
     }
 

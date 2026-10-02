@@ -179,6 +179,23 @@ extension AppModel {
             if active { self?.suflorModel.reportLocked = false }
         }
         plusStore.start()
+        // "AI edit: 2 left this month", before the limit card would be the first they hear of it.
+        access.onLow = { [weak self] text in self?.show(notice: text) }
+    }
+
+    /// Offers CueTake+ at a good moment: on the free plan only, once per install for each moment,
+    /// and never on top of the limit card or another offer.
+    func offerPlus(_ offer: PlusOffer, after seconds: Double) {
+        guard access.plan == .free, !UserDefaults.standard.bool(forKey: offer.shownKey) else { return }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard let self, self.access.plan == .free, self.plusOffer == nil, self.access.request == nil,
+                  !UserDefaults.standard.bool(forKey: offer.shownKey)
+            else { return }
+            UserDefaults.standard.set(true, forKey: offer.shownKey)
+            Analytics.track("paywall_shown", ["feature": .text(offer.analyticsName), "reason": "offer", "plan": .text(self.access.plan.rawValue)])
+            self.plusOffer = offer
+        }
     }
 
     /// The way into CueTake+: the App Store's own purchase sheet.

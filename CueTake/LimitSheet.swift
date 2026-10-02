@@ -510,7 +510,8 @@ struct LimitSheet: View {
 // MARK: - Motion pieces
 
 /// Fades up from 16 points below and out of a blur, like the design's `.rise`.
-private struct Rise: ViewModifier {
+/// (This and `LineUp` are shared with the offer card.)
+struct Rise: ViewModifier {
     let t: Double
     let delay: Double
 
@@ -524,7 +525,7 @@ private struct Rise: ViewModifier {
 }
 
 /// A title line sliding up out of its own mask with a slight tilt.
-private struct LineUp<Content: View>: View {
+struct LineUp<Content: View>: View {
     let t: Double
     let delay: Double
     @ViewBuilder let content: Content
@@ -618,8 +619,8 @@ enum LimitCurve {
     }
 }
 
-/// The card's own colours, from the design.
-private enum LimitColors {
+/// The card's own colours, from the design. Shared with the offer card (`PlusOfferSheet`).
+enum LimitColors {
     static let background = Color(red: 11 / 255, green: 11 / 255, blue: 13 / 255)
     static let sheet = Color(red: 19 / 255, green: 19 / 255, blue: 23 / 255)
     static let card = Color(red: 26 / 255, green: 26 / 255, blue: 32 / 255)

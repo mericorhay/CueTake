@@ -78,6 +78,9 @@ final class AppModel {
     let access = AccessModel()
     /// CueTake+ in the App Store.
     let plusStore = PlusStore()
+    /// The CueTake+ card to show at a good moment (after the introduction, after the first
+    /// export). Whoever shows it sets it back to nil.
+    var plusOffer: PlusOffer?
     /// Projects in the creator's own iCloud.
     let cloudBackup = CloudBackup()
     /// How many suflör reports are kept, for Settings.
@@ -720,6 +723,8 @@ final class AppModel {
             "saved_to": .text(String(describing: saved)),
         ])
         noteCertifiedExport(of: project)
+        // The best moment to mention CueTake+: the video is out and they have seen what the app does.
+        offerPlus(.firstExport, after: 1.8)
     }
 
     /// How many more bytes an export of this size needs than the phone has free, or nil when it
@@ -892,6 +897,8 @@ final class AppModel {
         Analytics.track("onboarding_completed")
         settingsModel.update(\.hasCompletedOnboarding, to: true)
         go(to: .home)
+        // Once home has settled: what is free for good, and what CueTake+ adds. One tap closes it.
+        offerPlus(.welcome, after: 0.9)
     }
 
     func go(to screen: Screen) {
