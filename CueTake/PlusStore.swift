@@ -36,6 +36,10 @@ final class PlusStore {
     /// When the current period ends, and whether it renews then or stops. Nil on the free plan.
     private(set) var renewal: (date: Date, renews: Bool)?
 
+    /// The billing period in force, from the last charge to the next renewal. The allowance is
+    /// counted over it, so it starts again on the subscriber's own day, not on the 1st.
+    private(set) var period: (start: Date, end: Date)?
+
     /// The last answer, for the next launch: a subscriber is Plus from the first frame, not after
     /// the store has been asked, and an offline start does not look like a lapsed subscription.
     private static let activeKey = "cuetake.plus.active"
@@ -84,6 +88,7 @@ final class PlusStore {
     /// Whether a verified, unrevoked CueTake+ transaction is current.
     func refresh() async {
         var active = false
+        var current: (start: Date, end: Date)?
         for await entitlement in Transaction.currentEntitlements {
             guard case .verified(let transaction) = entitlement,
                   transaction.productID == Self.monthlyID,
@@ -91,7 +96,11 @@ final class PlusStore {
             else { continue }
             if let expiry = transaction.expirationDate, expiry < .now { continue }
             active = true
+            // Each renewal is a transaction of its own: its purchase date is the day this
+            // period was charged (or the free trial began).
+            if let expiry = transaction.expirationDate { current = (transaction.purchaseDate, expiry) }
         }
+        period = current
         isActive = active
         UserDefaults.standard.set(active, forKey: Self.activeKey)
         await readRenewal(active: active)
@@ -174,7 +183,7 @@ extension AppModel {
         // What the store said last time, until it answers again.
         if PlusStore.wasActive { access.setPlan(.pro) }
         plusStore.onChange = { [weak self] active in
-            self?.access.setPlan(active ? .pro : .free)
+            self?.access.setPlan(active ? .pro : .free, period: active ? self?.plusStore.period : nil)
             self?.rememberForAnalytics()
             if active { self?.suflorModel.reportLocked = false }
         }
