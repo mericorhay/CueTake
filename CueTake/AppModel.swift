@@ -723,8 +723,9 @@ final class AppModel {
             "saved_to": .text(String(describing: saved)),
         ])
         noteCertifiedExport(of: project)
-        // The best moment to mention CueTake+: the video is out and they have seen what the app does.
-        offerPlus(.firstExport, after: 1.8)
+        // The video is out and they have seen what the app does. The first time, that is the moment
+        // to ask for a rating; CueTake+ is mentioned after the next export, not on top of it.
+        if !askForRating(at: "export", after: 1.8) { offerPlus(.firstExport, after: 1.8) }
     }
 
     /// How many more bytes an export of this size needs than the phone has free, or nil when it

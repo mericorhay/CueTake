@@ -207,6 +207,28 @@ extension AppModel {
         }
     }
 
+    /// Asks for an App Store rating, once per install, at a moment the app has just delivered
+    /// something: the first export, or the first workflow that ran to its end. The sheet is
+    /// Apple's own, so it speaks the language the app is set to, and iOS decides whether it shows.
+    /// Says whether it asked, so nothing else is offered on top of it.
+    @discardableResult
+    func askForRating(at moment: String, after seconds: Double) -> Bool {
+        let key = "cuetake.rating.asked"
+        guard !UserDefaults.standard.bool(forKey: key) else { return false }
+        UserDefaults.standard.set(true, forKey: key)
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(seconds))
+            guard let self, self.plusOffer == nil, self.access.request == nil,
+                  let scene = UIApplication.shared.connectedScenes
+                      .compactMap({ $0 as? UIWindowScene })
+                      .first(where: { $0.activationState == .foregroundActive })
+            else { return }
+            Analytics.track("rating_asked", ["moment": .text(moment)])
+            AppStore.requestReview(in: scene)
+        }
+        return true
+    }
+
     /// The way into CueTake+: the App Store's own purchase sheet.
     func upgradeToPlus() {
         Task {

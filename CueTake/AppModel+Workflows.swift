@@ -485,6 +485,7 @@ extension AppModel {
         if !wasPaused {
             if let queue, let job { try? await queue.complete(job.id, state: state) }
             noteCertifiedWorkflowRun()
+            if (studio.lastRunSummary?.completed ?? 0) > 0 { askForRating(at: "workflow", after: 2.5) }
         }
         if before.segments != project.segments {
             show(notice: AppLocalization.string("workflow.undoable"))
